@@ -1,0 +1,10 @@
+name = "strand-portal"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "strand-portal-db"
+database_id = "671f3fb4-f96d-4e60-a3a1-0082f4274f92"
+# ↑ Replace with your actual D1 database ID after running:
+#   npx wrangler d1 create strand-portal-db

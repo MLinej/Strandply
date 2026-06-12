@@ -1,0 +1,9 @@
+{
+  "name": "strand-portal",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx wrangler pages dev .",
+    "deploy": "npx wrangler pages deploy ."
+  }
+}

@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Transport Module — Strandply</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Urbanist:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --r:#D5110A;--rd:#A60D07;--rs:#FDECEB;
+  --bg:#fff;--bs:#fafafa;--b2:#f4f4f4;
+  --k:#1a1a1a;--k4:#9a9a9a;--k5:#c8c8c8;
+  --br:#e4e4e4;--br2:#cacaca;
+  --g:#15803d;--gs:#ecfdf5;
+  --bl:#1d4ed8;--bls:#eff6ff;
+  --am:#b45309;--ams:#fffbeb;--amd:#fde68a;
+  --sh:0 1px 3px rgba(0,0,0,.07);
+  --shm:0 4px 16px rgba(0,0,0,.08);
+  --shl:0 12px 36px rgba(0,0,0,.12)
+}
+html,body{min-height:100vh;background:var(--bs);color:var(--k);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
+a{text-decoration:none}
+.tb{position:sticky;top:0;z-index:200;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--br);height:54px;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
+.tb-logo{width:32px;height:32px;border-radius:7px;background:var(--r);color:#fff;font-family:'Urbanist',sans-serif;font-weight:900;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tb-name{font-family:'Urbanist',sans-serif;font-weight:800;font-size:14px;color:var(--k)}.tb-name em{color:var(--r);font-style:normal}
+.tb-sub{font-size:9.5px;color:var(--k4);text-transform:uppercase;letter-spacing:.07em}
+.uchip{display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--bs);border:1px solid var(--br);border-radius:99px}
+.uchip .un{font-size:12px;font-weight:700}.uchip .ur{font-size:9.5px;color:var(--k4);text-transform:uppercase;letter-spacing:.07em}
+.hbtn{padding:5px 12px;border:1px solid var(--br);border-radius:5px;font-size:11px;font-weight:700;font-family:'Urbanist',sans-serif;color:var(--k4);background:var(--bg);cursor:pointer}
+.hbtn:hover{border-color:var(--r);color:var(--r)}
+.lay{display:flex;min-height:calc(100vh - 54px)}
+.sb{width:215px;flex-shrink:0;border-right:1px solid var(--br);background:var(--bg);padding:14px 0;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;display:flex;flex-direction:column}
+.nl{font-size:9px;font-weight:800;color:var(--k5);text-transform:uppercase;letter-spacing:.13em;padding:7px 10px 3px}
+.nb{display:flex;align-items:center;gap:7px;width:calc(100% - 16px);padding:7px 10px;border-radius:5px;font-size:12.5px;font-weight:600;color:var(--k4);cursor:pointer;border:none;background:none;text-align:left;transition:.12s;margin:1px 8px}
+.nb:hover{background:var(--b2);color:var(--k)}.nb.on{background:var(--rs);color:var(--r);font-weight:700}
+.nb .ni{font-size:13px;width:17px;text-align:center;flex-shrink:0}
+.nbd{margin-left:auto;background:var(--r);color:#fff;border-radius:99px;font-size:9px;font-weight:800;padding:1px 5px;min-width:16px;text-align:center}
+.ndv{border:none;border-top:1px solid var(--br);margin:6px 10px}
+.sbf{margin-top:auto;padding:10px 12px;border-top:1px solid var(--br);font-size:10px;color:var(--k4);line-height:1.7}
+.mn{flex:1;min-width:0;padding:0 24px 80px}
+.ph{padding:22px 0 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ph h1{font-family:'Urbanist',sans-serif;font-size:22px;font-weight:900;letter-spacing:-.02em}
+.ph h1 em{color:var(--r);font-style:normal}
+.ph p{color:var(--k4);font-size:12px;margin-top:3px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:5px;font-size:12px;font-family:'Urbanist',sans-serif;font-weight:700;border:1.5px solid transparent;background:transparent;color:var(--k);transition:.13s;cursor:pointer}
+.bp{background:var(--r);color:#fff;border-color:var(--r)}.bp:hover{background:var(--rd)}
+.bo{border-color:var(--br2);color:var(--k);background:var(--bg)}.bo:hover{border-color:var(--k4)}
+.bg2{color:var(--k4)}.bg2:hover{background:var(--b2)}
+.bgn{background:var(--g);color:#fff;border-color:var(--g)}.bgn:hover{background:#166534}
+.bwa{background:#16a34a;color:#fff;border-color:#16a34a}.bwa:hover{background:#15803d}
+.bcl{background:#0369a1;color:#fff;border-color:#0369a1}.bcl:hover{background:#075985}
+.bam{background:var(--am);color:#fff;border-color:var(--am)}.bam:hover{background:#92400e}
+.bsm{padding:4px 9px;font-size:11px}.bxs{padding:3px 7px;font-size:10.5px}
+.sr{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:16px}
+.sc{background:var(--bg);border:1px solid var(--br);border-radius:8px;padding:12px 14px;box-shadow:var(--sh);cursor:pointer;transition:.15s;display:block}
+.sc:hover{border-color:var(--r);box-shadow:var(--shm);transform:translateY(-1px)}
+.sc .sl{font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.09em;margin-bottom:4px}
+.sc .sv{font-family:'Urbanist',sans-serif;font-size:22px;font-weight:900;line-height:1}
+.sc .ss{font-size:10.5px;color:var(--k4);margin-top:2px}
+.scr .sv{color:var(--r)}.sca .sv{color:var(--bl)}.scl .sv{color:var(--g)}.scg .sv{color:var(--am)}
+.tw{border:1px solid var(--br);border-radius:8px;overflow:hidden;box-shadow:var(--sh);background:var(--bg)}
+.vt{width:100%;border-collapse:collapse;font-size:12.5px}
+.vt thead th{background:var(--bs);border-bottom:1px solid var(--br);padding:8px 11px;text-align:left;font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.vt tbody tr{border-bottom:1px solid var(--br);transition:.1s}.vt tbody tr:last-child{border-bottom:none}
+.vt tbody tr:hover{background:var(--bs)}.vt td{padding:9px 11px;vertical-align:middle}
+.er{text-align:center;padding:40px 16px;color:var(--k4)}
+.er .ei{font-size:32px;margin-bottom:8px}
+.er h3{font-family:'Urbanist',sans-serif;font-size:15px;font-weight:700;color:var(--k);margin-bottom:4px}
+.ac{display:flex;gap:4px;flex-wrap:nowrap;align-items:center}
+.bd{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.bd::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.bp2{background:var(--ams);color:var(--am)}.bp2::before{background:var(--am)}
+.ba{background:var(--bls);color:var(--bl)}.ba::before{background:var(--bl)}
+.bl2{background:var(--gs);color:var(--g)}.bl2::before{background:var(--g)}
+.bi{background:var(--b2);color:var(--k4)}.bi::before{background:var(--k5)}
+.bb{background:#fef2f2;color:var(--r)}.bb::before{background:var(--r)}
+.addr-tag{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;background:var(--bls);color:var(--bl);border-radius:99px;font-size:10px;font-weight:700}
+.pin-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;background:var(--ams);color:var(--am);border-radius:99px;font-size:10px;font-weight:700}
+.veh-tag{padding:1px 7px;background:var(--b2);border-radius:3px;font-size:10px;font-weight:700;color:var(--k4)}
+.id-tag{font-family:monospace;font-size:11px;background:var(--b2);padding:2px 7px;border-radius:3px;font-weight:700;border:1px solid var(--br)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:20px 14px;overflow-y:auto}
+.md{background:var(--bg);border:1px solid var(--br);border-radius:12px;box-shadow:var(--shl);width:100%;max-width:720px;margin:auto}
+.md.mdw{max-width:900px}.md.mds{max-width:460px}.md.mdxl{max-width:1060px}
+.mh{padding:18px 22px 14px;border-bottom:1px solid var(--br);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mh h2{font-family:'Urbanist',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.01em}
+.mh .ms{font-size:11px;color:var(--k4);margin-top:2px}
+.mcl{background:none;border:none;font-size:18px;cursor:pointer;color:var(--k4);padding:2px;line-height:1}.mcl:hover{color:var(--r)}
+.mb{padding:18px 22px}.mf{padding:12px 22px;border-top:1px solid var(--br);display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+.fg3{grid-template-columns:1fr 1fr 1fr}
+.ff{grid-column:1/-1}
+.fd{display:flex;flex-direction:column;gap:4px;position:relative}
+.fd label{font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.05em}
+.fd label .rq{color:var(--r)}
+.fd input,.fd select,.fd textarea{padding:7px 10px;border:1.5px solid var(--br);border-radius:5px;font-size:13px;color:var(--k);background:var(--bg);outline:none;min-height:36px;transition:.13s;width:100%}
+.fd input:focus,.fd select:focus,.fd textarea:focus{border-color:var(--r);box-shadow:0 0 0 3px rgba(213,17,10,.06)}
+.fd textarea{resize:vertical;min-height:60px}
+.sdv{grid-column:1/-1;border:none;border-top:1px solid var(--br);margin:4px 0}
+.slb{grid-column:1/-1;font-family:'Urbanist',sans-serif;font-size:10.5px;font-weight:800;color:var(--k);text-transform:uppercase;letter-spacing:.05em;margin-top:4px}
+.ac-wrap{position:relative}
+.ac-drop{position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--bg);border:1.5px solid var(--r);border-radius:6px;box-shadow:var(--shm);z-index:9999;max-height:220px;overflow-y:auto;display:none}
+.ac-drop.open{display:block}
+.ac-item{padding:8px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--br);display:flex;justify-content:space-between;align-items:center}
+.ac-item:last-child{border-bottom:none}.ac-item:hover{background:var(--rs)}.ac-item:hover .ac-city{color:var(--r)}
+.ac-city{font-weight:700;color:var(--k)}.ac-meta{font-size:10.5px;color:var(--k4)}
+.pin-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.pin-tag{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;background:var(--bs);border:1.5px solid var(--br);border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;transition:.12s;color:var(--k)}
+.pin-tag:hover,.pin-tag.sel{border-color:var(--r);background:var(--rs);color:var(--r)}
+.msw{border:1.5px solid var(--br);border-radius:5px;background:var(--bg);min-height:40px;padding:4px 8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;cursor:text;transition:.13s}
+.msw:focus-within{border-color:var(--r)}
+.mst{display:inline-flex;align-items:center;gap:4px;background:var(--rs);color:var(--r);border:1px solid #f8c5c2;border-radius:3px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap}
+.mst button{background:none;border:none;cursor:pointer;color:var(--r);font-size:13px;line-height:1;padding:0;opacity:.7}.mst button:hover{opacity:1}
+.msi{border:none;outline:none;font-size:12.5px;color:var(--k);min-width:100px;flex:1;background:transparent;padding:2px 4px}
+.ck{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border:1.5px solid var(--br);border-radius:5px;cursor:pointer;font-size:11.5px;font-weight:600;color:var(--k4);transition:.12s;user-select:none}
+.ck.on{border-color:var(--r);background:var(--rs);color:var(--r)}
+.star{font-size:14px;color:var(--k5)}.star.on{color:#f59e0b}
+.call-btn{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:99px;color:#1d4ed8;font-size:11px;font-weight:700;text-decoration:none;cursor:pointer;transition:.12s}
+.call-btn:hover{background:#dbeafe}
+.card{background:var(--bg);border:1px solid var(--br);border-radius:8px;padding:14px 16px;box-shadow:var(--sh);margin-bottom:12px}
+.sh2{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sh2 h3{font-family:'Urbanist',sans-serif;font-size:13px;font-weight:800;color:var(--k)}
+.tli{display:flex;gap:10px;padding-bottom:12px;position:relative}
+.tli::before{content:'';position:absolute;left:7px;top:18px;bottom:0;width:1.5px;background:var(--br)}
+.tli:last-child::before{display:none}.tli:last-child{padding-bottom:0}
+.tld{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;flex-shrink:0;margin-top:3px;z-index:1;border:2px solid var(--bg)}
+.tdg{background:var(--g)}.tdb{background:var(--bl)}.tdp{background:var(--k5)}.tdr{background:var(--r)}.tdam{background:var(--am)}
+.rt-best td{background:#f0fdf4}.rt-best td:first-child{border-left:3px solid var(--g)}
+.rank-b{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:800;font-family:'Urbanist',sans-serif}
+.rank-1{background:var(--gs);color:var(--g)}.rank-2{background:var(--bls);color:var(--bl)}.rank-3{background:var(--ams);color:var(--am)}
+.rate-val{font-family:'Urbanist',sans-serif;font-size:15px;font-weight:900;color:var(--k)}
+.flow-chain{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:10px 0 14px}
+.fc-step{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:6px;font-size:11.5px;font-weight:700;border:1.5px solid var(--br);background:var(--bg);cursor:default;white-space:nowrap}
+.fc-step.done{background:var(--gs);border-color:#bbf7d0;color:var(--g)}
+.fc-step.active{background:var(--rs);border-color:#f8c5c2;color:var(--r)}
+.fc-step.pending{background:var(--bs);border-color:var(--br);color:var(--k4)}
+.fc-step.clickable{cursor:pointer}.fc-step.clickable:hover{border-color:var(--bl);color:var(--bl);background:var(--bls)}
+.fc-arr{color:var(--k5);font-size:14px;margin:0 2px}
+.wf-steps{display:flex;align-items:flex-start;gap:0;margin:14px 0}
+.wf-step{flex:1;text-align:center;position:relative}
+.wf-step::before{content:'';position:absolute;top:15px;left:50%;right:-50%;height:2px;background:var(--br);z-index:0}
+.wf-step:last-child::before{display:none}
+.wf-dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--br);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:12px;margin:0 auto 6px;position:relative;z-index:1;transition:.2s}
+.wf-dot.done{background:var(--g);border-color:var(--g);color:#fff}
+.wf-dot.active{background:var(--r);border-color:var(--r);color:#fff;box-shadow:0 0 0 4px var(--rs)}
+.wf-dot.pending{background:var(--bs);border-color:var(--br2);color:var(--k4)}
+.wf-label{font-size:10.5px;font-weight:700;color:var(--k4);font-family:'Urbanist',sans-serif}
+.wf-label.done{color:var(--g)}.wf-label.active{color:var(--r)}
+.tc{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.ts{background:var(--k);color:#fff;padding:9px 14px;border-radius:6px;font-size:12.5px;font-weight:600;box-shadow:var(--shl);opacity:0;transform:translateY(6px);transition:.22s;max-width:300px}
+.ts.sh{opacity:1;transform:translateY(0)}.ts.ok{background:var(--g)}.ts.er2{background:var(--r)}.ts.wn{background:var(--am)}
+.dr{display:flex;gap:8px;margin-bottom:5px}.dk{font-size:11px;color:var(--k4);font-weight:600;min-width:130px;flex-shrink:0}
+.dv2{font-size:12px;color:var(--k);font-weight:500;flex:1}
+.ds{margin-bottom:14px}.ds h3{font-size:9px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--br)}
+.amt-cell{background:#fefce8;font-family:'Urbanist',sans-serif;font-weight:700;font-size:13px;color:#854d0e}
+.draft-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:#fef9c3;color:#854d0e;border:1px solid #fde68a;border-radius:99px;font-size:10px;font-weight:700}
+@media print{.tb,.sb{display:none!important}.lay{display:block}.mn{padding:0}}
+@media(max-width:800px){.sb{display:none}.mn{padding:0 12px 80px}.fg,.fg3{grid-template-columns:1fr}.ff,.sdv,.slb{grid-column:1}}
+</style>
+</head>
+<body>
+<div class="tb">
+  <div style="display:flex;align-items:center;gap:9px">
+    <div class="tb-logo">SPL</div>
+    <div><div class="tb-name">Transport <em>Module</em></div><div class="tb-sub">Strandply LLP · Wankaner</div></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:7px">
+    <div class="uchip"><div><div class="un" id="cuName">Jimit Mehta</div><div class="ur" id="cuRole">Dispatch Exec</div></div></div>
+    <select id="roleSwitch" onchange="switchRole(this.value)" style="padding:4px 9px;border:1px solid var(--br);border-radius:5px;font-size:11px;font-weight:600;background:var(--bg);color:var(--k);cursor:pointer">
+      <option value="dispatch">Dispatch Executive</option>
+      <option value="accounts">Accounts</option>
+    </select>
+    <button class="hbtn" onclick="showSec('dashboard')" style="color:var(--bl)">Home</button>
+    <button class="hbtn">Vendor Portal</button>
+  </div>
+</div>
+<div class="lay">
+  <nav class="sb">
+    <div class="nl">Main Flow</div>
+    <button class="nb on" id="nb-dashboard" onclick="showSec('dashboard')"><span class="ni">📊</span>Dashboard</button>
+    <button class="nb" id="nb-inquiries" onclick="showSec('inquiries')"><span class="ni">📋</span>Inquiries <span class="nbd" id="nbInqC" style="display:none">0</span></button>
+    <button class="nb" id="nb-ratecmp" onclick="showSec('ratecmp')"><span class="ni">💰</span>Rate Comparisons <span class="nbd" id="nbRcC" style="display:none">0</span></button>
+    <button class="nb" id="nb-approval" onclick="showSec('approval')"><span class="ni">✅</span>Approvals <span class="nbd" id="nbApC" style="display:none">0</span></button>
+    <button class="nb" id="nb-orders" onclick="showSec('orders')"><span class="ni">📦</span>Order Forms <span class="nbd" id="nbOrC" style="display:none">0</span></button>
+    <hr class="ndv">
+    <div class="nl">Masters</div>
+    <button class="nb" id="nb-transporters" onclick="showSec('transporters')"><span class="ni">🏢</span>Transporters</button>
+    <button class="nb" id="nb-vehicles" onclick="showSec('vehicles')"><span class="ni">🚛</span>Vehicle Types</button>
+    <hr class="ndv">
+    <div class="nl">Operations</div>
+    <button class="nb" id="nb-trips" onclick="showSec('trips')"><span class="ni">🗺️</span>Trip Tracking</button>
+    <button class="nb" id="nb-reports" onclick="showSec('reports')"><span class="ni">📈</span>Reports</button>
+    <button class="nb" id="nb-import" onclick="showSec('import')"><span class="ni">📥</span>Import / Export</button>
+    <div class="sbf">Transport ERP v3.0<br>Strandply LLP</div>
+  </nav>
+  <div class="mn" id="main"></div>
+</div>
+<div id="overlays"></div>
+<div class="tc" id="tc"></div>
+
+<script>
+// ═══ DATA ═══════════════════════════════════════════════════════════════
+var CITIES=[
+  {city:'Wankaner',state:'Gujarat',pincodes:['363621','363622']},
+  {city:'Morbi',state:'Gujarat',pincodes:['363641','363650']},
+  {city:'Rajkot',state:'Gujarat',pincodes:['360001','360002','360003']},
+  {city:'Ahmedabad',state:'Gujarat',pincodes:['380001','380006','380015']},
+  {city:'Surat',state:'Gujarat',pincodes:['395001','395002','395003']},
+  {city:'Vadodara',state:'Gujarat',pincodes:['390001','390002']},
+  {city:'Jamnagar',state:'Gujarat',pincodes:['361001','361002']},
+  {city:'Bhavnagar',state:'Gujarat',pincodes:['364001']},
+  {city:'Mumbai',state:'Maharashtra',pincodes:['400001','400093']},
+  {city:'Pune',state:'Maharashtra',pincodes:['411001','411057']},
+  {city:'Nagpur',state:'Maharashtra',pincodes:['440001','440002']},
+  {city:'Nashik',state:'Maharashtra',pincodes:['422001']},
+  {city:'New Delhi',state:'Delhi',pincodes:['110001','110002','110003']},
+  {city:'Gurugram',state:'Haryana',pincodes:['122001']},
+  {city:'Bengaluru',state:'Karnataka',pincodes:['560001','560010']},
+  {city:'Chennai',state:'Tamil Nadu',pincodes:['600001','600002']},
+  {city:'Hyderabad',state:'Telangana',pincodes:['500001']},
+  {city:'Jaipur',state:'Rajasthan',pincodes:['302001']},
+  {city:'Indore',state:'Madhya Pradesh',pincodes:['452001']},
+  {city:'Lucknow',state:'Uttar Pradesh',pincodes:['226001']},
+  {city:'Kolkata',state:'West Bengal',pincodes:['700001']},
+  {city:'Chandigarh',state:'Chandigarh',pincodes:['160001']},
+  {city:'Kochi',state:'Kerala',pincodes:['682001']},
+  {city:'Patna',state:'Bihar',pincodes:['800001']},
+  {city:'Ankleshwar',state:'Gujarat',pincodes:['393001']},
+  {city:'Gandhinagar',state:'Gujarat',pincodes:['382001']},
+  {city:'Junagadh',state:'Gujarat',pincodes:['362001']},
+  {city:'Anand',state:'Gujarat',pincodes:['388001']},
+  {city:'Coimbatore',state:'Tamil Nadu',pincodes:['641001']},
+  {city:'Noida',state:'Uttar Pradesh',pincodes:['201301']},
+  {city:'Ludhiana',state:'Punjab',pincodes:['141001']}
+];
+
+var VEHICLES=[
+  {id:'v1',name:'LCV (1-2T)',desc:'Light Commercial Vehicle',capacity:'2 Ton',active:true},
+  {id:'v2',name:'20FT (5T)',desc:'20 Foot Container Truck',capacity:'5 Ton',active:true},
+  {id:'v3',name:'32FT (10T)',desc:'32 Foot Truck',capacity:'10 Ton',active:true},
+  {id:'v4',name:'Container (22T)',desc:'ISO Container',capacity:'22 Ton',active:true},
+  {id:'v5',name:'Trailer (25T)',desc:'Full Trailer',capacity:'25 Ton',active:true},
+  {id:'v6',name:'Open Body',desc:'Open Flatbed Truck',capacity:'Variable',active:true}
+];
+
+var TRANSPORTERS=[
+  {_id:'t1',name:'Gujarat Cargo Services',code:'TRP-26-001',contact:'Mahesh Patel',phone:'9123456780',phone2:'',email:'mahesh@gjcargo.com',address:'Plot 14, Near GIDC, Naroda Road',city:'Ahmedabad',state:'Gujarat',pincode:'380006',gst:'24AABCG1234F1Z5',pan:'AABCG1234F',tds:'Yes',credit:'Against Delivery',ifsc:'SBIN0001234',bankName:'SBI',bankBranch:'Naroda',accName:'Gujarat Cargo Services',accNo:'001234567890',visitingCard:'',vehicles:['LCV (1-2T)','32FT (10T)','Container (22T)'],op_cities:[{city:'Ahmedabad',state:'Gujarat',pincode:'380001'},{city:'Rajkot',state:'Gujarat',pincode:'360001'},{city:'Mumbai',state:'Maharashtra',pincode:'400001'}],rating:4,status:'active'},
+  {_id:'t2',name:'FastLine Logistics Pvt Ltd',code:'TRP-26-002',contact:'Sunil Patel',phone:'9988001122',phone2:'',email:'sunil@fastline.in',address:'12, Kathwada GIDC',city:'Surat',state:'Gujarat',pincode:'395003',gst:'24AABCF5678G2H6',pan:'AABCF5678G',tds:'No',credit:'7 Days',ifsc:'HDFC0001234',bankName:'HDFC Bank',bankBranch:'Surat Main',accName:'FastLine Logistics Pvt Ltd',accNo:'002345678901',visitingCard:'',vehicles:['20FT (5T)','32FT (10T)'],op_cities:[{city:'Surat',state:'Gujarat',pincode:'395001'},{city:'Mumbai',state:'Maharashtra',pincode:'400001'},{city:'Pune',state:'Maharashtra',pincode:'411001'}],rating:5,status:'active'},
+  {_id:'t3',name:'Nilgiri Transport Co.',code:'TRP-26-003',contact:'Rajesh Nair',phone:'9876543210',phone2:'',email:'rajesh@nilgiri.com',address:'18, Transport Nagar',city:'Nagpur',state:'Maharashtra',pincode:'440002',gst:'27AABCN9012H3J7',pan:'AABCN9012H',tds:'Yes',credit:'15 Days',ifsc:'ICIC0001234',bankName:'ICICI Bank',bankBranch:'Nagpur',accName:'Nilgiri Transport Co.',accNo:'003456789012',visitingCard:'',vehicles:['Trailer (25T)','Container (22T)'],op_cities:[{city:'Nagpur',state:'Maharashtra',pincode:'440001'},{city:'New Delhi',state:'Delhi',pincode:'110001'}],rating:3,status:'active'},
+  {_id:'t4',name:'Rapid Movers India',code:'TRP-26-004',contact:'Kiran Shah',phone:'9012345678',phone2:'9012345679',email:'kiran@rapidmovers.in',address:'Opp Bus Stand, NH8',city:'Vadodara',state:'Gujarat',pincode:'390002',gst:'24AABCR4321H1Z8',pan:'AABCR4321H',tds:'No',credit:'15 Days',ifsc:'UTIB0001234',bankName:'Axis Bank',bankBranch:'Vadodara',accName:'Rapid Movers India',accNo:'004567890123',visitingCard:'',vehicles:['20FT (5T)','32FT (10T)','Open Body'],op_cities:[{city:'Vadodara',state:'Gujarat',pincode:'390001'},{city:'Mumbai',state:'Maharashtra',pincode:'400001'},{city:'Rajkot',state:'Gujarat',pincode:'360001'}],rating:4,status:'active'}
+];
+
+var MARKET_RATES=[
+  {from:'Rajkot',to:'Mumbai',vehicle:'32FT (10T)',rates:[{tid:'t1',rate:28000,transit:'2 Days'},{tid:'t2',rate:27200,transit:'3 Days'},{tid:'t4',rate:28500,transit:'2 Days'}]},
+  {from:'Wankaner',to:'Ahmedabad',vehicle:'LCV (1-2T)',rates:[{tid:'t1',rate:3800,transit:'Same Day'},{tid:'t4',rate:3600,transit:'Same Day'}]},
+  {from:'Wankaner',to:'Mumbai',vehicle:'32FT (10T)',rates:[{tid:'t2',rate:29500,transit:'2 Days'},{tid:'t4',rate:30000,transit:'2 Days'}]},
+  {from:'Rajkot',to:'New Delhi',vehicle:'Container (22T)',rates:[{tid:'t3',rate:52000,transit:'4 Days'},{tid:'t1',rate:54000,transit:'3 Days'}]},
+  {from:'Ahmedabad',to:'Mumbai',vehicle:'20FT (5T)',rates:[{tid:'t1',rate:14000,transit:'1 Day'},{tid:'t2',rate:13500,transit:'2 Days'}]},
+  {from:'Surat',to:'Mumbai',vehicle:'32FT (10T)',rates:[{tid:'t2',rate:18000,transit:'1 Day'},{tid:'t4',rate:18500,transit:'1 Day'}]}
+];
+
+var INQUIRIES=[], RATE_CMPS=[], APPROVALS=[], ORDERS=[];
+var RC_DRAFTS={};  // rcId -> draft data (saved but not submitted)
+var _seqInq=1,_seqRc=1,_seqAp=1,_seqOr=1;
+var _curRole='dispatch';
+var _roleMap={dispatch:'Jimit Mehta',logistics:'Ramesh Shah',accounts:'Priya Agarwal'};
+var _roleLabel={dispatch:'Dispatch Executive',logistics:'Logistics Manager',accounts:'Accounts'};
+
+// ═══ UTILS ═══════════════════════════════════════════════════════════════
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toast(msg,type){var tc=document.getElementById('tc');var el=document.createElement('div');el.className='ts'+(type?' '+type:'');el.textContent=msg;tc.appendChild(el);setTimeout(function(){el.classList.add('sh');},10);setTimeout(function(){el.classList.remove('sh');setTimeout(function(){el.remove();},300);},2800);}
+function stars(n){var s='';for(var i=1;i<=5;i++)s+='<span class="star'+(i<=n?' on':'')+'">&#9733;</span>';return s;}
+function fmtDate(d){if(!d)return'---';return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtN(n){return Number(n||0).toLocaleString('en-IN');}
+function vNames(){return VEHICLES.filter(function(v){return v.active;}).map(function(v){return v.name;});}
+function getTp(id){return TRANSPORTERS.find(function(t){return t._id===id;})||{};}
+function yr(){return new Date().getFullYear().toString().slice(2);}
+
+function switchRole(r){
+  _curRole=r;
+  document.getElementById('cuName').textContent=_roleMap[r];
+  document.getElementById('cuRole').textContent=_roleLabel[r];
+  updateBadges();toast('Switched to '+_roleLabel[r],'ok');
+}
+
+function updateBadges(){
+  var sb=function(id,n){var el=document.getElementById(id);if(el){el.textContent=n;el.style.display=n>0?'inline':'none';}};
+  sb('nbInqC',INQUIRIES.filter(function(x){return x.status==='open';}).length);
+  sb('nbRcC',RATE_CMPS.filter(function(x){return x.status==='pending_approval';}).length);
+  sb('nbApC',APPROVALS.filter(function(x){return x.status==='pending'&&x.nextApprover===_curRole;}).length);
+  sb('nbOrC',ORDERS.length);
+}
+
+function showSec(sec){
+  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on');});
+  var nb=document.getElementById('nb-'+sec);if(nb)nb.classList.add('on');
+  var fn={dashboard:renderDashboard,inquiries:renderInquiries,ratecmp:renderRateCmp,approval:renderApproval,orders:renderOrders,transporters:renderTransporters,vehicles:renderVehicles,trips:renderTrips,reports:renderReports,import:renderImport};
+  if(fn[sec])fn[sec]();
+}
+
+// ═══ CITY AC ═════════════════════════════════════════════════════════════
+function createCityAC(inp,drop,onSelect){
+  function srch(q){if(!q)return[];var lq=q.toLowerCase();return CITIES.filter(function(c){return c.city.toLowerCase().indexOf(lq)>=0||c.state.toLowerCase().indexOf(lq)>=0||c.pincodes.some(function(p){return p.indexOf(q)>=0;});}).slice(0,8);}
+  inp.addEventListener('input',function(){
+    var res=srch(this.value.trim());drop.innerHTML='';
+    if(!res.length){drop.classList.remove('open');return;}
+    res.forEach(function(c){
+      var item=document.createElement('div');item.className='ac-item';
+      item.innerHTML='<span class="ac-city">'+esc(c.city)+', '+esc(c.state)+'</span><span class="ac-meta">'+c.pincodes[0]+'</span>';
+      item.addEventListener('mousedown',function(e){e.preventDefault();inp.value=c.city;drop.classList.remove('open');drop.innerHTML='';onSelect(c);});
+      drop.appendChild(item);
+    });drop.classList.add('open');
+  });
+  inp.addEventListener('blur',function(){setTimeout(function(){drop.classList.remove('open');},200);});
+}
+
+function renderPinSel(container,pins,onPick){
+  container.innerHTML='';if(!pins||!pins.length)return;
+  var lbl=document.createElement('div');lbl.style.cssText='font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px';lbl.textContent='Select Pincode';container.appendChild(lbl);
+  var row=document.createElement('div');row.className='pin-row';
+  pins.forEach(function(p,i){
+    var tag=document.createElement('div');tag.className='pin-tag'+(i===0?' sel':'');tag.textContent='📮 '+p;
+    tag.addEventListener('mousedown',function(e){e.preventDefault();row.querySelectorAll('.pin-tag').forEach(function(t){t.classList.remove('sel');});tag.classList.add('sel');onPick(p);});
+    row.appendChild(tag);
+  });container.appendChild(row);if(pins.length)onPick(pins[0]);
+}
+
+// ═══ FLOW CHAIN ═══════════════════════════════════════════════════════════
+function flowChain(active,inqId,rcId,apId,orId){
+  var steps=[{key:'inq',label:'📋 Inquiry',id:inqId,sec:'inquiries'},{key:'rc',label:'💰 Rate Comparison',id:rcId,sec:'ratecmp'},{key:'ap',label:'✅ Approval',id:apId,sec:'approval'},{key:'or',label:'📦 Order Form',id:orId,sec:'orders'}];
+  var order=['inq','rc','ap','or'];var ai=order.indexOf(active);
+  var html='<div class="flow-chain">';
+  steps.forEach(function(s,i){
+    var idx=order.indexOf(s.key);var cls=idx<ai?'done':idx===ai?'active':'pending';var clickable=s.id&&idx!==ai;
+    html+='<div class="fc-step '+cls+(clickable?' clickable':'')+'"'+(clickable?' onclick="showSec(\''+s.sec+'\')"':'')+' title="'+(s.id?s.id:'Not yet')+'">'+'<span>'+s.label+'</span>'+(s.id?'<span style="font-family:monospace;font-size:9.5px;opacity:.8;margin-left:2px">'+esc(s.id)+'</span>':'')+'</div>';
+    if(i<steps.length-1)html+='<span class="fc-arr">→</span>';
+  });
+  return html+'</div>';
+}
+
+function flowHint(msg){return '<div style="background:var(--bls);border:1px solid #bfdbfe;border-radius:7px;padding:9px 14px;font-size:12px;color:var(--bl);margin-bottom:12px">ℹ️ '+esc(msg)+'</div>';}
+
+// ═══ DASHBOARD ════════════════════════════════════════════════════════════
+function renderDashboard(){
+  var mn=document.getElementById('main');
+  var pendAp=APPROVALS.filter(function(a){return a.status==='pending';}).length;
+  var pendRc=Object.keys(RC_DRAFTS).length;
+  mn.innerHTML='<div class="ph"><div><h1>Transport <em>Dashboard</em></h1><p>Strandply LLP — Full Linked Flow</p></div>'
+    +'<button class="btn bp" onclick="openNewInquiry()">+ New Inquiry</button></div>'
+    +'<div class="card">'
+    +'<div style="font-family:Urbanist,sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--k4);margin-bottom:12px">End-to-End Freight Flow</div>'
+    +'<div style="display:flex;gap:0;flex-wrap:wrap">'
+    +'<div onclick="showSec(\'inquiries\')" style="flex:1;min-width:110px;padding:12px;border-radius:8px;background:var(--bls);border:1.5px solid var(--bl);cursor:pointer;margin:3px"><div style="font-size:20px;font-weight:900;color:var(--bl);font-family:Urbanist,sans-serif">1</div><div style="font-size:12px;font-weight:800;color:var(--k);margin-top:2px;font-family:Urbanist,sans-serif">New Inquiry</div><div style="font-size:9.5px;color:var(--bl);font-family:monospace">INQ-26-XXX</div></div>'
+    +'<div style="color:var(--k5);font-size:20px;margin:auto 2px">→</div>'
+    +'<div onclick="showSec(\'ratecmp\')" style="flex:1;min-width:110px;padding:12px;border-radius:8px;background:var(--ams);border:1.5px solid var(--am);cursor:pointer;margin:3px"><div style="font-size:20px;font-weight:900;color:var(--am);font-family:Urbanist,sans-serif">2</div><div style="font-size:12px;font-weight:800;color:var(--k);margin-top:2px;font-family:Urbanist,sans-serif">Rate Comparison</div><div style="font-size:9.5px;color:var(--am);font-family:monospace">RC-26-XXX</div></div>'
+    +'<div style="color:var(--k5);font-size:20px;margin:auto 2px">→</div>'
+    +'<div onclick="showSec(\'approval\')" style="flex:1;min-width:110px;padding:12px;border-radius:8px;background:var(--rs);border:1.5px solid var(--r);cursor:pointer;margin:3px"><div style="font-size:20px;font-weight:900;color:var(--r);font-family:Urbanist,sans-serif">3</div><div style="font-size:12px;font-weight:800;color:var(--k);margin-top:2px;font-family:Urbanist,sans-serif">Freight Approval</div><div style="font-size:9.5px;color:var(--r);font-family:monospace">FRA-26-XXX</div></div>'
+    +'<div style="color:var(--k5);font-size:20px;margin:auto 2px">→</div>'
+    +'<div onclick="showSec(\'orders\')" style="flex:1;min-width:110px;padding:12px;border-radius:8px;background:var(--gs);border:1.5px solid var(--g);cursor:pointer;margin:3px"><div style="font-size:20px;font-weight:900;color:var(--g);font-family:Urbanist,sans-serif">4</div><div style="font-size:12px;font-weight:800;color:var(--k);margin-top:2px;font-family:Urbanist,sans-serif">Order Form</div><div style="font-size:9.5px;color:var(--g);font-family:monospace">SFO-26-XXX</div></div>'
+    +'</div></div>'
+    +'<div class="sr">'
+    +'<div class="sc sca" onclick="showSec(\'inquiries\')"><div class="sl">📋 Inquiries</div><div class="sv">'+INQUIRIES.length+'</div><div class="ss">Total ↗</div></div>'
+    +'<div class="sc scg" onclick="showSec(\'ratecmp\')"><div class="sl">💰 Rate Comparisons</div><div class="sv">'+RATE_CMPS.length+'</div><div class="ss">'+(pendRc>0?pendRc+' drafts ↗':'Generated ↗')+'</div></div>'
+    +'<div class="sc scr" onclick="showSec(\'approval\')"><div class="sl">✅ Approvals</div><div class="sv">'+pendAp+'</div><div class="ss">Pending ↗</div></div>'
+    +'<div class="sc scl" onclick="showSec(\'orders\')"><div class="sl">📦 Order Forms</div><div class="sv">'+ORDERS.length+'</div><div class="ss">Issued ↗</div></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +'<div class="card"><div class="sh2"><h3>📋 Recent Inquiries</h3><button class="btn bg2 bsm" onclick="showSec(\'inquiries\')">View All →</button></div>'
+    +(INQUIRIES.length?INQUIRIES.slice(-3).reverse().map(function(inq){return '<div style="padding:8px 0;border-bottom:1px solid var(--br)"><div style="display:flex;justify-content:space-between"><span class="id-tag">'+esc(inq.id)+'</span><span class="bd '+(inq.status==='open'?'bp2':'bl2')+'">'+esc(inq.status)+'</span></div><div style="font-weight:700;font-size:13px;margin-top:4px">'+esc(inq.from)+' → '+esc(inq.to)+'</div><div style="font-size:11px;color:var(--k4)">'+esc(inq.vehicle)+' · '+esc(inq.material)+'</div></div>';}).join('')
+    :'<div class="er" style="padding:20px"><div class="ei">📋</div><p style="font-size:12px">No inquiries yet.</p><button class="btn bp bsm" style="margin-top:8px" onclick="openNewInquiry()">+ Create First</button></div>')
+    +'</div>'
+    +'<div class="card"><div class="sh2"><h3>✅ Approvals</h3><button class="btn bg2 bsm" onclick="showSec(\'approval\')">View All →</button></div>'
+    +(APPROVALS.length?APPROVALS.slice(-3).reverse().map(function(a){var sc={pending:'bp2',approved:'bl2',rejected:'bb'};return '<div style="padding:8px 0;border-bottom:1px solid var(--br)"><div style="display:flex;justify-content:space-between"><span class="id-tag">'+esc(a.id)+'</span><span class="bd '+(sc[a.status]||'bi')+'">'+esc(a.status)+'</span></div><div style="font-weight:700;font-size:13px;margin-top:4px">'+esc(a.transporter)+'</div><div style="font-size:11px;color:var(--k4)">'+esc(a.from)+' → '+esc(a.to)+' · ₹'+fmtN(a.selectedRate)+'</div></div>';}).join('')
+    :'<div class="er" style="padding:20px"><div class="ei">✅</div><p style="font-size:12px">No approvals yet.</p></div>')
+    +'</div></div>';
+  updateBadges();
+}
+
+// ═══ INQUIRY ══════════════════════════════════════════════════════════════
+var _inqF={from:null,to:null};
+function renderInquiries(){
+  var mn=document.getElementById('main');
+  mn.innerHTML='<div class="ph"><div><h1>Transport <em>Inquiries</em></h1><p>Step 1 of 4</p></div><button class="btn bp" onclick="openNewInquiry()">+ New Inquiry</button></div>'
+    +flowHint('Each inquiry gets a unique ID (INQ-26-XXX). From here you generate a Rate Comparison.')
+    +(INQUIRIES.length?'<div class="tw"><table class="vt"><thead><tr><th>ID</th><th>Route</th><th>Vehicle · Material</th><th>Freight Paid By</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
+      +INQUIRIES.slice().reverse().map(function(inq){
+        var rc=RATE_CMPS.find(function(r){return r.inqId===inq.id;});
+        var draft=Object.keys(RC_DRAFTS).find(function(k){return RC_DRAFTS[k].inqId===inq.id;});
+        return '<tr><td><span class="id-tag">'+esc(inq.id)+'</span><div style="font-size:9.5px;color:var(--k4);margin-top:2px">'+fmtDate(inq.created_at)+'</div></td>'
+          +'<td><span class="addr-tag">'+esc(inq.from)+'</span> → <span class="addr-tag">'+esc(inq.to)+'</span><div style="font-size:10px;color:var(--k4)">📮 '+esc(inq.fromPin)+' → '+esc(inq.toPin)+'</div></td>'
+          +'<td><span class="veh-tag">'+esc(inq.vehicle)+'</span><div style="font-size:11.5px;margin-top:2px">'+esc(inq.material)+(inq.weight?' · '+inq.weight+' MT':'')+'</div></td>'
+          +'<td><span class="bd '+(inq.freightPaidBy==='Party'?'bp2':'ba')+'">'+esc(inq.freightPaidBy||'Strandply')+'</span></td>'
+          +'<td><span class="bd '+(inq.status==='open'?'bp2':inq.status==='rate_compared'?'ba':'bl2')+'">'+esc(inq.status.replace('_',' '))+'</span></td>'
+          +'<td><div class="ac">'
+          +(rc?'<button class="btn bxs" style="background:var(--bls);color:var(--bl);border-color:#bfdbfe" onclick="viewRcById(\''+rc.id+'\')">→ '+esc(rc.id)+'</button>'
+            :draft?'<button class="btn bam bxs" onclick="openRateCompare(\''+inq.id+'\')">📝 Resume Draft</button>'
+            :'<button class="btn bp bxs" onclick="openRateCompare(\''+inq.id+'\')">Rates →</button>')
+          +'<button class="btn bo bxs" onclick="viewInquiry(\''+inq.id+'\')">View</button>'
+          +'</div></td></tr>';
+      }).join('')+'</tbody></table></div>'
+      :'<div class="er"><div class="ei">📋</div><h3>No Inquiries Yet</h3><button class="btn bp" style="margin-top:12px" onclick="openNewInquiry()">+ Create First Inquiry</button></div>');
+}
+
+function openNewInquiry(){
+  _inqF={from:null,to:null};
+  var nid='INQ-26-'+(String(_seqInq).padStart(3,'0'));
+  var ov=document.createElement('div');ov.className='ov';ov.id='newInqMod';
+  ov.innerHTML='<div class="md mdw"><div class="mh"><div><h2>New Transport Inquiry</h2><div class="ms">Auto ID: <strong>'+nid+'</strong></div></div><button class="mcl" onclick="document.getElementById(\'newInqMod\').remove()">✕</button></div>'
+    +'<div class="mb" style="max-height:75vh;overflow-y:auto">'+flowChain('inq',nid,null,null,null)
+    +'<div class="fg">'
+    +'<div class="slb ff">Route Details</div>'
+    +'<div class="fd"><label>From City <span class="rq">*</span></label><div class="ac-wrap"><input id="iFromI" placeholder="Origin city..." autocomplete="off"><div class="ac-drop" id="iFromD"></div></div><div id="iFromP" style="margin-top:4px"></div></div>'
+    +'<div class="fd"><label>To City <span class="rq">*</span></label><div class="ac-wrap"><input id="iToI" placeholder="Destination city..." autocomplete="off"><div class="ac-drop" id="iToD"></div></div><div id="iToP" style="margin-top:4px"></div></div>'
+    +'<div class="sdv"></div><div class="slb ff">Shipment Details</div>'
+    +'<div class="fd"><label>Material <span class="rq">*</span></label><input id="iMat" placeholder="e.g. Tiles, Timber, Resin"></div>'
+    +'<div class="fd"><label>Weight (MT)</label><input id="iWt" type="number" placeholder="e.g. 12" min="0" step="0.1"></div>'
+    +'<div class="fd"><label>Vehicle Type <span class="rq">*</span></label><select id="iVeh"><option value="">— Select —</option>'+vNames().map(function(v){return '<option>'+esc(v)+'</option>';}).join('')+'</select></div>'
+    +'<div class="fd"><label>Pickup Date</label><input id="iDate" type="date"></div>'
+    +'<div class="fd"><label>Delivery Type</label><select id="iDtype"><option>Door Delivery</option><option>Godown Delivery</option></select></div>'
+    +'<div class="fd"><label>Freight Paid By</label><select id="iPaidBy"><option value="Strandply">Strandply LLP</option><option value="Party">Party (Consignee)</option></select></div>'
+    +'<div class="fd"><label>Freight Budget (₹)</label><input id="iBudget" type="number" placeholder="Max approved budget"></div>'
+    +'<div class="fd ff"><label>Remarks</label><textarea id="iRem" rows="2" placeholder="Special instructions..."></textarea></div>'
+    +'</div></div>'
+    +'<div class="mf"><button class="btn bo" onclick="document.getElementById(\'newInqMod\').remove()">Cancel</button>'
+    +'<button class="btn bwa bsm" onclick="saveInquiry(true)">💬 Save & WhatsApp</button>'
+    +'<button class="btn bp" onclick="saveInquiry(false)">Save Inquiry →</button></div>'
+    +'</div>';
+  document.getElementById('overlays').appendChild(ov);
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+  createCityAC(document.getElementById('iFromI'),document.getElementById('iFromD'),function(c){_inqF.from={city:c.city,state:c.state,pincode:c.pincodes[0]};renderPinSel(document.getElementById('iFromP'),c.pincodes,function(p){_inqF.from.pincode=p;});});
+  createCityAC(document.getElementById('iToI'),document.getElementById('iToD'),function(c){_inqF.to={city:c.city,state:c.state,pincode:c.pincodes[0]};renderPinSel(document.getElementById('iToP'),c.pincodes,function(p){_inqF.to.pincode=p;});});
+}
+
+function saveInquiry(andWA){
+  var gv=function(id){var el=document.getElementById(id);return el?(el.value||'').trim():'';};
+  if(!_inqF.from||!_inqF.to){toast('Select From and To cities','er2');return;}
+  if(!gv('iVeh')){toast('Select vehicle type','er2');return;}
+  if(!gv('iMat')){toast('Enter material','er2');return;}
+  var inq={id:'INQ-26-'+(String(_seqInq++).padStart(3,'0')),from:_inqF.from.city,fromState:_inqF.from.state,fromPin:_inqF.from.pincode,to:_inqF.to.city,toState:_inqF.to.state,toPin:_inqF.to.pincode,material:gv('iMat'),weight:gv('iWt'),vehicle:gv('iVeh'),pickupDate:gv('iDate'),dtype:gv('iDtype'),freightPaidBy:gv('iPaidBy')||'Strandply',budget:parseFloat(gv('iBudget'))||0,remarks:gv('iRem'),status:'open',rcId:null,createdBy:_roleMap[_curRole],created_at:new Date().toISOString()};
+  INQUIRIES.push(inq);
+  document.getElementById('newInqMod').remove();
+  updateBadges();
+  toast(inq.id+' saved'+(andWA?' & WhatsApp sent':'')+' ✓','ok');
+  setTimeout(function(){openRateCompare(inq.id);},400);
+}
+
+function viewInquiry(id){
+  var inq=INQUIRIES.find(function(x){return x.id===id;});if(!inq)return;
+  var rc=RATE_CMPS.find(function(r){return r.inqId===id;});
+  var ap=rc?APPROVALS.find(function(a){return a.rcId===rc.id;}):null;
+  var or=ap?ORDERS.find(function(o){return o.apId===ap.id;}):null;
+  var ov=document.createElement('div');ov.className='ov';ov.id='viewInqMod';
+  ov.innerHTML='<div class="md"><div class="mh"><div><h2>'+esc(inq.id)+'</h2><div class="ms">Created '+fmtDate(inq.created_at)+' by '+esc(inq.createdBy)+'</div></div><button class="mcl" onclick="document.getElementById(\'viewInqMod\').remove()">✕</button></div>'
+    +'<div class="mb">'+flowChain('inq',inq.id,rc?rc.id:null,ap?ap.id:null,or?or.id:null)
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 24px">'
+    +'<div class="ds"><h3>Route</h3><div class="dr"><span class="dk">From</span><span class="dv2"><span class="addr-tag">'+esc(inq.from)+', '+esc(inq.fromState)+'</span> <span class="pin-badge">'+esc(inq.fromPin)+'</span></span></div><div class="dr"><span class="dk">To</span><span class="dv2"><span class="addr-tag">'+esc(inq.to)+', '+esc(inq.toState)+'</span> <span class="pin-badge">'+esc(inq.toPin)+'</span></span></div></div>'
+    +'<div class="ds"><h3>Shipment</h3><div class="dr"><span class="dk">Material</span><span class="dv2">'+esc(inq.material)+'</span></div><div class="dr"><span class="dk">Weight</span><span class="dv2">'+esc(inq.weight?inq.weight+' MT':'—')+'</span></div><div class="dr"><span class="dk">Vehicle</span><span class="dv2"><span class="veh-tag">'+esc(inq.vehicle)+'</span></span></div><div class="dr"><span class="dk">Delivery Type</span><span class="dv2">'+esc(inq.dtype||'—')+'</span></div><div class="dr"><span class="dk">Freight Paid By</span><span class="dv2"><span class="bd '+(inq.freightPaidBy==='Party'?'bp2':'ba')+'">'+esc(inq.freightPaidBy||'Strandply')+'</span></span></div><div class="dr"><span class="dk">Budget</span><span class="dv2">'+(inq.budget?'₹'+fmtN(inq.budget):'—')+'</span></div></div>'
+    +'</div></div>'
+    +'<div class="mf">'+(rc?'<button class="btn bsm" style="background:var(--bls);color:var(--bl);border-color:#bfdbfe" onclick="document.getElementById(\'viewInqMod\').remove();viewRcById(\''+rc.id+'\')">→ View '+rc.id+'</button>':'<button class="btn bp" onclick="document.getElementById(\'viewInqMod\').remove();openRateCompare(\''+inq.id+'\')">Generate Rates →</button>')+'<button class="btn bo" onclick="document.getElementById(\'viewInqMod\').remove()">Close</button></div>'
+    +'</div>';
+  document.getElementById('overlays').appendChild(ov);
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+}
+
+// ═══ RATE COMPARISON ══════════════════════════════════════════════════════
+function renderRateCmp(){
+  var mn=document.getElementById('main');
+  var draftKeys=Object.keys(RC_DRAFTS);
+  mn.innerHTML='<div class="ph"><div><h1>Rate <em>Comparisons</em></h1><p>Step 2 of 4 — Enter rates, save as draft, then submit for approval</p></div></div>'
+    +flowHint('Enter transporter rates manually. Save as Draft to continue later. Submit to approval when complete.')
+    +(draftKeys.length?'<div class="card" style="border-left:3px solid var(--am)"><div class="sh2"><h3>📝 Draft Rate Comparisons ('+draftKeys.length+')</h3></div>'
+      +'<div style="display:flex;flex-direction:column;gap:8px">'
+      +draftKeys.map(function(k){var d=RC_DRAFTS[k];var inq=INQUIRIES.find(function(x){return x.id===d.inqId;})||{};return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--ams);border-radius:6px"><div><span class="draft-badge">DRAFT</span> <span class="id-tag" style="margin-left:6px">'+esc(k)+'</span><div style="font-size:12px;font-weight:700;margin-top:4px">'+esc(d.from||'')+' → '+esc(d.to||'')+' · '+esc(d.vehicle||'')+'</div><div style="font-size:11px;color:var(--k4)">'+d.quotes.filter(function(q){return q.rate>0;}).length+' rates entered</div></div><button class="btn bam bsm" onclick="openRateCompare(\''+esc(d.inqId)+'\',\''+esc(k)+'\')">Continue →</button></div>';}).join('')
+      +'</div></div>':'')
+    +(RATE_CMPS.length?'<div class="tw"><table class="vt"><thead><tr><th>RC ID</th><th>← Inquiry</th><th>Route</th><th>Rates</th><th>Lowest</th><th>Status</th><th>Actions</th></tr></thead><tbody>'
+      +RATE_CMPS.slice().reverse().map(function(rc){
+        var ap=APPROVALS.find(function(a){return a.rcId===rc.id;});
+        var lowest=Math.min.apply(null,rc.quotes.map(function(q){return q.rate;}));
+        return '<tr><td><span class="id-tag">'+esc(rc.id)+'</span><div style="font-size:9.5px;color:var(--k4);margin-top:2px">'+fmtDate(rc.created_at)+'</div></td>'
+          +'<td><span class="id-tag" style="cursor:pointer;background:var(--bls);color:var(--bl);border-color:#bfdbfe" onclick="viewInquiry(\''+esc(rc.inqId)+'\')">'+esc(rc.inqId)+'</span></td>'
+          +'<td><span class="addr-tag">'+esc(rc.from)+'</span> → <span class="addr-tag">'+esc(rc.to)+'</span><br><span class="veh-tag" style="margin-top:3px">'+esc(rc.vehicle)+'</span></td>'
+          +'<td style="font-size:12px">'+rc.quotes.length+' quotes</td>'
+          +'<td><span class="rate-val">₹'+fmtN(lowest)+'</span></td>'
+          +'<td><span class="bd '+(rc.status==='pending_approval'?'bp2':rc.status==='submitted_approval'?'ba':'bl2')+'">'+esc(rc.status.replace(/_/g,' '))+'</span></td>'
+          +'<td><div class="ac"><button class="btn bo bxs" onclick="viewRcById(\''+rc.id+'\')">View</button>'
+          +(ap?'<span class="id-tag" style="cursor:pointer;background:var(--gs);color:var(--g);border-color:#bbf7d0" onclick="showSec(\'approval\')">'+esc(ap.id)+'</span>'
+            :'<button class="btn bp bxs" onclick="submitRcForApproval(\''+rc.id+'\')">Submit →</button>')
+          +'</div></td></tr>';
+      }).join('')+'</tbody></table></div>'
+      :'<div class="er"><div class="ei">💰</div><h3>No Rate Comparisons Yet</h3><p>Create an Inquiry first, then generate a Rate Comparison.</p></div>');
+}
+
+function openRateCompare(inqId, existingDraftId){
+  var inq=INQUIRIES.find(function(x){return x.id===inqId;});if(!inq)return;
+  var mkt=MARKET_RATES.find(function(r){return r.from===inq.from&&r.to===inq.to&&r.vehicle===inq.vehicle;});
+  var prefilled=mkt?mkt.rates:[];
+  var rcId=existingDraftId||('RC-26-'+(String(_seqRc).padStart(3,'0')));
+  var draft=RC_DRAFTS[rcId];
+  // Use draft data if available, otherwise prefill from market
+  var numRows=Math.max(draft?draft.quotes.length:prefilled.length,3);
+  var rowsHtml='';
+  for(var i=0;i<numRows;i++){
+    var dq=draft&&draft.quotes[i]?draft.quotes[i]:{};
+    var pr=!draft&&prefilled[i]?prefilled[i]:{};
+    var tid=dq.tid||pr.tid||'';
+    var tp=tid?getTp(tid):{};
+    var rate=dq.rate||pr.rate||'';
+    var transit=dq.transit||pr.transit||'2 Days';
+    var mgw=dq.mgWeight||'';
+    rowsHtml+=buildRcRow(i,tp,rate,transit,mgw,rcId,inqId);
+  }
+  var ov=document.createElement('div');ov.className='ov';ov.id='rcMod';
+  ov.innerHTML='<div class="md mdxl"><div class="mh"><div><h2>Rate Comparison</h2><div class="ms">'+esc(rcId)+' ← '+esc(inqId)+' · '+esc(inq.from)+' → '+esc(inq.to)+' · '+esc(inq.vehicle)+(draft?'<span class="draft-badge" style="margin-left:8px">DRAFT</span>':'')+'</div></div><button class="mcl" onclick="document.getElementById(\'rcMod\').remove()">✕</button></div>'
+    +'<div class="mb" style="max-height:80vh;overflow-y:auto">'
+    +flowChain('rc',inqId,rcId,null,null)
+    +'<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">'
+    +'<div style="flex:2;min-width:200px;background:var(--bs);border:1px solid var(--br);border-radius:7px;padding:10px 14px"><div style="font-size:9px;font-weight:700;color:var(--k4);text-transform:uppercase">Route</div><div style="font-size:13px;font-weight:700;margin-top:4px">'+esc(inq.from)+' ('+esc(inq.fromPin)+') → '+esc(inq.to)+' ('+esc(inq.toPin)+')</div><div style="font-size:11px;color:var(--k4);margin-top:2px">'+esc(inq.material)+(inq.weight?' · '+inq.weight+' MT':'')+' · '+esc(inq.vehicle)+'</div></div>'
+    +(inq.budget?'<div style="flex:1;min-width:110px;background:var(--ams);border:1px solid var(--amd);border-radius:7px;padding:10px 14px"><div style="font-size:9px;font-weight:700;color:var(--k4);text-transform:uppercase">Budget</div><div style="font-family:Urbanist,sans-serif;font-size:18px;font-weight:900;color:var(--am);margin-top:2px">₹'+fmtN(inq.budget)+'</div></div>':'')
+    +'<div style="flex:1;min-width:110px;background:var(--bs);border:1px solid var(--br);border-radius:7px;padding:10px 14px"><div style="font-size:9px;font-weight:700;color:var(--k4);text-transform:uppercase">Delivery</div><div style="font-size:13px;font-weight:700;margin-top:4px">'+esc(inq.dtype||'—')+'</div><div style="font-size:11px;color:var(--k4)">Paid by: '+esc(inq.freightPaidBy||'Strandply')+'</div></div>'
+    +'</div>'
+    +'<div style="background:var(--bls);border:1px solid #bfdbfe;border-radius:7px;padding:9px 14px;margin-bottom:10px;font-size:12px;color:var(--bl)">📝 Select transporter, enter rate, set Min. Guarantee Weight. <strong>Save Draft</strong> to continue later. <strong>Select →</strong> to choose the final rate and send for approval.</div>'
+    +'<div id="rcSummaryBar" style="margin-bottom:10px"></div>'
+    +'<div class="tw" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:var(--bs);border-bottom:1px solid var(--br)">'
+    +'<th style="padding:8px;font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;text-align:left">#</th>'
+    +'<th style="padding:8px;font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;text-align:left;min-width:160px">Transporter</th>'
+    +'<th style="padding:8px;font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;text-align:left">Rate (₹)</th>'
+    +'<th style="padding:8px;font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;text-align:left">Transit</th>'
+    +'<th style="padding:8px;font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;text-align:left">Min. Guar. (MT)</th>'
+    +'<th style="padding:8px;font-size:9.5px;font-weight:700;background:#fefce8;color:#854d0e;text-transform:uppercase;text-align:left">Amt (Rate×MG)</th>'
+    +'<th style="padding:8px;font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;text-align:left">Phone</th>'
+    +'<th style="padding:8px;font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;text-align:left">Select</th>'
+    +'</tr></thead><tbody id="rcTbody">'+rowsHtml+'</tbody></table></div>'
+    +'<div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">'
+    +'<button class="btn bo bsm" onclick="addRcRow(\''+rcId+'\',\''+inqId+'\')">+ Add Row</button>'
+    +'<button class="btn bam bsm" onclick="saveRcDraft(\''+rcId+'\',\''+inqId+'\')">💾 Save Draft</button>'
+    +'<span style="font-size:11px;color:var(--k4)">Save draft to continue later. Select a row to submit for approval.</span>'
+    +'</div>'
+    +'</div></div>';
+  document.getElementById('overlays').appendChild(ov);
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+  refreshRcSummary();
+}
+
+function buildRcRow(i,tp,rate,transit,mgw,rcId,inqId){
+  var transitOpts=['Same Day','1 Day','2 Days','3 Days','4 Days','5 Days'].map(function(t){return '<option'+(t===transit?' selected':'')+'>'+t+'</option>';}).join('');
+  var tpOpts='<option value="">— Select —</option>'+TRANSPORTERS.map(function(t){return '<option value="'+esc(t._id)+'"'+(tp._id===t._id?' selected':'')+'>'+esc(t.name)+'</option>';}).join('');
+  return '<tr id="rcRow_'+i+'">'
+    +'<td style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--k4)">'+(i+1)+'</td>'
+    +'<td style="padding:4px 6px"><select id="rcTp_'+i+'" style="width:100%;padding:5px 8px;border:1.5px solid var(--br);border-radius:5px;font-size:12px;min-width:160px" onchange="onRcTpChange('+i+')">'+tpOpts+'</select></td>'
+    +'<td style="padding:4px 6px"><input id="rcRate_'+i+'" type="number" value="'+(rate||'')+'" placeholder="₹" style="width:110px;padding:5px 8px;border:1.5px solid var(--br);border-radius:5px;font-size:13px;font-weight:700" oninput="refreshRcSummary()"></td>'
+    +'<td style="padding:4px 6px"><select id="rcTransit_'+i+'" style="padding:5px 8px;border:1.5px solid var(--br);border-radius:5px;font-size:12px">'+transitOpts+'</select></td>'
+    +'<td style="padding:4px 6px"><input id="rcMgW_'+i+'" type="number" value="'+(mgw||'')+'" placeholder="MT" style="width:75px;padding:5px 8px;border:1.5px solid var(--br);border-radius:5px;font-size:12px" oninput="refreshRcSummary()"></td>'
+    +'<td style="padding:4px 6px;background:#fefce8" id="rcAmt_'+i+'"><span style="font-weight:700;font-size:13px;color:#854d0e">—</span></td>'
+    +'<td style="padding:4px 6px;font-size:11px" id="rcPhone_'+i+'">'+(tp.phone?'<a class="call-btn" href="tel:'+tp.phone+'">📞 '+tp.phone+'</a>':'—')+'</td>'
+    +'<td style="padding:4px 6px"><button class="btn bp bxs" onclick="selectRcRow('+i+',\''+rcId+'\',\''+inqId+'\')">Select →</button></td>'
+    +'</tr>';
+}
+
+window.onRcTpChange=function(i){
+  var sel=document.getElementById('rcTp_'+i);if(!sel)return;
+  var tp=getTp(sel.value);
+  var ph=document.getElementById('rcPhone_'+i);
+  if(ph)ph.innerHTML=tp.phone?'<a class="call-btn" href="tel:'+tp.phone+'">📞 '+tp.phone+'</a>':'—';
+  refreshRcSummary();
+};
+
+window.addRcRow=function(rcId,inqId){
+  var tbody=document.getElementById('rcTbody');if(!tbody)return;
+  var i=tbody.rows.length;
+  var tr=document.createElement('tr');tr.id='rcRow_'+i;
+  tr.innerHTML=buildRcRow(i,{},0,'2 Days',0,rcId,inqId).replace(/^<tr[^>]*>/,'').replace(/<\/tr>$/,'');
+  tbody.appendChild(tr);
+};
+
+window.refreshRcSummary=function(){
+  var bar=document.getElementById('rcSummaryBar');if(!bar)return;
+  var tbody=document.getElementById('rcTbody');if(!tbody)return;
+  var rows=[];
+  for(var i=0;i<tbody.rows.length;i++){
+    var rEl=document.getElementById('rcRate_'+i);
+    var mgEl=document.getElementById('rcMgW_'+i);
+    var amtEl=document.getElementById('rcAmt_'+i);
+    var tpEl=document.getElementById('rcTp_'+i);
+    var rate=rEl&&rEl.value?parseFloat(rEl.value):0;
+    var mgw=mgEl&&mgEl.value?parseFloat(mgEl.value):0;
+    var amt=rate&&mgw?rate*mgw:0;
+    if(amtEl){
+      if(amt>0){amtEl.innerHTML='<span style="font-weight:700;font-size:13px;color:#854d0e">₹'+fmtN(amt)+'</span><div style="font-size:9.5px;color:var(--k4);margin-top:1px">'+fmtN(rate)+'×'+mgw+'</div>';}
+      else{amtEl.innerHTML='<span style="font-weight:700;font-size:13px;color:#854d0e">—</span>';}
+    }
+    if(tpEl&&tpEl.value&&rate>0){var tp=getTp(tpEl.value);rows.push({name:tp.name||tpEl.options[tpEl.selectedIndex].text,rate:rate,amt:amt});}
+  }
+  if(!rows.length){bar.innerHTML='';return;}
+  rows.sort(function(a,b){return a.rate-b.rate;});
+  var low=rows[0];
+  bar.innerHTML='<div style="display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;background:var(--gs);border:1px solid #bbf7d0;border-radius:7px;align-items:center">'
+    +'<span style="font-size:11px;font-weight:700;color:var(--g)">🟢 Lowest: '+esc(low.name)+' @ ₹'+fmtN(low.rate)+'</span>'
+    +(low.amt?'<span style="font-size:11px;color:#854d0e;font-weight:700;background:#fefce8;padding:2px 8px;border-radius:4px">Amt: ₹'+fmtN(low.amt)+'</span>':'')
+    +(rows.length>1?'<span style="font-size:11px;color:var(--k4)">'+rows.length+' quotes</span>':'')
+    +'</div>';
+};
+
+// SAVE DRAFT — key new feature
+window.saveRcDraft=function(rcId,inqId){
+  var tbody=document.getElementById('rcTbody');if(!tbody){toast('Rate table not found','er2');return;}
+  var inq=INQUIRIES.find(function(x){return x.id===inqId;})||{};
+  var quotes=[];
+  for(var i=0;i<tbody.rows.length;i++){
+    var tpEl=document.getElementById('rcTp_'+i);
+    var rEl=document.getElementById('rcRate_'+i);
+    var trEl=document.getElementById('rcTransit_'+i);
+    var mgEl=document.getElementById('rcMgW_'+i);
+    if(tpEl&&tpEl.value){
+      var tp=getTp(tpEl.value);
+      quotes.push({tid:tpEl.value,transporter:tp.name||'',rate:rEl?parseFloat(rEl.value)||0:0,transit:trEl?trEl.value:'2 Days',mgWeight:mgEl?parseFloat(mgEl.value)||0:0,rating:tp.rating||3,phone:tp.phone||''});
+    }
+  }
+  RC_DRAFTS[rcId]={rcId:rcId,inqId:inqId,from:inq.from,to:inq.to,vehicle:inq.vehicle,quotes:quotes,savedAt:new Date().toISOString()};
+  // Update seq if this is a new draft
+  if(rcId==='RC-26-'+(String(_seqRc).padStart(3,'0')))_seqRc++;
+  document.getElementById('rcMod').remove();
+  updateBadges();
+  toast(rcId+' draft saved ✓ — '+quotes.filter(function(q){return q.rate>0;}).length+' rates entered','ok');
+  showSec('ratecmp');
+};
+
+window.selectRcRow=function(i,rcId,inqId){
+  var tpEl=document.getElementById('rcTp_'+i);
+  var rEl=document.getElementById('rcRate_'+i);
+  var trEl=document.getElementById('rcTransit_'+i);
+  var mgEl=document.getElementById('rcMgW_'+i);
+  if(!tpEl||!tpEl.value){toast('Select a transporter for row '+(i+1),'er2');return;}
+  if(!rEl||!rEl.value||parseFloat(rEl.value)<=0){toast('Enter a valid rate for row '+(i+1),'er2');return;}
+  var tp=getTp(tpEl.value);
+  var rate=parseFloat(rEl.value);
+  var transit=trEl?trEl.value:'2 Days';
+  var mgw=mgEl?parseFloat(mgEl.value)||0:0;
+  // Collect all rows
+  var tbody=document.getElementById('rcTbody');
+  var allQuotes=[];
+  for(var j=0;j<tbody.rows.length;j++){
+    var te=document.getElementById('rcTp_'+j);var re=document.getElementById('rcRate_'+j);var tre=document.getElementById('rcTransit_'+j);var me=document.getElementById('rcMgW_'+j);
+    if(te&&te.value&&re&&re.value&&parseFloat(re.value)>0){
+      var ttp=getTp(te.value);
+      allQuotes.push({tid:te.value,transporter:ttp.name||te.options[te.selectedIndex].text,rate:parseFloat(re.value),transit:tre?tre.value:'—',mgWeight:me?parseFloat(me.value)||0:0,rating:ttp.rating||3,phone:ttp.phone||''});
+    }
+  }
+  allQuotes.sort(function(a,b){return a.rate-b.rate;});
+  var lowest=allQuotes.length?allQuotes[0].rate:rate;
+  var isLowest=rate===lowest;
+  var inq=INQUIRIES.find(function(x){return x.id===inqId;})||{};
+  var excBudget=inq.budget>0&&rate>inq.budget;
+  if(!RATE_CMPS.find(function(r){return r.id===rcId;})){
+    RATE_CMPS.push({id:rcId,inqId:inqId,from:inq.from,fromPin:inq.fromPin,to:inq.to,toPin:inq.toPin,vehicle:inq.vehicle,material:inq.material,weight:inq.weight,budget:inq.budget||0,quotes:allQuotes,selectedTid:tpEl.value,selectedTransporter:tp.name,selectedRate:rate,selectedTransit:transit,selectedMgWeight:mgw,isLowest:isLowest,exceedsBudget:excBudget,status:'pending_approval',created_at:new Date().toISOString()});
+    _seqRc++;
+    inq.status='rate_compared';inq.rcId=rcId;
+    delete RC_DRAFTS[rcId];
+  }
+  document.getElementById('rcMod').remove();
+  updateBadges();
+  toast(rcId+' saved — submitting for approval','ok');
+  setTimeout(function(){openApprovalSubmit(rcId);},400);
+};
+
+function submitRcForApproval(rcId){openApprovalSubmit(rcId);}
+
+function viewRcById(rcId){
+  var rc=RATE_CMPS.find(function(x){return x.id===rcId;});if(!rc)return;
+  var ap=APPROVALS.find(function(a){return a.rcId===rcId;});
+  var or=ap?ORDERS.find(function(o){return o.apId===ap.id;}):null;
+  var ov=document.createElement('div');ov.className='ov';ov.id='viewRcMod';
+  var lowest=rc.quotes[0].rate;
+  ov.innerHTML='<div class="md mdxl"><div class="mh"><div><h2>'+esc(rc.id)+'</h2><div class="ms">Rate Comparison · Linked to '+esc(rc.inqId)+'</div></div><button class="mcl" onclick="document.getElementById(\'viewRcMod\').remove()">✕</button></div>'
+    +'<div class="mb">'+flowChain('rc',rc.inqId,rc.id,ap?ap.id:null,or?or.id:null)
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'
+    +'<div style="padding:8px 12px;border-radius:6px;background:var(--bs);border:1px solid var(--br)"><div style="font-size:9px;color:var(--k4);font-weight:700;text-transform:uppercase">Route</div><div style="font-weight:700;font-size:13px;margin-top:2px">'+esc(rc.from)+' → '+esc(rc.to)+'</div></div>'
+    +'<div style="padding:8px 12px;border-radius:6px;background:'+(rc.isLowest?'var(--gs)':'var(--ams)')+';border:1px solid '+(rc.isLowest?'#bbf7d0':'var(--amd)')+'">'
+    +'<div style="font-size:9px;color:var(--k4);font-weight:700;text-transform:uppercase">Selected</div>'
+    +'<div style="font-weight:700;font-size:13px;margin-top:2px;color:'+(rc.isLowest?'var(--g)':'var(--am)')+'">'+esc(rc.selectedTransporter)+' · ₹'+fmtN(rc.selectedRate)+(rc.isLowest?' ✓ Lowest':' ⚠ Not Lowest')+'</div></div>'
+    +'</div>'
+    +'<div class="tw"><table class="vt"><thead><tr><th>#</th><th>Transporter</th><th>Rate</th><th>Transit</th><th>Min. Guar.</th><th>Rating</th><th>Selected</th></tr></thead><tbody>'
+    +rc.quotes.map(function(q,i){var isSel=q.tid===rc.selectedTid;var isLow=q.rate===lowest;return '<tr class="'+(isLow?'rt-best':'')+'"><td><span class="rank-b rank-'+(i+1)+'">'+(i+1)+'</span></td><td><div style="font-weight:700">'+esc(q.transporter)+'</div>'+(isLow?'<span class="bd bl2">✓ Lowest</span>':'')+'</td><td><span class="rate-val">₹'+fmtN(q.rate)+'</span></td><td style="font-size:12px;color:var(--k4)">'+esc(q.transit)+'</td><td style="font-size:12px;color:var(--k4)">'+(q.mgWeight?q.mgWeight+' MT':'—')+'</td><td>'+stars(q.rating)+'</td><td>'+(isSel?'<span class="bd bl2">✓ Selected</span>':'—')+'</td></tr>';}).join('')
+    +'</tbody></table></div></div>'
+    +'<div class="mf">'+(ap?'<button class="btn bsm" style="background:var(--gs);color:var(--g);border-color:#bbf7d0" onclick="document.getElementById(\'viewRcMod\').remove();showSec(\'approval\')">→ View '+ap.id+'</button>':'<button class="btn bp" onclick="document.getElementById(\'viewRcMod\').remove();openApprovalSubmit(\''+rc.id+'\')">Submit for Approval →</button>')+'<button class="btn bo" onclick="document.getElementById(\'viewRcMod\').remove()">Close</button></div>'
+    +'</div>';
+  document.getElementById('overlays').appendChild(ov);
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+}
+
+// ═══ APPROVAL ═════════════════════════════════════════════════════════════
+function openApprovalSubmit(rcId){
+  var rc=RATE_CMPS.find(function(x){return x.id===rcId;});if(!rc)return;
+  if(!rc.isLowest||rc.exceedsBudget){openJustModal(rc);}
+  else{createApproval(rc,'');}
+}
+
+function openJustModal(rc){
+  var ov=document.createElement('div');ov.className='ov';ov.id='justMod';
+  var lowest=rc.quotes[0].rate;
+  ov.innerHTML='<div class="md mds"><div class="mh"><div><h2>⚠ Justification Required</h2><div class="ms">'+(rc.exceedsBudget?'Rate exceeds budget · ':'')+(rc.isLowest?'':'Not the lowest rate')+'</div></div><button class="mcl" onclick="document.getElementById(\'justMod\').remove()">✕</button></div>'
+    +'<div class="mb"><div style="background:var(--ams);border:1px solid var(--amd);border-radius:7px;padding:12px 14px;margin-bottom:14px"><div style="font-size:12px;font-weight:700;color:var(--am)">Selected: ₹'+fmtN(rc.selectedRate)+' — '+esc(rc.selectedTransporter)+'</div><div style="font-size:11.5px;color:var(--am);margin-top:2px">Lowest: ₹'+fmtN(lowest)+'</div>'+(rc.exceedsBudget?'<div style="font-size:11px;color:var(--r);margin-top:3px;font-weight:700">⚠ Exceeds budget of ₹'+fmtN(rc.budget)+'</div>':'')+'</div>'
+    +'<div class="fd"><label>Justification <span class="rq">*</span></label><textarea id="justReason" rows="3" placeholder="e.g. Lowest transporter unavailable, urgent shipment..."></textarea></div></div>'
+    +'<div class="mf"><button class="btn bo" onclick="document.getElementById(\'justMod\').remove()">Cancel</button><button class="btn bam" onclick="saveJust(\''+rc.id+'\')">Submit with Justification →</button></div></div>';
+  document.getElementById('overlays').appendChild(ov);
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+}
+
+function saveJust(rcId){
+  var reason=(document.getElementById('justReason')||{value:''}).value.trim();
+  if(!reason){toast('Justification reason required','er2');return;}
+  var rc=RATE_CMPS.find(function(x){return x.id===rcId;});if(!rc)return;
+  document.getElementById('justMod').remove();
+  createApproval(rc,reason);
+}
+
+function createApproval(rc,justification){
+  var inq=INQUIRIES.find(function(x){return x.id===rc.inqId;})||{};
+  var apId='FRA-26-'+(String(_seqAp++).padStart(3,'0'));
+  var ap={id:apId,rcId:rc.id,inqId:rc.inqId,transporter:rc.selectedTransporter,selectedRate:rc.selectedRate,selectedTransit:rc.selectedTransit||'',from:rc.from,fromPin:rc.fromPin,to:rc.to,toPin:rc.toPin,vehicle:rc.vehicle,material:rc.material||'',weight:rc.weight||'',pickupDate:inq.pickupDate||'',dtype:inq.dtype||'Normal',budget:rc.budget||0,isLowest:rc.isLowest,exceedsBudget:rc.exceedsBudget||false,justification:justification,status:'pending',nextApprover:'accounts',history:[{role:'dispatch',user:_roleMap.dispatch,action:'Submitted',note:'Rate comparison '+rc.id+' submitted for Accounts approval'+(justification?' · Justification: '+justification:''),ts:new Date().toISOString()}],created_at:new Date().toISOString()};
+  APPROVALS.push(ap);rc.status='submitted_approval';
+  updateBadges();toast(apId+' submitted to Accounts for approval ✓','ok');showSec('approval');
+}
+
+function renderApproval(){
+  var all=APPROVALS.slice().reverse();
+  var mn=document.getElementById('main');
+  mn.innerHTML='<div class="ph"><div><h1>Freight <em>Approvals</em></h1><p>Step 3 of 4 — Accounts approval workflow</p></div></div>'
+    +flowHint('Approvals show the full rate comparison. Dispatch → Accounts. Use role switcher to simulate.')
+    +'<div class="card"><div style="font-family:Urbanist,sans-serif;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--k4);margin-bottom:10px">Approval Workflow</div>'
+    +'<div class="wf-steps">'
+    +'<div class="wf-step"><div class="wf-dot done">✓</div><div class="wf-label done">Dispatch</div></div>'
+    +'<div class="wf-step"><div class="wf-dot '+(_curRole==='accounts'?'active':'pending')+'">2</div><div class="wf-label '+(_curRole==='accounts'?'active':'')+'">Accounts</div></div>'
+    +'<div class="wf-step"><div class="wf-dot pending">📦</div><div class="wf-label">Order Form</div></div>'
+    +'</div>'
+    +'<div style="background:var(--bls);border:1px solid #bfdbfe;border-radius:6px;padding:8px 12px;font-size:12px;color:var(--bl)">Logged in as: <strong>'+esc(_roleLabel[_curRole])+'</strong></div></div>'
+    +(all.length?all.map(function(a){return apCard(a);}).join('')
+      :'<div class="er"><div class="ei">✅</div><h3>No Approvals Yet</h3><p>Create an inquiry → Rate comparison → Submit for approval.</p></div>');
+}
+
+function apCard(a){
+  var rc=RATE_CMPS.find(function(x){return x.id===a.rcId;})||{quotes:[]};
+  var sc={pending:'bp2',approved:'bl2',rejected:'bb'};
+  var or=ORDERS.find(function(o){return o.apId===a.id;});
+  return '<div style="background:var(--bg);border:1px solid var(--br);border-radius:8px;padding:14px 16px;margin-bottom:10px;box-shadow:var(--sh);border-left:3px solid '+(a.status==='approved'?'var(--g)':a.status==='rejected'?'var(--r)':'var(--am)')+'">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap"><div style="flex:1">'
+    +'<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:6px"><span class="id-tag">'+esc(a.id)+'</span><span class="bd '+(sc[a.status]||'bi')+'">'+esc(a.status)+'</span>'+(a.isLowest?'<span class="bd bl2">Lowest Rate</span>':'<span class="bd bp2">Not Lowest</span>')+(a.exceedsBudget?'<span class="bd bb">Over Budget</span>':'')+(a.justification?'<span class="bd ba">Exception</span>':'')+'</div>'
+    +flowChain(a.status==='approved'?'or':'ap',a.inqId,a.rcId,a.id,or?or.id:null)
+    +'<div style="font-family:Urbanist,sans-serif;font-size:15px;font-weight:800">'+esc(a.transporter)+'</div>'
+    +'<div style="font-size:12px;color:var(--k4);margin-top:2px">'+esc(a.from)+' → '+esc(a.to)+(a.vehicle?' · '+a.vehicle:'')+'</div>'
+    +(a.material?'<div style="font-size:11.5px;color:var(--k4);margin-top:1px">📦 '+esc(a.material)+(a.weight?' · '+a.weight+' MT':'')+'</div>':'')
+    +(a.justification?'<div style="font-size:11px;background:var(--ams);border-radius:4px;padding:4px 8px;margin-top:6px;color:var(--am)">📝 '+esc(a.justification)+'</div>':'')
+    +'</div><div style="text-align:right;flex-shrink:0">'
+    +'<div style="font-family:Urbanist,sans-serif;font-size:24px;font-weight:900;color:var(--k)">₹'+fmtN(a.selectedRate)+'</div>'
+    +(a.budget>0?'<div style="font-size:10.5px;color:'+(a.selectedRate>a.budget?'var(--r)':'var(--g)')+'">Budget: ₹'+fmtN(a.budget)+'</div>':'')
+    +(a.nextApprover&&a.status==='pending'?'<div style="font-size:10px;color:var(--am);margin-top:3px;font-weight:700">Waiting: '+esc(_roleLabel[a.nextApprover])+'</div>':'')
+    +'</div></div>'
+    // Embedded RC table
+    +(rc.quotes&&rc.quotes.length?'<div style="margin-top:12px;border-top:1px solid var(--br);padding-top:10px"><div style="font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Rate Comparison Chart ('+esc(a.rcId)+')</div>'
+    +'<div class="tw"><table class="vt" style="font-size:11.5px"><thead><tr><th>#</th><th>Transporter</th><th>Rate</th><th>Transit</th><th>Min.Guar.</th><th>Rating</th><th>Selection</th></tr></thead><tbody>'
+    +rc.quotes.map(function(q,i){var isSel=q.transporter===a.transporter||q.tid===rc.selectedTid;var isLow=q.rate===rc.quotes[0].rate;return '<tr class="'+(isLow?'rt-best':'')+'"><td><span class="rank-b rank-'+(i+1)+'">'+(i+1)+'</span></td><td><div style="font-weight:700">'+esc(q.transporter)+'</div>'+(isLow?'<span class="bd bl2" style="font-size:9px">✓ Lowest</span>':'')+'</td><td><span class="rate-val" style="font-size:13px">₹'+fmtN(q.rate)+'</span></td><td style="font-size:11px;color:var(--k4)">'+esc(q.transit)+'</td><td style="font-size:11px;color:var(--k4)">'+(q.mgWeight?q.mgWeight+' MT':'—')+'</td><td>'+stars(q.rating)+'</td><td>'+(isSel?'<span class="bd bl2">✓ Selected</span>':'—')+'</td></tr>';}).join('')
+    +'</tbody></table></div></div>':'')
+    // Approval action
+    +(a.status==='pending'&&a.nextApprover===_curRole?'<div style="border-top:1px solid var(--br);margin-top:12px;padding-top:12px;background:var(--bs);border-radius:0 0 7px 7px;margin-left:-14px;margin-right:-14px;margin-bottom:-14px;padding:12px 16px"><div style="font-size:10px;font-weight:700;color:var(--r);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">⏳ Action Required — '+esc(_roleLabel[_curRole])+'</div><div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div class="fd" style="flex:1;min-width:200px"><label>Remarks</label><input id="apRem_'+esc(a.id)+'" placeholder="Enter remarks (required for rejection)..."></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn bgn" onclick="doApprove(\''+esc(a.id)+'\')">✅ Approve</button><button class="btn bp" onclick="doReject(\''+esc(a.id)+'\')">✗ Reject</button>'+(a.exceedsBudget||!a.isLowest?'<button class="btn bam" onclick="doApproveExc(\''+esc(a.id)+'\')">⚠ Approve Exception</button>':'')+'</div></div></div>':'')
+    // History
+    +'<div style="border-top:1px solid var(--br);margin-top:10px;padding-top:10px"><div style="font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Timeline</div>'
+    +'<div>'+a.history.map(function(h){var cls={dispatch:'tdb',logistics:'tdam',accounts:'tdg',system:'tdp'}[h.role]||'tdp';return '<div class="tli"><div class="tld '+cls+'">●</div><div><div style="font-size:11.5px;font-weight:700;color:var(--k)">'+esc(h.user)+' ('+esc(h.role)+') — '+esc(h.action)+'</div><div style="font-size:11px;color:var(--k4)">'+esc(h.note)+(h.ts?' · '+fmtDate(h.ts):'')+'</div></div></div>';}).join('')+'</div></div>'
+    +(a.status==='approved'&&!or?'<div style="border-top:1px solid var(--br);margin-top:10px;padding-top:10px"><button class="btn bgn" onclick="generateOrder(\''+esc(a.id)+'\')">📦 Generate Order Form →</button></div>':'')
+    +(or?'<div style="border-top:1px solid var(--br);margin-top:10px;padding-top:10px;display:flex;align-items:center;gap:8px"><span class="bd bl2">Order Issued</span><span class="id-tag" style="cursor:pointer;background:var(--gs);color:var(--g);border-color:#bbf7d0" onclick="printOrder(\''+esc(or.id)+'\')">'+esc(or.id)+'</span><button class="btn bsm" style="background:var(--gs);color:var(--g);border-color:#bbf7d0" onclick="printOrder(\''+esc(or.id)+'\')">🖨️ Print</button></div>':'')
+    +'</div>';
+}
+
+function doApprove(id){var a=APPROVALS.find(function(x){return x.id===id;});if(!a)return;var rem=(document.getElementById('apRem_'+id)||{value:''}).value.trim();a.history.push({role:_curRole,user:_roleMap[_curRole],action:'Approved',note:rem||'Approved',ts:new Date().toISOString()});a.status='approved';a.nextApprover=null;toast(id+' APPROVED ✓','ok');updateBadges();renderApproval();}
+function doReject(id){var a=APPROVALS.find(function(x){return x.id===id;});if(!a)return;var rem=(document.getElementById('apRem_'+id)||{value:''}).value.trim();if(!rem){toast('Enter rejection reason','er2');return;}a.status='rejected';a.nextApprover=null;a.history.push({role:_curRole,user:_roleMap[_curRole],action:'Rejected',note:rem,ts:new Date().toISOString()});updateBadges();toast(id+' rejected','wn');renderApproval();}
+function doApproveExc(id){var a=APPROVALS.find(function(x){return x.id===id;});if(!a)return;var rem=(document.getElementById('apRem_'+id)||{value:''}).value.trim();a.history.push({role:_curRole,user:_roleMap[_curRole],action:'Exception Approved',note:rem||'Exception approved',ts:new Date().toISOString()});a.status='approved';a.nextApprover=null;toast(id+' exception APPROVED ✓','ok');updateBadges();renderApproval();}
+
+// ═══ ORDER FORM ════════════════════════════════════════════════════════════
+function generateOrder(apId){
+  var a=APPROVALS.find(function(x){return x.id===apId;});if(!a||a.status!=='approved'){toast('Must be fully approved first','er2');return;}
+  if(ORDERS.find(function(o){return o.apId===apId;})){toast('Order already exists','wn');return;}
+  var tp=TRANSPORTERS.find(function(t){return t.name===a.transporter;})||{phone:'—',contact:'—',gst:'—',address:'—',city:'—',state:'—',credit:'Against Delivery'};
+  var orId='SFO-26-'+(String(_seqOr++).padStart(3,'0'));
+  var rc=RATE_CMPS.find(function(x){return x.id===a.rcId;})||{quotes:[]};
+  var or={id:orId,apId:apId,rcId:a.rcId,inqId:a.inqId,transporter:a.transporter,tpPhone:tp.phone,tpContact:tp.contact,tpGst:tp.gst||'—',tpAddress:tp.address,tpCity:tp.city,tpState:tp.state,tpCredit:tp.credit,from:a.from,fromPin:a.fromPin,to:a.to,toPin:a.toPin,vehicle:a.vehicle,material:a.material||'—',weight:a.weight||'—',pickupDate:a.pickupDate||'TBD',dtype:a.dtype||'Normal',rate:a.selectedRate,transit:a.selectedTransit||'—',status:'issued',created_at:new Date().toISOString()};
+  ORDERS.push(or);a.history.push({role:'system',user:'System',action:'Order Form Generated',note:'Order '+orId+' issued',ts:new Date().toISOString()});
+  updateBadges();toast(orId+' Order Form generated ✓','ok');renderApproval();setTimeout(function(){printOrder(orId);},600);
+}
+
+function renderOrders(){
+  var mn=document.getElementById('main');
+  mn.innerHTML='<div class="ph"><div><h1>Order <em>Forms</em></h1><p>Step 4 of 4 — Official transport orders</p></div></div>'
+    +flowHint('Order Forms are auto-generated after full approval. Each links to Approval, RC, and Inquiry.')
+    +(ORDERS.length?'<div class="tw"><table class="vt"><thead><tr><th>Order ID</th><th>← Approval</th><th>← RC</th><th>← Inquiry</th><th>Transporter</th><th>Route</th><th>Load Date</th><th>Rate</th><th>Actions</th></tr></thead><tbody>'
+      +ORDERS.slice().reverse().map(function(o){return '<tr><td><span class="id-tag">'+esc(o.id)+'</span><div style="font-size:9.5px;color:var(--k4);margin-top:2px">'+fmtDate(o.created_at)+'</div></td><td><span class="id-tag" style="cursor:pointer;background:var(--ams);color:var(--am);border-color:var(--amd)" onclick="showSec(\'approval\')">'+esc(o.apId)+'</span></td><td><span class="id-tag" style="cursor:pointer;background:var(--bls);color:var(--bl);border-color:#bfdbfe" onclick="viewRcById(\''+esc(o.rcId)+'\')">'+esc(o.rcId)+'</span></td><td><span class="id-tag" style="cursor:pointer;background:#eef2ff;color:#4338ca;border-color:#c7d2fe" onclick="viewInquiry(\''+esc(o.inqId)+'\')">'+esc(o.inqId)+'</span></td><td><div style="font-weight:700">'+esc(o.transporter)+'</div><a class="call-btn" href="tel:'+esc(o.tpPhone)+'">📞 '+esc(o.tpPhone)+'</a></td><td><span class="addr-tag">'+esc(o.from)+'</span> → <span class="addr-tag">'+esc(o.to)+'</span><div style="font-size:10px;color:var(--k4);margin-top:2px">'+esc(o.vehicle)+'</div></td><td style="font-weight:700;color:var(--r)">'+esc(o.pickupDate)+'</td><td><span class="rate-val">₹'+fmtN(o.rate)+'</span><div style="font-size:10.5px;color:var(--k4)">'+esc(o.tpCredit)+'</div></td><td><div class="ac"><button class="btn bp bxs" onclick="printOrder(\''+esc(o.id)+'\')">🖨️ Print</button><a class="btn bcl bxs" href="tel:'+esc(o.tpPhone)+'">📞</a></div></td></tr>';}).join('')+'</tbody></table></div>'
+      :'<div class="er"><div class="ei">📦</div><h3>No Order Forms Yet</h3><p>Complete the flow: Inquiry → Rate Comparison → Approval → Order Form</p></div>');
+}
+
+function printOrder(oid){
+  var o=ORDERS.find(function(x){return x.id===oid;});if(!o)return;
+  var w=window.open('','_blank','width=900,height=720');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+o.id+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Urbanist:wght@700;800;900&display=swap" rel="stylesheet">'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,sans-serif;font-size:13px;color:#1a1a1a;background:#fff}.page{padding:26px 30px;max-width:820px;margin:0 auto}.hdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;border-bottom:3px solid #D5110A;margin-bottom:18px}.logo{width:36px;height:36px;background:#D5110A;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:Urbanist,sans-serif;font-weight:900;font-size:11px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px;margin-bottom:16px}.sec h4{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9a9a9a;border-bottom:1px solid #e4e4e4;padding-bottom:5px;margin-bottom:8px}.row{display:flex;gap:7px;margin-bottom:4px}.key{font-size:11px;color:#9a9a9a;font-weight:600;min-width:115px;flex-shrink:0}.val{font-size:12px;color:#1a1a1a;font-weight:500}.rate-big{font-family:Urbanist,sans-serif;font-size:34px;font-weight:900;color:#D5110A}.ids{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}.chip{font-family:monospace;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;border:1px solid #e4e4e4;background:#fafafa}.sig-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:20px}.sig{border-top:1.5px solid #1a1a1a;padding-top:7px;font-size:10px;color:#9a9a9a}.footer{margin-top:16px;padding-top:10px;border-top:1px solid #e4e4e4;font-size:9.5px;color:#9a9a9a;display:flex;justify-content:space-between}@media print{.np{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>'
+    +'</head><body><div class="page">'
+    +'<div class="hdr"><div style="display:flex;align-items:center;gap:10px"><div class="logo">SPL</div><div><div style="font-family:Urbanist,sans-serif;font-weight:800;font-size:14px;color:#1a1a1a">Strandply <span style="color:#D5110A">LLP</span></div><div style="font-size:9.5px;color:#9a9a9a;text-transform:uppercase;letter-spacing:.07em">Wankaner, Gujarat</div></div></div><div style="text-align:right"><div style="font-family:Urbanist,sans-serif;font-size:20px;font-weight:900;color:#1a1a1a">ORDER FORM</div><div style="font-family:monospace;background:#f4f4f4;padding:2px 9px;border-radius:4px;font-size:13px;font-weight:700;border:1px solid #e4e4e4;margin-top:5px;display:inline-block">'+o.id+'</div><div style="font-size:10px;color:#9a9a9a;margin-top:4px">Date: '+fmtDate(o.created_at)+'</div></div></div>'
+    +'<div style="background:#f0fdf4;border:2px solid #15803d;border-radius:8px;padding:11px 15px;margin-bottom:14px;display:flex;align-items:center;gap:10px"><span style="font-size:22px">✅</span><div><div style="font-size:12.5px;font-weight:700;color:#15803d">Freight Approved — Multi-Level Authorization Complete</div><div style="font-size:11px;color:#166534;margin-top:1px">Accounts approval obtained</div></div></div>'
+    +'<div class="ids"><span style="font-size:10px;color:#9a9a9a;font-weight:700">LINKED IDs:</span><span class="chip" style="background:#eef2ff;border-color:#c7d2fe;color:#4338ca">'+o.inqId+'</span><span style="color:#c8c8c8">→</span><span class="chip" style="background:#eff6ff;border-color:#bfdbfe;color:#1d4ed8">'+o.rcId+'</span><span style="color:#c8c8c8">→</span><span class="chip" style="background:#fffbeb;border-color:#fde68a;color:#b45309">'+o.apId+'</span><span style="color:#c8c8c8">→</span><span class="chip" style="background:#ecfdf5;border-color:#bbf7d0;color:#15803d">'+o.id+'</span></div>'
+    +'<div class="g2"><div class="sec"><h4>Transporter Details</h4><div class="row"><span class="key">Name</span><span class="val" style="font-weight:700;font-size:14px">'+o.transporter+'</span></div><div class="row"><span class="key">Contact</span><span class="val">'+o.tpContact+'</span></div><div class="row"><span class="key">Phone</span><span class="val">'+o.tpPhone+'</span></div><div class="row"><span class="key">GST</span><span class="val" style="font-family:monospace">'+o.tpGst+'</span></div><div class="row"><span class="key">Address</span><span class="val">'+o.tpAddress+', '+o.tpCity+', '+o.tpState+'</span></div></div>'
+    +'<div class="sec"><h4>Route & Shipment</h4><div class="row"><span class="key">From</span><span class="val" style="font-weight:700">'+o.from+' — '+o.fromPin+'</span></div><div class="row"><span class="key">To</span><span class="val" style="font-weight:700">'+o.to+' — '+o.toPin+'</span></div><div class="row"><span class="key">Vehicle</span><span class="val">'+o.vehicle+'</span></div><div class="row"><span class="key">Delivery Type</span><span class="val">'+o.dtype+'</span></div></div>'
+    +'<div class="sec"><h4>Material Details</h4><div class="row"><span class="key">Material</span><span class="val" style="font-weight:700">'+o.material+'</span></div><div class="row"><span class="key">Weight</span><span class="val">'+o.weight+' MT</span></div><div class="row"><span class="key">Date of Loading</span><span class="val" style="font-weight:700;color:#D5110A;font-size:14px">'+o.pickupDate+'</span></div><div class="row"><span class="key">Expected Transit</span><span class="val">'+o.transit+'</span></div></div>'
+    +'<div class="sec"><h4>Confirmed Rate</h4><div class="rate-big">&#8377;'+fmtN(o.rate)+'</div><div style="font-size:10.5px;color:#9a9a9a;margin-top:4px">All-inclusive freight rate</div><div class="row" style="margin-top:10px"><span class="key">Payment Terms</span><span class="val" style="font-weight:700">'+o.tpCredit+'</span></div><div class="row"><span class="key">Invoice To</span><span class="val">Strandply LLP, Wankaner</span></div></div></div>'
+    +'<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:11px 14px;margin-bottom:14px;font-size:12px;color:#92400e"><strong>Terms & Conditions:</strong> 1. Vehicle to report at loading point on specified date. 2. Driver to carry all valid documents. 3. Rate is final as per approved freight authorization. 4. POD to be submitted within 3 days of delivery. 5. Damage claims within 24 hours. 6. Payment as per credit terms after valid invoice.</div>'
+    +'<div class="sig-row"><div class="sig"><div style="font-size:11px;font-weight:700;color:#1a1a1a;margin-bottom:22px">Dispatch Executive</div>Strandply LLP</div>Strandply LLP</div><div class="sig"><div style="font-size:11px;font-weight:700;color:#1a1a1a;margin-bottom:22px">Transporter Acceptance</div>'+o.transporter+'</div></div>'
+    +'<div class="np" style="display:flex;justify-content:center;gap:10px;padding:18px 0 4px">'
+    +'<button onclick="window.print()" style="padding:9px 20px;background:#D5110A;color:#fff;border:none;border-radius:5px;font-family:Urbanist,sans-serif;font-weight:700;font-size:13px;cursor:pointer">🖨 Print / Save PDF</button>'
+    +'<button onclick="window.close()" style="padding:9px 20px;background:#f4f4f4;color:#1a1a1a;border:1px solid #e4e4e4;border-radius:5px;font-family:Urbanist,sans-serif;font-weight:700;font-size:13px;cursor:pointer">Close</button>'
+    +'</div>'
+    +'<div class="footer"><span>Strandply LLP — Official Transport Order · '+o.id+'</span><span>'+o.inqId+' · '+o.rcId+' · '+o.apId+'</span></div>'
+    +'</div>');w.document.close();
+}
+
+// ═══ TRANSPORTERS ═════════════════════════════════════════════════════════
+var _tmS={cities:[],vehicles:[],vcFile:null};
+function renderTransporters(){
+  var mn=document.getElementById('main');
+  var states=[...new Set(TRANSPORTERS.map(function(t){return t.state;}))];
+  mn.innerHTML='<div class="ph"><div><h1>Transporter <em>Master</em></h1></div><button class="btn bp" onclick="openAddTp()">+ Add Transporter</button></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:flex-end">'
+    +'<div style="position:relative;flex:2;min-width:200px"><span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--k4);pointer-events:none;font-size:12px">🔍</span><input type="text" id="tpQ" placeholder="Name, phone, city, GST..." oninput="filtTp()" style="width:100%;padding:7px 10px 7px 28px;border:1.5px solid var(--br);border-radius:5px;font-size:13px;color:var(--k);background:var(--bg);outline:none;min-height:36px"></div>'
+    +'<div style="position:relative;min-width:160px;flex:1">'
+    +'<input type="text" id="tpOpCity" placeholder="Operating city..." oninput="filtTp()" style="width:100%;padding:7px 10px;border:1.5px solid var(--br);border-radius:5px;font-size:13px;color:var(--k);background:var(--bg);outline:none;min-height:36px">'
+    +'<div id="opCitySug" style="position:absolute;top:100%;left:0;right:0;background:var(--bg);border:1.5px solid var(--r);border-radius:0 0 6px 6px;box-shadow:var(--shm);z-index:9999;max-height:180px;overflow-y:auto;display:none"></div>'
+    +'</div>'
+    +'<select id="tpSt" onchange="filtTp()" style="padding:7px 10px;border:1.5px solid var(--br);border-radius:5px;font-size:13px;min-height:36px;background:var(--bg)"><option value="">All States</option>'+states.map(function(s){return '<option>'+esc(s)+'</option>';}).join('')+'</select>'
+    +'<select id="tpVh" onchange="filtTp()" style="padding:7px 10px;border:1.5px solid var(--br);border-radius:5px;font-size:13px;min-height:36px;background:var(--bg)"><option value="">All Vehicles</option>'+vNames().map(function(v){return '<option>'+esc(v)+'</option>';}).join('')+'</select>'
+    +'<button class="btn bo bsm" onclick="clearTpFilters()">✕ Clear</button></div>'
+    +'<div id="tpTbl"></div>';
+  filtTp();
+}
+
+function clearTpFilters(){['tpQ','tpOpCity'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});['tpSt','tpVh'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});var s=document.getElementById('opCitySug');if(s)s.style.display='none';filtTp();}
+
+function filtTp(){
+  var q=(document.getElementById('tpQ')||{value:''}).value.trim().toLowerCase();
+  var st=(document.getElementById('tpSt')||{value:''}).value;
+  var vh=(document.getElementById('tpVh')||{value:''}).value;
+  var oc=(document.getElementById('tpOpCity')||{value:''}).value.trim().toLowerCase();
+  var sugDiv=document.getElementById('opCitySug');
+  if(sugDiv&&oc.length>0){
+    var allCities=[...new Set(TRANSPORTERS.reduce(function(acc,t){return acc.concat(t.op_cities.map(function(x){return x.city+', '+x.state;}));},[])) ].sort();
+    var matched=allCities.filter(function(s){return s.toLowerCase().indexOf(oc)>=0;}).slice(0,8);
+    if(matched.length){
+      sugDiv.innerHTML=matched.map(function(s){return '<div style="padding:7px 12px;font-size:12.5px;cursor:pointer;border-bottom:1px solid #e4e4e4" data-city="'+s.replace(/"/g,'')+'">'+esc(s)+'</div>';}).join('');
+      sugDiv.querySelectorAll('div').forEach(function(d){d.addEventListener('mousedown',function(e){e.preventDefault();var inp=document.getElementById('tpOpCity');if(inp){inp.value=this.dataset.city;filtTp();}sugDiv.style.display='none';});});
+      sugDiv.style.display='block';
+    }else{sugDiv.style.display='none';}
+  }else if(sugDiv){sugDiv.style.display='none';}
+  var list=TRANSPORTERS.filter(function(t){
+    var qm=!q||(t.name+t.city+t.state+t.pincode+t.phone+t.contact+(t.gst||'')+t.op_cities.map(function(x){return x.city+' '+x.state;}).join(' ')).toLowerCase().indexOf(q)>=0;
+    return qm&&(!st||t.state===st)&&(!vh||t.vehicles.indexOf(vh)>=0)&&(!oc||t.op_cities.some(function(x){return (x.city+', '+x.state).toLowerCase().indexOf(oc)>=0||x.city.toLowerCase().indexOf(oc)>=0;}));
+  });
+  var c=document.getElementById('tpTbl');if(!c)return;
+  if(!list.length){c.innerHTML='<div class="er"><div class="ei">🔍</div><h3>No match</h3></div>';return;}
+  c.innerHTML='<div class="tw"><table class="vt"><thead><tr><th>ID</th><th>Name & Contact</th><th>Address</th><th>Op. Cities</th><th>TDS</th><th>Vehicles</th><th>Rating</th><th>Actions</th></tr></thead><tbody>'
+    +list.map(function(t){return '<tr><td><span class="id-tag">'+esc(t.code)+'</span></td><td><div style="font-weight:700">'+esc(t.name)+'</div><a class="call-btn" href="tel:'+esc(t.phone)+'">📞 '+esc(t.phone)+'</a>'+(t.phone2?'<br><a class="call-btn" style="margin-top:2px" href="tel:'+esc(t.phone2)+'">📞 '+esc(t.phone2)+' (Alt)</a>':'')+'<div style="font-size:11px;color:var(--k4)">'+esc(t.contact)+'</div></td><td><span class="addr-tag">'+esc(t.city)+', '+esc(t.state)+'</span><br><span class="pin-badge" style="margin-top:3px">📮 '+esc(t.pincode)+'</span><div style="font-size:11px;color:var(--k4);margin-top:2px">'+esc(t.address||'—')+'</div></td><td style="max-width:140px"><div style="display:flex;gap:3px;flex-wrap:wrap">'+t.op_cities.map(function(c){return '<span class="addr-tag" style="font-size:9px;margin:1px">'+esc(c.city)+'</span>';}).join('')+'</div></td><td><span class="bd '+(t.tds==='Yes'?'bl2':'bi')+'">'+(t.tds||'No')+'</span></td><td>'+t.vehicles.map(function(v){return '<span class="veh-tag" style="display:inline-block;margin:1px">'+esc(v)+'</span>';}).join('')+'</td><td>'+stars(t.rating)+'</td><td><div class="ac"><button class="btn bo bxs" onclick="viewTp(\''+t._id+'\')">View</button><a class="btn bcl bxs" href="tel:'+esc(t.phone)+'">📞</a><button class="btn bxs" style="background:var(--gs);color:var(--g);border-color:#bbf7d0" onclick="pdfTp(\''+t._id+'\')">📄</button></div></td></tr>';}).join('')
+    +'</tbody></table></div>';
+}
+
+function viewTp(id){
+  var t=TRANSPORTERS.find(function(x){return x._id===id;});if(!t)return;
+  var ov=document.createElement('div');ov.className='ov';ov.id='tpView';
+  ov.innerHTML='<div class="md mdw"><div class="mh"><div><h2>'+esc(t.name)+'</h2><div class="ms">'+esc(t.code)+' · TDS: '+(t.tds||'No')+'</div></div><div style="display:flex;gap:7px"><button class="btn bsm" style="background:var(--gs);color:var(--g);border-color:#bbf7d0" onclick="pdfTp(\''+t._id+'\')">📄 PDF</button><a class="btn bcl bsm" href="tel:'+esc(t.phone)+'">📞 Call</a><button class="mcl" onclick="document.getElementById(\'tpView\').remove()">✕</button></div></div>'
+    +'<div class="mb"><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px 24px">'
+    +'<div class="ds"><h3>Contact</h3><div class="dr"><span class="dk">Person</span><span class="dv2">'+esc(t.contact)+'</span></div><div class="dr"><span class="dk">Primary</span><span class="dv2"><a class="call-btn" href="tel:'+esc(t.phone)+'">📞 '+esc(t.phone)+'</a></span></div>'+(t.phone2?'<div class="dr"><span class="dk">Secondary</span><span class="dv2"><a class="call-btn" href="tel:'+esc(t.phone2)+'">📞 '+esc(t.phone2)+'</a></span></div>':'')+'<div class="dr"><span class="dk">Email</span><span class="dv2"><a href="mailto:'+esc(t.email||'')+'" style="color:var(--bl)">'+esc(t.email||'—')+'</a></span></div></div>'
+    +'<div class="ds"><h3>Address</h3><div class="dr"><span class="dk">Street</span><span class="dv2">'+esc(t.address||'—')+'</span></div><div class="dr"><span class="dk">City, State</span><span class="dv2"><span class="addr-tag">'+esc(t.city)+', '+esc(t.state)+'</span></span></div><div class="dr"><span class="dk">Pincode</span><span class="dv2"><span class="pin-badge">📮 '+esc(t.pincode)+'</span></span></div></div>'
+    +'<div class="ds"><h3>Legal</h3><div class="dr"><span class="dk">GST</span><span class="dv2" style="font-family:monospace">'+esc(t.gst||'—')+'</span></div><div class="dr"><span class="dk">PAN</span><span class="dv2" style="font-family:monospace">'+esc(t.pan||'—')+'</span></div><div class="dr"><span class="dk">TDS</span><span class="dv2"><span class="bd '+(t.tds==='Yes'?'bl2':'bb')+'">'+esc(t.tds||'No')+'</span></span></div><div class="dr"><span class="dk">Credit</span><span class="dv2">'+esc(t.credit||'—')+'</span></div></div>'
+    +'<div class="ds"><h3>Bank Details</h3><div class="dr"><span class="dk">Bank</span><span class="dv2">'+esc(t.bankName||'—')+'</span></div><div class="dr"><span class="dk">Branch</span><span class="dv2">'+esc(t.bankBranch||'—')+'</span></div><div class="dr"><span class="dk">IFSC</span><span class="dv2" style="font-family:monospace">'+esc(t.ifsc||'—')+'</span></div><div class="dr"><span class="dk">Acc Name</span><span class="dv2">'+esc(t.accName||'—')+'</span></div><div class="dr"><span class="dk">Acc No</span><span class="dv2" style="font-family:monospace">'+esc(t.accNo||'—')+'</span></div></div>'
+    +'<div class="ds" style="grid-column:1/-1"><h3>Operating Cities</h3><div style="display:flex;gap:6px;flex-wrap:wrap">'+t.op_cities.map(function(c){return '<span class="addr-tag">'+esc(c.city)+', '+esc(c.state)+'</span> <span class="pin-badge">'+esc(c.pincode)+'</span>';}).join(' ')+'</div></div>'
+    +'</div></div><div class="mf"><button class="btn bo" onclick="document.getElementById(\'tpView\').remove()">Close</button></div></div>';
+  document.getElementById('overlays').appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+}
+
+function openAddTp(){
+  _tmS={cities:[],vehicles:[],vcFile:null};
+  var nc='TRP-'+yr()+'-'+(String(TRANSPORTERS.length+1).padStart(3,'0'));
+  var ov=document.createElement('div');ov.className='ov';ov.id='addTpMod';
+  ov.innerHTML='<div class="md mdw"><div class="mh"><div><h2>Add Transporter</h2><div class="ms">New ID: <strong>'+nc+'</strong></div></div><button class="mcl" onclick="document.getElementById(\'addTpMod\').remove()">✕</button></div>'
+    +'<div class="mb" style="max-height:75vh;overflow-y:auto"><div class="fg">'
+    +'<div class="slb ff">Basic Info</div>'
+    +'<div class="fd ff"><label>Name <span class="rq">*</span></label><input id="tmN"></div>'
+    +'<div class="fd"><label>Contact <span class="rq">*</span></label><input id="tmC"></div>'
+    +'<div class="fd"><label>Primary Mobile <span class="rq">*</span></label><input id="tmPh" maxlength="10"></div>'
+    +'<div class="fd"><label>Secondary Mobile</label><input id="tmPh2" maxlength="10"></div>'
+    +'<div class="fd"><label>Email</label><input id="tmE" type="email"></div>'
+    +'<div class="fd"><label>TDS Declaration</label><select id="tmTds"><option value="Yes">Yes</option><option value="No">No</option></select></div>'
+    +'<div class="sdv"></div><div class="slb ff">Office Address</div>'
+    +'<div class="fd ff"><label>Street Address <span class="rq">*</span></label><input id="tmA"></div>'
+    +'<div class="fd"><label>City <span class="rq">*</span></label><div class="ac-wrap"><input id="tmCi" placeholder="Type city..." autocomplete="off"><div class="ac-drop" id="tmCiD"></div></div><div id="tmCiP" style="margin-top:4px"></div><input type="hidden" id="tmCiV"><input type="hidden" id="tmStV"></div>'
+    +'<div class="fd"><label>State</label><input id="tmSt" readonly style="background:var(--bs);color:var(--k4)"></div>'
+    +'<div class="fd"><label>Pincode <span class="rq">*</span></label><input id="tmPi" maxlength="6"></div>'
+    +'<div class="sdv"></div><div class="slb ff">Legal</div>'
+    +'<div class="fd"><label>GST Number</label><input id="tmG" maxlength="15" style="text-transform:uppercase"></div>'
+    +'<div class="fd"><label>PAN Number</label><input id="tmPa" maxlength="10" style="text-transform:uppercase"></div>'
+    +'<div class="fd"><label>Credit Terms</label><select id="tmCr"><option>Against Delivery</option><option>7 Days</option><option>15 Days</option><option>30 Days</option><option>45 Days</option></select></div>'
+    +'<div class="fd"><label>Visiting Card</label><input type="file" id="tmVC" accept="image/*,.pdf" onchange="handleVCUpload(this)" style="padding:5px;font-size:12px"><div id="tmVCPrev" style="margin-top:6px"></div></div>'
+    +'<div class="sdv"></div><div class="slb ff">Bank Details</div>'
+    +'<div class="fd"><label>IFSC Code</label><div style="display:flex;gap:6px"><input id="tmIFSC" maxlength="11" style="text-transform:uppercase;flex:1" placeholder="e.g. SBIN0001234" oninput="lookupIFSC(this.value)"><button type="button" class="btn bp bsm" onclick="lookupIFSC(document.getElementById(\'tmIFSC\').value)">Fetch →</button></div><div id="tmIFSCInfo" style="margin-top:4px;font-size:11px"></div></div>'
+    +'<div class="fd"><label>Bank Name</label><input id="tmBkName" placeholder="Auto-filled from IFSC" readonly style="background:var(--bs)"></div>'
+    +'<div class="fd"><label>Branch</label><input id="tmBkBranch" placeholder="Auto-filled from IFSC" readonly style="background:var(--bs)"></div>'
+    +'<div class="fd"><label>Account Holder Name <span class="rq">*</span></label><input id="tmAccName"></div>'
+    +'<div class="fd"><label>Account Number <span class="rq">*</span></label><input id="tmAccNo"></div>'
+    +'<div class="sdv"></div><div class="slb ff">Fleet & Operations</div>'
+    +'<div class="fd ff"><label>Vehicle Types <span class="rq">*</span></label><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:2px" id="tmVG">'+vNames().map(function(v){return '<div class="ck" onclick="togTmV(this,\''+esc(v)+'\')">'+esc(v)+'</div>';}).join('')+'</div></div>'
+    +'<div class="fd ff"><label>Operating Cities</label><div class="ac-wrap"><div class="msw" id="tmOpB" onclick="document.getElementById(\'tmOpI\').focus()"><input class="msi" id="tmOpI" placeholder="Search & add cities..." autocomplete="off"></div><div class="ac-drop" id="tmOpD"></div></div></div>'
+    +'</div></div>'
+    +'<div class="mf"><button class="btn bo" onclick="document.getElementById(\'addTpMod\').remove()">Cancel</button><button class="btn bp" onclick="saveTp()">💾 Save Transporter</button></div></div>';
+  document.getElementById('overlays').appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+  createCityAC(document.getElementById('tmCi'),document.getElementById('tmCiD'),function(c){document.getElementById('tmCiV').value=c.city;document.getElementById('tmStV').value=c.state;document.getElementById('tmSt').value=c.state;renderPinSel(document.getElementById('tmCiP'),c.pincodes,function(p){document.getElementById('tmPi').value=p;});});
+  createCityAC(document.getElementById('tmOpI'),document.getElementById('tmOpD'),function(c){if(!_tmS.cities.find(function(x){return x.city===c.city;})){_tmS.cities.push({city:c.city,state:c.state,pincode:c.pincodes[0]});renderOpTags();}document.getElementById('tmOpI').value='';});
+}
+
+window.togTmV=function(el,v){el.classList.toggle('on');var i=_tmS.vehicles.indexOf(v);if(i>=0)_tmS.vehicles.splice(i,1);else _tmS.vehicles.push(v);};
+function renderOpTags(){var b=document.getElementById('tmOpB');if(!b)return;var inp=document.getElementById('tmOpI');b.querySelectorAll('.mst').forEach(function(t){t.remove();});_tmS.cities.forEach(function(c,i){var tag=document.createElement('div');tag.className='mst';tag.innerHTML=esc(c.city)+' <span class="pin-badge" style="font-size:9px;padding:1px 5px">'+esc(c.pincode)+'</span>';var rm=document.createElement('button');rm.textContent='×';rm.onclick=function(){_tmS.cities.splice(i,1);renderOpTags();};tag.appendChild(rm);b.insertBefore(tag,inp);});}
+window.lookupIFSC=function(val){val=(val||'').trim().toUpperCase();if(val.length!==11)return;var d=document.getElementById('tmIFSCInfo');if(d)d.innerHTML='<span style="color:var(--am)">⏳ Fetching...</span>';fetch('https://ifsc.razorpay.com/'+val).then(function(r){return r.ok?r.json():Promise.reject('Not found');}).then(function(data){var bn=document.getElementById('tmBkName');var bb=document.getElementById('tmBkBranch');if(bn)bn.value=data.BANK||'';if(bb)bb.value=data.BRANCH||'';if(d)d.innerHTML='<span style="color:var(--g)">✓ '+esc(data.BANK)+' — '+esc(data.BRANCH)+'</span>';}).catch(function(){if(d)d.innerHTML='<span style="color:var(--r)">IFSC not found — enter manually</span>';var bn=document.getElementById('tmBkName');var bb=document.getElementById('tmBkBranch');if(bn){bn.readOnly=false;bn.style.background='';}if(bb){bb.readOnly=false;bb.style.background='';}});};
+window.handleVCUpload=function(input){var file=input.files[0];if(!file)return;var prev=document.getElementById('tmVCPrev');if(!prev)return;var reader=new FileReader();reader.onload=function(e){_tmS.vcFile=e.target.result;if(file.type.startsWith('image/')){prev.innerHTML='<img src="'+e.target.result+'" style="max-height:80px;max-width:160px;border-radius:4px;border:1px solid var(--br)"><div style="font-size:10px;color:var(--g);margin-top:2px">✓ '+esc(file.name)+'</div>';}else{prev.innerHTML='<div style="font-size:11px;color:var(--g)">✓ PDF: '+esc(file.name)+'</div>';}};reader.readAsDataURL(file);};
+function saveTp(){var gv=function(id){var el=document.getElementById(id);return el?(el.value||'').trim():'';};if(!gv('tmN')||!gv('tmCiV')){toast('Name and city required','er2');return;}if(!gv('tmPi')||gv('tmPi').length!==6){toast('6-digit pincode required','er2');return;}if(!_tmS.vehicles.length){toast('Select at least one vehicle','er2');return;}var t={_id:'t'+(TRANSPORTERS.length+1),name:gv('tmN'),code:'TRP-'+yr()+'-'+(String(TRANSPORTERS.length+1).padStart(3,'0')),contact:gv('tmC'),phone:gv('tmPh'),phone2:gv('tmPh2'),email:gv('tmE'),tds:gv('tmTds')||'No',address:gv('tmA'),city:gv('tmCiV'),state:gv('tmStV'),pincode:gv('tmPi'),gst:gv('tmG').toUpperCase(),pan:gv('tmPa').toUpperCase(),credit:gv('tmCr'),ifsc:gv('tmIFSC').toUpperCase(),bankName:gv('tmBkName'),bankBranch:gv('tmBkBranch'),accName:gv('tmAccName'),accNo:gv('tmAccNo'),visitingCard:_tmS.vcFile||'',vehicles:_tmS.vehicles.slice(),op_cities:_tmS.cities.slice(),rating:4,status:'active'};TRANSPORTERS.push(t);document.getElementById('addTpMod').remove();toast(t.code+' saved ✓','ok');renderTransporters();}
+
+function pdfTp(id){
+  var t=TRANSPORTERS.find(function(x){return x._id===id;});if(!t)return;
+  var w=window.open('','_blank','width=860,height=680');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+t.code+'</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Urbanist:wght@700;800;900&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,sans-serif;font-size:13px;color:#1a1a1a}.page{padding:28px 32px;max-width:820px;margin:0 auto}.hdr{display:flex;justify-content:space-between;border-bottom:3px solid #D5110A;padding-bottom:14px;margin-bottom:18px}.logo{width:34px;height:34px;background:#D5110A;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:Urbanist,sans-serif;font-weight:900;font-size:10px}.g{display:grid;grid-template-columns:1fr 1fr;gap:12px 22px}.sec h4{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9a9a9a;border-bottom:1px solid #e4e4e4;padding-bottom:4px;margin-bottom:7px}.r{display:flex;gap:7px;margin-bottom:4px}.k{font-size:11px;color:#9a9a9a;font-weight:600;min-width:110px;flex-shrink:0}.v{font-size:12px;color:#1a1a1a;font-weight:500}.tag{display:inline-block;padding:1px 7px;background:#eff6ff;color:#1d4ed8;border-radius:99px;font-size:10px;font-weight:700;margin:2px}.pin{display:inline-block;padding:1px 7px;background:#fffbeb;color:#b45309;border-radius:99px;font-size:10px;font-weight:700;margin:2px}.veh{display:inline-block;padding:1px 6px;background:#f4f4f4;border-radius:3px;font-size:10px;font-weight:700;color:#646464;margin:2px}.tds-y{display:inline-block;padding:1px 8px;background:#ecfdf5;color:#15803d;border-radius:99px;font-size:10px;font-weight:700}.tds-n{display:inline-block;padding:1px 8px;background:#fef2f2;color:#D5110A;border-radius:99px;font-size:10px;font-weight:700}.ft{margin-top:16px;padding-top:10px;border-top:1px solid #e4e4e4;font-size:9.5px;color:#9a9a9a;display:flex;justify-content:space-between}@media print{.np{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="page">'
+    +'<div class="hdr"><div style="display:flex;align-items:center;gap:10px"><div class="logo">SPL</div><div><div style="font-family:Urbanist,sans-serif;font-weight:800;font-size:14px">Transport <span style="color:#D5110A">Module</span></div><div style="font-size:9.5px;color:#9a9a9a;text-transform:uppercase;letter-spacing:.07em">Strandply LLP</div></div></div><div style="text-align:right"><span style="font-family:monospace;background:#f4f4f4;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:700;border:1px solid #e4e4e4">'+t.code+'</span><div style="font-size:10px;color:#9a9a9a;margin-top:4px">'+new Date().toLocaleDateString('en-IN')+'</div></div></div>'
+    +'<div style="font-family:Urbanist,sans-serif;font-size:21px;font-weight:900;margin-bottom:6px">'+t.name+'</div>'
+    +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;align-items:center"><span class="tag">'+t.city+', '+t.state+'</span><span class="pin">📮 '+t.pincode+'</span><span class="'+(t.tds==='Yes'?'tds-y':'tds-n')+'">TDS: '+(t.tds||'No')+'</span></div>'
+    +'<div class="g"><div class="sec"><h4>Contact</h4><div class="r"><span class="k">Contact</span><span class="v">'+t.contact+'</span></div><div class="r"><span class="k">Primary</span><span class="v">'+t.phone+'</span></div>'+(t.phone2?'<div class="r"><span class="k">Secondary</span><span class="v">'+t.phone2+'</span></div>':'')+'<div class="r"><span class="k">Email</span><span class="v">'+(t.email||'—')+'</span></div></div>'
+    +'<div class="sec"><h4>Address</h4><div class="r"><span class="k">Street</span><span class="v">'+(t.address||'—')+'</span></div><div class="r"><span class="k">City, State</span><span class="v">'+t.city+', '+t.state+'</span></div><div class="r"><span class="k">Pincode</span><span class="v">'+t.pincode+'</span></div></div>'
+    +'<div class="sec"><h4>Legal</h4><div class="r"><span class="k">GST</span><span class="v" style="font-family:monospace">'+(t.gst||'—')+'</span></div><div class="r"><span class="k">PAN</span><span class="v" style="font-family:monospace">'+(t.pan||'—')+'</span></div><div class="r"><span class="k">TDS</span><span class="v">'+(t.tds||'No')+'</span></div><div class="r"><span class="k">Credit</span><span class="v">'+(t.credit||'—')+'</span></div></div>'
+    +'<div class="sec"><h4>Bank</h4><div class="r"><span class="k">Bank</span><span class="v">'+(t.bankName||'—')+'</span></div><div class="r"><span class="k">Branch</span><span class="v">'+(t.bankBranch||'—')+'</span></div><div class="r"><span class="k">IFSC</span><span class="v" style="font-family:monospace">'+(t.ifsc||'—')+'</span></div><div class="r"><span class="k">Acc Name</span><span class="v">'+(t.accName||'—')+'</span></div><div class="r"><span class="k">Acc No</span><span class="v" style="font-family:monospace">'+(t.accNo||'—')+'</span></div></div></div>'
+    +'<div class="sec" style="margin-top:12px"><h4>Vehicles</h4><div>'+t.vehicles.map(function(v){return '<span class="veh">'+v+'</span>';}).join('')+'</div></div>'
+    +'<div class="sec" style="margin-top:10px"><h4>Operating Cities</h4><div>'+t.op_cities.map(function(c){return '<span class="tag">'+c.city+', '+c.state+'</span><span class="pin">'+c.pincode+'</span>';}).join(' ')+'</div></div>'
+    +(t.visitingCard&&t.visitingCard.startsWith('data:image')?'<div class="sec" style="margin-top:10px"><h4>Visiting Card</h4><img src="'+t.visitingCard+'" style="max-height:100px;max-width:180px;border-radius:6px;border:1px solid #e4e4e4;margin-top:6px"></div>':'')
+    +'<div class="np" style="display:flex;justify-content:center;gap:10px;padding:18px 0 4px"><button onclick="window.print()" style="padding:8px 18px;background:#D5110A;color:#fff;border:none;border-radius:5px;font-family:Urbanist,sans-serif;font-weight:700;font-size:13px;cursor:pointer">🖨 Print</button><button onclick="window.close()" style="padding:8px 18px;background:#f4f4f4;color:#1a1a1a;border:1px solid #e4e4e4;border-radius:5px;font-family:Urbanist,sans-serif;font-weight:700;font-size:13px;cursor:pointer">Close</button></div>'
+    +'<div class="ft"><span>Strandply LLP — Confidential</span><span>'+t.code+'</span></div>'
+    +'</div>');w.document.close();
+}
+
+// ═══ VEHICLES ════════════════════════════════════════════════════════════
+function renderVehicles(){var mn=document.getElementById('main');mn.innerHTML='<div class="ph"><div><h1>Vehicle Type <em>Master</em></h1></div><button class="btn bp" onclick="openAddVeh()">+ Add Vehicle</button></div><div class="tw"><table class="vt"><thead><tr><th>Name</th><th>Description</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead><tbody id="vTb"></tbody></table></div>';renderVehRows();}
+function renderVehRows(){var tb=document.getElementById('vTb');if(!tb)return;tb.innerHTML=VEHICLES.map(function(v){return '<tr><td style="font-weight:700">'+esc(v.name)+'</td><td style="color:var(--k4)">'+esc(v.desc)+'</td><td><span style="background:#dbeafe;color:#1e3a8a;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:700">'+esc(v.capacity)+'</span></td><td><span class="bd '+(v.active?'bl2':'bi')+'">'+(v.active?'Active':'Inactive')+'</span></td><td><div class="ac"><button class="btn bo bxs" onclick="openAddVeh(\''+v.id+'\')">Edit</button><button class="btn bxs" style="background:'+(v.active?'#fef2f2':'var(--gs)')+';color:'+(v.active?'var(--r)':'var(--g)')+';border-color:'+(v.active?'#fecaca':'#bbf7d0')+'" onclick="togVeh(\''+v.id+'\')">'+(v.active?'Deactivate':'Activate')+'</button></div></td></tr>';}).join('');}
+function openAddVeh(id){var v=id?VEHICLES.find(function(x){return x.id===id;}):null;var ov=document.createElement('div');ov.className='ov';ov.id='addVehMod';ov.innerHTML='<div class="md mds"><div class="mh"><div><h2>'+(v?'Edit':'Add')+' Vehicle Type</h2></div><button class="mcl" onclick="document.getElementById(\'addVehMod\').remove()">✕</button></div><div class="mb"><div class="fg"><div class="fd ff"><label>Name <span class="rq">*</span></label><input id="vN" value="'+esc(v?v.name:'')+'"></div><div class="fd ff"><label>Description</label><input id="vD" value="'+esc(v?v.desc:'')+'"></div><div class="fd"><label>Capacity</label><input id="vC" value="'+esc(v?v.capacity:'')+'"></div><div class="fd"><label>Status</label><select id="vS"><option value="1"'+(v&&v.active?' selected':'')+'>Active</option><option value="0"'+(v&&!v.active?' selected':'')+'>Inactive</option></select></div></div></div><div class="mf"><button class="btn bo" onclick="document.getElementById(\'addVehMod\').remove()">Cancel</button><button class="btn bp" onclick="saveVeh(\''+esc(id||'')+'\')">Save</button></div></div>';document.getElementById('overlays').appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});}
+function saveVeh(id){var n=(document.getElementById('vN')||{value:''}).value.trim();if(!n){toast('Name required','er2');return;}var p={id:id||'v'+Date.now(),name:n,desc:(document.getElementById('vD')||{value:''}).value.trim(),capacity:(document.getElementById('vC')||{value:''}).value.trim()||'Variable',active:document.getElementById('vS').value==='1'};if(id){var i=VEHICLES.findIndex(function(v){return v.id===id;});if(i>=0)VEHICLES[i]=p;}else VEHICLES.push(p);document.getElementById('addVehMod').remove();toast((id?'Updated':'Added')+': '+p.name,'ok');renderVehicles();}
+function togVeh(id){var v=VEHICLES.find(function(x){return x.id===id;});if(v){v.active=!v.active;renderVehRows();toast((v.active?'Activated':'Deactivated')+': '+v.name,'ok');}}
+
+// ═══ IMPORT/EXPORT ════════════════════════════════════════════════════════
+function renderImport(){
+  var mn=document.getElementById('main');
+  mn.innerHTML='';
+  var ph=document.createElement('div');ph.className='ph';ph.innerHTML='<div><h1>Import / <em>Export</em></h1><p>Bulk upload transporters via CSV</p></div>';mn.appendChild(ph);
+  var exp=document.createElement('div');exp.className='card';exp.innerHTML='<div class="sh2"><h3>📤 Export</h3></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn bgn" onclick="exportTp()">⬇ Export Transporters (.csv)</button><button class="btn bo" onclick="exportTpTemplate()">⬇ Download Template</button></div>';mn.appendChild(exp);
+  var imp=document.createElement('div');imp.className='card';imp.innerHTML='<div class="sh2"><h3>📥 Import from CSV</h3></div><div style="background:var(--bls);border:1px solid #bfdbfe;border-radius:7px;padding:10px 14px;font-size:12px;color:var(--bl);margin-bottom:14px">Required columns: Name, Mobile, City, State, Pincode. Optional: Contact, Email, Address, GST, PAN, TDS, Credit, Vehicles, OpCities</div>';mn.appendChild(imp);
+  var dz=document.createElement('div');dz.style.cssText='border:2px dashed var(--br);border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:.15s;margin-bottom:12px';
+  dz.innerHTML='<div style="font-size:32px;margin-bottom:8px">📊</div><div style="font-family:Urbanist,sans-serif;font-weight:800;font-size:14px;color:var(--k)">Drop CSV file here or click to browse</div><div style="font-size:12px;color:var(--k4);margin-top:4px">.csv or .xlsx files accepted</div>';
+  var fi=document.createElement('input');fi.type='file';fi.accept='.csv,.xlsx,.xls';fi.style.display='none';fi.addEventListener('change',function(){if(this.files[0])handleXlsxUpload(this.files[0]);});
+  dz.addEventListener('click',function(){fi.click();});dz.addEventListener('dragover',function(e){e.preventDefault();this.style.borderColor='var(--r)';});dz.addEventListener('dragleave',function(){this.style.borderColor='var(--br)';});dz.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='var(--br)';if(e.dataTransfer.files[0])handleXlsxUpload(e.dataTransfer.files[0]);});
+  imp.appendChild(dz);imp.appendChild(fi);
+  var prev=document.createElement('div');prev.id='importPreview';imp.appendChild(prev);
+}
+
+window.exportTp=function(){var rows=[['Code','Name','Contact','Mobile','Mobile2','Email','Address','City','State','Pincode','GST','PAN','TDS','Credit','IFSC','Bank','Branch','AccName','AccNo','Vehicles','OpCities']];TRANSPORTERS.forEach(function(t){rows.push([t.code,t.name,t.contact,t.phone,t.phone2||'',t.email||'',t.address||'',t.city,t.state,t.pincode,t.gst||'',t.pan||'',t.tds||'No',t.credit||'',t.ifsc||'',t.bankName||'',t.bankBranch||'',t.accName||'',t.accNo||'',t.vehicles.join(', '),t.op_cities.map(function(c){return c.city;}).join(', ')]);});downloadCSV(rows,'transporters_export.csv');toast('Exported '+TRANSPORTERS.length+' transporters ✓','ok');};
+window.exportTpTemplate=function(){var rows=[['Name','Contact','Mobile','Mobile2','Email','Address','City','State','Pincode','GST','PAN','TDS','Credit','Vehicles','OpCities'],['Example Logistics','Ramesh Patel','9876543210','','ramesh@ex.com','Plot 1, GIDC','Surat','Gujarat','395001','24EXMPL1234F1Z5','EXMPL1234F','Yes','15 Days','32FT (10T)','Mumbai, Delhi']];downloadCSV(rows,'transporter_template.csv');toast('Template downloaded ✓','ok');};
+function downloadCSV(rows,filename){var lines=rows.map(function(r){return r.map(function(v){var s=String(v==null?'':v);return(s.indexOf(',')>=0||s.indexOf('"')>=0)?'"'+s.replace(/"/g,'""')+'"':s;}).join(',');});var blob=new Blob([lines.join('\n')],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();}
+
+var _importRows=[];
+window.handleXlsxUpload=function(file){
+  if(!file)return;var preview=document.getElementById('importPreview');if(!preview)return;
+  preview.innerHTML='<div style="padding:14px;text-align:center;color:var(--k4)">⏳ Reading file...</div>';
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var text=e.target.result;var lines=text.split(/\r?\n/).filter(function(l){return l.trim();});
+      if(!lines.length){toast('Empty file','er2');return;}
+      var headers=lines[0].split(',').map(function(h){return h.trim().replace(/"/g,'').toLowerCase();});
+      var dataRows=lines.slice(1).map(function(line){var vals=[];var cur='';var inQ=false;for(var i=0;i<line.length;i++){var ch=line[i];if(ch==='"'){inQ=!inQ;}else if(ch===','&&!inQ){vals.push(cur.trim().replace(/^"|"$/g,''));cur='';}else cur+=ch;}vals.push(cur.trim().replace(/^"|"$/g,''));return vals;}).filter(function(r){return r.some(function(v){return v.trim();});});
+      var get=function(row,name){var i=headers.indexOf(name.toLowerCase());return i>=0?(row[i]||'').trim():'';};
+      var tableRows=dataRows.map(function(row,idx){return{idx:idx+1,name:get(row,'name'),contact:get(row,'contact'),mobile:get(row,'mobile'),mobile2:get(row,'mobile2'),email:get(row,'email'),address:get(row,'address'),city:get(row,'city'),state:get(row,'state'),pincode:get(row,'pincode'),gst:get(row,'gst'),pan:get(row,'pan'),tds:get(row,'tds'),credit:get(row,'credit'),vehicles:get(row,'vehicles'),opCities:get(row,'opcities'),valid:!!(get(row,'name')&&get(row,'mobile')&&get(row,'city'))};});
+      _importRows=tableRows;var validCount=tableRows.filter(function(r){return r.valid;}).length;
+      preview.innerHTML='';
+      var hdr=document.createElement('div');hdr.style.cssText='margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap';hdr.innerHTML='<span style="font-size:13px;font-weight:700">Preview: '+tableRows.length+' rows · '+validCount+' valid</span>';
+      var btn=document.createElement('button');btn.className='btn bgn bsm';btn.textContent='✅ Import '+validCount+' Transporters';btn.addEventListener('click',function(){confirmImport();});hdr.appendChild(btn);preview.appendChild(hdr);
+      var tbl=document.createElement('div');tbl.className='tw';tbl.innerHTML='<table class="vt"><thead><tr><th>#</th><th>Name</th><th>Mobile</th><th>City, State</th><th>Status</th></tr></thead><tbody>'+tableRows.slice(0,20).map(function(r){return '<tr><td>'+r.idx+'</td><td style="font-weight:'+(r.valid?'700':'400')+'">'+esc(r.name||'—')+'</td><td>'+esc(r.mobile||'—')+'</td><td>'+esc((r.city||'—')+(r.state?', '+r.state:''))+'</td><td><span class="bd '+(r.valid?'bl2':'bb')+'">'+(r.valid?'✓ Ready':'⚠ Incomplete')+'</span></td></tr>';}).join('')+(tableRows.length>20?'<tr><td colspan="5" style="text-align:center;color:var(--k4);font-size:11px">... and '+(tableRows.length-20)+' more</td></tr>':'')+'</tbody></table>';preview.appendChild(tbl);
+    }catch(err){preview.innerHTML='<div style="color:var(--r);padding:10px">Error: '+esc(err.message)+'</div>';}
+  };reader.readAsText(file);
+};
+
+window.confirmImport=function(){
+  var rows=_importRows;if(!rows||!rows.length){toast('No data to import','er2');return;}
+  var added=0;rows.forEach(function(r){
+    if(!r.valid)return;
+    var t={_id:'t'+(TRANSPORTERS.length+1),name:r.name,code:'TRP-'+yr()+'-'+(String(TRANSPORTERS.length+1).padStart(3,'0')),contact:r.contact||'',phone:r.mobile||'',phone2:r.mobile2||'',email:r.email||'',address:r.address||'',city:r.city||'',state:r.state||'',pincode:r.pincode||'',gst:(r.gst||'').toUpperCase(),pan:(r.pan||'').toUpperCase(),tds:r.tds||'No',credit:r.credit||'Against Delivery',ifsc:'',bankName:'',bankBranch:'',accName:'',accNo:'',visitingCard:'',vehicles:r.vehicles?r.vehicles.split(',').map(function(v){return v.trim();}).filter(Boolean):['32FT (10T)'],op_cities:r.opCities?r.opCities.split(',').map(function(v){return{city:v.trim(),state:'',pincode:''};}).filter(function(x){return x.city;}):[], rating:3,status:'active'};
+    TRANSPORTERS.push(t);added++;
+  });
+  _importRows=[];toast(added+' transporters imported ✓','ok');showSec('transporters');
+};
+
+// ═══ MISC ═════════════════════════════════════════════════════════════════
+function renderTrips(){document.getElementById('main').innerHTML='<div class="ph"><div><h1>Trip <em>Tracking</em></h1></div></div><div class="er"><div class="ei">🗺️</div><h3>Trip Tracking</h3><p>Connect GPS/FASTag API for live tracking</p></div>';}
+function renderReports(){document.getElementById('main').innerHTML='<div class="ph"><div><h1>Freight <em>Reports</em></h1></div></div><div class="sr"><div class="sc scr" onclick="showSec(\'reports\')"><div class="sl">💰 Monthly Freight</div><div class="sv">₹4.2L</div><div class="ss">This month</div></div><div class="sc scl" onclick="showSec(\'trips\')"><div class="sl">📦 Trips Done</div><div class="sv">89</div><div class="ss">Completed</div></div><div class="sc sca" onclick="showSec(\'reports\')"><div class="sl">⏱️ On-Time</div><div class="sv">94%</div><div class="ss">Delivery rate</div></div></div><div class="er" style="margin-top:12px"><div class="ei">📈</div><h3>Analytics Dashboard</h3><p>Integrate Power BI / Metabase for full reports</p></div>';}
+
+// ═══ BOOT ═════════════════════════════════════════════════════════════════
+updateBadges();
+renderDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Strandply LLP — Company Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════ TOKENS ═══════════ */
+:root{
+  --red:#B91C1C;--red2:#DC2626;--red3:#EF4444;--red-dark:#7F1D1D;
+  --red-bg:#FEF2F2;--red-mid:#FECACA;
+  --ink:#111827;--ink2:#374151;--ink3:#6B7280;--ink4:#D1D5DB;--ink5:#9CA3AF;
+  --bg:#F3F4F6;--bg2:#FFFFFF;--bg3:#F9FAFB;
+  --border:#E5E7EB;--border2:#D1D5DB;
+  --green:#15803D;--green-bg:#F0FDF4;--green-mid:#86EFAC;
+  --blue:#1D4ED8;--blue-bg:#EFF6FF;--blue-mid:#93C5FD;
+  --amber:#B45309;--amber-bg:#FFFBEB;--amber-mid:#FDE68A;
+  --purple:#7C3AED;--purple-bg:#F5F3FF;--purple-mid:#C4B5FD;
+  --teal:#0F766E;--teal-bg:#F0FDFA;--teal-mid:#5EEAD4;
+  --rose:#BE185D;--rose-bg:#FDF2F8;
+  --body:'DM Sans',system-ui,sans-serif;
+  --disp:'DM Serif Display',Georgia,serif;
+  --mono:'JetBrains Mono',monospace;
+  --sh1:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 4px 16px rgba(0,0,0,.09);
+  --sh3:0 20px 48px rgba(0,0,0,.15);
+  --r:8px;--r2:12px;--r3:16px;
+}
+/* ═══════════ RESET ═══════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--body);color:var(--ink);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--ink4);border-radius:3px}
+
+/* ═══════════ SCREEN SWITCHER ═══════════ */
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+#screen-login{flex-direction:row;min-height:100vh}
+
+/* ═══════════════════════════════════════
+   LOGIN SCREEN
+═══════════════════════════════════════ */
+.ll{width:44%;background:linear-gradient(155deg,#450a0a 0%,var(--red-dark) 35%,var(--red) 70%,#C2410C 100%);padding:52px 48px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;flex-shrink:0}
+.ll::before,.ll::after{content:'';position:absolute;border-radius:50%;pointer-events:none}
+.ll::before{width:420px;height:420px;top:-130px;right:-130px;background:rgba(255,255,255,.05)}
+.ll::after{width:260px;height:260px;bottom:-80px;left:-60px;background:rgba(255,255,255,.04)}
+.ll-brand{position:relative;z-index:1}
+.ll-logo{width:54px;height:54px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.32);border-radius:13px;display:flex;align-items:center;justify-content:center;margin-bottom:22px}
+.ll-logo-t{font-family:var(--disp);font-size:21px;color:#fff}
+.ll-co{font-family:var(--disp);font-size:34px;color:#fff;line-height:1.1;margin-bottom:8px}
+.ll-co em{font-style:italic;opacity:.7;font-weight:300}
+.ll-tag{font-size:12.5px;color:rgba(255,255,255,.68);line-height:1.65;max-width:255px}
+.ll-mods{position:relative;z-index:1}
+.ll-mod{display:flex;align-items:center;gap:10px;margin-bottom:13px}
+.ll-mod-icon{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ll-mod-text{font-size:12px;color:rgba(255,255,255,.78);line-height:1.35}
+.ll-mod-text strong{color:#fff;display:block;font-size:13px;margin-bottom:1px}
+.ll-foot{font-size:11px;color:rgba(255,255,255,.44);position:relative;z-index:1}
+
+.lr{flex:1;display:flex;align-items:center;justify-content:center;padding:48px 52px;background:var(--bg)}
+.lf{width:100%;max-width:390px}
+.lf-title{font-family:var(--disp);font-size:30px;color:var(--ink);margin-bottom:4px}
+.lf-sub{font-size:13px;color:var(--ink3);margin-bottom:30px}
+.f-lbl{display:block;font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.25px}
+.f-inp{width:100%;padding:11px 14px;border:1.5px solid var(--border2);border-radius:var(--r);background:var(--bg2);font-size:14px;color:var(--ink);transition:border-color .15s,box-shadow .15s;outline:none}
+.f-inp:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(185,28,28,.1)}
+.f-inp.err{border-color:var(--red3);background:var(--red-bg)}
+.f-grp{margin-bottom:17px}
+.pw-wr{position:relative}
+.pw-tog{position:absolute;right:11px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--ink3);font-size:17px;user-select:none;padding:3px;line-height:1}
+.l-btn{width:100%;padding:12px;border:none;border-radius:var(--r);background:var(--red);color:#fff;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 14px rgba(185,28,28,.28);display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-top:6px}
+.l-btn:hover:not(:disabled){background:var(--red2);box-shadow:0 6px 20px rgba(185,28,28,.36);transform:translateY(-1px)}
+.l-btn:disabled{opacity:.65;cursor:not-allowed;transform:none}
+.l-err{background:var(--red-bg);border:1.5px solid var(--red-mid);border-radius:var(--r);padding:10px 13px;font-size:12px;color:var(--red2);margin-bottom:15px;display:none;align-items:center;gap:7px}
+.l-err.show{display:flex}
+.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.28);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ═══════════════════════════════════════
+   PORTAL LAYOUT
+═══════════════════════════════════════ */
+#screen-portal{background:var(--bg)}
+
+/* Top bar */
+.tb{background:var(--bg2);border-bottom:1.5px solid var(--border);height:58px;display:flex;align-items:center;padding:0 28px;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--sh1);flex-shrink:0}
+.tb-l{display:flex;align-items:center;gap:11px}
+.tb-logo{width:36px;height:36px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-size:14px;color:#fff;flex-shrink:0}
+.tb-nm{font-size:15px;font-weight:700}
+.tb-sub{font-size:11px;color:var(--ink3)}
+.tb-r{display:flex;align-items:center;gap:8px}
+.tb-nav{display:flex;align-items:center;gap:2px;margin-right:10px}
+.tb-nav-btn{padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:500;color:var(--ink3);cursor:pointer;border:1.5px solid transparent;background:transparent;transition:all .15s;display:flex;align-items:center;gap:5px}
+.tb-nav-btn:hover{background:var(--bg3);color:var(--ink)}
+.tb-nav-btn.act{background:var(--red-bg);color:var(--red);border-color:var(--red-mid);font-weight:600}
+.uch{display:flex;align-items:center;gap:7px;padding:5px 13px 5px 5px;border-radius:20px;background:var(--bg3);border:1.5px solid var(--border);cursor:default}
+.uav{width:28px;height:28px;border-radius:50%;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.unm{font-size:12.5px;font-weight:600}
+.url{font-size:10px;color:var(--ink3)}
+.out-btn{padding:7px 14px;border-radius:var(--r);border:1.5px solid var(--border);background:var(--bg2);font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+.out-btn:hover{border-color:var(--red-mid);color:var(--red);background:var(--red-bg)}
+
+/* ═══════════════════════════════════════
+   PORTAL HOME
+═══════════════════════════════════════ */
+#pane-home{flex:1}
+.ph-hero{background:linear-gradient(135deg,#450a0a 0%,var(--red-dark) 40%,var(--red) 75%,#C2410C 100%);padding:38px 40px;position:relative;overflow:hidden}
+.ph-hero::before{content:'';position:absolute;top:-90px;right:-90px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,.05);pointer-events:none}
+.ph-hero::after{content:'';position:absolute;bottom:-55px;left:28%;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none}
+.ph-hero-in{max-width:980px;margin:0 auto;position:relative;z-index:1}
+.ph-gr{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:4px}
+.ph-nm{font-family:var(--disp);font-size:clamp(22px,4vw,34px);color:#fff;line-height:1.1;margin-bottom:5px}
+.ph-ac{font-size:13px;color:rgba(255,255,255,.72)}
+.ph-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 12px;border-radius:20px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);font-size:11px;font-weight:600;color:#fff;text-transform:uppercase;letter-spacing:.6px;margin-top:9px}
+
+.ph-body{max-width:980px;margin:0 auto;padding:28px 40px 40px}
+.sec-hd{margin-bottom:14px}
+.sec-t{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:2px}
+.sec-s{font-size:12px;color:var(--ink3)}
+.sec-sep{font-size:10.5px;font-weight:700;color:var(--ink4);text-transform:uppercase;letter-spacing:.7px;margin:26px 0 13px;display:flex;align-items:center;gap:9px}
+.sec-sep::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* Module grid */
+.mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:13px;margin-bottom:24px}
+.mc{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh1);transition:all .2s;display:flex;flex-direction:column;animation:fup .35s ease both}
+.mc.open{cursor:pointer}
+.mc.open:hover{box-shadow:var(--sh2);transform:translateY(-2px)}
+.mc.lock{opacity:.48;cursor:not-allowed;filter:grayscale(.45)}
+@keyframes fup{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.mc:nth-child(2){animation-delay:.05s}.mc:nth-child(3){animation-delay:.1s}.mc:nth-child(4){animation-delay:.15s}.mc:nth-child(5){animation-delay:.2s}.mc:nth-child(6){animation-delay:.25s}
+.mc-top{padding:18px 18px 14px;position:relative;flex-shrink:0}
+/* gradient themes */
+.ct-red   .mc-top{background:linear-gradient(135deg,#7F1D1D,#B91C1C)}
+.ct-blue  .mc-top{background:linear-gradient(135deg,#1e3a8a,#1D4ED8)}
+.ct-green .mc-top{background:linear-gradient(135deg,#14532d,#15803D)}
+.ct-amber .mc-top{background:linear-gradient(135deg,#78350f,#B45309)}
+.ct-teal  .mc-top{background:linear-gradient(135deg,#134e4a,#0F766E)}
+.ct-purple .mc-top{background:linear-gradient(135deg,#4c1d95,#7C3AED)}
+.ct-rose  .mc-top{background:linear-gradient(135deg,#881337,#BE185D)}
+.mc-icon{font-size:30px;margin-bottom:9px;display:block}
+.mc-name{font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;line-height:1.2}
+.mc-desc{font-size:11px;color:rgba(255,255,255,.72);line-height:1.35}
+.mc-sbadge{position:absolute;top:13px;right:13px;display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.msb-live{background:rgba(21,128,61,.28);color:#86EFAC;border:1px solid rgba(134,239,172,.28)}
+.msb-soon{background:rgba(180,83,9,.22);color:#FDE68A;border:1px solid rgba(253,230,138,.22)}
+.msb-lock{background:rgba(0,0,0,.28);color:rgba(255,255,255,.48);border:1px solid rgba(255,255,255,.14)}
+.mc-sbadge::before{content:'●';font-size:6px}
+.mc-body{padding:13px 15px;flex:1;display:flex;flex-direction:column;gap:5px}
+.mc-feat{font-size:11px;color:var(--ink2);display:flex;align-items:flex-start;gap:4px;line-height:1.4}
+.mc-feat::before{content:'✓';color:var(--green);font-weight:700;font-size:10px;flex-shrink:0;margin-top:2px}
+.mc-feat.na::before{content:'○';color:var(--ink4)}.mc-feat.na{color:var(--ink4)}
+.mc-foot{padding:10px 15px;border-top:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mc-url{font-family:var(--mono);font-size:10px;color:var(--ink3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.mc-btn-o{display:inline-flex;align-items:center;gap:3px;padding:4px 11px;border-radius:6px;font-size:11px;font-weight:600;border:1.5px solid var(--red-mid);color:var(--red);flex-shrink:0;transition:all .15s;cursor:pointer;background:transparent}
+.mc.open:hover .mc-btn-o{background:var(--red);color:#fff;border-color:var(--red)}
+.mc-btn-d{display:inline-flex;align-items:center;gap:3px;padding:4px 11px;border-radius:6px;font-size:11px;font-weight:600;border:1.5px solid var(--border);color:var(--ink4);flex-shrink:0;cursor:not-allowed;background:transparent}
+
+/* No access banner */
+.nab{background:var(--red-bg);border:1.5px solid var(--red-mid);border-radius:var(--r2);padding:13px 17px;display:flex;gap:11px;align-items:flex-start;margin-bottom:14px}
+.nab-t{font-size:12.5px;font-weight:600;color:var(--red);margin-bottom:2px}
+.nab-b{font-size:12px;color:var(--ink2);line-height:1.6}
+
+/* Admin stats */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:24px}
+.sc{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:13px 15px;box-shadow:var(--sh1)}
+.sc-v{font-size:22px;font-weight:800;font-family:var(--mono);line-height:1;margin-bottom:3px}
+.sc-l{font-size:10.5px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+
+/* ═══════════════════════════════════════
+   ADMIN PANEL
+═══════════════════════════════════════ */
+#pane-admin{flex:1;background:var(--bg)}
+.ap-head{background:var(--bg2);border-bottom:1.5px solid var(--border);padding:22px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ap-title{font-size:18px;font-weight:700}
+.ap-sub{font-size:12px;color:var(--ink3);margin-top:2px}
+.ap-body{max-width:1100px;margin:0 auto;padding:24px 32px}
+.ap-grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:flex-start}
+@media(max-width:900px){.ap-grid{grid-template-columns:1fr}}
+
+/* Card */
+.card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh1)}
+.card-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
+.card-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px}
+.card-sub{font-size:11px;color:var(--ink3)}
+.card-body{padding:16px 18px}
+
+/* User list */
+.ul-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.ul-item:last-child{border-bottom:none}
+.ul-item:hover{background:var(--bg3)}
+.ul-item.sel{background:var(--red-bg);border-left:3px solid var(--red)}
+.ul-item.sel .ul-nm{color:var(--red)}
+.ul-av{width:34px;height:34px;border-radius:50%;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ul-nm{font-size:13px;font-weight:600;color:var(--ink)}
+.ul-ro{font-size:11px;color:var(--ink3);margin-top:1px}
+.ul-badge{display:inline-flex;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;border:1px solid;margin-left:auto;flex-shrink:0}
+.b-adm{background:var(--red-bg);color:var(--red);border-color:var(--red-mid)}
+.b-usr{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-mid)}
+
+/* Add user form */
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f-grp-sm{margin-bottom:12px}
+.f-lbl-sm{display:block;font-size:11px;font-weight:600;color:var(--ink2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.2px}
+.f-inp-sm{width:100%;padding:9px 11px;border:1.5px solid var(--border2);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:var(--bg2);transition:border-color .14s}
+.f-inp-sm:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(185,28,28,.09)}
+.f-sel{width:100%;padding:9px 11px;border:1.5px solid var(--border2);border-radius:var(--r);font-size:13px;color:var(--ink);outline:none;background:var(--bg2);cursor:pointer}
+.f-sel:focus{border-color:var(--red)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:var(--r);font-size:12px;font-weight:600;border:1.5px solid;cursor:pointer;transition:all .15s}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red);box-shadow:0 3px 10px rgba(185,28,28,.22)}
+.btn-red:hover{background:var(--red2);box-shadow:0 4px 14px rgba(185,28,28,.3);transform:translateY(-1px)}
+.btn-ghost{background:var(--bg2);color:var(--ink2);border-color:var(--border)}
+.btn-ghost:hover{border-color:var(--border2);background:var(--bg3)}
+.btn-danger{background:#FEF2F2;color:var(--red2);border-color:var(--red-mid)}
+.btn-danger:hover{background:var(--red);color:#fff}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn-full{width:100%;justify-content:center}
+
+/* Permission editor */
+.pe-tabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:1.5px solid var(--border);padding-bottom:0}
+.pe-tab{padding:8px 14px;font-size:12px;font-weight:500;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:all .14s}
+.pe-tab:hover{color:var(--ink)}
+.pe-tab.act{color:var(--red);border-bottom-color:var(--red);font-weight:600}
+.pe-pane{display:none}.pe-pane.act{display:block}
+
+/* Module permission row */
+.mp-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)}
+.mp-row:last-child{border-bottom:none}
+.mp-left{display:flex;align-items:flex-start;gap:9px;flex:1;min-width:0}
+.mp-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.mp-name{font-size:13px;font-weight:600}
+.mp-desc{font-size:11px;color:var(--ink3);margin-top:1px}
+.mp-toggle{flex-shrink:0;display:flex;align-items:center;gap:8px}
+/* Toggle switch */
+.tog{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tog-sl{position:absolute;inset:0;background:var(--ink4);border-radius:11px;transition:background .2s}
+.tog-sl::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tog input:checked + .tog-sl{background:var(--green)}
+.tog input:checked + .tog-sl::before{transform:translateX(18px)}
+
+/* Sub-module accordion */
+.sm-section{background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);margin-top:6px;overflow:hidden}
+.sm-head{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;cursor:pointer;user-select:none}
+.sm-head-t{font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sm-head-arr{font-size:10px;color:var(--ink3);transition:transform .2s}
+.sm-head.open .sm-head-arr{transform:rotate(180deg)}
+.sm-body{display:none;padding:8px 13px;border-top:1px solid var(--border)}
+.sm-body.open{display:block}
+.sm-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border)}
+.sm-item:last-child{border-bottom:none}
+.sm-item-t{font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.sm-item-t::before{content:'└';color:var(--ink4);font-size:11px}
+
+/* Confirm dialog */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:none;align-items:center;justify-content:center;animation:fdin .15s ease}
+.overlay.show{display:flex}
+@keyframes fdin{from{opacity:0}to{opacity:1}}
+.dialog{background:var(--bg2);border-radius:var(--r3);padding:28px;max-width:400px;width:90%;box-shadow:var(--sh3);animation:dlgin .2s ease}
+@keyframes dlgin{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.dlg-icon{font-size:32px;margin-bottom:12px;text-align:center}
+.dlg-title{font-size:16px;font-weight:700;margin-bottom:6px;text-align:center}
+.dlg-body{font-size:13px;color:var(--ink2);text-align:center;margin-bottom:20px;line-height:1.6}
+.dlg-btns{display:flex;gap:9px;justify-content:center}
+
+/* Toast */
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:7px;z-index:9999;pointer-events:none}
+.toast{background:var(--ink);color:#fff;padding:10px 18px;border-radius:var(--r);font-size:13px;font-weight:500;box-shadow:var(--sh2);display:flex;align-items:center;gap:8px;animation:tin .3s ease;pointer-events:auto;max-width:320px}
+.toast.hide{animation:tout .3s ease forwards}
+.toast.t-ok{border-left:4px solid var(--green)}
+.toast.t-err{border-left:4px solid var(--red3)}
+.toast.t-info{border-left:4px solid var(--blue-mid)}
+@keyframes tin{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+@keyframes tout{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(14px)}}
+
+/* Empty state */
+.empty{text-align:center;padding:40px 20px;color:var(--ink3)}
+.empty-icon{font-size:36px;opacity:.4;margin-bottom:10px}
+.empty-t{font-size:14px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+
+/* Role preview */
+.role-prev-mod{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);margin-bottom:6px;font-size:12px}
+.role-prev-icon{font-size:16px;flex-shrink:0}
+.role-prev-name{font-weight:600;flex:1}
+.role-prev-subs{font-size:10.5px;color:var(--ink3)}
+.role-tbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.role-tbl th{background:var(--ink);color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:600}
+.role-tbl th:first-child{border-radius:6px 0 0 0}.role-tbl th:last-child{border-radius:0 6px 0 0}
+.role-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.role-tbl tr:last-child td{border-bottom:none}
+.role-tbl tr:nth-child(even) td{background:var(--bg3)}
+.role-tbl tr:hover td{background:var(--red-bg)}
+.role-mod-tag{display:inline-flex;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;border:1px solid;margin:1px}
+
+/* ── Role management cards ── */
+.role-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh1);transition:box-shadow .2s}
+.role-card:hover{box-shadow:var(--sh2)}
+.rc-top{padding:16px 18px 12px;display:flex;align-items:flex-start;gap:12px}
+.rc-av{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:700;flex-shrink:0}
+.rc-name{font-size:14px;font-weight:700;margin-bottom:2px}
+.rc-id{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.rc-desc{font-size:11.5px;color:var(--ink2);margin-top:3px;line-height:1.4}
+.rc-body{padding:10px 16px;border-top:1px solid var(--border);background:var(--bg3);display:flex;flex-wrap:wrap;gap:4px}
+.rc-mod{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;border:1px solid}
+.rc-foot{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.rc-users{font-size:11px;color:var(--ink3)}
+.rc-sys{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-mid)}
+
+/* ════════════════════════════════════════
+   RESPONSIVE DESIGN
+   Desktop  : ≥ 1024px  — full layout
+   Tablet   : 600–1023px — adapted grid
+   Mobile   : < 600px   — single column, compact
+════════════════════════════════════════ */
+
+/* ── Desktop baseline (already the default) ── */
+@media(min-width:1024px){
+  .ap-grid{grid-template-columns:320px 1fr}
+  .tb-nav-btn{padding:7px 14px;font-size:12px}
+  .ll{width:44%}
+}
+
+/* ── Tablet (600px – 1023px) ── */
+@media(max-width:1023px) and (min-width:600px){
+  .ap-grid{grid-template-columns:1fr}
+  .tb{height:54px;padding:0 18px}
+  .tb-nav-btn{padding:6px 10px;font-size:11.5px}
+  .tb-nm{font-size:14px}
+  .ll{width:40%}
+  .ph-body{padding:20px 22px}
+  .ap-body{padding:18px 22px}
+  .mod-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+  #roles-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .f-row{grid-template-columns:1fr}
+  .dialog{padding:22px 18px}
+}
+
+/* ── Mobile (< 600px) ── */
+@media(max-width:599px){
+  /* Login */
+  #screen-login{flex-direction:column!important}
+  .ll{width:100%!important;padding:24px 18px!important;min-height:auto}
+  .ll-mods{display:none}
+  .ll-co{font-size:26px}
+  .lr{padding:24px 18px}
+  .lf-title{font-size:24px}
+
+  /* Topbar — scrollable nav on mobile */
+  .tb{height:auto;padding:0;flex-direction:column;align-items:stretch}
+  .tb-l{padding:10px 14px 0}
+  .tb-sub{display:none}
+  .tb-r{padding:0 14px 8px;gap:6px;flex-wrap:wrap}
+  .tb-nav{gap:2px;overflow-x:auto;padding:4px 14px;border-top:1px solid var(--border);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tb-nav::-webkit-scrollbar{display:none}
+  .tb-nav-btn{padding:6px 10px;font-size:11px;white-space:nowrap}
+  .uch{padding:4px 10px 4px 4px}
+  .unm{font-size:12px}
+  .url{display:none}
+  .out-btn{padding:6px 10px;font-size:11px}
+
+  /* Hero */
+  .ph-hero{padding:20px 14px}
+  .ph-nm{font-size:22px}
+  .ph-gr{font-size:12px}
+  .ph-badge{font-size:10px;padding:2px 9px}
+
+  /* Portal body */
+  .ph-body{padding:14px}
+  .ap-body{padding:12px}
+  .ap-head{padding:14px;flex-wrap:wrap;gap:10px}
+  .ap-title{font-size:16px}
+
+  /* Module grid — 1 column on mobile */
+  .mod-grid{grid-template-columns:1fr}
+  #roles-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
+  .sc{padding:11px 12px}
+  .sc-v{font-size:20px}
+
+  /* Admin grid — stack vertically */
+  .ap-grid{grid-template-columns:1fr}
+
+  /* User list — compact */
+  .ul-item{padding:9px 12px}
+  .ul-av{width:30px;height:30px;font-size:11px}
+  .ul-nm{font-size:12px}
+
+  /* Forms — single column */
+  .f-row{grid-template-columns:1fr}
+
+  /* Dialogs */
+  .dialog{padding:20px 16px;width:95%!important;border-radius:12px}
+
+  /* PE tabs — scrollable */
+  .pe-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .pe-tabs::-webkit-scrollbar{display:none}
+  .pe-tab{white-space:nowrap;flex-shrink:0}
+
+  /* Login panel */
+  .ll-brand{margin-bottom:16px}
+  .ll-logo{width:44px;height:44px;margin-bottom:14px}
+  .ll-foot{margin-top:16px}
+}
+
+/* ── Very small phones (< 380px) ── */
+@media(max-width:379px){
+  .mod-grid{grid-template-columns:1fr}
+  .tb-nav-btn{padding:5px 8px;font-size:10.5px}
+  .stats-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════ -->
+<div class="screen active" id="screen-login" style="flex-direction:row;min-height:100vh">
+  <!-- Left brand panel -->
+  <div class="ll">
+    <div class="ll-brand">
+      <div class="ll-logo"><div class="ll-logo-t">SL</div></div>
+      <div class="ll-co">Strandply<br><em>LLP</em></div>
+      <div class="ll-tag">Engineered wood board manufacturer — Wankaner, Morbi, Gujarat</div>
+    </div>
+    <div class="ll-mods">
+      <div class="ll-mod"><div class="ll-mod-icon">📦</div><div class="ll-mod-text"><strong>SampleTrack Pro</strong>Dispatch & sample tracking</div></div>
+      <div class="ll-mod"><div class="ll-mod-icon">🏭</div><div class="ll-mod-text"><strong>Vendor Portal</strong>Supplier management</div></div>
+      <div class="ll-mod"><div class="ll-mod-icon">⚙️</div><div class="ll-mod-text"><strong>Production MIS</strong>Chipping, Hot Press & Weight</div></div>
+      <div class="ll-mod"><div class="ll-mod-icon">🚛</div><div class="ll-mod-text"><strong>Transport Module</strong>Freight & order flow</div></div>
+      <div class="ll-mod"><div class="ll-mod-icon">📋</div><div class="ll-mod-text"><strong>Purchase ERP</strong>Material procurement</div></div>
+      <div class="ll-mod"><div class="ll-mod-icon">📊</div><div class="ll-mod-text"><strong>Reports Hub</strong>Analytics & dashboards</div></div>
+    </div>
+    <div class="ll-foot">LLPIN: AAP-7300 &nbsp;·&nbsp; www.strandply.in &nbsp;·&nbsp; Company Portal v2.0</div>
+  </div>
+  <!-- Right form -->
+  <div class="lr">
+    <div class="lf">
+      <div class="lf-title">Welcome back</div>
+      <div class="lf-sub">Sign in to access your assigned modules</div>
+      <div class="l-err" id="l-err"><span>⚠️</span><span id="l-err-msg">Incorrect credentials</span></div>
+      <div class="f-grp">
+        <label class="f-lbl">Username</label>
+        <input class="f-inp" id="li-user" type="text" placeholder="Enter username" autocomplete="username" spellcheck="false">
+      </div>
+      <div class="f-grp">
+        <label class="f-lbl">Password</label>
+        <div class="pw-wr">
+          <input class="f-inp" id="li-pass" type="password" placeholder="Enter password" autocomplete="current-password">
+          <span class="pw-tog" id="pw-tog">👁</span>
+        </div>
+      </div>
+      <button class="l-btn" id="l-btn" onclick="doLogin()">Sign In →</button>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--ink3);text-align:center;line-height:1.75">
+        Contact your system administrator if you need access.<br>
+        <strong style="color:var(--ink2)">Strandply LLP — Company Portal</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PORTAL SCREEN
+═══════════════════════════════════════ -->
+<div class="screen" id="screen-portal">
+  <!-- Top bar -->
+  <div class="tb">
+    <div class="tb-l">
+      <div class="tb-logo">SL</div>
+      <div><div class="tb-nm">Strandply LLP</div><div class="tb-sub">Company Portal</div></div>
+    </div>
+    <div class="tb-r">
+      <div class="tb-nav">
+        <button class="tb-nav-btn act" id="nav-home" onclick="showPane('home')">🏠 My Portal</button>
+        <button class="tb-nav-btn" id="nav-admin" onclick="showPane('admin')" style="display:none">👥 Users</button>
+        <button class="tb-nav-btn" id="nav-roles" onclick="showPane('roles')" style="display:none">🎭 Roles</button>
+      </div>
+      <div class="uch">
+        <div class="uav" id="p-av">A</div>
+        <div><div class="unm" id="p-nm">User</div><div class="url" id="p-rl">Role</div></div>
+      </div>
+      <button class="out-btn" onclick="doLogout()">⎋ Sign Out</button>
+    </div>
+  </div>
+
+  <!-- ── HOME PANE ── -->
+  <div id="pane-home">
+    <div class="ph-hero">
+      <div class="ph-hero-in">
+        <div class="ph-gr" id="p-gr">Good morning,</div>
+        <div class="ph-nm" id="p-nm2">Welcome</div>
+        <div class="ph-ac" id="p-ac">You have access to the following modules.</div>
+        <div class="ph-badge" id="p-bdg">User</div>
+      </div>
+    </div>
+    <div class="ph-body">
+      <!-- Admin stats -->
+      <div id="adm-stats" style="display:none">
+        <div class="stats-row">
+          <div class="sc"><div class="sc-v" style="color:var(--red)" id="st-u">0</div><div class="sc-l">Total Users</div></div>
+          <div class="sc"><div class="sc-v" style="color:var(--green)" id="st-lv">0</div><div class="sc-l">Live Modules</div></div>
+          <div class="sc"><div class="sc-v" style="color:var(--amber)" id="st-sn">0</div><div class="sc-l">Coming Soon</div></div>
+          <div class="sc"><div class="sc-v" style="color:var(--blue)">₹0</div><div class="sc-l">Hosting Cost</div></div>
+        </div>
+      </div>
+      <div class="sec-hd">
+        <div class="sec-t">🗂 My Modules</div>
+        <div class="sec-s" id="my-sub">Loading…</div>
+      </div>
+      <div class="mod-grid" id="my-grid"></div>
+      <div id="lock-sec" style="display:none">
+        <div class="sec-sep">Restricted Modules</div>
+        <div class="nab"><div style="font-size:18px">🔒</div>
+          <div><div class="nab-t">Access Restricted</div><div class="nab-b" id="lock-body">These modules are not assigned to your account.</div></div>
+        </div>
+        <div class="mod-grid" id="lock-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ADMIN PANE ── -->
+  <div id="pane-admin" style="display:none;flex:1;flex-direction:column">
+    <div class="ap-head">
+      <div>
+        <div class="ap-title">⚙️ Admin Panel</div>
+        <div class="ap-sub">Manage users, module access and sub-module permissions</div>
+      </div>
+      <button class="btn btn-red" onclick="openAddUser()">＋ Add New User</button>
+    </div>
+    <div class="ap-body">
+      <div class="ap-grid">
+
+        <!-- Left: user list -->
+        <div>
+          <div class="card">
+            <div class="card-hd">
+              <div class="card-title">👥 All Users</div>
+              <div class="card-sub" id="user-count-lbl">0 users</div>
+            </div>
+            <div id="user-list"></div>
+          </div>
+        </div>
+
+        <!-- Right: editor -->
+        <div>
+          <!-- Empty state -->
+          <div class="card" id="editor-empty">
+            <div class="card-body">
+              <div class="empty">
+                <div class="empty-icon">👆</div>
+                <div class="empty-t">Select a user to edit</div>
+                <div>Click any user on the left to manage their access</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Editor (hidden until user selected) -->
+          <div id="editor" style="display:none">
+            <!-- User info card -->
+            <div class="card" style="margin-bottom:14px">
+              <div class="card-hd" id="ed-head">
+                <div class="card-title"><span id="ed-av-sm" style="width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;margin-right:4px"></span><span id="ed-fullname">User</span></div>
+                <button class="btn btn-sm btn-danger" onclick="confirmDeleteUser()">🗑 Delete User</button>
+              </div>
+              <div class="card-body">
+                <div class="f-row" style="margin-bottom:10px">
+                  <div class="f-grp-sm">
+                    <label class="f-lbl-sm">Full Name</label>
+                    <input class="f-inp-sm" id="ed-name" placeholder="Full name">
+                  </div>
+                  <div class="f-grp-sm">
+                    <label class="f-lbl-sm">Username</label>
+                    <input class="f-inp-sm" id="ed-user" placeholder="username" autocomplete="off">
+                  </div>
+                </div>
+                <div class="f-row" style="margin-bottom:10px">
+                  <div class="f-grp-sm">
+                    <label class="f-lbl-sm">Password <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:var(--ink3)">(blank = keep current)</span></label>
+                    <input class="f-inp-sm" id="ed-pass" type="password" placeholder="New password" autocomplete="new-password">
+                  </div>
+                  <div class="f-grp-sm">
+                    <label class="f-lbl-sm">Department</label>
+                    <input class="f-inp-sm" id="ed-dept" placeholder="e.g. Dispatch Dept">
+                  </div>
+                </div>
+                <div class="f-row">
+                  <div class="f-grp-sm">
+                    <label class="f-lbl-sm">Role</label>
+                    <select class="f-sel" id="ed-role">
+                      <option value="admin">Administrator</option>
+                      <option value="dispatch">Dispatch Executive</option>
+                      <option value="marketing">Marketing Executive</option>
+                      <option value="management">Management</option>
+                      <option value="vendor">Vendor Relations</option>
+                      <option value="accounts">Accounts</option>
+                      <option value="hr">HR Executive</option>
+                      <option value="transport">Transport Executive</option>
+                      <option value="erp">Purchase Manager</option>
+                      <option value="stock">Stock Manager</option>
+                      <option value="maintenance">Maintenance Manager</option>
+                    </select>
+                  </div>
+                  <div class="f-grp-sm">
+                    <label class="f-lbl-sm">Avatar Initials</label>
+                    <input class="f-inp-sm" id="ed-avatar" placeholder="e.g. AP" maxlength="3">
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button class="btn btn-red btn-full" onclick="saveUserEdits()">💾 Save User Details</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Permission editor -->
+            <div class="card">
+              <div class="card-hd">
+                <div class="card-title">🔐 Access & Permissions</div>
+                <div class="card-sub">Modules & sub-module rights for this user</div>
+              </div>
+              <div class="card-body">
+                <div class="pe-tabs">
+                  <div class="pe-tab act" onclick="switchPeTab('modules',this)">📦 Module Access</div>
+                  <div class="pe-tab" onclick="switchPeTab('subs',this)">🔧 Sub-Module Rights</div>
+                  <div class="pe-tab" onclick="switchPeTab('role',this)">🎭 Role & Defaults</div>
+                </div>
+
+                <!-- Module access tab -->
+                <div class="pe-pane act" id="pe-modules">
+                  <div style="font-size:12px;color:var(--ink3);margin-bottom:12px">Toggle which top-level modules this user can open.</div>
+                  <div id="module-perms-list"></div>
+                  <button class="btn btn-red btn-full" style="margin-top:14px" onclick="saveModuleAccess()">💾 Save Module Access</button>
+                </div>
+
+                <!-- Sub-module rights tab -->
+                <div class="pe-pane" id="pe-subs">
+                  <div style="font-size:12px;color:var(--ink3);margin-bottom:12px">For each unlocked module, define which sub-features this user can access.</div>
+                  <div id="sub-perms-list"></div>
+                  <button class="btn btn-red btn-full" style="margin-top:14px" onclick="saveSubAccess()">💾 Save Sub-Module Rights</button>
+                </div>
+
+                <!-- Role & defaults tab -->
+                <div class="pe-pane" id="pe-role">
+                  <div style="background:var(--blue-bg);border:1.5px solid var(--blue-mid);border-radius:var(--r);padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--ink2);line-height:1.65">
+                    <strong style="color:var(--blue);display:block;margin-bottom:3px">📋 Role-Based Default Permissions</strong>
+                    Assign a role to this user and apply its default module + sub-module permissions in one click. You can still customise individual access in the other tabs after applying defaults.
+                  </div>
+
+                  <div class="f-grp-sm" style="margin-bottom:14px">
+                    <label class="f-lbl-sm">Assign Role</label>
+                    <select class="f-sel" id="role-sel-apply" onchange="previewRoleDefaults()">
+                      <option value="">— Select a role to preview —</option>
+                      <option value="admin">Administrator — Full access to all modules</option>
+                      <option value="dispatch">Dispatch Executive — Dispatch, Tracking, Couriers</option>
+                      <option value="marketing">Marketing Executive — Requests, Parties, Products</option>
+                      <option value="management">Management — View Reports &amp; Dashboard</option>
+                      <option value="vendor">Vendor Relations — Vendor Portal only</option>
+                      <option value="accounts">Accounts — Accounts Module only</option>
+                      <option value="hr">HR Executive — HR Module only</option>
+                      <option value="transport">Transport Executive — Transport Module only</option>
+                      <option value="erp">Purchase Manager — Purchase ERP only</option>
+                      <option value="stock">Stock Manager — Stock Management only</option>
+                      <option value="maintenance">Maintenance Manager — Maintenance Tracker only</option>
+                    </select>
+                  </div>
+
+                  <!-- Role preview card -->
+                  <div id="role-preview" style="display:none;margin-bottom:14px">
+                    <div style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:10px">Preview — what this role grants:</div>
+                    <div id="role-preview-body"></div>
+                  </div>
+
+                  <div style="display:flex;gap:9px">
+                    <button class="btn btn-ghost" style="flex:1" onclick="previewRoleDefaults()">👁 Preview</button>
+                    <button class="btn btn-red" style="flex:2" onclick="applyRoleDefaults()">⚡ Apply Role Defaults</button>
+                  </div>
+
+                  <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+                    <div style="font-size:11.5px;font-weight:700;color:var(--ink2);margin-bottom:8px">All Role Templates</div>
+                    <div id="all-roles-table"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ── ROLES PANE ── -->
+<div id="pane-roles" style="display:none;flex:1;flex-direction:column;background:var(--bg)">
+  <div class="ap-head">
+    <div>
+      <div class="ap-title">🎭 Roles Management</div>
+      <div class="ap-sub">Create, edit and delete roles. Roles define default module access for new users.</div>
+    </div>
+    <button class="btn btn-red" onclick="openAddRole()">＋ Add New Role</button>
+  </div>
+  <div class="ap-body">
+
+    <!-- Role cards grid -->
+    <div id="roles-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-bottom:24px"></div>
+
+    <!-- Role editor -->
+    <div id="role-editor" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <span>─</span> Editing Role <span id="re-title" style="color:var(--red)"></span>
+      </div>
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-title">✏️ Role Details</div>
+          <button class="btn btn-sm btn-danger" id="re-del-btn" onclick="confirmDeleteRole()">🗑 Delete Role</button>
+        </div>
+        <div class="card-body">
+          <div class="f-row" style="margin-bottom:12px">
+            <div class="f-grp-sm">
+              <label class="f-lbl-sm">Role ID <span style="font-size:10px;color:var(--ink3);text-transform:none;letter-spacing:0;font-weight:400">(lowercase, no spaces)</span></label>
+              <input class="f-inp-sm" id="re-id" placeholder="e.g. production_mgr">
+            </div>
+            <div class="f-grp-sm">
+              <label class="f-lbl-sm">Role Display Name</label>
+              <input class="f-inp-sm" id="re-name" placeholder="e.g. Production Manager">
+            </div>
+          </div>
+          <div class="f-row" style="margin-bottom:16px">
+            <div class="f-grp-sm">
+              <label class="f-lbl-sm">Description</label>
+              <input class="f-inp-sm" id="re-desc" placeholder="Brief description of this role">
+            </div>
+            <div class="f-grp-sm">
+              <label class="f-lbl-sm">Colour</label>
+              <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+                <input type="color" id="re-color" value="#B91C1C" style="width:36px;height:34px;border-radius:6px;border:1.5px solid var(--border2);cursor:pointer;padding:2px">
+                <select class="f-sel" id="re-color-preset" onchange="document.getElementById('re-color').value=this.value">
+                  <option value="#B91C1C">Red</option>
+                  <option value="#0F766E">Teal</option>
+                  <option value="#B45309">Amber</option>
+                  <option value="#1D4ED8">Blue</option>
+                  <option value="#7C3AED">Purple</option>
+                  <option value="#BE185D">Rose</option>
+                  <option value="#15803D">Green</option>
+                  <option value="#C2410C">Orange</option>
+                  <option value="#0E7490">Cyan</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Module defaults for this role -->
+          <div style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:10px">Default Module Access for this Role</div>
+          <div id="re-modules" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" onclick="cancelRoleEdit()">Cancel</button>
+            <button class="btn btn-red" style="flex:1;justify-content:center" onclick="saveRoleEdit()">💾 Save Role</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add Role Modal -->
+<div class="overlay" id="dlg-add-role">
+  <div class="dialog" style="max-width:460px">
+    <div class="dlg-icon">🎭</div>
+    <div class="dlg-title">Add New Role</div>
+    <div style="margin-bottom:16px">
+      <div class="f-row" style="margin-bottom:10px">
+        <div class="f-grp-sm">
+          <label class="f-lbl-sm">Role ID * <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0">(lowercase, no spaces)</span></label>
+          <input class="f-inp-sm" id="nr-id" placeholder="e.g. production_mgr">
+        </div>
+        <div class="f-grp-sm">
+          <label class="f-lbl-sm">Display Name *</label>
+          <input class="f-inp-sm" id="nr-name" placeholder="e.g. Production Manager">
+        </div>
+      </div>
+      <div class="f-row">
+        <div class="f-grp-sm">
+          <label class="f-lbl-sm">Description</label>
+          <input class="f-inp-sm" id="nr-desc" placeholder="What does this role do?">
+        </div>
+        <div class="f-grp-sm">
+          <label class="f-lbl-sm">Colour</label>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+            <input type="color" id="nr-color" value="#0E7490" style="width:36px;height:34px;border-radius:6px;border:1.5px solid var(--border2);cursor:pointer;padding:2px">
+            <select class="f-sel" id="nr-color-preset" onchange="document.getElementById('nr-color').value=this.value">
+              <option value="#B91C1C">Red</option>
+              <option value="#0F766E">Teal</option>
+              <option value="#B45309">Amber</option>
+              <option value="#1D4ED8">Blue</option>
+              <option value="#7C3AED">Purple</option>
+              <option value="#BE185D">Rose</option>
+              <option value="#15803D">Green</option>
+              <option value="#C2410C">Orange</option>
+              <option value="#0E7490" selected>Cyan</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dlg-btns">
+      <button class="btn btn-ghost" onclick="closeDlg('dlg-add-role')">Cancel</button>
+      <button class="btn btn-red" onclick="addRole()">Create Role →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Role Modal -->
+<div class="overlay" id="dlg-del-role">
+  <div class="dialog">
+    <div class="dlg-icon">🗑️</div>
+    <div class="dlg-title">Delete Role?</div>
+    <div class="dlg-body" id="dlg-del-role-body">This cannot be undone.</div>
+    <div class="dlg-btns">
+      <button class="btn btn-ghost" onclick="closeDlg('dlg-del-role')">Cancel</button>
+      <button class="btn btn-danger" onclick="deleteRole()">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="overlay" id="dlg-add">
+  <div class="dialog">
+    <div class="dlg-icon">👤</div>
+    <div class="dlg-title">Add New User</div>
+    <div style="margin-bottom:16px">
+      <div class="f-row" style="margin-bottom:10px">
+        <div class="f-grp-sm"><label class="f-lbl-sm">Full Name *</label><input class="f-inp-sm" id="na-name" placeholder="Full name"></div>
+        <div class="f-grp-sm"><label class="f-lbl-sm">Username *</label><input class="f-inp-sm" id="na-user" placeholder="login username" autocomplete="off"></div>
+      </div>
+      <div class="f-row" style="margin-bottom:10px">
+        <div class="f-grp-sm"><label class="f-lbl-sm">Password *</label><input class="f-inp-sm" id="na-pass" type="password" placeholder="Min 6 chars" autocomplete="new-password"></div>
+        <div class="f-grp-sm"><label class="f-lbl-sm">Department</label><input class="f-inp-sm" id="na-dept" placeholder="e.g. Marketing"></div>
+      </div>
+      <div class="f-row">
+        <div class="f-grp-sm"><label class="f-lbl-sm">Role</label>
+          <select class="f-sel" id="na-role">
+            <option value="dispatch">Dispatch Executive</option>
+            <option value="marketing">Marketing Executive</option>
+            <option value="management">Management</option>
+            <option value="vendor">Vendor Relations</option>
+            <option value="accounts">Accounts</option>
+            <option value="hr">HR Executive</option>
+            <option value="transport">Transport Executive</option>
+            <option value="erp">Purchase Manager</option>
+            <option value="stock">Stock Manager</option>
+            <option value="maintenance">Maintenance Manager</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+        <div class="f-grp-sm"><label class="f-lbl-sm">Avatar (initials)</label><input class="f-inp-sm" id="na-avatar" placeholder="e.g. AP" maxlength="3"></div>
+      </div>
+    </div>
+    <div class="dlg-btns">
+      <button class="btn btn-ghost" onclick="closeDlg('dlg-add')">Cancel</button>
+      <button class="btn btn-red" onclick="addUser()">Create User →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="overlay" id="dlg-del">
+  <div class="dialog">
+    <div class="dlg-icon">🗑️</div>
+    <div class="dlg-title">Delete User?</div>
+    <div class="dlg-body" id="dlg-del-body">This cannot be undone.</div>
+    <div class="dlg-btns">
+      <button class="btn btn-ghost" onclick="closeDlg('dlg-del')">Cancel</button>
+      <button class="btn btn-danger" onclick="deleteUser()">Yes, Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   DATA — persisted in Cloudflare D1 database
+══════════════════════════════════════════ */
+
+/* Module catalogue — sub-modules define granular rights */
+const MODULES = [
+  { id:'dispatch', name:'SampleTrack Pro', desc:'Dispatch & Sample Tracking System', icon:'📦', color:'ct-red',
+    status:'live', url:'dispatch/index.html', urlDisplay:'strandply.in/dispatch',
+    features:['Sample request management','Dispatch entries & courier labels','Live tracking & WhatsApp share','Google Sheets sync','Reports & analytics'],
+    subModules:[
+      {id:'req',    name:'Sample Requests',   desc:'Raise & approve sample requests'},
+      {id:'disp',   name:'Dispatch Entry',    desc:'Create & edit dispatch records'},
+      {id:'track',  name:'Live Tracking',     desc:'Track shipment statuses'},
+      {id:'party',  name:'Party Database',    desc:'View & manage party/customer records'},
+      {id:'courier',name:'Courier Database',  desc:'Manage courier partners'},
+      {id:'product',name:'Product Master',    desc:'View & import product catalogue'},
+      {id:'report', name:'Reports',           desc:'Dispatch register & analytics'},
+      {id:'settings',name:'Settings & Sync', desc:'Configure Google Sheets & backup'},
+    ]
+  },
+  { id:'vendor', name:'Vendor Portal', desc:'Supplier & Raw Material Management', icon:'🏭', color:'ct-blue',
+    status:'live', url:'vendor/index.html', urlDisplay:'strandply.in/vendor',
+    features:['Vendor / supplier database','Purchase order tracking','Raw material inventory','Payment & due dates'],
+    subModules:[
+      {id:'vend_list', name:'Vendor List',     desc:'View & manage vendor records'},
+      {id:'vend_po',   name:'Purchase Orders', desc:'Create & track POs'},
+      {id:'vend_inv',  name:'Inventory',       desc:'Raw material stock levels'},
+      {id:'vend_pay',  name:'Payments',        desc:'Payment status & schedules'},
+    ]
+  },
+  { id:'reports', name:'Reports Hub', desc:'Consolidated Business Analytics', icon:'📊', color:'ct-amber',
+    status:'soon', url:null, urlDisplay:'strandply.in/reports',
+    features:['Cross-module dashboards','Sales & dispatch trends','Export to Excel / PDF','Management KPIs'],
+    subModules:[
+      {id:'rpt_dash',  name:'Dashboard',       desc:'KPI summary dashboard'},
+      {id:'rpt_disp',  name:'Dispatch Reports', desc:'Dispatch analytics'},
+      {id:'rpt_sales', name:'Sales Reports',   desc:'Sales performance'},
+      {id:'rpt_exp',   name:'Export',          desc:'Export any report to Excel'},
+    ]
+  },
+  { id:'hr', name:'HR Module', desc:'Employee Attendance & Leave Management', icon:'👥', color:'ct-teal',
+    status:'soon', url:null, urlDisplay:'strandply.in/hr',
+    features:['Employee database','Attendance tracking','Leave requests & approvals','Salary register'],
+    subModules:[
+      {id:'hr_emp',   name:'Employee Master', desc:'Employee records'},
+      {id:'hr_att',   name:'Attendance',      desc:'Mark & review attendance'},
+      {id:'hr_leave', name:'Leave Manager',   desc:'Leave applications'},
+      {id:'hr_sal',   name:'Salary Register', desc:'Payroll records'},
+    ]
+  },
+  { id:'production', name:'Production MIS', desc:'Chipping, Hot Press & Matt Weight System', icon:'⚙️', color:'ct-purple',
+    status:'live', url:'production/index.html', urlDisplay:'strandply.in/production',
+    features:['Chipping report & lot tracking','Hot Press charge management','Matt Weight recording system','Production summary & analytics','Material consumption tracking'],
+    subModules:[
+      {id:'pr_batch',  name:'Batch Records',  desc:'Production batch entry & tracking'},
+      {id:'pr_qual',   name:'Quality Grades', desc:'Grade inspection records'},
+      {id:'pr_mat',    name:'Material Log',   desc:'Material consumption tracking'},
+      {id:'pr_weight', name:'Weight System',   desc:'Matt weight punch & batch management'},
+    ]
+  },
+  { id:'transport', name:'Transport Module', desc:'Freight Inquiry, Rate Comparison & Order Flow', icon:'🚛', color:'ct-rose',
+    status:'live', url:'transport/index.html', urlDisplay:'strandply.in/transport',
+    features:['Transport inquiry management','Multi-transporter rate comparison','Freight approval workflow','Order form generation','Trip tracking & reports'],
+    subModules:[
+      {id:'tr_inq',   name:'Inquiries',       desc:'Create & manage transport inquiries'},
+      {id:'tr_rate',  name:'Rate Comparison',  desc:'Compare transporter rates'},
+      {id:'tr_appr',  name:'Approvals',        desc:'Freight approval workflow'},
+      {id:'tr_order', name:'Order Forms',      desc:'Generate transport order forms'},
+      {id:'tr_track', name:'Trip Tracking',    desc:'Track active shipments'},
+    ]
+  },
+  { id:'erp', name:'Purchase ERP', desc:'Raw Material Purchase & Inventory Management', icon:'📋', color:'ct-amber',
+    status:'live', url:'erp/index.html', urlDisplay:'strandply.in/erp',
+    features:['Multi-material purchase registers','Purchase order management','Vendor-linked invoicing','Debit/Credit note tracking','Inventory & analytics dashboard'],
+    subModules:[
+      {id:'erp_entry',  name:'Purchase Entry',    desc:'Material-wise purchase records'},
+      {id:'erp_po',     name:'Purchase Orders',   desc:'PO creation & tracking'},
+      {id:'erp_truck',  name:'Truck Register',    desc:'Truck-wise inward register'},
+      {id:'erp_dncn',   name:'Debit/Credit Notes', desc:'DN/CN management'},
+      {id:'erp_inv',    name:'Inventory',         desc:'Stock levels & analytics'},
+      {id:'erp_report', name:'Reports',           desc:'Purchase analytics & export'},
+    ]
+  },
+  { id:'accounts', name:'Accounts Module', desc:'Invoice, Payment & Expense Tracking', icon:'💰', color:'ct-green',
+    status:'planned', url:null, urlDisplay:'strandply.in/accounts',
+    features:['Invoice management','Receivables & payables','GST summary','Expense tracking'],
+    subModules:[
+      {id:'ac_inv',  name:'Invoices',     desc:'Create & manage invoices'},
+      {id:'ac_recv', name:'Receivables',  desc:'Outstanding receivables'},
+      {id:'ac_pay',  name:'Payables',     desc:'Vendor & expense payments'},
+      {id:'ac_gst',  name:'GST Reports',  desc:'GST input/output summary'},
+    ]
+  },
+  { id:'stock', name:'Stock Management', desc:'Raw Material & SKU Stock tracking, SIS/SRS slips', icon:'📦', color:'ct-teal',
+    status:'live', url:'stock/index.html', urlDisplay:'strandply.in/stock',
+    features:['Live Stock tracking','Stock Inward/Outward slips','Ledger & transaction logs','Department reclassifications','Master data management'],
+    subModules:[
+      {id:'stk_slip',  name:'Stock Slips',   desc:'Create & view SIS/SRS stock slips'},
+      {id:'stk_ledger',name:'SKU Ledger',    desc:'Transaction history ledger per SKU'},
+      {id:'stk_stock', name:'Live Stock',    desc:'Real-time stock reports'},
+      {id:'stk_reclass',name:'Reclassification', desc:'Reclassify stock between departments'},
+      {id:'stk_master',name:'Master SKU',    desc:'Manage SKU catalogue'},
+    ]
+  },
+  { id:'maintenance', name:'Maintenance Tracker', desc:'Plant Maintenance Work Order Management', icon:'🔧', color:'ct-green',
+    status:'live', url:'maintenance/index.html', urlDisplay:'strandply.in/maintenance',
+    features:['Work order creation & tracking','Priority & status management','Plant area mapping','Activity timeline & notes','PDF generation & WhatsApp share'],
+    subModules:[
+      {id:'mt_wo',      name:'Work Orders',    desc:'Create & manage maintenance work orders'},
+      {id:'mt_board',   name:'Kanban Board',   desc:'Visual board view of work orders'},
+      {id:'mt_area',    name:'Area Management', desc:'Manage plant areas'},
+      {id:'mt_timeline',name:'Timeline & Notes',desc:'Activity log & note posting'},
+      {id:'mt_export',  name:'Export & Share',  desc:'PDF download & WhatsApp sharing'},
+    ]
+  },
+];
+
+const ROLE_LABELS = {
+  admin:'System Administrator', dispatch:'Dispatch Executive',
+  marketing:'Marketing Executive', management:'Management',
+  vendor:'Vendor Relations', accounts:'Accounts Executive', hr:'HR Executive',
+  transport:'Transport Executive', erp:'Purchase Manager', stock:'Stock Manager',
+  maintenance:'Maintenance Manager',
+};
+
+const AVATAR_COLORS = [
+  '#B91C1C','#0F766E','#B45309','#1D4ED8','#7C3AED','#BE185D','#15803D','#C2410C','#0E7490'
+];
+
+/* ── Default users (fallback if D1 API is unreachable) ── */
+const SEED_USERS = [
+  { id:'u001', name:'Admin', username:'admin', password:'admin@strandply', role:'admin',
+    dept:'Administration', avatar:'AD', color:'#B91C1C',
+    modules:['dispatch','vendor','reports','hr','production','transport','erp','accounts','stock','maintenance'],
+    subRights:{'dispatch':['req','disp','track','party','courier','product','report','settings'],'vendor':['vend_list','vend_po','vend_inv','vend_pay'],'reports':['rpt_dash','rpt_disp','rpt_sales','rpt_exp'],'hr':['hr_emp','hr_att','hr_leave','hr_sal'],'production':['pr_batch','pr_qual','pr_mat','pr_weight'],'transport':['tr_inq','tr_rate','tr_appr','tr_order','tr_track'],'erp':['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'],'accounts':['ac_inv','ac_recv','ac_pay','ac_gst'],'stock':['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],'maintenance':['mt_wo','mt_board','mt_area','mt_timeline','mt_export']}
+  },
+  { id:'u002', name:'Ankit Parmar', username:'ankit', password:'ankit@123', role:'dispatch',
+    dept:'Dispatch Department', avatar:'AP', color:'#0F766E',
+    modules:['dispatch'],
+    subRights:{'dispatch':['disp','track','courier']}
+  },
+  { id:'u003', name:'Suresh Kumar', username:'suresh', password:'suresh@123', role:'marketing',
+    dept:'Marketing Team', avatar:'SK', color:'#B45309',
+    modules:['dispatch','vendor'],
+    subRights:{'dispatch':['req','track','party','product'],'vendor':['vend_list']}
+  },
+  { id:'u004', name:'Raj Verma', username:'raj', password:'raj@123', role:'management',
+    dept:'Management', avatar:'RV', color:'#1D4ED8',
+    modules:['dispatch','reports'],
+    subRights:{'dispatch':['track','report'],'reports':['rpt_dash','rpt_disp','rpt_sales','rpt_exp']}
+  },
+  { id:'u005', name:'Vendor Manager', username:'vendor', password:'vendor@123', role:'vendor',
+    dept:'Vendor Relations', avatar:'VM', color:'#7C3AED',
+    modules:['vendor'],
+    subRights:{'vendor':['vend_list','vend_po','vend_inv','vend_pay']}
+  },
+];
+
+/* ── API-backed data layer ── */
+/* ══════════════════════════════════════════
+   ROLE DEFAULT PERMISSIONS
+   When admin assigns a role to a user,
+   these are the suggested defaults shown.
+   Admin can still override per-user.
+══════════════════════════════════════════ */
+const ROLE_DEFAULTS = {
+  admin: {
+    modules: ['dispatch','vendor','reports','hr','production','transport','erp','accounts','stock','maintenance'],
+    subRights: {
+      dispatch:   ['req','disp','track','party','courier','product','report','settings'],
+      vendor:     ['vend_list','vend_po','vend_inv','vend_pay'],
+      reports:    ['rpt_dash','rpt_disp','rpt_sales','rpt_exp'],
+      hr:         ['hr_emp','hr_att','hr_leave','hr_sal'],
+      production: ['pr_batch','pr_qual','pr_mat','pr_weight'],
+      transport:  ['tr_inq','tr_rate','tr_appr','tr_order','tr_track'],
+      erp:        ['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'],
+      accounts:   ['ac_inv','ac_recv','ac_pay','ac_gst'],
+      stock:      ['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],
+      maintenance:['mt_wo','mt_board','mt_area','mt_timeline','mt_export'],
+    }
+  },
+  dispatch: {
+    modules: ['dispatch'],
+    subRights: { dispatch: ['disp','track','courier'] }
+  },
+  marketing: {
+    modules: ['dispatch','vendor'],
+    subRights: { dispatch: ['req','track','party','product'], vendor: ['vend_list'] }
+  },
+  management: {
+    modules: ['dispatch','reports'],
+    subRights: { dispatch: ['track','report'], reports: ['rpt_dash','rpt_disp','rpt_sales','rpt_exp'] }
+  },
+  vendor: {
+    modules: ['vendor'],
+    subRights: { vendor: ['vend_list','vend_po','vend_inv','vend_pay'] }
+  },
+  accounts: {
+    modules: ['accounts'],
+    subRights: { accounts: ['ac_inv','ac_recv','ac_pay','ac_gst'] }
+  },
+  hr: {
+    modules: ['hr'],
+    subRights: { hr: ['hr_emp','hr_att','hr_leave','hr_sal'] }
+  },
+  transport: {
+    modules: ['transport'],
+    subRights: { transport: ['tr_inq','tr_rate','tr_appr','tr_order','tr_track'] }
+  },
+  erp: {
+    modules: ['erp'],
+    subRights: { erp: ['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'] }
+  },
+  stock: {
+    modules: ['stock'],
+    subRights: { stock: ['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'] }
+  },
+  maintenance: {
+    modules: ['maintenance'],
+    subRights: { maintenance: ['mt_wo','mt_board','mt_area','mt_timeline','mt_export'] }
+  },
+};
+
+/* ── API helpers ── */
+async function apiGet(url) {
+  const res = await fetch(url);
+  return res.json();
+}
+async function apiPost(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+async function loadUsersFromAPI() {
+  try {
+    const data = await apiGet('/api/users');
+    return data.users || [];
+  } catch (e) {
+    console.error('Failed to load users from API:', e);
+    // Fallback to seed users if API is unreachable
+    return JSON.parse(JSON.stringify(SEED_USERS));
+  }
+}
+
+async function reloadUsers() {
+  USERS = await loadUsersFromAPI();
+}
+
+/* ── Initialize ── */
+let USERS = []; // Will be loaded from API
+let currentUser = null;
+let selectedUserId = null;
+let activePeTab = 'modules';
+
+/* ══════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════ */
+async function doLogin(){
+  const u = document.getElementById('li-user').value.trim().toLowerCase();
+  const p = document.getElementById('li-pass').value;
+  const btn = document.getElementById('l-btn');
+  const err = document.getElementById('l-err');
+
+  err.classList.remove('show');
+  ['li-user','li-pass'].forEach(id=>document.getElementById(id).classList.remove('err'));
+
+  if(!u||!p){ showLoginErr('Please enter username and password.'); return; }
+
+  btn.disabled=true;
+  btn.innerHTML='<div class="spin"></div> Signing in…';
+
+  try {
+    const data = await apiPost('/api/auth', { username: u, password: p });
+
+    if(data.error || !data.success){
+      btn.disabled=false; btn.innerHTML='Sign In →';
+      showLoginErr(data.error || 'Incorrect username or password.');
+      ['li-user','li-pass'].forEach(id=>document.getElementById(id).classList.add('err'));
+      document.getElementById('li-pass').value='';
+      return;
+    }
+
+    currentUser = data.user;
+    // Load all users from API for admin panel
+    await reloadUsers();
+    btn.disabled=false; btn.innerHTML='Sign In →';
+    openPortal(data.user);
+  } catch(e) {
+    btn.disabled=false; btn.innerHTML='Sign In →';
+    showLoginErr('Network error — please try again.');
+    console.error('Login error:', e);
+  }
+}
+
+function showLoginErr(msg){
+  document.getElementById('l-err-msg').textContent = msg;
+  document.getElementById('l-err').classList.add('show');
+}
+
+/* ══════════════════════════════════════════
+   PORTAL RENDER
+══════════════════════════════════════════ */
+async function openPortal(user){
+  // Init role registry on first portal open
+  await initRoles();
+
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-portal').classList.add('active');
+  window.scrollTo(0,0);
+
+  // topbar
+  const av = document.getElementById('p-av');
+  av.textContent = user.avatar; av.style.background = user.color;
+  document.getElementById('p-nm').textContent = user.name;
+  document.getElementById('p-rl').textContent = ROLE_LABELS[user.role]||user.role;
+
+  // admin nav buttons — visible only to admin
+  const isAdmin = user.role==='admin';
+  document.getElementById('nav-admin').style.display = isAdmin ? '' : 'none';
+  document.getElementById('nav-roles').style.display = isAdmin ? '' : 'none';
+
+  // Populate role dropdowns dynamically from registry
+  refreshRoleDropdowns();
+
+  // hero
+  const h = new Date().getHours();
+  const gr = h<5?'🌙 Good night,':h<12?'🌅 Good morning,':h<17?'☀️ Good afternoon,':'🌆 Good evening,';
+  document.getElementById('p-gr').textContent = gr;
+  document.getElementById('p-nm2').textContent = user.name;
+  document.getElementById('p-bdg').textContent = ROLE_LABELS[user.role]||user.role;
+
+  const myMods = MODULES.filter(m=>user.modules.includes(m.id));
+  document.getElementById('p-ac').textContent =
+    myMods.length===1 ? 'You have access to 1 module.' : `You have access to ${myMods.length} modules.`;
+
+  // admin stats
+  const aStats = document.getElementById('adm-stats');
+  aStats.style.display = isAdmin ? '' : 'none';
+  if(isAdmin){
+    document.getElementById('st-u').textContent  = USERS.length;
+    document.getElementById('st-lv').textContent = MODULES.filter(m=>m.status==='live').length;
+    document.getElementById('st-sn').textContent = MODULES.filter(m=>m.status!=='live').length;
+  }
+
+  renderHomeModules(user);
+  showPane('home');
+}
+
+function renderHomeModules(user){
+  const myMods   = MODULES.filter(m=>user.modules.includes(m.id));
+  const locked   = user.role==='admin' ? [] : MODULES.filter(m=>!user.modules.includes(m.id));
+
+  document.getElementById('my-sub').textContent =
+    `${myMods.length} module${myMods.length!==1?'s':''} available to you`;
+  document.getElementById('my-grid').innerHTML = myMods.map(m=>buildCard(m,true)).join('');
+
+  if(locked.length && user.role!=='admin'){
+    document.getElementById('lock-grid').innerHTML = locked.map(m=>buildCard(m,false)).join('');
+    document.getElementById('lock-sec').style.display='';
+    document.getElementById('lock-body').textContent =
+      `${locked.length} module${locked.length!==1?' are':' is'} not assigned to your account. Contact your administrator.`;
+  } else {
+    document.getElementById('lock-sec').style.display='none';
+  }
+}
+
+function buildCard(mod, unlocked){
+  const SB = {live:{cls:'msb-live',lbl:'Live'},soon:{cls:'msb-soon',lbl:'Coming Soon'},planned:{cls:'msb-soon',lbl:'Planned'}};
+  const {cls,lbl} = SB[mod.status]||{cls:'msb-soon',lbl:'Soon'};
+  const feats = mod.features.map(f=>`<div class="mc-feat${unlocked?'':' na'}">${f}</div>`).join('');
+  const foot  = unlocked&&mod.url
+    ? `<div class="mc-btn-o" onclick="goMod('${mod.url}','${mod.name}')">Launch →</div>`
+    : unlocked&&!mod.url
+    ? `<div class="mc-btn-d">Coming Soon</div>`
+    : `<div class="mc-btn-d">🔒 Locked</div>`;
+  const click = unlocked&&mod.url ? `onclick="goMod('${mod.url}','${mod.name}')"` : '';
+  return `<div class="mc ${mod.color}${unlocked?' open':' lock'}" ${click}>
+    <div class="mc-top">
+      <span class="mc-icon">${mod.icon}</span>
+      <div class="mc-sbadge ${unlocked?cls:'msb-lock'}">${unlocked?lbl:'Locked'}</div>
+      <div class="mc-name">${mod.name}</div>
+      <div class="mc-desc">${mod.desc}</div>
+    </div>
+    <div class="mc-body">${feats}</div>
+    <div class="mc-foot"><span class="mc-url">${mod.urlDisplay}</span>${foot}</div>
+  </div>`;
+}
+
+function goMod(url,name){ toast(name+' opening…','info'); setTimeout(()=>window.location.href=url,280); }
+
+/* ══════════════════════════════════════════
+   PANE SWITCHING
+══════════════════════════════════════════ */
+function showPane(pane){
+  ['home','admin','roles'].forEach(p=>{
+    const el=document.getElementById('pane-'+p);
+    if(!el) return;
+    el.style.display = p===pane ? (p==='home'?'block':'flex') : 'none';
+  });
+  ['nav-home','nav-admin','nav-roles'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('act', id==='nav-'+pane);
+  });
+  if(pane==='admin')  renderAdminPanel();
+  if(pane==='roles')  renderRolesPane();
+}
+
+/* ══════════════════════════════════════════
+   ADMIN PANEL
+══════════════════════════════════════════ */
+function renderAdminPanel(){
+  document.getElementById('user-count-lbl').textContent = USERS.length+' user'+(USERS.length!==1?'s':'');
+  document.getElementById('user-list').innerHTML = USERS.map(u=>`
+    <div class="ul-item${selectedUserId===u.id?' sel':''}"
+         data-uid="${u.id}"
+         onclick="selectUser('${u.id}')">
+      <div class="ul-av" style="background:${u.color}">${u.avatar}</div>
+      <div style="flex:1;min-width:0">
+        <div class="ul-nm">${u.name}</div>
+        <div class="ul-ro">${ROLE_LABELS[u.role]||u.role} · ${u.dept||'—'}</div>
+      </div>
+      <span class="ul-badge ${u.role==='admin'?'b-adm':'b-usr'}">${u.role==='admin'?'Admin':'User'}</span>
+    </div>`).join('');
+}
+
+function selectUser(id){
+  selectedUserId = id;
+  const u = USERS.find(x=>x.id===id);
+  if(!u){ toast('User not found','err'); return; }
+
+  // Highlight selected row without full re-render
+  document.querySelectorAll('.ul-item').forEach(el=>{
+    const isThis = el.dataset.uid === id;
+    el.classList.toggle('sel', isThis);
+  });
+
+  // Show the editor panel (hide empty state)
+  document.getElementById('editor-empty').style.display = 'none';
+  document.getElementById('editor').style.display       = '';
+
+  // Populate header
+  document.getElementById('ed-fullname').textContent = u.name;
+  const edAv = document.getElementById('ed-av-sm');
+  edAv.textContent   = u.avatar;
+  edAv.style.background = u.color;
+
+  // Populate form fields — use setTimeout so DOM is definitely ready
+  setTimeout(()=>{
+    const setVal = (id, val) => { const el=document.getElementById(id); if(el) el.value=val; };
+    setVal('ed-name',   u.name);
+    setVal('ed-user',   u.username);
+    setVal('ed-pass',   '');
+    setVal('ed-dept',   u.dept||'');
+    setVal('ed-avatar', u.avatar);
+
+    // Role select — ensure option exists before setting
+    const roleEl = document.getElementById('ed-role');
+    if(roleEl){
+      // Add option if role not in list (e.g. custom role)
+      if(![...roleEl.options].some(o=>o.value===u.role)){
+        const opt = document.createElement('option');
+        opt.value = u.role; opt.textContent = ROLE_LABELS[u.role]||u.role;
+        roleEl.appendChild(opt);
+      }
+      roleEl.value = u.role;
+    }
+
+    // Role defaults tab
+    const rsa = document.getElementById('role-sel-apply');
+    if(rsa){ rsa.value = u.role; previewRoleDefaults(); }
+
+    // Permission tabs
+    renderModulePerms(u);
+    renderSubPerms(u);
+    renderAllRolesTable();
+
+    // Reset to first tab
+    switchPeTab('modules', document.querySelector('.pe-tab'));
+  }, 0);
+}
+
+/* ── Save user details ── */
+async function saveUserEdits(){
+  if(!selectedUserId){ toast('No user selected — click a user on the left first','err'); return; }
+
+  const idx = USERS.findIndex(x=>x.id===selectedUserId);
+  if(idx===-1){ toast('User not found — try refreshing the admin panel','err'); return; }
+
+  const name   = (document.getElementById('ed-name')?.value||'').trim();
+  const uname  = (document.getElementById('ed-user')?.value||'').trim().toLowerCase();
+  const pass   = (document.getElementById('ed-pass')?.value||'');
+  const dept   = (document.getElementById('ed-dept')?.value||'').trim();
+  const role   = document.getElementById('ed-role')?.value||'';
+  const avatar = ((document.getElementById('ed-avatar')?.value||'').trim().toUpperCase()||name.slice(0,2).toUpperCase());
+
+  // Validation
+  if(!name)  { toast('Full name is required','err'); document.getElementById('ed-name')?.focus(); return; }
+  if(!uname) { toast('Username is required','err');  document.getElementById('ed-user')?.focus(); return; }
+  if(pass && pass.length<6){ toast('Password must be at least 6 characters','err'); document.getElementById('ed-pass')?.focus(); return; }
+
+  try {
+    const res = await apiPost('/api/users', {
+      action: 'update',
+      id: selectedUserId,
+      name, username: uname, password: pass || undefined,
+      role, dept, avatar, color: USERS[idx].color,
+      modules: USERS[idx].modules,
+      subRights: USERS[idx].subRights,
+    });
+
+    if(res.error){ toast(res.error, 'err'); return; }
+
+    // Sync role-apply dropdown
+    const rsa = document.getElementById('role-sel-apply');
+    if(rsa) rsa.value = role;
+
+    // Reload users from API
+    await reloadUsers();
+
+    // Update UI
+    document.getElementById('ed-fullname').textContent = name;
+    const edAv = document.getElementById('ed-av-sm');
+    if(edAv){ edAv.textContent=avatar; }
+
+    // If logged-in user edited themselves, update topbar
+    if(currentUser && currentUser.id===selectedUserId){
+      currentUser = USERS.find(x=>x.id===selectedUserId) || currentUser;
+      document.getElementById('p-nm').textContent  = name;
+      document.getElementById('p-rl').textContent  = ROLE_LABELS[role]||role;
+      document.getElementById('p-av').textContent  = avatar;
+      document.getElementById('p-nm2').textContent = name;
+      document.getElementById('p-bdg').textContent = ROLE_LABELS[role]||role;
+    }
+
+    renderAdminPanel();
+    toast(`✅ "${name}" saved successfully`, 'ok');
+  } catch(e) {
+    toast('Failed to save — ' + e.message, 'err');
+  }
+}
+
+/* ── Module permissions ── */
+function renderModulePerms(u){
+  document.getElementById('module-perms-list').innerHTML = MODULES.map(mod=>{
+    const checked = (u.modules||[]).includes(mod.id);
+    const SB={live:'msb-live',soon:'msb-soon',planned:'msb-soon'};
+    const SL={live:'Live',soon:'Coming Soon',planned:'Planned'};
+    return `<div class="mp-row">
+      <div class="mp-left">
+        <div class="mp-icon">${mod.icon}</div>
+        <div>
+          <div class="mp-name">${mod.name} <span style="font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600;margin-left:4px" class="mc-sbadge ${SB[mod.status]||'msb-soon'}">${SL[mod.status]||'Soon'}</span></div>
+          <div class="mp-desc">${mod.desc}</div>
+        </div>
+      </div>
+      <label class="tog" title="Toggle access to ${mod.name}">
+        <input type="checkbox" data-modid="${mod.id}" ${checked?'checked':''} onchange="onModToggle('${mod.id}',this.checked)">
+        <span class="tog-sl"></span>
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function onModToggle(modId, on){
+  const u = USERS.find(x=>x.id===selectedUserId);
+  if(!u) return;
+  if(!u.modules) u.modules=[];
+  if(on){ if(!u.modules.includes(modId)) u.modules.push(modId); }
+  else   { u.modules = u.modules.filter(m=>m!==modId); }
+  renderSubPerms(u); // refresh sub-perms tab
+}
+
+async function saveModuleAccess(){
+  const idx = USERS.findIndex(x=>x.id===selectedUserId);
+  if(idx===-1){ toast('No user selected','err'); return; }
+  const cbs = document.querySelectorAll('#module-perms-list input[type=checkbox]');
+  const modules = [...cbs].filter(c=>c.checked).map(c=>c.getAttribute('data-modid'));
+  try {
+    const res = await apiPost('/api/users', { action:'update', id:selectedUserId, modules });
+    if(res.error){ toast(res.error,'err'); return; }
+    await reloadUsers();
+    const u = USERS.find(x=>x.id===selectedUserId);
+    if(currentUser && currentUser.id===selectedUserId && u) renderHomeModules(u);
+    toast('Module access saved ✓','ok');
+  } catch(e){ toast('Failed: '+e.message,'err'); }
+}
+
+/* ── Sub-module permissions ── */
+function renderSubPerms(u){
+  const mods = MODULES.filter(m=>(u.modules||[]).includes(m.id));
+  if(!mods.length){
+    document.getElementById('sub-perms-list').innerHTML=
+      '<div class="empty"><div class="empty-icon">📦</div><div class="empty-t">No modules assigned</div><div>Enable module access first to set sub-module rights.</div></div>';
+    return;
+  }
+  document.getElementById('sub-perms-list').innerHTML = mods.map((mod,i)=>{
+    const allowed = (u.subRights&&u.subRights[mod.id]) || [];
+    const subHtml = mod.subModules.map(sm=>{
+      const on = allowed.includes(sm.id);
+      return `<div class="sm-item">
+        <div class="sm-item-t">${sm.name} <span style="font-size:10px;color:var(--ink3)">— ${sm.desc}</span></div>
+        <label class="tog" style="transform:scale(.85);transform-origin:right center" title="${sm.name}">
+          <input type="checkbox" data-mod="${mod.id}" data-sub="${sm.id}" ${on?'checked':''}>
+          <span class="tog-sl"></span>
+        </label>
+      </div>`;
+    }).join('');
+    return `<div class="sm-section" style="margin-bottom:10px">
+      <div class="sm-head${i===0?' open':''}" onclick="toggleSmHead(this)">
+        <div class="sm-head-t">${mod.icon} ${mod.name} <span style="font-size:10px;color:var(--ink3);font-weight:400">— ${mod.subModules.length} sub-modules</span></div>
+        <span class="sm-head-arr">▼</span>
+      </div>
+      <div class="sm-body${i===0?' open':''}">
+        <div style="font-size:11px;color:var(--ink3);margin-bottom:8px">Toggle which features of ${mod.name} this user can access:</div>
+        ${subHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleSmHead(head){
+  head.classList.toggle('open');
+  const body = head.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+async function saveSubAccess(){
+  const idx = USERS.findIndex(x=>x.id===selectedUserId);
+  if(idx===-1){ toast('No user selected','err'); return; }
+  const subRights = JSON.parse(JSON.stringify(USERS[idx].subRights||{}));
+  const cbs = document.querySelectorAll('#sub-perms-list input[type=checkbox]');
+  cbs.forEach(cb=>{
+    const mod=cb.getAttribute('data-mod'), sub=cb.getAttribute('data-sub');
+    if(!subRights[mod]) subRights[mod]=[];
+    if(cb.checked){ if(!subRights[mod].includes(sub)) subRights[mod].push(sub); }
+    else { subRights[mod]=subRights[mod].filter(s=>s!==sub); }
+  });
+  try {
+    const res = await apiPost('/api/users', { action:'update', id:selectedUserId, subRights });
+    if(res.error){ toast(res.error,'err'); return; }
+    await reloadUsers();
+    toast('Sub-module rights saved ✓','ok');
+  } catch(e){ toast('Failed: '+e.message,'err'); }
+}
+
+/* ── Add user ── */
+function openAddUser(){
+  ['na-name','na-user','na-pass','na-dept','na-avatar'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('na-role').value='dispatch';
+  openDlg('dlg-add');
+}
+
+async function addUser(){
+  const name   = document.getElementById('na-name').value.trim();
+  const uname  = document.getElementById('na-user').value.trim().toLowerCase();
+  const pass   = document.getElementById('na-pass').value;
+  const dept   = document.getElementById('na-dept').value.trim();
+  const role   = document.getElementById('na-role').value;
+  const avatar = (document.getElementById('na-avatar').value.trim().toUpperCase()||name.slice(0,2).toUpperCase());
+
+  if(!name||!uname||!pass){ toast('Name, username and password are required','err'); return; }
+  if(pass.length<6){ toast('Password must be at least 6 characters','err'); return; }
+
+  const color = AVATAR_COLORS[USERS.length % AVATAR_COLORS.length];
+  const newId = 'u'+Date.now();
+  try {
+    const res = await apiPost('/api/users', {
+      action:'create', id:newId, name, username:uname, password:pass,
+      role, dept, avatar, color, modules:[], subRights:{}
+    });
+    if(res.error){ toast(res.error,'err'); return; }
+    await reloadUsers();
+    closeDlg('dlg-add');
+    renderAdminPanel();
+    setTimeout(()=>selectUser(newId), 50);
+    toast(`User "${name}" created ✓ — now assign module access`,'ok');
+  } catch(e){ toast('Failed: '+e.message,'err'); }
+}
+
+/* ── Delete user ── */
+function confirmDeleteUser(){
+  const u = USERS.find(x=>x.id===selectedUserId);
+  if(!u) return;
+  if(u.role==='admin' && USERS.filter(x=>x.role==='admin').length<=1){
+    toast('Cannot delete the last administrator','err'); return;
+  }
+  document.getElementById('dlg-del-body').textContent=`Delete "${u.name}"? This cannot be undone.`;
+  openDlg('dlg-del');
+}
+
+async function deleteUser(){
+  const u = USERS.find(x=>x.id===selectedUserId);
+  if(!u) return;
+  try {
+    const res = await apiPost('/api/users', { action:'delete', id:selectedUserId });
+    if(res.error){ toast(res.error,'err'); return; }
+    await reloadUsers();
+    closeDlg('dlg-del');
+    selectedUserId = null;
+    document.getElementById('editor').style.display      = 'none';
+    document.getElementById('editor-empty').style.display= '';
+    renderAdminPanel();
+    toast(`User "${u.name}" deleted`, 'ok');
+  } catch(e){ toast('Failed: '+e.message,'err'); }
+}
+
+/* ── Permission editor tabs ── */
+function switchPeTab(tab, el){
+  activePeTab=tab;
+  document.querySelectorAll('.pe-tab').forEach(t=>t.classList.remove('act'));
+  el.classList.add('act');
+  document.querySelectorAll('.pe-pane').forEach(p=>p.classList.remove('act'));
+  document.getElementById('pe-'+tab).classList.add('act');
+}
+
+/* ══════════════════════════════════════════
+   ROLE DEFAULTS — preview & apply
+══════════════════════════════════════════ */
+const MODULE_COLORS = {
+  dispatch:'#B91C1C,#FEF2F2', vendor:'#1D4ED8,#EFF6FF',
+  reports:'#B45309,#FFFBEB',  hr:'#0F766E,#F0FDFA',
+  production:'#7C3AED,#F5F3FF', accounts:'#15803D,#F0FDF4',
+};
+
+function previewRoleDefaults(){
+  const role = document.getElementById('role-sel-apply').value;
+  const prev = document.getElementById('role-preview');
+  const body = document.getElementById('role-preview-body');
+  if(!role){ prev.style.display='none'; return; }
+  const def = ROLE_DEFAULTS[role];
+  if(!def){ prev.style.display='none'; return; }
+
+  body.innerHTML = def.modules.map(mid=>{
+    const mod = MODULES.find(m=>m.id===mid);
+    if(!mod) return '';
+    const subs = def.subRights[mid]||[];
+    const subNames = subs.map(sid=>{
+      const sm = mod.subModules.find(s=>s.id===sid);
+      return sm?sm.name:sid;
+    });
+    const [fg,bg] = (MODULE_COLORS[mid]||'#374151,#F9FAFB').split(',');
+    return `<div class="role-prev-mod">
+      <div class="role-prev-icon">${mod.icon}</div>
+      <div style="flex:1">
+        <div class="role-prev-name" style="color:${fg}">${mod.name}</div>
+        <div class="role-prev-subs">${subNames.length?'Sub-modules: '+subNames.join(', '):'No sub-module rights'}</div>
+      </div>
+      <span style="font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600;background:${bg};color:${fg};border:1px solid ${fg}33">${subs.length} rights</span>
+    </div>`;
+  }).join('') || '<div style="font-size:12px;color:var(--ink3)">No modules assigned in this role template.</div>';
+
+  prev.style.display = '';
+}
+
+async function applyRoleDefaults(){
+  const role = document.getElementById('role-sel-apply').value;
+  if(!role){ toast('Select a role first','err'); return; }
+  const idx = USERS.findIndex(x=>x.id===selectedUserId);
+  if(idx===-1){ toast('No user selected','err'); return; }
+  const def = ROLE_DEFAULTS[role];
+  if(!def){ toast('No defaults for this role','err'); return; }
+
+  try {
+    const res = await apiPost('/api/users', {
+      action:'update', id:selectedUserId,
+      role, modules:[...def.modules],
+      subRights:JSON.parse(JSON.stringify(def.subRights)),
+    });
+    if(res.error){ toast(res.error,'err'); return; }
+
+    document.getElementById('ed-role').value = role;
+    await reloadUsers();
+    const u = USERS.find(x=>x.id===selectedUserId);
+    if(u){
+      renderModulePerms(u);
+      renderSubPerms(u);
+    }
+    renderAdminPanel();
+    toast(`Role "${ROLE_LABELS[role]||role}" applied with default permissions ✓`, 'ok');
+  } catch(e){ toast('Failed: '+e.message,'err'); }
+}
+
+function renderAllRolesTable(){
+  const body = document.getElementById('all-roles-table');
+  if(!body) return;
+  const rows = Object.entries(ROLE_DEFAULTS).map(([role,def],i)=>{
+    const modTags = def.modules.map(mid=>{
+      const mod = MODULES.find(m=>m.id===mid);
+      const [fg,bg] = (MODULE_COLORS[mid]||'#374151,#F9FAFB').split(',');
+      return `<span class="role-mod-tag" style="color:${fg};background:${bg};border-color:${fg}33">${mod?mod.icon+' '+mod.name:mid}</span>`;
+    }).join('');
+    const totalSubs = Object.values(def.subRights).reduce((a,v)=>a+v.length,0);
+    return `<tr>
+      <td style="font-weight:600">${ROLE_LABELS[role]||role}</td>
+      <td>${modTags}</td>
+      <td style="text-align:center;font-family:var(--mono);font-weight:700;color:var(--blue)">${totalSubs}</td>
+      <td><button class="btn btn-sm btn-ghost" onclick="quickApplyRole('${role}')">Apply</button></td>
+    </tr>`;
+  }).join('');
+
+  body.innerHTML = `<table class="role-tbl">
+    <thead><tr><th>Role</th><th>Modules Included</th><th>Sub-rights</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function quickApplyRole(role){
+  document.getElementById('role-sel-apply').value = role;
+  previewRoleDefaults();
+  applyRoleDefaults();
+}
+
+/* ── Logout ── */
+function doLogout(){
+  currentUser=null; selectedUserId=null;
+  document.getElementById('screen-portal').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  ['li-user','li-pass'].forEach(id=>{const e=document.getElementById(id);e.value='';e.classList.remove('err');});
+  document.getElementById('l-err').classList.remove('show');
+  document.getElementById('li-user').focus();
+}
+
+/* ══════════════════════════════════════════
+   ROLES MANAGEMENT
+   Custom roles are stored in D1 via /api/roles
+   Built-in roles cannot be deleted.
+══════════════════════════════════════════ */
+
+// Built-in system roles — always present, cannot be deleted
+const BUILTIN_ROLE_IDS = ['admin','dispatch','marketing','management','vendor','accounts','hr'];
+
+// Dynamic role registry — starts from hardcoded + loads custom from D1
+let ROLE_REGISTRY = {}; // { roleId: { id, name, desc, color, modules, subRights, isBuiltin } }
+let editingRoleId = null;
+
+async function initRoles(){
+  // Seed built-in roles from ROLE_DEFAULTS + ROLE_LABELS
+  BUILTIN_ROLE_IDS.forEach(rid=>{
+    ROLE_REGISTRY[rid] = {
+      id: rid,
+      name: ROLE_LABELS[rid] || rid,
+      desc: getRoleDesc(rid),
+      color: getRoleColor(rid),
+      modules: ROLE_DEFAULTS[rid]?.modules || [],
+      subRights: ROLE_DEFAULTS[rid]?.subRights || {},
+      isBuiltin: true,
+    };
+  });
+  // Load custom roles from D1 API
+  try {
+    const data = await apiGet('/api/roles');
+    (data.roles||[]).forEach(r=>{
+      ROLE_REGISTRY[r.id] = r;
+      // Also sync into ROLE_LABELS and ROLE_DEFAULTS
+      ROLE_LABELS[r.id] = r.name;
+      ROLE_DEFAULTS[r.id] = { modules: r.modules||[], subRights: r.subRights||{} };
+    });
+  } catch(e){ console.error('Failed to load custom roles:', e); }
+}
+
+function getRoleDesc(rid){
+  const descs={
+    admin:'Full access to all modules and system settings.',
+    dispatch:'Handles dispatch entries, courier tracking and label printing.',
+    marketing:'Raises sample requests, manages parties and products.',
+    management:'View-only access to reports and dispatch dashboard.',
+    vendor:'Manages vendor/supplier database and purchase orders.',
+    accounts:'Handles invoices, payments, receivables and GST.',
+    hr:'Manages employee records, attendance and leave.',
+  };
+  return descs[rid]||'Custom role';
+}
+
+function getRoleColor(rid){
+  const colors={
+    admin:'#B91C1C',dispatch:'#0F766E',marketing:'#B45309',
+    management:'#1D4ED8',vendor:'#7C3AED',accounts:'#15803D',hr:'#BE185D',
+  };
+  return colors[rid]||'#374151';
+}
+
+/* ── Render all role cards ── */
+function renderRolesPane(){
+  const grid = document.getElementById('roles-grid');
+  const roles = Object.values(ROLE_REGISTRY);
+  const modColors={
+    dispatch:['#B91C1C','#FEF2F2'],vendor:['#1D4ED8','#EFF6FF'],
+    reports:['#B45309','#FFFBEB'],hr:['#BE185D','#FDF2F8'],
+    production:['#7C3AED','#F5F3FF'],accounts:['#15803D','#F0FDF4'],
+  };
+
+  grid.innerHTML = roles.map(role=>{
+    const userCount = USERS.filter(u=>u.role===role.id).length;
+    const modTags = (role.modules||[]).map(mid=>{
+      const mod = MODULES.find(m=>m.id===mid);
+      const [fg,bg] = (modColors[mid]||['#374151','#F9FAFB']);
+      return `<span class="rc-mod" style="color:${fg};background:${bg};border-color:${fg}33">${mod?mod.icon+' '+mod.name:mid}</span>`;
+    }).join('') || '<span style="font-size:11px;color:var(--ink3)">No modules assigned</span>';
+
+    const totalSubs = Object.values(role.subRights||{}).reduce((a,v)=>a+v.length,0);
+
+    return `<div class="role-card">
+      <div class="rc-top">
+        <div class="rc-av" style="background:${role.color}">${role.name.slice(0,2).toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div class="rc-name">${role.name}
+            ${role.isBuiltin?'<span class="rc-sys">Built-in</span>':''}
+          </div>
+          <div class="rc-id">${role.id}</div>
+          <div class="rc-desc">${role.desc||''}</div>
+        </div>
+      </div>
+      <div class="rc-body">${modTags}</div>
+      <div class="rc-foot">
+        <span class="rc-users">👤 ${userCount} user${userCount!==1?'s':''}</span>
+        <div style="display:flex;gap:6px">
+          <span style="font-size:11px;color:var(--ink3);align-self:center">${totalSubs} sub-rights</span>
+          <button class="btn btn-sm btn-ghost" onclick="editRole('${role.id}')">✏️ Edit</button>
+          ${!role.isBuiltin?`<button class="btn btn-sm btn-danger" onclick="openDeleteRole('${role.id}')">🗑</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Open Add Role dialog ── */
+function openAddRole(){
+  ['nr-id','nr-name','nr-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nr-color').value='#0E7490';
+  document.getElementById('nr-color-preset').value='#0E7490';
+  openDlg('dlg-add-role');
+}
+
+/* ── Create new role ── */
+async function addRole(){
+  const id   = document.getElementById('nr-id').value.trim().toLowerCase().replace(/\s+/g,'_');
+  const name = document.getElementById('nr-name').value.trim();
+  const desc = document.getElementById('nr-desc').value.trim();
+  const color= document.getElementById('nr-color').value;
+
+  if(!id)  { toast('Role ID is required','err'); return; }
+  if(!name){ toast('Role name is required','err'); return; }
+  if(ROLE_REGISTRY[id]){ toast(`Role ID "${id}" already exists`,'err'); return; }
+  if(!/^[a-z0-9_]+$/.test(id)){ toast('Role ID: only lowercase letters, numbers, underscores','err'); return; }
+
+  try {
+    const res = await apiPost('/api/roles', { action:'create', id, name, desc, color, modules:[], subRights:{} });
+    if(res.error){ toast(res.error,'err'); return; }
+
+    ROLE_REGISTRY[id] = { id, name, desc, color, modules:[], subRights:{}, isBuiltin:false };
+    ROLE_LABELS[id] = name;
+    ROLE_DEFAULTS[id] = { modules:[], subRights:{} };
+
+    closeDlg('dlg-add-role');
+    renderRolesPane();
+    editRole(id);
+    toast(`Role "${name}" created — now set its module defaults`, 'ok');
+    refreshRoleDropdowns();
+  } catch(e){ toast('Failed: '+e.message,'err'); }
+}
+
+/* ── Edit role ── */
+function editRole(roleId){
+  const role = ROLE_REGISTRY[roleId];
+  if(!role){ toast('Role not found','err'); return; }
+  editingRoleId = roleId;
+
+  document.getElementById('role-editor').style.display = '';
+  document.getElementById('re-title').textContent = role.name;
+
+  document.getElementById('re-id').value    = role.id;
+  document.getElementById('re-name').value  = role.name;
+  document.getElementById('re-desc').value  = role.desc||'';
+  document.getElementById('re-color').value = role.color;
+
+  // Disable ID field for built-in roles
+  document.getElementById('re-id').disabled = role.isBuiltin;
+  document.getElementById('re-del-btn').style.display = role.isBuiltin ? 'none' : '';
+
+  // Render module checkboxes for defaults
+  document.getElementById('re-modules').innerHTML = MODULES.map(mod=>{
+    const on = (role.modules||[]).includes(mod.id);
+    const subs = mod.subModules||[];
+    const allowedSubs = (role.subRights&&role.subRights[mod.id])||[];
+    const subHtml = subs.map(sm=>{
+      const son = allowedSubs.includes(sm.id);
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border)">
+        <span style="font-size:11.5px;color:var(--ink2);display:flex;align-items:center;gap:5px"><span style="color:var(--ink4);font-size:10px">└</span>${sm.name}</span>
+        <label class="tog" style="transform:scale(.8);transform-origin:right center">
+          <input type="checkbox" class="re-sub-cb" data-mod="${mod.id}" data-sub="${sm.id}" ${son?'checked':''}>
+          <span class="tog-sl"></span>
+        </label>
+      </div>`;
+    }).join('');
+
+    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 13px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:16px">${mod.icon}</span>
+          <div>
+            <div style="font-size:12.5px;font-weight:600">${mod.name}</div>
+            <div style="font-size:11px;color:var(--ink3)">${mod.desc}</div>
+          </div>
+        </div>
+        <label class="tog" data-modid="${mod.id}">
+          <input type="checkbox" class="re-mod-cb" data-modid="${mod.id}" ${on?'checked':''} onchange="toggleReSubSection('${mod.id}',this.checked)">
+          <span class="tog-sl"></span>
+        </label>
+      </div>
+      <div id="re-sub-${mod.id}" style="${on?'':'display:none'};padding:4px 13px 10px;border-top:1px solid var(--border);background:var(--bg2)">
+        ${subHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Scroll to editor
+  document.getElementById('role-editor').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function toggleReSubSection(modId, on){
+  const sec = document.getElementById('re-sub-'+modId);
+  if(sec) sec.style.display = on ? '' : 'none';
+}
+
+function cancelRoleEdit(){
+  editingRoleId = null;
+  document.getElementById('role-editor').style.display = 'none';
+}
+
+/* ── Save role edits ── */
+async function saveRoleEdit(){
+  if(!editingRoleId){ toast('No role being edited','err'); return; }
+  const role = ROLE_REGISTRY[editingRoleId];
+  if(!role){ toast('Role not found','err'); return; }
+
+  const name  = document.getElementById('re-name').value.trim();
+  const desc  = document.getElementById('re-desc').value.trim();
+  const color = document.getElementById('re-color').value;
+
+  if(!name){ toast('Role name is required','err'); return; }
+
+  // Read module checkboxes
+  const modCbs = document.querySelectorAll('.re-mod-cb');
+  const modules = [...modCbs].filter(c=>c.checked).map(c=>c.getAttribute('data-modid'));
+
+  // Read sub-module checkboxes
+  const subRights = {};
+  document.querySelectorAll('.re-sub-cb').forEach(cb=>{
+    const mod=cb.getAttribute('data-mod'), sub=cb.getAttribute('data-sub');
+    if(!subRights[mod]) subRights[mod]=[];
+    if(cb.checked) subRights[mod].push(sub);
+  });
+
+  // Only persist custom roles to D1; built-in roles update in-memory only
+  if(!role.isBuiltin){
+    try {
+      const res = await apiPost('/api/roles', { action:'update', id:editingRoleId, name, desc, color, modules, subRights });
+      if(res.error){ toast(res.error,'err'); return; }
+    } catch(e){ toast('Failed: '+e.message,'err'); return; }
+  }
+
+  // Apply locally
+  role.name = name; role.desc = desc; role.color = color;
+  role.modules = modules; role.subRights = subRights;
+  ROLE_LABELS[editingRoleId] = name;
+  ROLE_DEFAULTS[editingRoleId] = { modules:[...modules], subRights:JSON.parse(JSON.stringify(subRights)) };
+
+  renderRolesPane();
+  refreshRoleDropdowns();
+  document.getElementById('re-title').textContent = name;
+
+  toast(`Role "${name}" saved ✓`, 'ok');
+}
+
+/* ── Delete role ── */
+function openDeleteRole(roleId){
+  editingRoleId = roleId;
+  const role = ROLE_REGISTRY[roleId];
+  const userCount = USERS.filter(u=>u.role===roleId).length;
+  let msg = `Delete role "${role?.name}"?`;
+  if(userCount>0) msg += ` ${userCount} user${userCount>1?'s are':' is'} currently assigned this role — they will keep it but it won't appear in dropdowns.`;
+  document.getElementById('dlg-del-role-body').textContent = msg;
+  openDlg('dlg-del-role');
+}
+
+function confirmDeleteRole(){
+  openDeleteRole(editingRoleId);
+}
+
+async function deleteRole(){
+  if(!editingRoleId){ closeDlg('dlg-del-role'); return; }
+  const role = ROLE_REGISTRY[editingRoleId];
+  if(role?.isBuiltin){ toast('Cannot delete built-in roles','err'); closeDlg('dlg-del-role'); return; }
+
+  try {
+    const res = await apiPost('/api/roles', { action:'delete', id:editingRoleId });
+    if(res.error){ toast(res.error,'err'); return; }
+
+    delete ROLE_REGISTRY[editingRoleId];
+    delete ROLE_LABELS[editingRoleId];
+    delete ROLE_DEFAULTS[editingRoleId];
+
+    closeDlg('dlg-del-role');
+    cancelRoleEdit();
+    renderRolesPane();
+    refreshRoleDropdowns();
+    toast('Role deleted','ok');
+    editingRoleId = null;
+  } catch(e){ toast('Failed: '+e.message,'err'); }
+}
+
+/* ── Refresh role dropdowns when roles change ── */
+function refreshRoleDropdowns(){
+  const roles = Object.values(ROLE_REGISTRY);
+  const opts  = roles.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+  ['ed-role','na-role'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(!sel) return;
+    const cur=sel.value;
+    sel.innerHTML=opts;
+    if(cur && [...sel.options].some(o=>o.value===cur)) sel.value=cur;
+  });
+}
+
+/* ═══════ UTILITIES ═══════ */
+function openDlg(id){ document.getElementById(id).classList.add('show'); }
+function closeDlg(id){ document.getElementById(id).classList.remove('show'); }
+
+function toast(msg, type='info'){
+  const wrap=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className=`toast t-${type}`;
+  t.textContent=msg;
+  wrap.appendChild(t);
+  setTimeout(()=>{ t.classList.add('hide'); setTimeout(()=>t.remove(),300); },3000);
+}
+
+/* Password toggle */
+document.getElementById('pw-tog').addEventListener('click',()=>{
+  const i=document.getElementById('li-pass');
+  const b=document.getElementById('pw-tog');
+  i.type=i.type==='password'?'text':'password';
+  b.textContent=i.type==='password'?'👁':'🙈';
+});
+
+/* Enter key on login */
+['li-user','li-pass'].forEach(id=>{
+  document.getElementById(id).addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+});
+
+/* Close overlay on backdrop click */
+document.querySelectorAll('.overlay').forEach(ov=>{
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('show'); });
+});
+
+/* Auto-focus */
+window.addEventListener('load',()=>document.getElementById('li-user').focus());
+</script>
+</body>
+</html>

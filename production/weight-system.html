@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Strandply LLP &mdash; Matt Weight System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f4f8;--surf:#fff;--surf2:#f7f9fc;--brd:#e2e8f0;--brd2:#cbd5e1;
+  --txt:#0f172a;--sub:#475569;--muted:#94a3b8;
+  --blue:#2563eb;--blue2:#1d4ed8;--blue-light:#eff6ff;
+  --grn:#059669;--grn-bg:#ecfdf5;--grn-light:#d1fae5;
+  --red:#dc2626;--red-bg:#fef2f2;--red-light:#fee2e2;
+  --amb:#d97706;--amb-bg:#fffbeb;--amb-light:#fde68a;
+  --org:#ea580c;--org2:#c2410c;
+  --navy:#1e3a5f;--navy2:#0f2744;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --sh2:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+  --sh3:0 10px 40px rgba(0,0,0,.12),0 4px 12px rgba(0,0,0,.06);
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ===================== LOGIN PAGE ===================== */
+#loginPage{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy2) 0%,var(--navy) 50%,#1a4a7a 100%);display:flex;align-items:center;justify-content:center;z-index:9000;padding:20px}
+#loginPage::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+.login-box{position:relative;background:rgba(255,255,255,.97);border-radius:20px;padding:44px 44px 36px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.35);backdrop-filter:blur(10px)}
+.login-logo{width:56px;height:56px;background:linear-gradient(135deg,var(--org),var(--org2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;color:#fff;margin:0 auto 16px;letter-spacing:-1px;box-shadow:0 8px 24px rgba(234,88,12,.4)}
+.login-title{font-size:1.5rem;font-weight:800;color:var(--txt);text-align:center;margin-bottom:4px;letter-spacing:-.02em}
+.login-sub{font-size:.82rem;color:var(--sub);text-align:center;margin-bottom:28px}
+.login-field{margin-bottom:14px}
+.login-field label{display:block;font-size:.75rem;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.login-field input{width:100%;padding:11px 14px;font-family:'Inter',sans-serif;font-size:.9rem;background:var(--surf2);border:1.5px solid var(--brd2);border-radius:var(--radius-sm);color:var(--txt);outline:none;transition:all .2s}
+.login-field input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:6px;transition:all .2s;box-shadow:0 4px 14px rgba(37,99,235,.35);letter-spacing:.01em}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(37,99,235,.45)}
+.login-btn:active{transform:translateY(0)}
+.login-err{background:var(--red-bg);border:1px solid #fca5a5;color:var(--red);border-radius:var(--radius-sm);padding:9px 12px;font-size:.8rem;font-weight:500;margin-bottom:12px;display:none}
+.login-users{margin-top:20px;padding-top:16px;border-top:1px solid var(--brd)}
+.login-users p{font-size:.72rem;color:var(--muted);text-align:center;margin-bottom:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.login-user-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.luser-btn{padding:9px 10px;background:var(--surf2);border:1.5px solid var(--brd2);border-radius:var(--radius-sm);cursor:pointer;text-align:center;transition:all .15s}
+.luser-btn:hover{border-color:var(--blue);background:var(--blue-light)}
+.luser-name{font-size:.78rem;font-weight:700;color:var(--txt);display:block}
+.luser-role{font-size:.65rem;color:var(--sub);display:block;margin-top:1px}
+
+/* ===================== SETUP BANNER ===================== */
+#setupBanner{background:var(--navy2);color:#fff;padding:10px 24px;display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--org)}
+#setupBanner h2{font-size:.82rem;font-weight:700;margin-bottom:1px}
+#setupBanner ol{font-size:.72rem;color:#93c5fd;margin-left:16px;line-height:1.8}
+.setup-badge{background:var(--org);color:#fff;padding:5px 12px;border-radius:20px;font-size:.68rem;font-weight:700;letter-spacing:.05em;white-space:nowrap;flex-shrink:0}
+
+/* ===================== HEADER ===================== */
+.hdr{background:linear-gradient(90deg,var(--navy2),var(--navy));color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;box-shadow:var(--sh2);position:sticky;top:0;z-index:200}
+.hdr-brand{display:flex;align-items:center;gap:12px}
+.hdr-logo{width:36px;height:36px;background:linear-gradient(135deg,var(--org),var(--org2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900;color:#fff;letter-spacing:-1px;box-shadow:0 3px 10px rgba(234,88,12,.4)}
+.hdr-title{font-size:1rem;font-weight:700;letter-spacing:-.01em}
+.hdr-sub{font-size:.65rem;color:#93c5fd;margin-top:1px;font-weight:400}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.user-pill{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:20px;padding:4px 12px 4px 8px;cursor:pointer;transition:all .15s}
+.user-pill:hover{background:rgba(255,255,255,.18)}
+.user-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;color:#fff}
+.user-name{font-size:.72rem;font-weight:600;color:#e0f2fe}
+.logout-btn{font-size:.68rem;color:#93c5fd;background:none;border:none;cursor:pointer;padding:2px 4px;font-family:Inter,sans-serif}
+.logout-btn:hover{color:#fff}
+.sync-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:4px 10px;font-size:.68rem;color:#bfdbfe;font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot.online{background:#34d399;box-shadow:0 0 6px #34d39988}
+.dot.syncing{background:var(--amb);animation:blink .6s ease infinite}
+.dot.offline{background:#f87171}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.clock{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:#bfdbfe;font-weight:600}
+
+/* ===================== RIBBON ===================== */
+#batchRibbon{background:var(--blue2);color:#fff;padding:8px 24px;display:flex;align-items:center;gap:14px;font-size:.72rem;font-weight:600;border-bottom:2px solid var(--blue);flex-wrap:wrap}
+#batchRibbon.no-batch{background:#334155}
+.ribbon-code{font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;background:rgba(255,255,255,.15);padding:2px 10px;border-radius:4px;letter-spacing:.06em}
+.ribbon-close{margin-left:auto;padding:4px 14px;background:var(--org);border:none;border-radius:20px;color:#fff;font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;cursor:pointer;transition:all .15s}
+.ribbon-close:hover{background:var(--org2)}
+
+/* ===================== NAV ===================== */
+.nav{background:var(--surf);border-bottom:1px solid var(--brd);padding:0 24px;display:flex;overflow-x:auto;box-shadow:var(--sh)}
+.ntab{padding:12px 20px;font-size:.75rem;font-weight:600;letter-spacing:.03em;color:var(--sub);cursor:pointer;border:none;border-bottom:2.5px solid transparent;margin-bottom:-1px;background:none;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.ntab:hover{color:var(--blue);background:var(--blue-light)}
+.ntab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:700}
+.ntab-ico{font-size:1rem}
+
+/* ===================== PAGES ===================== */
+.pg{display:none;padding:20px 24px;max-width:1360px;margin:0 auto}.pg.on{display:block}
+
+/* ===================== OPERATOR ===================== */
+.op-grid{display:grid;grid-template-columns:370px 1fr;gap:18px;align-items:start}
+@media(max-width:820px){.op-grid{grid-template-columns:1fr}}
+.ecard{background:var(--surf);border-radius:var(--radius-lg);box-shadow:var(--sh2);overflow:hidden;border:1px solid var(--brd)}
+.ecard-hdr{background:var(--navy);color:#fff;padding:12px 18px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+.ecard-body{padding:16px}
+.card{background:var(--surf);border-radius:var(--radius);border:1px solid var(--brd);overflow:hidden;box-shadow:var(--sh)}
+.card-hdr{padding:10px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;background:var(--surf2)}
+.card-ttl{font-size:.72rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--sub)}
+.batch-panel{background:var(--surf);border-radius:var(--radius-lg);border:2px solid var(--blue);box-shadow:var(--sh2);overflow:hidden;margin-bottom:16px}
+.batch-panel-hdr{background:linear-gradient(90deg,var(--blue),var(--blue2));color:#fff;padding:13px 18px;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.batch-panel-body{padding:16px}
+.batch-code-preview{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--blue);background:var(--blue-light);border:2px dashed #93c5fd;border-radius:var(--radius-sm);padding:10px 16px;text-align:center;letter-spacing:.06em;margin:10px 0}
+.open-batch-btn{width:100%;padding:13px;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:700;letter-spacing:.01em;background:linear-gradient(90deg,var(--blue),var(--blue2));color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(37,99,235,.35)}
+.open-batch-btn:hover{box-shadow:0 6px 20px rgba(37,99,235,.45);transform:translateY(-1px)}
+.open-batch-btn:active{transform:translateY(0)}
+.active-batch-card{background:var(--grn-bg);border:1.5px solid var(--grn);border-radius:var(--radius);padding:13px 16px;margin-bottom:12px}
+.ab-lbl{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grn);margin-bottom:3px}
+.ab-val{font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:700;color:var(--txt)}
+.ab-meta{font-size:.72rem;color:var(--sub);margin-top:3px;line-height:1.7}
+.fl{display:flex;gap:8px;margin-bottom:10px}.fld{flex:1}
+.fld label{display:block;font-size:.68rem;font-weight:600;letter-spacing:.04em;color:var(--sub);text-transform:uppercase;margin-bottom:5px}
+.fld input,.fld select{width:100%;padding:8px 11px;font-family:'Inter',sans-serif;font-size:.85rem;font-weight:500;background:var(--surf2);border:1.5px solid var(--brd2);border-radius:var(--radius-sm);color:var(--txt);outline:none;transition:all .2s}
+.fld input:focus,.fld select:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+
+/* ===================== WEIGHT DISPLAY ===================== */
+.wlbl{font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--sub);text-transform:uppercase;margin-bottom:6px}
+.wwrap{position:relative;margin-bottom:10px}
+.wdisp{width:100%;font-family:'JetBrains Mono',monospace;font-size:2.4rem;font-weight:700;color:var(--txt);background:var(--surf2);border:2px solid var(--brd2);border-radius:var(--radius);padding:12px 64px 12px 16px;text-align:center;transition:all .2s}
+.wdisp.focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.wdisp.bad{border-color:var(--red);background:var(--red-bg);box-shadow:0 0 0 3px rgba(220,38,38,.1)}
+.wunit{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.06em}
+
+/* ===================== NUMPAD ===================== */
+.np{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:11px}
+.nk{padding:11px;font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:700;background:var(--surf2);border:1.5px solid var(--brd2);border-radius:var(--radius-sm);cursor:pointer;color:var(--txt);transition:all .1s;text-align:center;user-select:none}
+.nk:hover{background:var(--brd);border-color:var(--brd2)}
+.nk:active{transform:scale(.93);background:var(--blue);color:#fff;border-color:var(--blue)}
+.nk.del{background:var(--red-bg);color:var(--red);border-color:#fca5a5}.nk.del:hover{background:var(--red);color:#fff}
+.nk.dot{background:var(--amb-bg);color:var(--amb);border-color:var(--amb-light)}
+
+/* ===================== PUNCH BUTTON ===================== */
+.pbtn{width:100%;padding:15px;font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:800;letter-spacing:.01em;background:linear-gradient(135deg,var(--org),var(--org2));color:#fff;border:none;border-radius:var(--radius);cursor:pointer;transition:all .18s;box-shadow:0 4px 18px rgba(234,88,12,.38);display:flex;align-items:center;justify-content:center;gap:9px}
+.pbtn:hover{transform:translateY(-2px);box-shadow:0 7px 26px rgba(234,88,12,.45)}
+.pbtn:active{transform:translateY(0)}
+.pbtn.ok{background:linear-gradient(135deg,var(--grn),#047857);animation:pop .4s ease;box-shadow:0 4px 18px rgba(5,150,105,.38)}
+.pbtn:disabled{background:#94a3b8;cursor:not-allowed;box-shadow:none;transform:none}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+/* ===================== STATUS BAR ===================== */
+.sbar{margin-top:9px;padding:9px 13px;border-radius:var(--radius-sm);font-size:.78rem;font-weight:600;min-height:36px;display:flex;align-items:center;gap:7px}
+.sbar.idle{background:var(--surf2);color:var(--muted);border:1px solid var(--brd)}
+.sbar.good{background:var(--grn-bg);color:var(--grn);border:1px solid var(--grn-light)}
+.sbar.warn{background:var(--amb-bg);color:var(--amb);border:1px solid var(--amb-light)}
+.sbar.bad{background:var(--red-bg);color:var(--red);border:1px solid var(--red-light)}
+
+/* ===================== KPIs ===================== */
+.rpnl{display:flex;flex-direction:column;gap:14px}
+.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:640px){.krow{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--surf);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--sh2);border:1px solid var(--brd);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;bottom:0;width:4px;border-radius:2px 0 0 2px}
+.kpi.bl::before{background:var(--blue)}.kpi.gr::before{background:var(--grn)}.kpi.rd::before{background:var(--red)}.kpi.am::before{background:var(--amb)}
+.kval{font-size:1.9rem;font-weight:800;color:var(--txt);line-height:1;letter-spacing:-.02em}
+.kval.bl{color:var(--blue)}.kval.gr{color:var(--grn)}.kval.rd{color:var(--red)}.kval.am{color:var(--amb)}
+.klbl{font-size:.65rem;font-weight:600;color:var(--sub);letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
+.ksub{font-size:.68rem;color:var(--muted);margin-top:2px;font-weight:400}
+
+/* ===================== TABLES ===================== */
+.tscroll{max-height:340px;overflow-y:auto}
+.tscroll::-webkit-scrollbar{width:4px}.tscroll::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
+table.rt{width:100%;border-collapse:collapse;font-size:.78rem}
+table.rt th{background:var(--surf2);padding:8px 10px;text-align:left;font-size:.66rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--sub);border-bottom:1px solid var(--brd)}
+table.rt td{padding:7px 10px;border-bottom:1px solid var(--brd);color:var(--txt);vertical-align:middle}
+table.rt tr:hover td{background:#f8fafc}
+table.rt tr:last-child td{border-bottom:none}
+.bdg{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.66rem;font-weight:700}
+.bdg.pass{background:var(--grn-light);color:var(--grn)}.bdg.warn{background:var(--amb-light);color:#92400e}.bdg.fail{background:var(--red-light);color:var(--red)}
+.bdg.open{background:#dbeafe;color:var(--blue)}.bdg.closed{background:var(--surf2);color:var(--sub)}
+.dbtn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;padding:2px 5px;border-radius:4px;transition:all .1s}
+.dbtn:hover{color:var(--red);background:var(--red-bg)}
+.mono{font-family:'JetBrains Mono',monospace}
+
+/* ===================== BATCH LIST ===================== */
+.batch-list-grid{display:grid;gap:10px}
+.batch-item{background:var(--surf);border:1px solid var(--brd);border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:16px;box-shadow:var(--sh);cursor:pointer;transition:all .18s;border-left:4px solid var(--muted)}
+.batch-item:hover{border-color:var(--blue);box-shadow:var(--sh2);transform:translateX(2px)}
+.batch-item.open-b{border-left-color:var(--blue)}.batch-item.closed-b{border-left-color:var(--muted);opacity:.8}
+.bi-code{font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700;color:var(--txt);min-width:150px}
+.bi-meta{font-size:.7rem;color:var(--sub);line-height:1.7;flex:1;font-weight:400}.bi-meta strong{color:var(--txt);font-weight:600}
+.bi-stats{display:flex;gap:16px;align-items:center}
+.bi-stat{text-align:center}
+.bi-stat-v{font-size:1.1rem;font-weight:800;color:var(--txt);letter-spacing:-.01em}
+.bi-stat-l{font-size:.6rem;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.bi-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* ===================== FILTER BAR ===================== */
+.fbar{background:var(--surf);border-radius:var(--radius);border:1px solid var(--brd);padding:13px 18px;margin-bottom:14px;display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;box-shadow:var(--sh)}
+.fbar .fld{min-width:100px}
+
+/* ===================== EXPORT BUTTONS ===================== */
+.ebtn{padding:8px 14px;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.02em;border-radius:20px;cursor:pointer;border:none;transition:all .15s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.ebtn.pdf{background:var(--red);color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.25)}.ebtn.pdf:hover{background:#b91c1c}
+.ebtn.csv{background:var(--grn);color:#fff;box-shadow:0 2px 8px rgba(5,150,105,.25)}.ebtn.csv:hover{background:#047857}
+
+/* ===================== REPORT ===================== */
+.rctrl{background:var(--surf);border-radius:var(--radius);border:1px solid var(--brd);padding:14px 18px;margin-bottom:14px;display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;box-shadow:var(--sh)}
+.rctrl .fld{min-width:110px}
+.rpv{background:var(--surf);border-radius:var(--radius);border:1px solid var(--brd);padding:22px 26px;box-shadow:var(--sh)}
+.rpv-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--txt);padding-bottom:12px;margin-bottom:14px}
+.rpv-co{font-size:1.25rem;font-weight:800;color:var(--txt);letter-spacing:-.02em}
+.rpv-meta{text-align:right;font-size:.7rem;color:var(--sub);line-height:1.9;font-weight:400}
+.rpv-sec{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);margin:14px 0 8px;border-bottom:1px solid var(--brd);padding-bottom:4px}
+.rpv-kg{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:7px}
+@media(max-width:600px){.rpv-kg{grid-template-columns:repeat(3,1fr)}}
+.rpv-kpi{background:var(--surf2);border-radius:var(--radius-sm);padding:8px 10px;border:1px solid var(--brd)}
+.rpv-kv{font-size:1.2rem;font-weight:800;color:var(--txt);letter-spacing:-.01em}
+.rpv-kl{font-size:.6rem;font-weight:600;color:var(--sub);letter-spacing:.05em;text-transform:uppercase;margin-top:2px}
+.rpv-tbl{width:100%;border-collapse:collapse;font-size:.78rem}
+.rpv-tbl th{background:var(--navy);color:#fff;padding:7px 9px;text-align:left;font-size:.62rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.rpv-tbl td{padding:5px 9px;border-bottom:1px solid var(--brd)}
+.rpv-tbl tr:nth-child(even) td{background:var(--surf2)}
+.rpv-foot{margin-top:18px;padding-top:9px;border-top:1px solid var(--brd);font-size:.62rem;color:var(--muted);text-align:center}
+.info-bar{display:flex;margin-bottom:10px;border:1px solid var(--brd);border-radius:var(--radius-sm);overflow:hidden;font-size:.76rem;font-weight:600}
+.ib-lbl{background:var(--navy);color:#fff;padding:8px 14px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;font-size:.65rem;font-weight:700}
+.ib-val{background:var(--surf2);padding:8px 16px;border-right:1px solid var(--brd);display:flex;align-items:center;gap:5px}
+.ib-val:last-child{border-right:none}
+.ib-key{color:var(--sub);font-size:.6rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+
+/* ===================== SETTINGS ===================== */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.sgrid{grid-template-columns:1fr}}
+.scard{background:var(--surf);border-radius:var(--radius);border:1px solid var(--brd);padding:18px;box-shadow:var(--sh)}
+.sttl{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt);margin-bottom:13px;border-bottom:1px solid var(--brd);padding-bottom:7px}
+.savebtn{padding:9px 20px;background:var(--blue);color:#fff;border:none;border-radius:20px;font-family:'Inter',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;margin-top:12px;transition:all .15s;letter-spacing:.01em}
+.savebtn:hover{background:var(--blue2)}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--blue-light);border:1.5px solid #bfdbfe;border-radius:20px;padding:4px 10px 4px 13px;font-size:.75rem;font-weight:600;color:var(--blue);margin:3px}
+.chip-x{background:none;border:none;cursor:pointer;color:#93c5fd;font-size:1rem;line-height:1;padding:0;transition:color .1s}
+.chip-x:hover{color:var(--red)}
+.danger-card{background:var(--surf);border-radius:var(--radius);border:2px solid var(--red);padding:18px;box-shadow:var(--sh)}
+
+/* ===================== SPREM ===================== */
+.sprem{background:var(--amb-bg);border:1px solid var(--amb-light);border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;gap:9px;font-size:.76rem;font-weight:600;color:var(--amb)}
+
+/* ===================== DASHBOARD GRAPHS ===================== */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px}
+@media(max-width:900px){.dash-grid{grid-template-columns:1fr}}
+.chart-card{background:var(--surf);border-radius:var(--radius);border:1px solid var(--brd);padding:18px;box-shadow:var(--sh)}
+.chart-ttl{font-size:.8rem;font-weight:700;color:var(--txt);margin-bottom:4px;letter-spacing:-.01em}
+.chart-sub{font-size:.7rem;color:var(--sub);margin-bottom:14px;font-weight:400}
+canvas{display:block}
+
+/* ===================== MODAL ===================== */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;backdrop-filter:blur(2px)}
+.modal{background:var(--surf);border-radius:var(--radius-lg);padding:26px 28px;max-width:460px;width:100%;box-shadow:var(--sh3);border:1px solid var(--brd)}
+.modal-title{font-size:1.05rem;font-weight:800;color:var(--txt);margin-bottom:4px;letter-spacing:-.01em}
+.modal-sub{font-size:.76rem;color:var(--sub);margin-bottom:18px;line-height:1.6;font-weight:400}
+.modal-btns{display:flex;gap:10px;margin-top:18px}
+.btn-primary{flex:1;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:20px;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-primary:hover{background:var(--blue2)}
+.btn-secondary{flex:1;padding:11px;background:var(--surf2);color:var(--sub);border:1.5px solid var(--brd2);border-radius:20px;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer}
+.btn-danger{flex:1;padding:11px;background:var(--red);color:#fff;border:none;border-radius:20px;font-family:'Inter',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer}
+.code-big{font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--blue);text-align:center;padding:12px;background:var(--blue-light);border-radius:var(--radius-sm);border:2px dashed #93c5fd;letter-spacing:.04em;margin:11px 0}
+
+/* ===================== EMPTY ===================== */
+.empty{text-align:center;padding:32px 16px;color:var(--muted)}
+.empty-ico{font-size:2rem;margin-bottom:9px}
+.empty-txt{font-size:.8rem;font-weight:500;letter-spacing:.03em}
+
+/* ===================== TOAST ===================== */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:11px 16px;border-radius:var(--radius);font-size:.76rem;font-weight:600;box-shadow:var(--sh3);transform:translateY(70px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:9999;max-width:300px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.gr{border-left:4px solid var(--grn)}.toast.rd{border-left:4px solid var(--red)}.toast.am{border-left:4px solid var(--amb)}
+
+/* ===================== PAGE HEADER ===================== */
+.pg-hdr{margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.pg-title{font-size:1.15rem;font-weight:800;color:var(--txt);letter-spacing:-.02em}
+.pg-sub{font-size:.76rem;color:var(--sub);margin-top:2px;font-weight:400}
+</style>
+</head>
+<body>
+
+<!-- ==================== LOGIN PAGE ==================== -->
+<div id="loginPage">
+  <div class="login-box">
+    <div class="login-logo">OSB</div>
+    <div class="login-title">Strandply LLP</div>
+    <div class="login-sub">Matt Weight Recording System &mdash; Sign in to continue</div>
+    <div class="login-err" id="loginErr">Incorrect username or password. Please try again.</div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter your username" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In &rarr;</button>
+    <div class="login-users">
+      <p>Quick Select</p>
+      <div class="login-user-btns" id="quickUserBtns"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SETUP BANNER ==================== -->
+<div id="setupBanner" style="display:none">
+  <div style="flex:1">
+    <h2>&#9881; Google Sheets Setup &mdash; Paste your Web App URL in the script section (PASTE_YOUR_WEB_APP_URL_HERE)</h2>
+  </div>
+  <div class="setup-badge">Setup Required</div>
+</div>
+
+<!-- ==================== HEADER ==================== -->
+<div class="hdr" id="mainHeader" style="display:none">
+  <div class="hdr-brand">
+    <div class="hdr-logo">OSB</div>
+    <div>
+      <div class="hdr-title">Strandply LLP &mdash; Matt Weight System</div>
+      <div class="hdr-sub">Production Batch Management &middot; Google Sheets Database</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="user-pill" id="userPill">
+      <div class="user-avatar" id="userAvatar" style="background:#3b82f6">A</div>
+      <span class="user-name" id="userNameDisplay">User</span>
+      <button class="logout-btn" onclick="doLogout()">&#9587; Logout</button>
+    </div>
+    <div class="sync-pill"><div class="dot syncing" id="syncDot"></div><span id="syncTxt">Connecting...</span></div>
+    <div class="clock" id="clockEl">00:00:00</div>
+  </div>
+</div>
+
+<!-- ==================== BATCH RIBBON ==================== -->
+<div id="batchRibbon" class="no-batch" style="display:none">
+  <span id="ribbonLabel">NO ACTIVE BATCH &mdash; Open one in the Operator tab</span>
+  <span id="ribbonCode" class="ribbon-code" style="display:none"></span>
+  <span id="ribbonMeta" style="color:#ffffffaa;font-size:.68rem"></span>
+  <button class="ribbon-close" id="ribbonCloseBtn" style="display:none" onclick="confirmCloseBatch()">&#9632; Close Batch</button>
+</div>
+
+<!-- ==================== NAV ==================== -->
+<div class="nav" id="mainNav" style="display:none">
+  <button class="ntab on" onclick="showPg('operator',this)"><span class="ntab-ico">&#9889;</span>Operator</button>
+  <button class="ntab" onclick="showPg('dashboard',this)"><span class="ntab-ico">&#128200;</span>Dashboard</button>
+  <button class="ntab" onclick="showPg('batches',this)"><span class="ntab-ico">&#128230;</span>Batches</button>
+  <button class="ntab" onclick="showPg('history',this)"><span class="ntab-ico">&#128203;</span>All Records</button>
+  <button class="ntab" onclick="showPg('report',this)"><span class="ntab-ico">&#128202;</span>Report</button>
+  <button class="ntab settings-tab" onclick="showPg('settings',this)"><span class="ntab-ico">&#9881;</span>Settings</button>
+</div>
+
+<!-- ==================== OPERATOR ==================== -->
+<div id="pg-operator" class="pg on">
+  <div class="op-grid">
+    <div>
+      <div id="noBatchPanel" class="batch-panel">
+        <div class="batch-panel-hdr">&#128230; Open a Production Batch to Start Punching</div>
+        <div class="batch-panel-body">
+          <div class="fl">
+            <div class="fld">
+              <label>Batch Code</label>
+              <input type="text" id="batchCodeInput" placeholder="e.g. BATCH-001, 08MAY-DAY..." style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:.9rem;text-transform:uppercase" oninput="this.value=this.value.toUpperCase();document.getElementById('batchCodePreview').textContent=this.value.trim()||'-'">
+            </div>
+          </div>
+          <div class="fl">
+            <div class="fld"><label>Product</label>
+              <select id="batchProduct"><option>OSB</option><option>S-OSB</option></select>
+            </div>
+            <div class="fld"><label>Matt Thickness</label>
+              <select id="batchThick"></select>
+            </div>
+          </div>
+          <div class="fl">
+            <div class="fld"><label>Shift</label>
+              <select id="batchShift">
+                <option>Day (06:00-14:00)</option>
+                <option>Afternoon (14:00-22:00)</option>
+                <option>Night (22:00-06:00)</option>
+              </select>
+            </div>
+            <div class="fld"><label>Target Weight / Setpoint (kg)</label>
+              <input type="number" id="batchTargetQty" placeholder="e.g. 18.00" min="0.01" step="0.01">
+              <div style="font-size:.62rem;color:var(--sub);margin-top:3px">This becomes the setpoint for deviation calculation in this batch</div>
+            </div>
+          </div>
+          <div class="batch-code-preview" id="batchCodePreview">-</div>
+          <button class="open-batch-btn" onclick="openBatch()">&#9654; Open Production Batch</button>
+        </div>
+      </div>
+      <div id="activeBatchPanel" style="display:none">
+        <div class="active-batch-card">
+          <div class="ab-lbl">&#9679; Active Production Batch</div>
+          <div class="ab-val" id="activeBatchCode">-</div>
+          <div class="ab-meta" id="activeBatchMeta">-</div>
+        </div>
+        <div class="ecard">
+          <div class="ecard-hdr">&#9889; Weight Entry</div>
+          <div class="ecard-body">
+            <div class="wlbl">Matt Weight (kg)</div>
+            <div class="wwrap">
+              <div class="wdisp" id="wdisp">0.00</div>
+              <span class="wunit">kg</span>
+            </div>
+            <div class="np">
+              <button class="nk" onclick="nk('7')">7</button>
+              <button class="nk" onclick="nk('8')">8</button>
+              <button class="nk" onclick="nk('9')">9</button>
+              <button class="nk" onclick="nk('4')">4</button>
+              <button class="nk" onclick="nk('5')">5</button>
+              <button class="nk" onclick="nk('6')">6</button>
+              <button class="nk" onclick="nk('1')">1</button>
+              <button class="nk" onclick="nk('2')">2</button>
+              <button class="nk" onclick="nk('3')">3</button>
+              <button class="nk dot" onclick="nk('.')">.</button>
+              <button class="nk" onclick="nk('0')">0</button>
+              <button class="nk del" onclick="nkDel()">&#9003;</button>
+            </div>
+            <button class="pbtn" id="punchBtn" onclick="punchWeight()">
+              <span>&#9889;</span><span id="pbtnTxt">Punch Weight</span>
+            </button>
+            <div class="sbar idle" id="sbar">Enter weight from scale then press Punch</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rpnl">
+      <div class="krow">
+        <div class="kpi bl"><div class="kval bl" id="kTotal">0</div><div class="klbl">This Batch</div><div class="ksub">matts punched</div></div>
+        <div class="kpi">  <div class="kval"    id="kAvg">-</div><div class="klbl">Avg Weight</div><div class="ksub">kg / matt</div></div>
+        <div class="kpi gr"><div class="kval gr" id="kPass">0</div><div class="klbl">In Tolerance</div><div class="ksub" id="kPPct">-</div></div>
+        <div class="kpi rd"><div class="kval rd" id="kFail">0</div><div class="klbl">Out of Range</div><div class="ksub" id="kFPct">-</div></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-ttl">Current Batch &mdash; Live Records</div>
+          <button class="dbtn" style="font-size:.7rem;padding:3px 10px;border:1px solid var(--brd);border-radius:20px;font-weight:600" onclick="removeLast()">Remove Last</button>
+        </div>
+        <div class="tscroll">
+          <table class="rt">
+            <thead><tr><th>#</th><th>Time</th><th>Weight (kg)</th><th>Deviation</th><th>Status</th><th></th></tr></thead>
+            <tbody id="liveB"><tr><td colspan="6"><div class="empty"><div class="empty-ico">&#128230;</div><div class="empty-txt">Open a batch to start punching</div></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sprem">
+        <span>&#9888;</span>
+        <span>Target Weight: <strong id="spRem">- kg</strong> &nbsp;&middot;&nbsp; Tolerance: +/-<strong id="tolRem">0.50 kg</strong> &nbsp;&middot;&nbsp; Range: <strong id="rangeRem">- kg</strong></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== DASHBOARD ==================== -->
+<div id="pg-dashboard" class="pg">
+  <div class="pg-hdr">
+    <div><div class="pg-title">Production Dashboard</div><div class="pg-sub">Live analytics across all batches</div></div>
+    <button class="savebtn" style="margin-top:0" onclick="renderDashboard()">&#8635; Refresh</button>
+  </div>
+  <div class="krow" style="margin-bottom:16px">
+    <div class="kpi bl"><div class="kval bl" id="dkTotal">0</div><div class="klbl">Total Matts</div><div class="ksub">all time</div></div>
+    <div class="kpi gr"><div class="kval gr" id="dkPass">0</div><div class="klbl">Overall Pass Rate</div><div class="ksub" id="dkPassPct">-</div></div>
+    <div class="kpi am"><div class="kval am" id="dkBatches">0</div><div class="klbl">Total Batches</div><div class="ksub" id="dkOpenBatches">-</div></div>
+    <div class="kpi rd"><div class="kval rd" id="dkReject">0</div><div class="klbl">Total Rejects</div><div class="ksub" id="dkRejectPct">-</div></div>
+  </div>
+  <div class="dash-grid">
+    <div class="chart-card">
+      <div class="chart-ttl">Weight Distribution</div>
+      <div class="chart-sub">Number of matts per weight band vs setpoint</div>
+      <canvas id="chartDist" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-ttl">Pass / Warn / Reject Breakdown</div>
+      <div class="chart-sub">Status breakdown for all punched matts</div>
+      <canvas id="chartStatus" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-ttl">Weight Trend (Last 60 Matts)</div>
+      <div class="chart-sub">Weight over time with setpoint and tolerance bands</div>
+      <canvas id="chartTrend" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-ttl">Batch Performance Comparison</div>
+      <div class="chart-sub">Average weight and pass rate per batch</div>
+      <canvas id="chartBatch" height="200"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== BATCHES ==================== -->
+<div id="pg-batches" class="pg">
+  <div class="pg-hdr">
+    <div><div class="pg-title">Production Batches</div><div class="pg-sub">Click any batch to view records and generate a report</div></div>
+    <select id="bFilterStatus" style="padding:8px 12px;font-family:'Inter',sans-serif;font-size:.8rem;background:var(--surf);border:1.5px solid var(--brd2);border-radius:20px;color:var(--txt)" onchange="renderBatchList()">
+      <option value="">All Batches</option>
+      <option value="open">Open Only</option>
+      <option value="closed">Closed Only</option>
+    </select>
+  </div>
+  <div class="batch-list-grid" id="batchListGrid">
+    <div class="empty"><div class="empty-ico">&#128230;</div><div class="empty-txt">No batches yet</div></div>
+  </div>
+</div>
+
+<!-- ==================== ALL RECORDS ==================== -->
+<div id="pg-history" class="pg">
+  <div class="fbar">
+    <div class="fld"><label>Batch</label><select id="fBatch"><option value="">All Batches</option></select></div>
+    <div class="fld"><label>Date</label><input type="date" id="fDate"></div>
+    <div class="fld"><label>Product</label><select id="fProduct"><option value="">All Products</option><option>OSB</option><option>S-OSB</option></select></div>
+    <div class="fld"><label>Status</label><select id="fStatus"><option value="">All</option><option value="pass">Pass</option><option value="warn">Warning</option><option value="fail">Reject</option></select></div>
+    <button class="savebtn" style="margin-top:0" onclick="applyFilter()">Filter</button>
+    <button class="savebtn" style="margin-top:0;background:var(--sub)" onclick="clearFilter()">Clear</button>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button class="ebtn csv" onclick="doCSV(false)">&#11015; CSV</button>
+      <button class="ebtn pdf" onclick="doPDF(false)">&#11015; PDF</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-ttl">All Records &nbsp;&middot;&nbsp; <span id="allRecCount" style="color:var(--blue)">0</span> total <span id="filterNote" style="color:var(--amb)"></span></div>
+    </div>
+    <div class="tscroll" style="max-height:68vh">
+      <table class="rt">
+        <thead><tr><th>Batch</th><th>#</th><th>Date</th><th>Time</th><th>Shift</th><th>Thickness</th><th>Product</th><th>Weight (kg)</th><th>Target Wt</th><th>Deviation</th><th>Status</th><th></th></tr></thead>
+        <tbody id="allB"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== REPORT ==================== -->
+<div id="pg-report" class="pg">
+  <div class="rctrl">
+    <div class="fld"><label>Company</label><input id="rCo" value="Strandply LLP"></div>
+    <div class="fld"><label>Plant</label><input id="rPlant" value="Plant 1 - Unit A"></div>
+    <div class="fld"><label>Select Batch</label><select id="rBatch"><option value="">All Batches</option></select></div>
+    <div class="fld"><label>Date</label><input id="rDate" type="date"></div>
+    <button class="ebtn pdf" onclick="doPDF(true)">&#11015; Print / Save PDF</button>
+    <button class="ebtn csv" onclick="doCSV(true)">&#11015; Download CSV</button>
+  </div>
+  <div id="rpvContent" class="rpv">
+    <div class="empty"><div class="empty-ico">&#128202;</div><div class="empty-txt">Select a batch above then view report</div></div>
+  </div>
+</div>
+
+<!-- ==================== SETTINGS ==================== -->
+<div id="pg-settings" class="pg">
+  <div class="sgrid">
+    <div class="scard">
+      <div class="sttl">Tolerance &amp; Warning Bands</div>
+      <p style="font-size:.72rem;color:var(--sub);margin-bottom:12px;line-height:1.6;font-weight:400">Target weight (setpoint) is entered per batch when opening a batch. Tolerance bands below apply to all batches.</p>
+      <div class="fld" style="margin-bottom:10px"><label>Tolerance +/- (kg)</label><input type="number" id="stTol" value="0.50" step="0.05" min="0.05" max="99"></div>
+      <div class="fld" style="margin-bottom:10px"><label>Warning Band +/- (kg)</label><input type="number" id="stWarn" value="0.35" step="0.05" min="0.05" max="99"></div>
+      <button class="savebtn" onclick="saveSettings()">Save to Database</button>
+    </div>
+    <div class="scard">
+      <div class="sttl">Plant Information</div>
+      <div class="fld" style="margin-bottom:10px"><label>Company Name</label><input type="text" id="stCo" value="Strandply LLP"></div>
+      <div class="fld" style="margin-bottom:10px"><label>Plant / Location</label><input type="text" id="stPlant" value="Plant 1 - Unit A"></div>
+      <button class="savebtn" onclick="saveSettings()">Save to Database</button>
+    </div>
+  </div>
+  <div class="scard" style="margin-top:16px">
+    <div class="sttl">Manage Users / Passwords</div>
+    <p style="font-size:.76rem;color:var(--sub);margin-bottom:14px;line-height:1.6;font-weight:400">Add or remove users. Passwords are stored locally in this HTML file. To change permanently, open the file in Notepad and edit the USERS array in the script.</p>
+    <div id="userListDisplay" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="text" id="newUserName" placeholder="Username" style="padding:7px 11px;font-family:Inter,sans-serif;font-size:.82rem;border:1.5px solid var(--brd2);border-radius:var(--radius-sm);outline:none;width:130px">
+      <input type="password" id="newUserPass" placeholder="Password" style="padding:7px 11px;font-family:Inter,sans-serif;font-size:.82rem;border:1.5px solid var(--brd2);border-radius:var(--radius-sm);outline:none;width:130px">
+      <select id="newUserRole" style="padding:7px 11px;font-family:Inter,sans-serif;font-size:.82rem;border:1.5px solid var(--brd2);border-radius:var(--radius-sm);outline:none">
+        <option value="operator">Operator</option>
+        <option value="supervisor">Supervisor</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button class="savebtn" style="margin-top:0" onclick="addUser()">+ Add User</button>
+    </div>
+  </div>
+  <div class="scard" style="margin-top:16px">
+    <div class="sttl">Matt Thickness Master List</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:flex-end">
+      <div class="fld" style="max-width:150px"><label>New Thickness (mm)</label><input type="number" id="newThickVal" placeholder="e.g. 20" min="1" max="999" step="0.5"></div>
+      <button class="savebtn" style="margin-top:0" onclick="addThickness()">+ Add</button>
+    </div>
+    <div id="thickMasterList" style="display:flex;flex-wrap:wrap"></div>
+  </div>
+  <div class="danger-card" style="margin-top:16px">
+    <div class="sttl" style="color:var(--red)">Danger Zone</div>
+    <p style="font-size:.76rem;color:var(--sub);margin-bottom:12px;font-weight:400">Permanently delete ALL records and batches. Cannot be undone.</p>
+    <button onclick="clearEverything()" style="padding:9px 20px;background:var(--red);color:#fff;border:none;border-radius:20px;font-family:Inter,sans-serif;font-size:.76rem;font-weight:700;cursor:pointer">Delete Everything</button>
+  </div>
+</div>
+
+<!-- CLOSE BATCH MODAL -->
+<div class="modal-overlay" id="closeBatchModal" style="display:none">
+  <div class="modal">
+    <div class="modal-title">Close Production Batch?</div>
+    <div class="modal-sub">This marks the batch as complete. No more records can be added to it.</div>
+    <div class="code-big" id="closeBatchCode">-</div>
+    <div style="font-size:.74rem;color:var(--sub);text-align:center;font-weight:400" id="closeBatchSummary">-</div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="hideModal('closeBatchModal')">Cancel</button>
+      <button class="btn-danger" onclick="closeBatch()">Close Batch</button>
+    </div>
+  </div>
+</div>
+
+<!-- BATCH DETAIL MODAL -->
+<div class="modal-overlay" id="batchDetailModal" style="display:none">
+  <div class="modal" style="max-width:680px;width:100%">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="modal-title" id="bdTitle">Batch Detail</div>
+      <button onclick="hideModal('batchDetailModal')" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted)">&#215;</button>
+    </div>
+    <div class="modal-sub" id="bdMeta">-</div>
+    <div class="tscroll" style="max-height:320px">
+      <table class="rt" style="font-size:.74rem">
+        <thead><tr><th>#</th><th>Date</th><th>Time</th><th>Weight (kg)</th><th>Deviation</th><th>Status</th></tr></thead>
+        <tbody id="bdBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-btns" style="margin-top:13px">
+      <button class="btn-secondary" onclick="hideModal('batchDetailModal')">Close</button>
+      <button class="btn-primary" onclick="reportFromModal()">&#128202; Report This Batch</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================
+   USER ACCOUNTS
+   To add/change users: edit USERS array below.
+   Roles: operator (punch only), supervisor (all except settings), admin (full access)
+===================================================== */
+var USERS = [
+  { username: "admin",      password: "strandply123", role: "admin",      name: "Administrator",  color: "#dc2626" },
+  { username: "supervisor", password: "super456",     role: "supervisor", name: "Supervisor",     color: "#d97706" },
+  { username: "operator1",  password: "op1pass",      role: "operator",   name: "Operator 1",    color: "#2563eb" },
+  { username: "operator2",  password: "op2pass",      role: "operator",   name: "Operator 2",    color: "#059669" }
+];
+
+var currentUser = null;
+
+/* ---- Login / Logout ---- */
+function buildQuickButtons() {
+  var container = document.getElementById('quickUserBtns');
+  container.innerHTML = USERS.map(function(u) {
+    return '<div class="luser-btn" onclick="quickFill(\''+u.username+'\',\''+u.password+'\')">'+
+      '<span class="luser-name">'+u.name+'</span>'+
+      '<span class="luser-role">'+u.role+'</span>'+
+    '</div>';
+  }).join('');
+}
+
+function quickFill(user, pass) {
+  document.getElementById('loginUser').value = user;
+  document.getElementById('loginPass').value = pass;
+  doLogin();
+}
+
+function doLogin() {
+  var u = document.getElementById('loginUser').value.trim().toLowerCase();
+  var p = document.getElementById('loginPass').value;
+  var match = USERS.find(function(x){ return x.username.toLowerCase()===u && x.password===p; });
+  if(!match) {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('loginPass').value = '';
+    return;
+  }
+  document.getElementById('loginErr').style.display = 'none';
+  currentUser = match;
+  showMainApp();
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('mainHeader').style.display = 'none';
+  document.getElementById('batchRibbon').style.display = 'none';
+  document.getElementById('mainNav').style.display = 'none';
+  document.querySelectorAll('.pg').forEach(function(p){ p.style.display='none'; });
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+function showMainApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('mainHeader').style.display = 'flex';
+  document.getElementById('batchRibbon').style.display = 'flex';
+  document.getElementById('mainNav').style.display = 'flex';
+
+  /* Set user display */
+  document.getElementById('userNameDisplay').textContent = currentUser.name;
+  document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
+  document.getElementById('userAvatar').style.background = currentUser.color;
+
+  /* Role-based access: hide settings tab for operators */
+  var settingsTab = document.querySelector('.settings-tab');
+  if(currentUser.role === 'operator') settingsTab.style.display = 'none';
+  else settingsTab.style.display = '';
+
+  /* Show operator page */
+  var firstTab = document.querySelector('.ntab');
+  showPg('operator', firstTab);
+
+  /* Role-based UI: hide delete controls for operators */
+  var removeLast = document.getElementById('removeLastBtn');
+  if(removeLast) removeLast.style.display = currentUser.role==='operator' ? 'none' : '';
+
+  /* Init app */
+  initApp();
+}
+
+/* ---- User management (settings page) ---- */
+function renderUserList() {
+  var container = document.getElementById('userListDisplay');
+  if(!container) return;
+  container.innerHTML = USERS.map(function(u, i) {
+    return '<div style="display:inline-flex;align-items:center;gap:8px;background:var(--surf2);border:1.5px solid var(--brd2);border-radius:20px;padding:6px 12px;">'+
+      '<div style="width:20px;height:20px;border-radius:50%;background:'+u.color+';display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:#fff;">'+u.name.charAt(0)+'</div>'+
+      '<span style="font-size:.76rem;font-weight:600;color:var(--txt);">'+u.name+'</span>'+
+      '<span style="font-size:.68rem;color:var(--sub);">'+u.role+'</span>'+
+      (currentUser.role==='admin'?'<button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.9rem;" onclick="removeUser('+i+')">&#215;</button>':'') +
+    '</div>';
+  }).join('');
+}
+
+function addUser() {
+  var name = document.getElementById('newUserName').value.trim();
+  var pass = document.getElementById('newUserPass').value;
+  var role = document.getElementById('newUserRole').value;
+  if(!name || !pass) { toast('Enter username and password','rd'); return; }
+  var colors = ['#2563eb','#059669','#d97706','#7c3aed','#db2777','#0891b2'];
+  USERS.push({ username: name.toLowerCase(), password: pass, role: role, name: name, color: colors[USERS.length%colors.length] });
+  document.getElementById('newUserName').value = '';
+  document.getElementById('newUserPass').value = '';
+  renderUserList();
+  buildQuickButtons();
+  toast(name+' added','gr');
+}
+
+function removeUser(idx) {
+  if(USERS[idx].username === currentUser.username) { toast('Cannot remove yourself','rd'); return; }
+  USERS.splice(idx, 1);
+  renderUserList();
+  buildQuickButtons();
+  toast('User removed','rd');
+}
+
+/* =====================================================
+   DASHBOARD CHARTS (pure Canvas, no libraries)
+===================================================== */
+function renderDashboard() {
+  if(!allRecords.length) {
+    ['chartDist','chartStatus','chartTrend','chartBatch'].forEach(function(id){
+      var canvas = document.getElementById(id);
+      var ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '14px Inter,sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('No data yet', canvas.width/2, canvas.height/2);
+    });
+    document.getElementById('dkTotal').textContent = 0;
+    document.getElementById('dkPass').textContent = 0;
+    document.getElementById('dkBatches').textContent = 0;
+    document.getElementById('dkReject').textContent = 0;
+    return;
+  }
+
+  var n      = allRecords.length;
+  var pass   = allRecords.filter(function(r){ return r.status==='pass'; }).length;
+  var warn   = allRecords.filter(function(r){ return r.status==='warn'; }).length;
+  var fail   = allRecords.filter(function(r){ return r.status==='fail'; }).length;
+  var bCount = Object.keys(batches).length;
+  var openB  = Object.values(batches).filter(function(b){ return b.status==='open'; }).length;
+
+  document.getElementById('dkTotal').textContent  = n;
+  document.getElementById('dkPass').textContent   = pass;
+  document.getElementById('dkPassPct').textContent= n ? ((pass/n)*100).toFixed(1)+'% pass rate' : '-';
+  document.getElementById('dkBatches').textContent= bCount;
+  document.getElementById('dkOpenBatches').textContent = openB+' open, '+(bCount-openB)+' closed';
+  document.getElementById('dkReject').textContent = fail;
+  document.getElementById('dkRejectPct').textContent = n ? ((fail/n)*100).toFixed(1)+'% reject rate' : '-';
+
+  /* Defer chart drawing by one frame so layout is complete */
+  var _pass=pass, _warn=warn, _fail=fail;
+  setTimeout(function(){
+    drawDistChart();
+    drawStatusChart(_pass, _warn, _fail);
+    drawTrendChart();
+    drawBatchChart();
+  }, 50);
+}
+
+function setupCanvas(id) {
+  var canvas = document.getElementById(id);
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.parentElement.getBoundingClientRect();
+  /* Use minimum 200px wide so radius never goes negative */
+  var W = Math.max(rect.width || 200, 200);
+  var H = 200;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  return { ctx: ctx, W: W, H: H };
+}
+
+function drawDistChart() {
+  var c = setupCanvas('chartDist');
+  var ctx=c.ctx, W=c.W, H=c.H;
+  var weights = allRecords.map(function(r){ return r.weight; });
+  if(!weights.length) return;
+  /* Use average of all batch SPs as reference line */
+  var allSPs = allRecords.map(function(r){ return Number(r.sp)||0; }).filter(function(v){ return v>0; });
+  var avgSP = allSPs.length ? allSPs.reduce(function(a,b){return a+b;},0)/allSPs.length : (weights.reduce(function(a,b){return a+b;},0)/weights.length);
+  var mn = Math.min.apply(null,weights), mx = Math.max.apply(null,weights);
+  var spread = Math.max(mx-mn, TOL*4);
+  var lo = avgSP - spread*0.6, hi = avgSP + spread*0.6;
+  var bins = 12;
+  var binW = (hi-lo)/bins;
+  var counts = new Array(bins).fill(0);
+  weights.forEach(function(w){
+    var i = Math.floor((w-lo)/binW);
+    if(i>=0 && i<bins) counts[i]++;
+  });
+  var maxC = Math.max.apply(null,counts)||1;
+  var pad = {l:36,r:12,t:12,b:28};
+  var bw = (W-pad.l-pad.r)/bins;
+  var bh = H-pad.t-pad.b;
+
+  /* grid */
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
+  for(var gi=0; gi<=4; gi++){
+    var gy = pad.t + bh - (gi/4)*bh;
+    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(W-pad.r,gy); ctx.stroke();
+    ctx.fillStyle='#94a3b8'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='right';
+    ctx.fillText(Math.round((gi/4)*maxC), pad.l-4, gy+3);
+  }
+
+  /* tolerance zone */
+  var spX = pad.l + ((avgSP-lo)/binW)*bw;
+  var tolLo = pad.l + ((avgSP-TOL-lo)/binW)*bw;
+  var tolHi = pad.l + ((avgSP+TOL-lo)/binW)*bw;
+  ctx.fillStyle='rgba(5,150,105,.08)';
+  ctx.fillRect(tolLo, pad.t, tolHi-tolLo, bh);
+
+  /* bars */
+  counts.forEach(function(c, i){
+    var x = pad.l + i*bw;
+    var barH = (c/maxC)*bh;
+    var y = pad.t + bh - barH;
+    var center = lo + (i+0.5)*binW;
+    var diff = Math.abs(center-avgSP);
+    var color = diff<=WARN?'#059669':diff<=TOL?'#d97706':'#dc2626';
+    ctx.fillStyle = color;
+    ctx.fillRect(x+2, y, bw-4, barH);
+    if(i%2===0){
+      ctx.fillStyle='#94a3b8'; ctx.font='9px JetBrains Mono,monospace'; ctx.textAlign='center';
+      ctx.fillText(center.toFixed(1), x+bw/2, H-pad.b+10);
+    }
+  });
+
+  /* SP line */
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(spX, pad.t); ctx.lineTo(spX, pad.t+bh); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#2563eb'; ctx.font='bold 9px Inter,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('SP', spX, pad.t-2);
+}
+
+function drawStatusChart(pass, warn, fail) {
+  var c = setupCanvas('chartStatus');
+  var ctx=c.ctx, W=c.W, H=c.H;
+  var total = pass+warn+fail;
+  if(!total) return;
+  var cx=W/2, cy=H/2, r=Math.max(Math.min(cx,cy)-30, 20);
+  var data=[
+    {v:pass, color:'#059669', label:'Pass'},
+    {v:warn, color:'#d97706', label:'Warning'},
+    {v:fail, color:'#dc2626', label:'Reject'}
+  ];
+  var start = -Math.PI/2;
+  data.forEach(function(d){
+    if(!d.v) return;
+    var angle = (d.v/total)*Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,start+angle);
+    ctx.closePath();
+    ctx.fillStyle = d.color;
+    ctx.fill();
+    /* label */
+    var midA = start + angle/2;
+    var lx = cx + Math.cos(midA)*(r*0.65);
+    var ly = cy + Math.sin(midA)*(r*0.65);
+    ctx.fillStyle='#fff'; ctx.font='bold 11px Inter,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(((d.v/total)*100).toFixed(0)+'%', lx, ly+4);
+    start += angle;
+  });
+  /* center hole */
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.45,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.fill();
+  ctx.fillStyle='#0f172a'; ctx.font='bold 14px Inter,sans-serif'; ctx.textAlign='center';
+  ctx.fillText(total, cx, cy-2);
+  ctx.fillStyle='#94a3b8'; ctx.font='10px Inter,sans-serif';
+  ctx.fillText('matts', cx, cy+13);
+  /* legend */
+  var lx2=12, ly2=H-52;
+  data.forEach(function(d){
+    ctx.fillStyle=d.color; ctx.fillRect(lx2,ly2,10,10);
+    ctx.fillStyle='#475569'; ctx.font='11px Inter,sans-serif'; ctx.textAlign='left';
+    ctx.fillText(d.label+' ('+d.v+')', lx2+14, ly2+9);
+    ly2+=18;
+  });
+}
+
+function drawTrendChart() {
+  var c = setupCanvas('chartTrend');
+  var ctx=c.ctx, W=c.W, H=c.H;
+  var recs = allRecords.slice(-60);
+  if(recs.length<2) return;
+  var weights = recs.map(function(r){ return r.weight; });
+  var mn=Math.min.apply(null,weights), mx=Math.max.apply(null,weights);
+  var recSPs = recs.map(function(r){ return Number(r.sp)||0; }).filter(function(v){ return v>0; });
+  var avgSP2 = recSPs.length ? recSPs.reduce(function(a,b){return a+b;},0)/recSPs.length : mn;
+  var lo2=Math.min(mn,avgSP2-TOL*1.5)-0.2, hi2=Math.max(mx,avgSP2+TOL*1.5)+0.2;
+  var pad={l:40,r:12,t:12,b:24};
+  var bh=H-pad.t-pad.b, bw2=W-pad.l-pad.r;
+
+  function px(i){ return pad.l + (i/(recs.length-1))*bw2; }
+  function py(v){ return pad.t + bh - ((v-lo2)/(hi2-lo2))*bh; }
+
+  /* grid */
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
+  for(var gi=0; gi<=4; gi++){
+    var gy=pad.t+(gi/4)*bh;
+    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(W-pad.r,gy); ctx.stroke();
+    var val=hi2-((hi2-lo2)*gi/4);
+    ctx.fillStyle='#94a3b8'; ctx.font='10px JetBrains Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText(val.toFixed(1), pad.l-4, gy+3);
+  }
+
+  /* tolerance band */
+  ctx.fillStyle='rgba(5,150,105,.08)';
+  ctx.fillRect(pad.l, py(avgSP2+TOL), bw2, py(avgSP2-TOL)-py(avgSP2+TOL));
+  ctx.fillStyle='rgba(217,119,6,.06)';
+  ctx.fillRect(pad.l, py(avgSP2+WARN), bw2, py(avgSP2-WARN)-py(avgSP2+WARN));
+
+  /* Avg Target Weight line */
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=1.5; ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(pad.l,py(avgSP2)); ctx.lineTo(W-pad.r,py(avgSP2)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* line */
+  ctx.beginPath();
+  recs.forEach(function(r,i){
+    if(i===0) ctx.moveTo(px(i),py(r.weight));
+    else ctx.lineTo(px(i),py(r.weight));
+  });
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=2; ctx.stroke();
+
+  /* dots */
+  recs.forEach(function(r,i){
+    ctx.beginPath(); ctx.arc(px(i),py(r.weight),3,0,Math.PI*2);
+    var s=r.status;
+    ctx.fillStyle=s==='pass'?'#059669':s==='warn'?'#d97706':'#dc2626';
+    ctx.fill();
+  });
+}
+
+function drawBatchChart() {
+  var c = setupCanvas('chartBatch');
+  var ctx=c.ctx, W=c.W, H=c.H;
+  var bList = Object.values(batches).slice(-8);
+  if(!bList.length) return;
+  var bData = bList.map(function(b){
+    var bRecs = allRecords.filter(function(r){ return r.batchCode===b.code; });
+    var pass  = bRecs.filter(function(r){ return r.status==='pass'; }).length;
+    var avg   = bRecs.length?(bRecs.reduce(function(a,r){ return a+r.weight; },0)/bRecs.length):0;
+    return { code:b.code, avg:avg, pct:bRecs.length?((pass/bRecs.length)*100):0, n:bRecs.length };
+  }).filter(function(d){ return d.n>0; });
+  if(!bData.length) return;
+  var pad={l:36,r:12,t:12,b:40};
+  var bh=H-pad.t-pad.b, bw2=W-pad.l-pad.r;
+  var barW=Math.min(bw2/bData.length-8, 40);
+  var maxAvg=Math.max.apply(null,bData.map(function(d){ return d.avg; }))||1;
+  var lo3=Math.max(0,Math.min.apply(null,bData.map(function(d){ return d.avg; }))-1);
+  var hi3=maxAvg+1;
+
+  /* grid */
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
+  for(var gi=0; gi<=4; gi++){
+    var gy=pad.t+(gi/4)*bh;
+    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(W-pad.r,gy); ctx.stroke();
+    var val2=hi3-((hi3-lo3)*gi/4);
+    ctx.fillStyle='#94a3b8'; ctx.font='10px JetBrains Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText(val2.toFixed(1), pad.l-4, gy+3);
+  }
+
+  bData.forEach(function(d,i){
+    var x = pad.l + (i+0.5)*bw2/bData.length - barW/2;
+    var barH2 = d.avg ? ((d.avg-lo3)/(hi3-lo3))*bh : 0;
+    var y = pad.t+bh-barH2;
+    /* Pass rate colored bar */
+    var pct=d.pct/100;
+    var r2=Math.round(5+(1-pct)*215); var g2=Math.round(150*pct); var b2=Math.round(105*pct);
+    ctx.fillStyle='rgb('+r2+','+g2+','+b2+')';
+    ctx.beginPath();
+    ctx.roundRect?ctx.roundRect(x,y,barW,barH2,3):ctx.rect(x,y,barW,barH2);
+    ctx.fill();
+    /* label */
+    ctx.fillStyle='#475569'; ctx.font='9px Inter,sans-serif'; ctx.textAlign='center';
+    var shortCode = d.code.length>8?d.code.substring(0,8)+'...':d.code;
+    ctx.fillText(shortCode, x+barW/2, H-pad.b+10);
+    ctx.fillText(d.pct.toFixed(0)+'%', x+barW/2, H-pad.b+20);
+  });
+}
+
+/* =====================================================
+   MAIN APP SCRIPT
+===================================================== */
+/* =====================================================
+   STRANDPLY LLP - MATT WEIGHT SYSTEM
+   Paste your Apps Script Web App URL below.
+   Get it from: Apps Script -> Deploy -> New deployment
+   -> Web App -> Execute as: Me -> Anyone -> Deploy
+   Copy the URL that ends in /exec
+===================================================== */
+var GOOGLE_SHEETS_API_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+/* ===================================================== */
+
+var API_READY = GOOGLE_SHEETS_API_URL !== "PASTE_YOUR_WEB_APP_URL_HERE";
+var SP=0, TOL=0.50, WARN=0.35; /* SP=0 means no global setpoint - use batchSP per batch */
+var weightStr = '';
+var thicknessList = [6,8,9,10,11,12,15,18,22,25];
+var batches = {};
+var allRecords = [];
+var activeBatchCode = null;
+var filteredRecords = null;
+var modalBatchCode = null;
+/* Dedicated store for batch setpoints - NEVER overwritten by Sheets data */
+var batchSPStore = {};
+var pollTimer = null;
+var POLL_INTERVAL = 10000;
+
+/* ---- Clock ---- */
+function tick(){ document.getElementById('clockEl').textContent = new Date().toLocaleTimeString('en-GB',{hour12:false}); }
+function fmtDDMMYY(d){ var dt=d instanceof Date?d:new Date(d); var dd=String(dt.getDate()).padStart(2,'0'); var mm=String(dt.getMonth()+1).padStart(2,'0'); var yy=String(dt.getFullYear()).slice(-2); return dd+'/'+mm+'/'+yy; }
+function fmtTimeOnly(d){
+  var dt=d instanceof Date?d:new Date(d);
+  /* Manual format - never uses locale which can add timezone text */
+  var hh=String(dt.getHours()).padStart(2,'0');
+  var mi=String(dt.getMinutes()).padStart(2,'0');
+  var ss=String(dt.getSeconds()).padStart(2,'0');
+  return hh+':'+mi+':'+ss;
+}
+
+/* Sanitise a date value - always return dd/mm/yy string */
+function sanitiseDate(v){
+  if(!v || v==='-') return '-';
+  /* Already in dd/mm/yy format */
+  if(typeof v==='string' && /^\d{2}\/\d{2}\/\d{2}$/.test(v)) return v;
+  /* Try parsing as date */
+  try{ var dt=new Date(v); if(!isNaN(dt.getTime())) return fmtDDMMYY(dt); }catch(e){}
+  return String(v).substring(0,8);
+}
+/* Sanitise a time value - always return HH:MM:SS string */
+function sanitiseTime(v){
+  if(!v || v==='-') return '-';
+  /* Already HH:MM:SS */
+  if(typeof v==='string' && /^\d{2}:\d{2}:\d{2}$/.test(v)) return v;
+  /* Extract time portion from full date string */
+  try{
+    var dt=new Date(v);
+    if(!isNaN(dt.getTime())){
+      var hh=String(dt.getHours()).padStart(2,'0');
+      var mi=String(dt.getMinutes()).padStart(2,'0');
+      var ss2=String(dt.getSeconds()).padStart(2,'0');
+      return hh+':'+mi+':'+ss2;
+    }
+  }catch(e){}
+  /* Try extracting HH:MM:SS from string directly */
+  var m = String(v).match(/(\d{2}:\d{2}:\d{2})/);
+  if(m) return m[1];
+  return String(v).substring(0,8);
+}
+setInterval(tick, 1000); tick();
+document.getElementById('rDate').value = new Date().toISOString().split('T')[0];
+if(API_READY) document.getElementById('setupBanner').style.display = 'none';
+
+/* =====================================================
+   GOOGLE SHEETS API - CORE FETCH LAYER
+
+   KEY FIX: Google Apps Script Web App does a redirect
+   (302) before returning JSON. Regular fetch() with
+   redirect:'follow' loses the response body.
+
+   Solution:
+   - For READS  (getAll): use no-cors fetch does not
+     work for reads, so we use XHR which handles the
+     redirect correctly and returns the JSON body.
+   - For WRITES (addRecord, openBatch etc): use
+     no-cors fetch (fire-and-forget). The script runs
+     and writes to the sheet. We don't need the
+     response - just confirm it was sent.
+===================================================== */
+
+/* XHR-based GET - handles Google's 302 redirect correctly */
+function sheetGet(action) {
+  return new Promise(function(resolve, reject) {
+    var url = GOOGLE_SHEETS_API_URL + '?action=' + action + '&t=' + Date.now();
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onload = function() {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        resolve(data);
+      } catch(e) {
+        reject(new Error('Bad JSON from sheet: ' + xhr.responseText.substring(0,100)));
+      }
+    };
+    xhr.onerror = function() { reject(new Error('Network error')); };
+    xhr.ontimeout = function() { reject(new Error('Timeout')); };
+    xhr.timeout = 15000;
+    xhr.send();
+  });
+}
+
+/* XHR-based action call with data payload */
+function sheetAction(action, payload) {
+  return new Promise(function(resolve, reject) {
+    var data = encodeURIComponent(JSON.stringify(payload || {}));
+    var url = GOOGLE_SHEETS_API_URL + '?action=' + action + '&data=' + data + '&t=' + Date.now();
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.onload = function() {
+      try {
+        var res = JSON.parse(xhr.responseText);
+        resolve(res);
+      } catch(e) {
+        /* Script ran but returned non-JSON (e.g. redirect HTML).
+           This still means the write succeeded - resolve with success. */
+        resolve({ success: true, note: 'no-json-response' });
+      }
+    };
+    xhr.onerror = function() { reject(new Error('Network error')); };
+    xhr.ontimeout = function() { reject(new Error('Timeout')); };
+    xhr.timeout = 20000;
+    xhr.send();
+  });
+}
+
+/* ---- Sync status ---- */
+function setSyncStatus(s) {
+  var dot = document.getElementById('syncDot');
+  var txt = document.getElementById('syncTxt');
+  if(s === 'online')        { dot.className='dot online';  txt.textContent='Live - Google Sheets'; }
+  else if(s === 'syncing')  { dot.className='dot syncing'; txt.textContent='Syncing...'; }
+  else                      { dot.className='dot offline'; txt.textContent='Offline'; }
+}
+
+/* ---- Init ---- */
+function initApp() {
+  if(!API_READY) { setSyncStatus('offline'); loadLocal(); return; }
+  setSyncStatus('syncing');
+  loadFromSheets().then(function() {
+    startPolling();
+  }).catch(function(e) {
+    console.error('Sheet load failed:', e.message);
+    setSyncStatus('offline');
+    toast('Cannot reach Google Sheets - using local data', 'am');
+    loadLocal();
+  });
+}
+
+async function loadFromSheets() {
+  setSyncStatus('syncing');
+  var data = await sheetGet('getAll');
+  if(data.error) throw new Error(data.error);
+  applyData(data);
+  setSyncStatus('online');
+}
+
+function applyData(data) {
+  if(data.records) {
+    allRecords = Object.values(data.records).sort(function(a,b){ return a.id - b.id; });
+    /* Sanitise date/time fields from Sheets - may arrive as full date strings */
+    allRecords.forEach(function(r){
+      r.date = sanitiseDate(r.date);
+      r.time = sanitiseTime(r.time);
+      r.weight = Number(r.weight) || 0;
+      r.sp     = Number(r.sp)  > 0 ? Number(r.sp) : 0;   /* keep record's own batch SP, 0 if unknown */
+      r.dev    = isNaN(Number(r.dev)) ? 0 : Number(r.dev);   /* allow 0 deviation */
+    });
+  }
+  if(data.batches) {
+    var incoming = data.batches;
+    for(var bk in incoming) {
+      /* batchSPStore is the authoritative source - always wins over Sheets value */
+      if(Number(batchSPStore[bk]) > 0) {
+        incoming[bk].batchSP = Number(batchSPStore[bk]);
+      } else if(batches[bk] && Number(batches[bk].batchSP) > 0) {
+        /* fallback: keep existing local value and save to store */
+        incoming[bk].batchSP = Number(batches[bk].batchSP);
+        batchSPStore[bk] = incoming[bk].batchSP;
+      }
+    }
+    /* Never close the currently active batch via a Sheets refresh -
+       only closeBatch() button should do that */
+    if(activeBatchCode && incoming[activeBatchCode]) {
+      if(batches[activeBatchCode] && batches[activeBatchCode].status === 'open') {
+        incoming[activeBatchCode].status = 'open';
+        incoming[activeBatchCode].closedAt = null;
+      }
+    }
+    batches = incoming;
+  }
+  if(data.settings) {
+    var s = data.settings;
+    /* SP deliberately NOT loaded from Settings - target weight is per-batch only */
+    TOL  = Number(s.TOL)  > 0 ? Number(s.TOL)  : TOL;
+    WARN = Number(s.WARN) > 0 ? Number(s.WARN) : WARN;
+    document.getElementById('stTol').value  = TOL;
+    document.getElementById('stWarn').value = WARN;
+    if(s.company){ document.getElementById('stCo').value   = s.company; document.getElementById('rCo').value    = s.company; }
+    if(s.plant)  { document.getElementById('stPlant').value= s.plant;   document.getElementById('rPlant').value = s.plant; }
+    applySettingsUI();
+  }
+  if(data.thickness && Array.isArray(data.thickness)) {
+    thicknessList = data.thickness;
+    renderThickMaster(); rebuildThickDropdowns();
+  }
+  /* Only update activeBatchCode from Sheets if we do not already have one locally */
+  if(!activeBatchCode) {
+    activeBatchCode = data.activeBatch || null;
+  } else if(data.activeBatch && data.activeBatch !== activeBatchCode) {
+    /* Different device opened a batch - switch to it */
+    activeBatchCode = data.activeBatch;
+  }
+  saveLocal();
+  rebuildBatchSelectors(); renderBatchList(); updateKPIs(); renderLive(); updateRibbon();
+  if(document.getElementById('pg-history').classList.contains('on')) renderAllTable(filteredRecords || allRecords);
+}
+
+function startPolling() {
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(function() {
+    if(!API_READY) return;
+    loadFromSheets().catch(function() { setSyncStatus('offline'); });
+  }, POLL_INTERVAL);
+}
+
+/* ---- Local fallback (localStorage) ---- */
+function loadLocal() {
+  try {
+    var r = localStorage.getItem('osb_records');   if(r) allRecords    = JSON.parse(r);
+    var b = localStorage.getItem('osb_batches');   if(b) batches       = JSON.parse(b);
+    var s = localStorage.getItem('osb_settings');  if(s) { var o=JSON.parse(s); TOL=o.TOL||0.5; WARN=o.WARN||0.35; }
+    var t = localStorage.getItem('osb_thickness'); if(t) thicknessList = JSON.parse(t);
+    var ac= localStorage.getItem('osb_activeBatch'); if(ac) activeBatchCode = ac;
+    /* Restore batchSP store from saved batches */
+    for(var bk in batches){
+      if(Number(batches[bk].batchSP) > 0) batchSPStore[bk] = Number(batches[bk].batchSP);
+    }
+  } catch(e){}
+  applySettingsUI(); renderThickMaster(); rebuildThickDropdowns();
+  rebuildBatchSelectors(); renderBatchList(); updateKPIs(); renderLive(); updateRibbon();
+}
+function saveLocal() {
+  try {
+    localStorage.setItem('osb_records',    JSON.stringify(allRecords));
+    localStorage.setItem('osb_batches',    JSON.stringify(batches));
+    localStorage.setItem('osb_settings',   JSON.stringify({SP:SP,TOL:TOL,WARN:WARN}));
+    localStorage.setItem('osb_thickness',  JSON.stringify(thicknessList));
+    if(activeBatchCode) localStorage.setItem('osb_activeBatch', activeBatchCode);
+    else                localStorage.removeItem('osb_activeBatch');
+  } catch(e){}
+}
+
+/* ---- Navigation ---- */
+function showPg(id, btn) {
+  document.querySelectorAll('.pg').forEach(function(p){
+    p.classList.remove('on');
+    p.style.display = 'none';
+  });
+  document.querySelectorAll('.ntab').forEach(function(b){ b.classList.remove('on'); });
+  var target = document.getElementById('pg-'+id);
+  target.classList.add('on');
+  target.style.display = 'block';
+  btn.classList.add('on');
+  if(id==='report')  refreshReport();
+  if(id==='history') renderAllTable(filteredRecords || allRecords);
+  if(id==='batches') renderBatchList();
+}
+
+/* ---- Helpers ---- */
+function getStatus(w)    { var d=Math.abs(w-SP); return d<=WARN?'pass':d<=TOL?'warn':'fail'; }
+function getStatusSP(w,sp){ var d=Math.abs(w-sp); return d<=WARN?'pass':d<=TOL?'warn':'fail'; }
+function statusLabel(s)  { return s==='pass'?'PASS':s==='warn'?'WARNING':'REJECT'; }
+function statusColor(s)  { return s==='pass'?'#12a05c':s==='warn'?'#c47a00':'#c02020'; }
+function statusBg(s)     { return s==='pass'?'#edfaf3':s==='warn'?'#fff8ed':'#fff0f0'; }
+function devColor(d)     { return Math.abs(d)>TOL?'#c02020':Math.abs(d)>WARN?'#c47a00':'#12a05c'; }
+function fmtDate(ts)     { return ts ? fmtDDMMYY(new Date(ts)) : '-'; }
+function fmtTime(ts)     { return ts ? fmtTimeOnly(new Date(ts)) : '-'; }
+function applySettingsUI(){
+  /* Show batch target weight if a batch is open, else show dashes */
+  var bSP = null;
+  if(activeBatchCode && batches[activeBatchCode]) {
+    var nb = Number(batches[activeBatchCode].batchSP);
+    if(nb > 0) bSP = nb;
+  }
+  document.getElementById('spRem').textContent    = bSP ? bSP.toFixed(2)+' kg' : 'Open a batch';
+  document.getElementById('tolRem').textContent   = TOL.toFixed(2)+' kg';
+  document.getElementById('rangeRem').textContent = bSP ? (bSP-TOL).toFixed(2)+'-'+(bSP+TOL).toFixed(2)+' kg' : '-';
+}
+
+/* =====================================================
+   BATCH MANAGEMENT
+===================================================== */
+async function openBatch() {
+  var code = document.getElementById('batchCodeInput').value.trim().toUpperCase();
+  if(!code) { toast('Enter a batch code first','rd'); return; }
+
+  if(batches[code] && batches[code].status === 'open') {
+    activeBatchCode = code;
+    if(API_READY) sheetAction('setActiveBatch', {code:code});
+    saveLocal(); updateRibbon();
+    toast('Resumed batch '+code, 'am'); return;
+  }
+  if(batches[code] && batches[code].status === 'closed') {
+    toast('Batch '+code+' is closed. Use a new code.', 'am'); return;
+  }
+
+  var batchSPval = parseFloat(document.getElementById('batchTargetQty').value);
+  if(!batchSPval || isNaN(batchSPval) || batchSPval <= 0) {
+    toast('Please enter a Target Weight (kg) before opening the batch','rd');
+    return;
+  }
+
+  var batch = {
+    code:      code,
+    product:   document.getElementById('batchProduct').value,
+    thick:     document.getElementById('batchThick').value,
+    shift:     document.getElementById('batchShift').value,
+    batchSP:   batchSPval,
+    openedAt:  Date.now(),
+    closedAt:  null,
+    status:    'open'
+  };
+
+  /* Optimistic update - show immediately */
+  batches[code] = batch;
+  activeBatchCode = code;
+  batchSPStore[code] = batchSPval; /* persist separately, never overwritten by Sheets */
+  saveLocal();
+  rebuildBatchSelectors(); renderBatchList(); updateRibbon();
+  document.getElementById('batchCodeInput').value = '';
+  document.getElementById('batchCodePreview').textContent = '-';
+  document.getElementById('batchTargetQty').value = '';
+  toast('Batch '+code+' opened', 'gr');
+
+  if(API_READY) {
+    setSyncStatus('syncing');
+    try {
+      await sheetAction('openBatch', batch);
+      setSyncStatus('online');
+      /* Save batchSPval before loadFromSheets overwrites it */
+      var savedSP = batchSPval;
+      var savedCode = code;
+      await loadFromSheets();
+      /* Always restore batchSP and open status after reload */
+      batchSPStore[savedCode] = savedSP;
+      if(batches[savedCode]) {
+        batches[savedCode].batchSP = savedSP;
+        batches[savedCode].status  = 'open';
+        batches[savedCode].closedAt = null;
+      }
+      activeBatchCode = savedCode;
+      saveLocal();
+      updateRibbon();
+    } catch(e) {
+      console.error('openBatch failed:', e.message);
+      setSyncStatus('offline');
+      toast('Batch saved locally - will sync when online', 'am');
+    }
+  }
+}
+
+function updateRibbon() {
+  var ribbon   = document.getElementById('batchRibbon');
+  var lbl      = document.getElementById('ribbonLabel');
+  var codeEl   = document.getElementById('ribbonCode');
+  var metaEl   = document.getElementById('ribbonMeta');
+  var closeBtn = document.getElementById('ribbonCloseBtn');
+
+  if(activeBatchCode && batches[activeBatchCode] && batches[activeBatchCode].status === 'open') {
+    var b = batches[activeBatchCode];
+    ribbon.className = '';
+    lbl.textContent  = 'ACTIVE BATCH';
+    codeEl.textContent = activeBatchCode; codeEl.style.display = '';
+    var bRecs = allRecords.filter(function(r){ return r.batchCode === activeBatchCode; });
+    metaEl.textContent = b.product+' - '+b.thick+' - '+b.shift.split('(')[0].trim()+' - '+bRecs.length+' matts - SP: '+(parseFloat(b.batchSP)||SP).toFixed(2)+' kg';
+    closeBtn.style.display = '';
+    document.getElementById('noBatchPanel').style.display    = 'none';
+    document.getElementById('activeBatchPanel').style.display= 'block';
+    document.getElementById('activeBatchCode').textContent   = activeBatchCode;
+    document.getElementById('activeBatchMeta').innerHTML = '<strong>'+b.product+'</strong> &nbsp;-&nbsp; '+b.thick+' &nbsp;-&nbsp; '+b.shift.split('(')[0].trim()+' &nbsp;-&nbsp; Setpoint: <strong>'+(parseFloat(b.batchSP)||SP).toFixed(2)+' kg</strong>';
+  } else {
+    ribbon.className = 'no-batch';
+    lbl.textContent  = 'NO ACTIVE BATCH - Open one in the Operator tab';
+    codeEl.style.display = 'none'; metaEl.textContent = ''; closeBtn.style.display = 'none';
+    document.getElementById('noBatchPanel').style.display     = 'block';
+    document.getElementById('activeBatchPanel').style.display = 'none';
+    activeBatchCode = null;
+  }
+  updateKPIs(); renderLive();
+}
+
+function confirmCloseBatch() {
+  if(!activeBatchCode) return;
+  var bRecs = allRecords.filter(function(r){ return r.batchCode === activeBatchCode; });
+  var pass  = bRecs.filter(function(r){ return r.status === 'pass'; }).length;
+  document.getElementById('closeBatchCode').textContent    = activeBatchCode;
+  document.getElementById('closeBatchSummary').textContent = bRecs.length+' matts - '+pass+' pass - '+(bRecs.length-pass)+' reject/warn';
+  document.getElementById('closeBatchModal').style.display = 'flex';
+}
+
+async function closeBatch() {
+  if(!activeBatchCode) return;
+  hideModal('closeBatchModal');
+  var code = activeBatchCode;
+
+  /* Optimistic update */
+  if(batches[code]) { batches[code].status = 'closed'; batches[code].closedAt = Date.now(); }
+  activeBatchCode = null;
+  saveLocal(); renderBatchList(); updateRibbon();
+  toast('Batch '+code+' closed', 'rd');
+
+  if(API_READY) {
+    setSyncStatus('syncing');
+    try {
+      await sheetAction('closeBatch', {code:code});
+      setSyncStatus('online');
+      await loadFromSheets();
+    } catch(e) {
+      console.error('closeBatch failed:', e.message);
+      setSyncStatus('offline');
+    }
+  }
+}
+
+/* =====================================================
+   NUMPAD
+===================================================== */
+function nk(v) {
+  if(v === '.' && weightStr.includes('.')) return;
+  if(weightStr.length >= 7) return;
+  if(v !== '.' && weightStr === '0') weightStr = '';
+  weightStr += v;
+  var d = document.getElementById('wdisp');
+  d.textContent = weightStr || '0.00'; d.className = 'wdisp focus';
+}
+function nkDel() {
+  weightStr = weightStr.slice(0,-1);
+  var d = document.getElementById('wdisp');
+  d.textContent = weightStr || '0.00'; d.className = weightStr ? 'wdisp focus' : 'wdisp';
+}
+
+/* =====================================================
+   PUNCH WEIGHT - Main entry point
+===================================================== */
+async function punchWeight() {
+  if(!activeBatchCode || !batches[activeBatchCode] || batches[activeBatchCode].status !== 'open') {
+    toast('Open a batch first','am'); return;
+  }
+  var w = parseFloat(weightStr);
+  if(!weightStr || isNaN(w) || w <= 0) {
+    document.getElementById('wdisp').className = 'wdisp bad';
+    setSbar('bad','Enter a valid weight first'); return;
+  }
+
+  var b       = batches[activeBatchCode];
+  var bSP = Number(b.batchSP);
+  /* If batchSP missing, check batchSPStore first, then localStorage */
+  if(!bSP || isNaN(bSP) || bSP <= 0) {
+    if(Number(batchSPStore[activeBatchCode]) > 0) {
+      bSP = Number(batchSPStore[activeBatchCode]);
+      batches[activeBatchCode].batchSP = bSP;
+    } else {
+      try {
+        var localBatches = JSON.parse(localStorage.getItem('osb_batches') || '{}');
+        if(localBatches[activeBatchCode] && Number(localBatches[activeBatchCode].batchSP) > 0) {
+          bSP = Number(localBatches[activeBatchCode].batchSP);
+          batches[activeBatchCode].batchSP = bSP;
+          batchSPStore[activeBatchCode] = bSP;
+        }
+      } catch(ex) {}
+    }
+  }
+  if(!bSP || isNaN(bSP) || bSP <= 0) {
+    toast('Target weight missing for this batch. Please close and reopen with a Target Weight.','rd');
+    return;
+  }
+  var status  = getStatusSP(w, bSP);
+  var batchRecs = allRecords.filter(function(r){ return r.batchCode === activeBatchCode; });
+  var mattNum = batchRecs.length + 1;
+  var maxId   = allRecords.length ? Math.max.apply(null, allRecords.map(function(r){ return r.id; })) : 0;
+
+  var rec = {
+    id:        maxId + 1,
+    mattNum:   mattNum,
+    batchCode: activeBatchCode,
+    product:   b.product,
+    thick:     b.thick,
+    shift:     b.shift,
+    date:      fmtDDMMYY(new Date()),
+    time:      new Date().toLocaleTimeString('en-GB',{hour12:false}),
+    ts:        Date.now(),
+    weight:    w,
+    sp:        bSP,
+    dev:       +(w - bSP).toFixed(3),
+    status:    status
+  };
+
+  /* Optimistic update - show in UI immediately */
+  allRecords.push(rec);
+  saveLocal();
+  updateKPIs(); renderLive();
+
+  /* Button feedback */
+  var btn  = document.getElementById('punchBtn');
+  var btxt = document.getElementById('pbtnTxt');
+  btn.className = 'pbtn ok'; btxt.textContent = 'Recorded';
+  setTimeout(function(){ btn.className = 'pbtn'; btxt.textContent = 'Punch Weight'; }, 1300);
+
+  /* Reset input */
+  weightStr = '';
+  document.getElementById('wdisp').textContent = '0.00';
+  document.getElementById('wdisp').className = 'wdisp';
+
+  /* Status messages */
+  var devStr = (rec.dev>=0?'+':'')+rec.dev.toFixed(3);
+  var msgs = {
+    pass: 'Matt #'+mattNum+' - '+w.toFixed(2)+' kg ('+devStr+' kg) - IN TOLERANCE',
+    warn: 'Matt #'+mattNum+' - '+w.toFixed(2)+' kg ('+devStr+' kg) - NEAR LIMIT',
+    fail: 'Matt #'+mattNum+' - '+w.toFixed(2)+' kg ('+devStr+' kg) - OUT OF TOLERANCE!'
+  };
+  setSbar(status==='pass'?'good':status==='warn'?'warn':'bad', msgs[status]);
+  toast(msgs[status], status==='pass'?'gr':'rd');
+
+  /* No target qty count needed - batchSP is the weight setpoint */
+
+  /* Send to Google Sheets */
+  if(API_READY) {
+    setSyncStatus('syncing');
+    sheetAction('addRecord', rec).then(function(res) {
+      setSyncStatus('online');
+    }).catch(function(e) {
+      console.error('addRecord failed:', e.message);
+      setSyncStatus('offline');
+      toast('Weight saved locally - check internet connection','am');
+    });
+  }
+}
+
+function setSbar(cls, msg) { var sb = document.getElementById('sbar'); sb.className = 'sbar '+cls; sb.textContent = msg; }
+
+/* ---- KPIs ---- */
+function updateKPIs() {
+  var recs = activeBatchCode ? allRecords.filter(function(r){ return r.batchCode === activeBatchCode; }) : [];
+  var n    = recs.length;
+  var pass = recs.filter(function(r){ return r.status === 'pass'; }).length;
+  var fail = recs.filter(function(r){ return r.status !== 'pass'; }).length;
+  var ws   = recs.map(function(r){ return r.weight; });
+  var avg  = n ? (ws.reduce(function(a,b){ return a+b; },0)/n).toFixed(2) : '-';
+  document.getElementById('kTotal').textContent = n;
+  document.getElementById('kAvg').textContent   = n ? avg+' kg' : '-';
+  document.getElementById('kPass').textContent  = pass;
+  document.getElementById('kFail').textContent  = fail;
+  document.getElementById('kPPct').textContent  = n ? ((pass/n)*100).toFixed(1)+'% pass' : '-';
+  document.getElementById('kFPct').textContent  = n ? ((fail/n)*100).toFixed(1)+'% out'  : '-';
+}
+
+/* ---- Live table ---- */
+function renderLive() {
+  var b    = document.getElementById('liveB');
+  var recs = activeBatchCode ? allRecords.filter(function(r){ return r.batchCode === activeBatchCode; }).slice().reverse() : [];
+  if(!recs.length) {
+    b.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-ico">&#128230;</div><div class="empty-txt">'+(activeBatchCode?'No records yet - punch your first weight':'Open a batch to start punching')+'</div></div></td></tr>';
+    return;
+  }
+  b.innerHTML = recs.slice(0,60).map(function(r) {
+    var dc = devColor(r.dev);
+    var ds = (r.dev > 0 ? '+' : '') + r.dev.toFixed(3);
+    return '<tr>'
+      +'<td class="mono" style="color:var(--muted)">#'+(r.mattNum||r.id)+'</td>'
+      +'<td class="mono">'+r.time+'</td>'
+      +'<td class="mono" style="font-weight:700">'+r.weight.toFixed(2)+'</td>'
+      +'<td class="mono" style="color:'+dc+'">'+ds+'</td>'
+      +'<td><span class="bdg '+r.status+'">'+statusLabel(r.status)+'</span></td>'
+      +'<td><button class="dbtn" onclick="delRec('+r.id+')">&#215;</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+/* ---- Delete ---- */
+async function removeLast() {
+  if(currentUser && currentUser.role==='operator'){ toast('Operators cannot delete records','rd'); return; }
+  if(!activeBatchCode) return;
+  var bRecs = allRecords.filter(function(r){ return r.batchCode === activeBatchCode; });
+  if(!bRecs.length) return;
+  var last = bRecs[bRecs.length - 1];
+  allRecords = allRecords.filter(function(r){ return r.id !== last.id; });
+  saveLocal(); updateKPIs(); renderLive();
+  toast('Last record removed','rd');
+  if(API_READY) sheetAction('deleteRecord', {id: last.id}).catch(function(){});
+}
+async function delRec(id) {
+  if(currentUser && currentUser.role==='operator'){ toast('Operators cannot delete records','rd'); return; }
+  allRecords = allRecords.filter(function(r){ return r.id !== id; });
+  saveLocal(); updateKPIs(); renderLive(); renderAllTable(filteredRecords || allRecords);
+  if(API_READY) sheetAction('deleteRecord', {id: id}).catch(function(){});
+}
+
+/* =====================================================
+   BATCH LIST
+===================================================== */
+function renderBatchList() {
+  var grid    = document.getElementById('batchListGrid');
+  var fStatus = document.getElementById('bFilterStatus').value;
+  var bList   = Object.values(batches).sort(function(a,b){ return b.openedAt - a.openedAt; });
+  if(fStatus) bList = bList.filter(function(b){ return b.status === fStatus; });
+  if(!bList.length) {
+    grid.innerHTML = '<div class="empty"><div class="empty-ico">&#128230;</div><div class="empty-txt">No batches found</div></div>';
+    return;
+  }
+  grid.innerHTML = bList.map(function(b) {
+    var bRecs = allRecords.filter(function(r){ return r.batchCode === b.code; });
+    var pass  = bRecs.filter(function(r){ return r.status === 'pass'; }).length;
+    var pct   = bRecs.length ? ((pass/bRecs.length)*100).toFixed(0) : '-';
+    var avg   = bRecs.length ? (bRecs.reduce(function(a,r){ return a+r.weight; },0)/bRecs.length).toFixed(2) : '-';
+    return '<div class="batch-item '+(b.status==='open'?'open-b':'closed-b')+'" onclick="showBatchDetail(\''+b.code+'\')">'
+      +'<div><div class="bi-code">'+b.code+'</div><div style="margin-top:3px"><span class="bdg '+(b.status==='open'?'open':'closed')+'">'+b.status.toUpperCase()+'</span></div></div>'
+      +'<div class="bi-meta"><strong>'+b.product+'</strong> &nbsp;-&nbsp; '+b.thick+' &nbsp;-&nbsp; '+b.shift.split('(')[0].trim()+'<br>'
+        +'Opened: '+fmtDate(b.openedAt)+' '+fmtTime(b.openedAt)+(b.closedAt?' &nbsp;-&nbsp; Closed: '+fmtDate(b.closedAt):'')
+        +' &nbsp;-&nbsp; SP: '+(parseFloat(b.batchSP)||SP).toFixed(2)+' kg'
+      +'</div>'
+      +'<div class="bi-stats">'
+        +'<div class="bi-stat"><div class="bi-stat-v">'+bRecs.length+'</div><div class="bi-stat-l">Matts</div></div>'
+        +'<div class="bi-stat"><div class="bi-stat-v" style="color:#12a05c">'+pct+(pct==='-'?'':'%')+'</div><div class="bi-stat-l">Pass</div></div>'
+        +'<div class="bi-stat"><div class="bi-stat-v">'+avg+'</div><div class="bi-stat-l">Avg kg</div></div>'
+      +'</div>'
+      +'<div class="bi-actions">'
+        +(b.status==='open'?'<button class="ebtn pdf" style="font-size:.62rem" onclick="event.stopPropagation();selectAndClose(\''+b.code+'\')">Close</button>':'')
+        +'<button class="ebtn csv" style="font-size:.62rem" onclick="event.stopPropagation();quickExport(\''+b.code+'\')">CSV</button>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+function selectAndClose(code){ activeBatchCode = code; confirmCloseBatch(); }
+
+function showBatchDetail(code) {
+  var b = batches[code]; if(!b) return;
+  modalBatchCode = code;
+  var bRecs = allRecords.filter(function(r){ return r.batchCode === code; }).sort(function(a,b){ return a.id - b.id; });
+  var pass  = bRecs.filter(function(r){ return r.status === 'pass'; }).length;
+  document.getElementById('bdTitle').textContent = code;
+  document.getElementById('bdMeta').textContent  = b.product+' - '+b.thick+' - '+b.shift.split('(')[0].trim()+' - '+bRecs.length+' matts - '+pass+' pass - '+(bRecs.length-pass)+' reject/warn';
+  document.getElementById('bdBody').innerHTML = bRecs.map(function(r) {
+    var d  = r.dev; var ds = (d > 0 ? '+' : '') + d.toFixed(3);
+    return '<tr>'
+      +'<td class="mono" style="color:var(--muted)">#'+(r.mattNum||r.id)+'</td>'
+      +'<td>'+r.date+'</td><td class="mono">'+r.time+'</td>'
+      +'<td class="mono" style="font-weight:700">'+r.weight.toFixed(2)+'</td>'
+      +'<td class="mono" style="color:'+devColor(d)+'">'+ds+'</td>'
+      +'<td><span class="bdg '+r.status+'">'+statusLabel(r.status)+'</span></td>'
+    +'</tr>';
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:14px">No records in this batch</td></tr>';
+  document.getElementById('batchDetailModal').style.display = 'flex';
+}
+function reportFromModal() {
+  hideModal('batchDetailModal');
+  document.getElementById('rBatch').value = modalBatchCode;
+  showPg('report', document.querySelectorAll('.ntab')[3]);
+  refreshReport();
+}
+function quickExport(code) {
+  var saved = document.getElementById('rBatch').value;
+  document.getElementById('rBatch').value = code;
+  doCSV(true);
+  document.getElementById('rBatch').value = saved;
+}
+
+function rebuildBatchSelectors() {
+  var bList = Object.keys(batches).sort();
+  ['rBatch','fBatch'].forEach(function(id) {
+    var sel = document.getElementById(id); var cur = sel.value;
+    sel.innerHTML = '<option value="">All Batches</option>'+bList.map(function(k){
+      return '<option'+(k===cur?' selected':'')+' value="'+k+'">'+k+' ('+(batches[k].status==='open'?'Open':'Closed')+')</option>';
+    }).join('');
+  });
+}
+
+/* =====================================================
+   ALL RECORDS TABLE
+===================================================== */
+function renderAllTable(recs) {
+  document.getElementById('allRecCount').textContent = recs ? recs.length : 0;
+  var b = document.getElementById('allB');
+  if(!recs || !recs.length) {
+    b.innerHTML = '<tr><td colspan="12"><div class="empty"><div class="empty-ico">&#128203;</div><div class="empty-txt">No records found</div></div></td></tr>';
+    return;
+  }
+  b.innerHTML = recs.map(function(r) {
+    var dc = devColor(r.dev); var ds = (r.dev > 0 ? '+' : '') + r.dev.toFixed(3);
+    return '<tr>'
+      +'<td style="font-weight:700;color:var(--blue)">'+r.batchCode+'</td>'
+      +'<td class="mono" style="color:var(--muted)">#'+(r.mattNum||r.id)+'</td>'
+      +'<td>'+r.date+'</td><td class="mono">'+r.time+'</td>'
+      +'<td style="font-size:.68rem">'+r.shift.split('(')[0].trim()+'</td>'
+      +'<td style="font-weight:700">'+r.thick+'</td>'
+      +'<td>'+r.product+'</td>'
+      +'<td class="mono" style="font-weight:700">'+r.weight.toFixed(2)+'</td>'
+      +'<td class="mono">'+r.sp.toFixed(2)+'</td>'
+      +'<td class="mono" style="color:'+dc+'">'+ds+'</td>'
+      +'<td><span class="bdg '+r.status+'">'+statusLabel(r.status)+'</span></td>'
+      +'<td><button class="dbtn" onclick="delRec('+r.id+')">&#215;</button></td>'
+    +'</tr>';
+  }).join('');
+}
+
+function applyFilter() {
+  var fb = document.getElementById('fBatch').value;
+  var fd = document.getElementById('fDate').value;
+  var fp = document.getElementById('fProduct').value;
+  var fs = document.getElementById('fStatus').value;
+  filteredRecords = allRecords.filter(function(r) {
+    if(fb && r.batchCode !== fb) return false;
+    if(fd && r.date !== fmtDDMMYY(new Date(fd+'T00:00:00'))) return false;
+    if(fp && r.product !== fp) return false;
+    if(fs && r.status !== fs) return false;
+    return true;
+  });
+  renderAllTable(filteredRecords);
+  document.getElementById('filterNote').textContent = '- '+filteredRecords.length+' filtered';
+}
+function clearFilter() {
+  filteredRecords = null;
+  ['fBatch','fDate','fProduct','fStatus'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('filterNote').textContent = '';
+  renderAllTable(allRecords);
+}
+
+/* =====================================================
+   REPORT
+===================================================== */
+function getReportRecs() {
+  var bCode = document.getElementById('rBatch').value;
+  return (bCode ? allRecords.filter(function(r){ return r.batchCode === bCode; }) : allRecords)
+    .slice().sort(function(a,b){ return a.id - b.id; });
+}
+
+function refreshReport() {
+  var recs  = getReportRecs();
+  var bCode = document.getElementById('rBatch').value;
+  var co    = document.getElementById('rCo').value;
+  var plant = document.getElementById('rPlant').value;
+  var dv    = document.getElementById('rDate').value;
+  var dd    = dv ? fmtDDMMYY(new Date(dv+'T00:00:00')) : '-';
+  var bInfo = bCode && batches[bCode] ? batches[bCode] : null;
+  var n     = recs.length;
+  var ws    = recs.map(function(r){ return r.weight; });
+  var pass  = recs.filter(function(r){ return r.status==='pass'; }).length;
+  var fail  = recs.filter(function(r){ return r.status!=='pass'; }).length;
+  var avg   = n ? (ws.reduce(function(a,b){return a+b;},0)/n).toFixed(2) : '-';
+  var pct   = n ? ((pass/n)*100).toFixed(1)+'%' : '-';
+  var minW  = n ? Math.min.apply(null,ws).toFixed(2) : '-';
+  var maxW  = n ? Math.max.apply(null,ws).toFixed(2) : '-';
+  var totW  = ws.reduce(function(a,b){return a+b;},0).toFixed(2);
+  var sd    = '-';
+  if(n>1){ var m=ws.reduce(function(a,b){return a+b;},0)/n; sd=Math.sqrt(ws.reduce(function(a,b){return a+Math.pow(b-m,2);},0)/(n-1)).toFixed(3); }
+  var thicks = Array.from(new Set(recs.map(function(r){ return r.thick; }))).join(', ') || '-';
+  var prods  = Array.from(new Set(recs.map(function(r){ return r.product; }))).join(', ') || '-';
+  var rows = recs.map(function(r) {
+    var d = r.dev; var ds = (d>0?'+':'')+d.toFixed(3);
+    return '<tr><td>'+(r.mattNum||r.id)+'</td>'
+      +'<td>'+r.date+'</td><td>'+r.time+'</td>'
+      +'<td style="font-weight:700">'+r.weight.toFixed(2)+'</td>'
+      +'<td style="color:'+devColor(d)+'">'+ds+'</td>'
+      +'<td style="color:'+statusColor(r.status)+';font-weight:700">'+statusLabel(r.status)+'</td></tr>';
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:14px">No records</td></tr>';
+
+  document.getElementById('rpvContent').innerHTML =
+    '<div class="rpv-head"><div>'
+      +'<div class="rpv-co">'+co+'</div>'
+      +'<div style="font-size:.95rem;font-weight:700;margin-top:3px">Matt Weight Production Report</div>'
+      +'<div style="font-size:.68rem;color:var(--sub);margin-top:2px">'+(bCode?'Batch: '+bCode:'All Batches')+' - '+plant+'</div>'
+      +(bInfo?'<div style="font-size:.65rem;color:var(--sub);margin-top:1px">'+bInfo.product+' - '+bInfo.thick+' - '+bInfo.shift.split('(')[0].trim()+(bInfo.status==='closed'?' - Closed':'')+'</div>':'')
+    +'</div>'
+    +'<div class="rpv-meta">'
+      +'<div style="font-weight:800;color:var(--txt)">'+dd+'</div>'
+      +'<div>Target Weight: set per batch &nbsp;|&nbsp; Tolerance: +/-'+TOL.toFixed(2)+' kg</div>'
+      +'<div>Generated: '+fmtDDMMYY(new Date())+' '+fmtTimeOnly(new Date())+'</div>'
+      +'<div style="color:var(--org);font-weight:700;margin-top:2px">Paperless Production Record</div>'
+    +'</div></div>'
+    +'<div class="rpv-sec">Summary</div>'
+    +'<div class="rpv-kg">'
+      +'<div class="rpv-kpi"><div class="rpv-kv">'+n+'</div><div class="rpv-kl">Total Matts</div></div>'
+      +'<div class="rpv-kpi"><div class="rpv-kv">'+avg+(avg==='-'?'':' kg')+'</div><div class="rpv-kl">Avg Weight</div></div>'
+      +'<div class="rpv-kpi"><div class="rpv-kv" style="color:var(--grn)">'+pass+'</div><div class="rpv-kl">Pass</div></div>'
+      +'<div class="rpv-kpi"><div class="rpv-kv" style="color:var(--red)">'+fail+'</div><div class="rpv-kl">Reject/Warn</div></div>'
+      +'<div class="rpv-kpi"><div class="rpv-kv">'+pct+'</div><div class="rpv-kl">Pass Rate</div></div>'
+    +'</div>'
+    +'<div class="rpv-kg">'
+      +'<div class="rpv-kpi"><div class="rpv-kv">'+minW+(minW==='-'?'':' kg')+'</div><div class="rpv-kl">Min Weight</div></div>'
+      +'<div class="rpv-kpi"><div class="rpv-kv">'+maxW+(maxW==='-'?'':' kg')+'</div><div class="rpv-kl">Max Weight</div></div>'
+      +'<div class="rpv-kpi"><div class="rpv-kv">'+sd+'</div><div class="rpv-kl">Std Deviation</div></div>'
+      +'<div class="rpv-kpi"><div class="rpv-kv">'+totW+' kg</div><div class="rpv-kl">Total Weight</div></div>'
+      +'<div class="rpv-kpi"><div class="rpv-kv">'+n+'</div><div class="rpv-kl">Records</div></div>'
+    +'</div>'
+    +'<div class="rpv-sec">Matt-by-matt Detail</div>'
+    +'<div class="info-bar">'
+      +'<div class="ib-lbl">Batch Info</div>'
+      +'<div class="ib-val"><span class="ib-key">Batch&nbsp;</span><span style="font-size:.88rem">'+(bCode||'All')+'</span></div>'
+      +'<div class="ib-val"><span class="ib-key">Target Weight&nbsp;</span><span style="font-size:.88rem">'+(bInfo?(parseFloat(bInfo.batchSP)||SP).toFixed(2)+' kg':SP.toFixed(2)+' kg')+'</span></div>'
+      +'<div class="ib-val"><span class="ib-key">Thickness&nbsp;</span><span style="font-size:.88rem">'+thicks+'</span></div>'
+      +'<div class="ib-val"><span class="ib-key">Product&nbsp;</span><span style="font-size:.88rem">'+prods+'</span></div>'
+    +'</div>'
+    +'<table class="rpv-tbl"><thead><tr><th>Matt #</th><th>Date</th><th>Time</th><th>Weight (kg)</th><th>Deviation</th><th>Status</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>'
+    +'<div class="rpv-foot">Verified by: _________________________ &nbsp;&nbsp; Supervisor: _________________________ &nbsp;&nbsp; Date: _____________<br><br>'
+    +'System-generated - Strandply LLP Matt Weight Recording System - Replaces manual paper weight log</div>';
+}
+
+/* =====================================================
+   EXPORT - CSV
+===================================================== */
+function doCSV(isReport) {
+  var recs  = isReport ? getReportRecs() : (filteredRecords || allRecords).slice().sort(function(a,b){ return a.id-b.id; });
+  if(!recs.length) { toast('No records to export','rd'); return; }
+  var bCode = isReport ? document.getElementById('rBatch').value : '';
+  var dv    = document.getElementById('rDate').value;
+  function q(v){ return '"'+String(v===undefined||v===null?'':v).replace(/"/g,'""')+'"'; }
+  var lines = [
+    [q('STRANDPLY LLP - OSB MATT WEIGHT PRODUCTION RECORD')],
+    [q('Company'), q(document.getElementById('rCo').value)],
+    [q('Plant'),   q(document.getElementById('rPlant').value)],
+    [q('Date'),    q(dv)],
+    [q('Batch'),   q(bCode||'All Batches')],
+    [q('Tolerance +/- (kg)'), q(TOL), q('Warning Band +/- (kg)'), q(WARN)],
+    [],
+    [q('Batch'),q('Matt #'),q('Date'),q('Time'),q('Shift'),q('Thickness'),q('Product'),q('Weight (kg)'),q('Target Weight (kg)'),q('Deviation (kg)'),q('Status')]
+  ];
+  recs.forEach(function(r){ lines.push([q(r.batchCode),q(r.mattNum||r.id),q(r.date),q(r.time),q(r.shift),q(r.thick),q(r.product),q(r.weight.toFixed(2)),q(r.sp.toFixed(2)),q(r.dev.toFixed(3)),q(statusLabel(r.status))]); });
+  var ws2 = recs.map(function(r){ return r.weight; }); var n2 = recs.length;
+  lines.push([], [q('--- SUMMARY ---')]);
+  lines.push([q('Total Matts'), q(n2)], [q('Avg Weight (kg)'), q(n2?(ws2.reduce(function(a,b){return a+b;},0)/n2).toFixed(2):'-')]);
+  lines.push([q('Pass'), q(recs.filter(function(r){return r.status==='pass';}).length)], [q('Reject/Warn'), q(recs.filter(function(r){return r.status!=='pass';}).length)]);
+  lines.push([q('Generated'), q(fmtDDMMYY(new Date())+' '+fmtTimeOnly(new Date()))]);
+  var csv  = '\uFEFF'+lines.map(function(r){ return r.join(','); }).join('\r\n');
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = 'Strandply_'+(bCode||'All')+'_'+(dv||'export')+'.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+  toast('CSV downloaded','gr');
+}
+
+/* =====================================================
+   EXPORT - PDF
+===================================================== */
+function doPDF(isReport) {
+  var recs  = isReport ? getReportRecs() : (filteredRecords || allRecords).slice().sort(function(a,b){ return a.id-b.id; });
+  if(!recs.length) { toast('No records to export','rd'); return; }
+  var bCode = isReport ? document.getElementById('rBatch').value : '';
+  var co    = document.getElementById('rCo').value;
+  var plant = document.getElementById('rPlant').value;
+  var dv    = document.getElementById('rDate').value;
+  var dd    = dv ? fmtDDMMYY(new Date(dv+'T00:00:00')) : fmtDDMMYY(new Date());
+  var gen   = fmtDDMMYY(new Date())+' '+fmtTimeOnly(new Date());
+  var ws2   = recs.map(function(r){ return r.weight; }); var n2=recs.length;
+  var pass  = recs.filter(function(r){ return r.status==='pass'; }).length;
+  var fail  = recs.filter(function(r){ return r.status!=='pass'; }).length;
+  var avg   = (ws2.reduce(function(a,b){return a+b;},0)/n2).toFixed(2);
+  var pct   = ((pass/n2)*100).toFixed(1);
+  var minW  = Math.min.apply(null,ws2).toFixed(2);
+  var maxW  = Math.max.apply(null,ws2).toFixed(2);
+  var totW  = ws2.reduce(function(a,b){return a+b;},0).toFixed(2);
+  var sd2   = '-'; if(n2>1){var m2=ws2.reduce(function(a,b){return a+b;},0)/n2; sd2=Math.sqrt(ws2.reduce(function(a,b){return a+Math.pow(b-m2,2);},0)/(n2-1)).toFixed(3);}
+  var thicks= Array.from(new Set(recs.map(function(r){return r.thick;}))).join(', ')||'-';
+  var prods = Array.from(new Set(recs.map(function(r){return r.product;}))).join(', ')||'-';
+  var pctColor = parseFloat(pct)>=95?'#12a05c':parseFloat(pct)>=80?'#c47a00':'#c02020';
+  var bInfo    = bCode && batches[bCode] ? batches[bCode] : null;
+  var rows     = recs.map(function(r,i) {
+    var d=r.dev; var ds=(d>0?'+':'')+d.toFixed(3);
+    return '<tr style="background:'+(i%2===0?'#fff':'#f7f8fa')+'">'
+      +'<td>'+(r.mattNum||r.id)+'</td>'
+      +'<td>'+r.date+'</td><td>'+r.time+'</td>'
+      +'<td style="font-weight:700">'+r.weight.toFixed(2)+'</td>'
+      +'<td style="color:'+devColor(d)+'">'+ds+'</td>'
+      +'<td><span style="background:'+statusBg(r.status)+';color:'+statusColor(r.status)+';padding:2px 7px;border-radius:10px;font-weight:700;font-size:9px">'+statusLabel(r.status)+'</span></td></tr>';
+  }).join('');
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Strandply Report</title><style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:11px;color:#1a2332}'
+    +'.acc{height:4px;background:#d44000}.hd{background:#1a2332;color:#fff;padding:13px 18px;display:flex;justify-content:space-between}'
+    +'.hd h1{font-size:13px;font-weight:900;margin-bottom:3px}.hd p{font-size:9px;color:#8899bb;line-height:1.7}'
+    +'.hd-r{text-align:right;font-size:9px;color:#8899bb;line-height:1.8}.body{padding:13px 18px}'
+    +'.sec{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#0a4fd4;border-bottom:1px solid #dde2ea;padding-bottom:3px;margin:10px 0 7px}'
+    +'.kg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:6px}'
+    +'.kpi{background:#f7f8fa;border:1px solid #dde2ea;border-radius:4px;padding:6px 8px;text-align:center}'
+    +'.kv{font-size:15px;font-weight:900}.kl{font-size:8px;font-weight:700;color:#5a6a7e;letter-spacing:1px;text-transform:uppercase;margin-top:1px}'
+    +'.ib{display:flex;margin-bottom:8px;border:1px solid #dde2ea;border-radius:4px;overflow:hidden;font-size:10px}'
+    +'.ib-l{background:#1a2332;color:#fff;padding:5px 10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}'
+    +'.ib-v{background:#f7f8fa;padding:5px 12px;border-right:1px solid #dde2ea}'
+    +'table{width:100%;border-collapse:collapse;font-size:10px}'
+    +'th{background:#1a2332;color:#fff;padding:5px 6px;text-align:left;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase}'
+    +'td{padding:4px 6px;border-bottom:1px solid #eee;vertical-align:middle}'
+    +'.foot{margin-top:14px;padding-top:8px;border-top:1.5px solid #dde2ea}'
+    +'.sign{display:flex;gap:24px;margin-bottom:7px}.sb{flex:1;border-bottom:1px solid #333;padding-bottom:2px;font-size:9px;color:#5a6a7e}'
+    +'.fn{font-size:8px;color:#9aaabb;text-align:center;margin-top:6px}'
+    +'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:A4;margin:8mm}}'
+    +'</style></head><body><div class="acc"></div><div class="hd">'
+    +'<div><h1>OSB MATT WEIGHT REPORT - STRANDPLY LLP</h1>'
+    +'<p>'+co+' - '+plant+'<br>Batch: <strong style="color:#fff">'+(bCode||'All Batches')+'</strong> - Date: '+dd+'</p>'
+    +(bInfo?'<p style="margin-top:2px;font-size:9px;color:#8899bb">'+bInfo.product+' - '+bInfo.thick+' - '+bInfo.shift+(bInfo.status==='closed'?' - CLOSED':'')+'</p>':'')
+    +'</div>'
+    +'<div class="hd-r">Generated: '+gen+'<br>Tolerance: +/-'+TOL.toFixed(2)+' kg<br><strong style="color:#d44000">Paperless Record</strong></div>'
+    +'</div><div class="body">'
+    +'<div class="sec">Summary</div><div class="kg">'
+    +'<div class="kpi"><div class="kv">'+n2+'</div><div class="kl">Total Matts</div></div>'
+    +'<div class="kpi"><div class="kv">'+avg+' kg</div><div class="kl">Avg Weight</div></div>'
+    +'<div class="kpi"><div class="kv" style="color:#12a05c">'+pass+'</div><div class="kl">Pass</div></div>'
+    +'<div class="kpi"><div class="kv" style="color:#c02020">'+fail+'</div><div class="kl">Reject/Warn</div></div>'
+    +'<div class="kpi"><div class="kv" style="color:'+pctColor+'">'+pct+'%</div><div class="kl">Pass Rate</div></div>'
+    +'</div><div class="kg">'
+    +'<div class="kpi"><div class="kv">'+minW+' kg</div><div class="kl">Min</div></div>'
+    +'<div class="kpi"><div class="kv">'+maxW+' kg</div><div class="kl">Max</div></div>'
+    +'<div class="kpi"><div class="kv">'+sd2+'</div><div class="kl">Std Dev</div></div>'
+    +'<div class="kpi"><div class="kv">'+totW+' kg</div><div class="kl">Total Weight</div></div>'
+    +'<div class="kpi"><div class="kv">'+n2+'</div><div class="kl">Records</div></div>'
+    +'</div><div class="sec">Matt-by-matt Detail</div>'
+    +'<div class="ib"><div class="ib-l">Batch Info</div>'
+    +'<div class="ib-v"><span style="color:#5a6a7e;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Batch &nbsp;</span><strong>'+(bCode||'All')+'</strong></div>'
+    +'<div class="ib-v"><span style="color:#5a6a7e;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Thickness &nbsp;</span><strong>'+thicks+'</strong></div>'
+    +'<div class="ib-v"><span style="color:#5a6a7e;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Product &nbsp;</span><strong>'+prods+'</strong></div>'
+    +'</div>'
+    +'<table><thead><tr><th>Matt #</th><th>Date</th><th>Time</th><th>Weight (kg)</th><th>Deviation</th><th>Status</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>'
+    +'<div class="foot"><div class="sign">'
+    +'<div class="sb">Operator: _______________________________</div>'
+    +'<div class="sb">Supervisor: _______________________________</div>'
+    +'<div class="sb">Date: _______________________________</div>'
+    +'</div><div class="fn">System-generated - Strandply LLP Matt Weight Recording System - Replaces manual paper weight log</div>'
+    +'</div></div><scr'+'ipt>window.onload=function(){window.print();}<\/scr'+'ipt></body></html>';
+  var pw = window.open('','_blank','width=860,height=700,scrollbars=yes');
+  if(!pw){ toast('Allow pop-ups then try again','rd'); return; }
+  pw.document.open(); pw.document.write(html); pw.document.close();
+  toast('Print window opened - choose Save as PDF','gr');
+}
+
+/* =====================================================
+   SETTINGS
+===================================================== */
+function renderThickMaster() {
+  var c = document.getElementById('thickMasterList'); if(!c) return;
+  c.innerHTML = thicknessList.map(function(t){
+    return '<span class="chip">'+t+' mm<button class="chip-x" onclick="removeThickness('+t+')">&#215;</button></span>';
+  }).join('');
+}
+function rebuildThickDropdowns() {
+  var sel = document.getElementById('batchThick'); if(!sel) return;
+  var cur = sel.value;
+  sel.innerHTML = thicknessList.map(function(t){ return '<option'+(t+' mm'===cur?' selected':'')+'>'+t+' mm</option>'; }).join('');
+}
+async function addThickness() {
+  var val = parseFloat(document.getElementById('newThickVal').value);
+  if(!val || val <= 0) { toast('Enter a valid value','rd'); return; }
+  var label = val%1===0 ? parseInt(val) : val;
+  if(thicknessList.indexOf(label) !== -1) { toast(label+' mm already exists','rd'); return; }
+  thicknessList.push(label); thicknessList.sort(function(a,b){ return a-b; });
+  document.getElementById('newThickVal').value = '';
+  renderThickMaster(); rebuildThickDropdowns();
+  saveLocal();
+  if(API_READY) sheetAction('saveThickness', {list: thicknessList}).catch(function(){});
+  toast(label+' mm added','gr');
+}
+async function removeThickness(val) {
+  thicknessList = thicknessList.filter(function(t){ return t !== val; });
+  renderThickMaster(); rebuildThickDropdowns();
+  saveLocal();
+  if(API_READY) sheetAction('saveThickness', {list: thicknessList}).catch(function(){});
+  toast(val+' mm removed','rd');
+}
+async function saveSettings() {
+  /* SP is no longer set from Settings - it is set per batch */
+  TOL  = parseFloat(document.getElementById('stTol').value)  || 0.5;
+  WARN = parseFloat(document.getElementById('stWarn').value) || 0.35;
+  var company = document.getElementById('stCo').value;
+  var plant   = document.getElementById('stPlant').value;
+  document.getElementById('rCo').value    = company;
+  document.getElementById('rPlant').value = plant;
+  applySettingsUI();
+  saveLocal();
+  if(API_READY) {
+    sheetAction('saveSettings', {SP:SP, TOL:TOL, WARN:WARN, company:company, plant:plant})
+      .then(function(){ toast('Settings saved to Google Sheets','gr'); })
+      .catch(function(){ toast('Settings saved locally','am'); });
+  } else {
+    toast('Settings saved','gr');
+  }
+}
+async function clearEverything() {
+  if(currentUser && currentUser.role!=='admin'){ toast('Only Admin can delete all data','rd'); return; }
+  if(!confirm('Delete ALL records and batches?\n\nThis CANNOT be undone.')) return;
+  allRecords = []; batches = {}; activeBatchCode = null;
+  saveLocal();
+  updateRibbon(); renderAllTable([]); renderBatchList();
+  toast('All data deleted locally','rd');
+  if(API_READY) sheetAction('deleteAll', {}).catch(function(){});
+}
+
+/* ---- Modal ---- */
+function hideModal(id){ document.getElementById(id).style.display = 'none'; }
+
+/* ---- Toast ---- */
+var toastTmr;
+function toast(msg, cls) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+cls+' show';
+  clearTimeout(toastTmr);
+  toastTmr = setTimeout(function(){ t.classList.remove('show'); }, 3500);
+}
+
+initApp();
+
+/* Re-render charts on window resize */
+window.addEventListener('resize', function(){
+  if(document.getElementById('pg-dashboard').classList.contains('on')) {
+    renderDashboard();
+  }
+});
+
+/* Override showPg to also handle dashboard */
+var _origShowPg = showPg;
+showPg = function(id, btn) {
+  _origShowPg(id, btn);
+  if(id === 'dashboard') {
+    renderDashboard();
+    renderUserList();
+  }
+  if(id === 'settings') renderUserList();
+};
+
+/* Init login page */
+buildQuickButtons();
+</script>
+</body>
+</html>

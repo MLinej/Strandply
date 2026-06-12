@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#D5110A"/>
+<title>Strandply — Maintenance Work Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Urbanist:wght@700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--r:#D5110A;--rd:#A60D07;--rs:#FDECEB;--bg:#fff;--bs:#fafafa;--b2:#f4f4f4;--k:#1a1a1a;--k3:#646464;--k4:#9a9a9a;--k5:#c8c8c8;--br:#e4e4e4;--br2:#cacaca;--g:#15803d;--gs:#ecfdf5;--bl:#1d4ed8;--bls:#eff6ff;--am:#b45309;--ams:#fffbeb;--amd:#fde68a;--sh:0 1px 3px rgba(0,0,0,.07);--shm:0 4px 16px rgba(0,0,0,.08);--shl:0 12px 36px rgba(0,0,0,.12)}
+html,body{min-height:100vh;background:var(--bs);color:var(--k);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
+.tb{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border-bottom:1px solid var(--br);height:54px;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
+.tb-logo{width:32px;height:32px;border-radius:7px;background:var(--r);color:#fff;font-family:'Urbanist',sans-serif;font-weight:900;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tb-name{font-family:'Urbanist',sans-serif;font-weight:800;font-size:14px;color:var(--k)}
+.tb-name em{color:var(--r);font-style:normal}
+.tb-sub{font-size:9.5px;color:var(--k4);text-transform:uppercase;letter-spacing:.07em}
+.uchip{display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--bs);border:1px solid var(--br);border-radius:99px}
+.uchip .uav{width:26px;height:26px;border-radius:50%;background:var(--r);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.home-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border:1.5px solid var(--br);border-radius:5px;font-size:11px;font-weight:700;font-family:'Urbanist',sans-serif;color:var(--k4);background:var(--bg);cursor:pointer;transition:.13s}
+.home-btn:hover{border-color:var(--r);color:var(--r);background:var(--rs)}
+.tb-divider{width:1px;height:22px;background:var(--br);flex-shrink:0}
+.hbtn{padding:5px 12px;border:1px solid var(--br);border-radius:5px;font-size:11px;font-weight:700;font-family:'Urbanist',sans-serif;color:var(--k4);background:var(--bg);cursor:pointer;transition:.13s}
+.hbtn:hover{border-color:var(--r);color:var(--r)}
+.hbtn.primary{background:var(--r);color:#fff;border-color:var(--r)}
+.hbtn.primary:hover{background:var(--rd)}
+.lay{display:flex;min-height:calc(100vh - 54px)}
+.sb{width:210px;flex-shrink:0;border-right:1px solid var(--br);background:var(--bg);padding:14px 0;position:sticky;top:54px;height:calc(100vh - 54px);overflow-y:auto;display:flex;flex-direction:column}
+.nl{font-size:9px;font-weight:800;color:var(--k5);text-transform:uppercase;letter-spacing:.13em;padding:7px 10px 3px}
+.nl-row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px 3px}
+.nl-row .nl{padding:0}
+.nl-add{font-size:9px;color:var(--r);background:none;border:none;cursor:pointer;font-weight:700;font-family:'Urbanist',sans-serif}
+.nb{display:flex;align-items:center;gap:7px;width:calc(100% - 16px);padding:7px 10px;border-radius:5px;font-size:12.5px;font-weight:600;color:var(--k4);cursor:pointer;border:none;background:none;text-align:left;transition:.12s;margin:1px 8px}
+.nb:hover{background:var(--b2);color:var(--k)}
+.nb.on{background:var(--rs);color:var(--r);font-weight:700}
+.ni{font-size:13px;width:17px;text-align:center;flex-shrink:0}
+.nbd{margin-left:auto;background:var(--r);color:#fff;border-radius:99px;font-size:9px;font-weight:800;padding:1px 5px}
+.ndv{border:none;border-top:1px solid var(--br);margin:6px 10px}
+.sb-footer{margin-top:auto;padding:10px 12px;border-top:1px solid var(--br);font-size:10px;color:var(--k4);line-height:1.7}
+.mn{flex:1;min-width:0;padding:0 20px 80px}
+.ph{padding:22px 0 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ph h1{font-family:'Urbanist',sans-serif;font-size:22px;font-weight:900;letter-spacing:-.02em}
+.ph h1 em{color:var(--r);font-style:normal}
+.ph p{color:var(--k4);font-size:12px;margin-top:3px}
+.vt-toggle{display:flex;border:1px solid var(--br);border-radius:5px;overflow:hidden;background:var(--bg)}
+.vt-toggle button{padding:5px 13px;font-size:11px;font-weight:700;font-family:'Urbanist',sans-serif;border:none;cursor:pointer;background:transparent;color:var(--k4);transition:.13s}
+.vt-toggle button.on{background:var(--r);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:5px;font-size:12px;font-family:'Urbanist',sans-serif;font-weight:700;letter-spacing:.01em;border:1.5px solid transparent;background:transparent;color:var(--k);transition:.13s;cursor:pointer}
+.bp{background:var(--r);color:#fff;border-color:var(--r)}.bp:hover{background:var(--rd)}
+.bo{border-color:var(--br2);color:var(--k);background:var(--bg)}.bo:hover{border-color:var(--k4)}
+.bg-btn{color:var(--k4)}.bg-btn:hover{background:var(--b2)}
+.bdn{background:#fef2f2;color:var(--r);border-color:#fecaca}.bdn:hover{background:var(--r);color:#fff}
+.bsm{padding:4px 9px;font-size:11px}.bxs{padding:3px 7px;font-size:10.5px}
+.bwa{background:#f0fdf4;color:#15803d;border:1.5px solid #bbf7d0}.bwa:hover{background:#dcfce7}
+.sr{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:14px}
+.sc{background:var(--bg);border:1px solid var(--br);border-radius:8px;padding:12px 14px;box-shadow:var(--sh)}
+.sc .sl{font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.09em;margin-bottom:4px}
+.sc .sv{font-family:'Urbanist',sans-serif;font-size:22px;font-weight:900;line-height:1}
+.sc.sca .sv{color:var(--bl)}.sc.scl .sv{color:var(--g)}.sc.scb .sv{color:var(--r)}
+.fb{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap}
+.fb input,.fb select{padding:6px 10px;border:1.5px solid var(--br);border-radius:5px;font-size:12.5px;color:var(--k);background:var(--bg);outline:none;min-height:34px;transition:.13s}
+.fb input:focus,.fb select:focus{border-color:var(--r)}
+.sw{position:relative;flex:1;min-width:180px}.sw input{width:100%;padding-left:28px}
+.sw .si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--k4);font-size:12px;pointer-events:none}
+.tw{border:1px solid var(--br);border-radius:8px;overflow:hidden;box-shadow:var(--sh);background:var(--bg)}
+.vtbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.vtbl thead th{background:var(--bs);border-bottom:1px solid var(--br);padding:8px 11px;text-align:left;font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+.vtbl tbody tr{border-bottom:1px solid var(--br);transition:.1s;cursor:pointer}
+.vtbl tbody tr:last-child{border-bottom:none}
+.vtbl tbody tr:hover{background:var(--bs)}
+.vtbl tbody tr.sel{background:var(--rs)}
+.vtbl td{padding:9px 11px;vertical-align:middle}
+.ac{display:flex;gap:3px}
+.bd{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.bd .dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.cp{display:inline-block;padding:1px 6px;border-radius:99px;font-size:9.5px;font-weight:700;white-space:nowrap}
+.cp.c1{background:#fef9c3;color:#713f12}.cp.c2{background:#e0e7ff;color:#3730a3}.cp.c3{background:#fce7f3;color:#9d174d}
+.cp.c4{background:#dbeafe;color:#1e3a8a}.cp.c5{background:#d1fae5;color:#065f46}.cp.c6{background:#ede9fe;color:#5b21b6}.cp.c7{background:var(--b2);color:var(--k4)}
+.split{display:flex;gap:14px;align-items:flex-start}
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.bcol-hd{display:flex;align-items:center;gap:6px;margin-bottom:10px;padding-bottom:8px}
+.wcard{background:var(--bg);border:1px solid var(--br);border-radius:8px;padding:12px 13px;cursor:pointer;box-shadow:var(--sh);transition:.18s}
+.wcard:hover{box-shadow:var(--shm);border-color:var(--br2)}
+.wcard.sel{border:1.5px solid var(--r)}
+.wcard-acts{display:flex;gap:4px;border-top:1px solid var(--br);padding-top:8px;margin-top:8px}
+.empty{text-align:center;padding:40px 16px;color:var(--k4)}
+.empty .ei{font-size:28px;margin-bottom:6px}
+.empty h3{font-family:'Urbanist',sans-serif;font-size:14px;font-weight:700;color:var(--k);margin-bottom:3px}
+.dp{width:380px;flex-shrink:0;background:var(--bg);border:1px solid var(--br);border-radius:10px;box-shadow:var(--shm);overflow:hidden;position:sticky;top:70px}
+.dp-hd{padding:14px 16px;border-bottom:1px solid var(--br);background:var(--bs);display:flex;justify-content:space-between;align-items:flex-start}
+.dp-acts{padding:10px 16px;border-bottom:1px solid var(--br);display:flex;gap:6px}
+.dp-tabs{display:flex;border-bottom:1px solid var(--br)}
+.dp-tab{flex:1;padding:9px 0;font-size:11.5px;font-weight:700;font-family:'Urbanist',sans-serif;border:none;cursor:pointer;background:transparent;color:var(--k4);border-bottom:2px solid transparent;transition:.13s}
+.dp-tab.on{color:var(--r);border-bottom-color:var(--r)}
+.dp-body{padding:14px 16px;max-height:calc(100vh - 300px);overflow-y:auto}
+.tc-lbl{font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.tc-val{font-size:12.5px;font-weight:600}
+.info-box{font-size:12.5px;color:var(--k3);line-height:1.55;background:var(--bs);padding:10px 11px;border-radius:6px;border:1px solid var(--br);margin-top:4px}
+.note-box{background:var(--ams);border:1px solid var(--amd)}
+.status-update{background:var(--bs);border:1px solid var(--br);border-radius:7px;padding:12px 13px;margin-bottom:12px}
+.pl{font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.tl-add{margin-bottom:16px;background:var(--bs);border:1px solid var(--br);border-radius:7px;padding:11px 12px}
+.tl-add textarea{width:100%;border:1.5px solid var(--br);border-radius:5px;padding:7px 9px;font-size:12.5px;color:var(--k);background:var(--bg);resize:vertical;font-family:inherit;margin-top:6px;outline:none;transition:.13s}
+.tl-add textarea:focus{border-color:var(--r)}
+.tl-wrap{position:relative}
+.tl-line{position:absolute;left:14px;top:0;bottom:0;width:1px;background:var(--br)}
+.tl-entry{display:flex;gap:12px;margin-bottom:16px;position:relative}
+.tl-icon{width:28px;height:28px;border-radius:50%;flex-shrink:0;z-index:1;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 0 0 2px var(--br);border:2px solid var(--bg)}
+.tl-text{font-size:12.5px;color:var(--k);font-weight:600;line-height:1.4;margin-bottom:3px}
+.tl-meta{font-size:10.5px;color:var(--k4)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:300;display:flex;align-items:flex-start;justify-content:center;padding:20px 14px;overflow-y:auto}
+.md{background:var(--bg);border:1px solid var(--br);border-radius:12px;box-shadow:var(--shl);width:100%;max-width:680px;margin:auto}
+.md.sm{max-width:440px}
+.mh{padding:18px 22px 14px;border-bottom:1px solid var(--br);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mh h2{font-family:'Urbanist',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.01em}
+.mh .ms{font-size:11px;color:var(--k4);margin-top:2px}
+.mc{background:none;border:none;font-size:18px;cursor:pointer;color:var(--k4);padding:2px;line-height:1}
+.mc:hover{color:var(--r)}
+.mb{padding:18px 22px}
+.mf{padding:12px 22px;border-top:1px solid var(--br);display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+.ff{grid-column:1/-1}
+.fd{display:flex;flex-direction:column;gap:4px}
+.fd label{font-size:9.5px;font-weight:700;color:var(--k4);text-transform:uppercase;letter-spacing:.05em}
+.fd .rq{color:var(--r)}
+.fd input,.fd select,.fd textarea{padding:7px 10px;border:1.5px solid var(--br);border-radius:5px;font-size:13px;color:var(--k);background:var(--bg);outline:none;min-height:36px;transition:.13s}
+.fd input:focus,.fd select:focus,.fd textarea:focus{border-color:var(--r);box-shadow:0 0 0 3px rgba(213,17,10,.06)}
+.fd textarea{resize:vertical;min-height:60px}
+.sdv{grid-column:1/-1;border:none;border-top:1px solid var(--br);margin:3px 0}
+.slb{grid-column:1/-1;font-family:'Urbanist',sans-serif;font-size:10.5px;font-weight:800;color:var(--k);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.area-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bs);border:1px solid var(--br);border-radius:6px}
+.in-use{font-size:9px;background:var(--bls);color:var(--bl);padding:1px 6px;border-radius:99px;font-weight:700}
+.area-del{background:none;border:none;cursor:pointer;color:var(--r);font-size:15px;line-height:1;padding:2px 4px}
+.area-del:disabled{color:var(--k5);cursor:not-allowed}
+.toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--bg);border:1px solid var(--br);border-radius:7px;padding:10px 16px;font-size:12.5px;font-weight:600;box-shadow:var(--shm);animation:tsin .22s ease}
+.toast.ok{border-color:#bbf7d0;background:var(--gs);color:var(--g)}
+.toast.er{border-color:#fecaca;background:#fef2f2;color:var(--r)}
+@keyframes tsin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+(function(){
+"use strict";
+var h = React.createElement;
+var useState = React.useState;
+var useEffect = React.useEffect;
+
+
+/* ── CONSTANTS ── */
+var PRIORITIES=["Critical","High","Medium","Low"];
+var STATUSES=["Open","In Progress","On Hold","Completed"];
+var CATEGORIES=["Mechanical","Electrical","Hydraulic","Pneumatic","Civil","Instrumentation","HVAC","Safety"];
+var DEFAULT_AREAS=["Assembly Line A","Assembly Line B","Packaging Unit","Boiler Room","Warehouse","Quality Lab","Utility Block","Press Shop"];
+var P_COLOR={Critical:{bg:"#fef2f2",color:"#D5110A",dot:"#D5110A"},High:{bg:"#fffbeb",color:"#b45309",dot:"#b45309"},Medium:{bg:"#eff6ff",color:"#1d4ed8",dot:"#1d4ed8"},Low:{bg:"#f0fdf4",color:"#15803d",dot:"#15803d"}};
+var S_COLOR={"Open":{bg:"#f4f4f4",color:"#646464"},"In Progress":{bg:"#eff6ff",color:"#1d4ed8"},"On Hold":{bg:"#fffbeb",color:"#b45309"},Completed:{bg:"#f0fdf4",color:"#15803d"}};
+var TL_ICON={created:"✦",status:"⟳",edited:"✎",note:"✉",assigned:"👤"};
+var CAT_CLASS={Mechanical:"c1",Electrical:"c2",Hydraulic:"c3",Pneumatic:"c4",Civil:"c5",Instrumentation:"c6",HVAC:"c7",Safety:"c7"};
+
+function genId(){return"WO-"+Math.random().toString(36).substr(2,6).toUpperCase();}
+function nowISO(){return new Date().toISOString();}
+function fmtDT(iso){if(!iso)return"";var d=new Date(iso);return d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})+" · "+d.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});}
+function fmtDate(s){if(!s)return"";try{return new Date(s).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});}catch(e){return s;}}
+function today(){return new Date().toISOString().split("T")[0];}
+
+/* ── DEMO DATA ── */
+var DEMO_TASKS=[
+  {id:"WO-A1B2C3",title:"Hydraulic Press #3 Oil Leak",category:"Hydraulic",area:"Press Shop",priority:"Critical",status:"In Progress",assignee:"Raj Kumar",description:"Continuous oil drip from main cylinder seal. Production halted.",createdAt:"2026-05-25T09:10:00Z",dueDate:"2026-05-28",notes:"Replacement seal ordered.",timeline:[
+    {id:"t1",type:"created",by:"Suresh Mehta",at:"2026-05-25T09:10:00Z",text:"Work order created."},
+    {id:"t2",type:"assigned",by:"Suresh Mehta",at:"2026-05-25T09:11:00Z",text:"Assigned to Raj Kumar."},
+    {id:"t3",type:"status",by:"Raj Kumar",at:"2026-05-26T08:30:00Z",text:"Status changed to In Progress."},
+    {id:"t4",type:"note",by:"Raj Kumar",at:"2026-05-26T14:00:00Z",text:"Inspected seal — ordering replacement part. ETA 2 days."}]},
+  {id:"WO-D4E5F6",title:"Conveyor Belt Motor Bearing Noise",category:"Mechanical",area:"Assembly Line A",priority:"High",status:"Open",assignee:"Priya Nair",description:"Unusual grinding noise from conveyor motor bearing at station 4.",createdAt:"2026-05-26T11:00:00Z",dueDate:"2026-05-30",notes:"",timeline:[
+    {id:"t1",type:"created",by:"Operations",at:"2026-05-26T11:00:00Z",text:"Work order created."},
+    {id:"t2",type:"assigned",by:"Operations",at:"2026-05-26T11:02:00Z",text:"Assigned to Priya Nair."}]},
+  {id:"WO-G7H8I9",title:"Panel PLC Fault — Line B",category:"Electrical",area:"Assembly Line B",priority:"Critical",status:"Open",assignee:"Suresh Yadav",description:"PLC throwing E204 fault code. Assembly Line B is stopped.",createdAt:"2026-05-27T07:45:00Z",dueDate:"2026-05-27",notes:"",timeline:[
+    {id:"t1",type:"created",by:"Shift Supervisor",at:"2026-05-27T07:45:00Z",text:"Work order created. Line B halted."},
+    {id:"t2",type:"assigned",by:"Shift Supervisor",at:"2026-05-27T07:46:00Z",text:"Assigned to Suresh Yadav."}]},
+  {id:"WO-J1K2L3",title:"Air Compressor Pressure Drop",category:"Pneumatic",area:"Utility Block",priority:"Medium",status:"On Hold",assignee:"Meena Das",description:"Compressor #2 not holding pressure above 6 bar.",createdAt:"2026-05-22T10:00:00Z",dueDate:"2026-06-02",notes:"Parts ETA: June 1.",timeline:[
+    {id:"t1",type:"created",by:"Meena Das",at:"2026-05-22T10:00:00Z",text:"Work order created."},
+    {id:"t2",type:"status",by:"Meena Das",at:"2026-05-23T09:00:00Z",text:"Status changed to In Progress."},
+    {id:"t3",type:"note",by:"Meena Das",at:"2026-05-24T15:00:00Z",text:"Spare parts not available locally. Ordered from Rajkot supplier."},
+    {id:"t4",type:"status",by:"Meena Das",at:"2026-05-24T15:05:00Z",text:"Status changed to On Hold — awaiting parts."}]},
+  {id:"WO-M4N5O6",title:"Fire Exit Door Hinge Repair",category:"Civil",area:"Warehouse",priority:"Low",status:"Completed",assignee:"Arjun Singh",description:"South warehouse fire exit door hinge broken. Safety hazard.",createdAt:"2026-05-20T08:00:00Z",dueDate:"2026-05-23",notes:"Completed on schedule.",timeline:[
+    {id:"t1",type:"created",by:"Safety Officer",at:"2026-05-20T08:00:00Z",text:"Work order created."},
+    {id:"t2",type:"assigned",by:"Safety Officer",at:"2026-05-20T08:05:00Z",text:"Assigned to Arjun Singh."},
+    {id:"t3",type:"status",by:"Arjun Singh",at:"2026-05-21T09:30:00Z",text:"Status changed to In Progress."},
+    {id:"t4",type:"note",by:"Arjun Singh",at:"2026-05-22T11:00:00Z",text:"Hinge replaced and tested. Door closes properly."},
+    {id:"t5",type:"status",by:"Arjun Singh",at:"2026-05-22T11:10:00Z",text:"Status changed to Completed."}]}
+];
+var EMPTY_FORM={title:"",category:CATEGORIES[0],area:DEFAULT_AREAS[0],priority:"High",status:"Open",assignee:"",description:"",dueDate:"",notes:""};
+
+/* ── PDF ── */
+function loadJsPDF(){
+  return new Promise(function(resolve,reject){
+    if(window.jspdf){resolve(window.jspdf.jsPDF);return;}
+    var s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    s.onload=function(){resolve(window.jspdf.jsPDF);};
+    s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+function generatePDF(task){
+  return loadJsPDF().then(function(jsPDF){
+    var doc=new jsPDF({orientation:"portrait",unit:"mm",format:"a4"});
+    var W=210,M=18,CW=W-M*2;
+    function hex2rgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+    function setFill(hex){var c=hex2rgb(hex);doc.setFillColor(c[0],c[1],c[2]);}
+    function setTxt(hex){var c=hex2rgb(hex);doc.setTextColor(c[0],c[1],c[2]);}
+    function setDrw(hex){var c=hex2rgb(hex);doc.setDrawColor(c[0],c[1],c[2]);}
+    var y=0;
+    setFill("#D5110A");doc.rect(0,0,W,22,"F");
+    doc.setFont("helvetica","bold");doc.setFontSize(16);doc.setTextColor(255,255,255);
+    doc.text("Strandply LLP",M,10);
+    doc.setFontSize(8);doc.setFont("helvetica","normal");doc.text("MAINTENANCE WORK ORDER",M,16);
+    doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text(task.id,W-M,13,{align:"right"});
+    y=28;
+    doc.setFont("helvetica","bold");doc.setFontSize(14);doc.setTextColor(26,26,26);
+    var tl=doc.splitTextToSize(task.title,CW);doc.text(tl,M,y);y+=tl.length*6+3;
+    function drawBadge(label,bgH,txtH,x,bY){
+      var tw=doc.getTextWidth(label)+6;
+      setFill(bgH);doc.roundedRect(x,bY-4,tw,6,1.5,1.5,"F");
+      setTxt(txtH);doc.setFontSize(7.5);doc.setFont("helvetica","bold");
+      doc.text(label,x+3,bY);return tw+4;
+    }
+    var bx=M;
+    var pc=P_COLOR[task.priority]||{bg:"#f4f4f4",color:"#646464"};
+    var sc2=S_COLOR[task.status]||{bg:"#f4f4f4",color:"#646464"};
+    bx+=drawBadge("● "+task.priority.toUpperCase(),pc.bg,pc.color,bx,y);
+    bx+=drawBadge(task.status.toUpperCase(),sc2.bg,sc2.color,bx,y);
+    drawBadge(task.category.toUpperCase(),"#f4f4f4","#646464",bx,y);
+    y+=10;
+    setDrw("#e4e4e4");doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=6;
+    var fields=[["Assigned To",task.assignee||"—"],["Plant Area",task.area||"—"],["Created",fmtDate(task.createdAt)],["Due Date",fmtDate(task.dueDate)]];
+    var colW=CW/2;
+    fields.forEach(function(fi,i){
+      var col=i%2,row=Math.floor(i/2),fx=M+col*colW,fy=y+row*12;
+      doc.setFontSize(7.5);doc.setFont("helvetica","normal");doc.setTextColor(154,154,154);doc.text(fi[0].toUpperCase(),fx,fy);
+      doc.setFont("helvetica","bold");doc.setTextColor(26,26,26);doc.setFontSize(9);doc.text(fi[1],fx,fy+5);
+    });
+    y+=Math.ceil(fields.length/2)*12+4;
+    setDrw("#e4e4e4");doc.line(M,y,W-M,y);y+=6;
+    if(task.description){
+      doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(26,26,26);doc.text("DESCRIPTION",M,y);y+=5;
+      doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(64,64,64);
+      var dl=doc.splitTextToSize(task.description,CW);doc.text(dl,M,y);y+=dl.length*5+4;
+    }
+    if(task.notes){
+      doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(180,83,9);doc.text("NOTES / REMARKS",M,y);y+=5;
+      doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(64,64,64);
+      var nl2=doc.splitTextToSize(task.notes,CW);doc.text(nl2,M,y);y+=nl2.length*5+6;
+    }
+    setDrw("#e4e4e4");doc.line(M,y,W-M,y);y+=6;
+    if(task.timeline&&task.timeline.length>0){
+      doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(26,26,26);doc.text("ACTIVITY TIMELINE",M,y);y+=6;
+      var tlRev=[].concat(task.timeline).reverse();
+      tlRev.forEach(function(entry){
+        if(y>265){doc.addPage();y=20;}
+        setFill(entry.type==="note"?"#b45309":entry.type==="status"?"#1d4ed8":entry.type==="created"?"#D5110A":"#9a9a9a");
+        doc.circle(M+2,y-1,1.5,"F");
+        setDrw("#e4e4e4");doc.setLineWidth(0.3);doc.line(M+2,y+1,M+2,y+9);
+        doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(26,26,26);
+        var el=doc.splitTextToSize(entry.text,CW-10);doc.text(el,M+7,y);y+=el.length*4.5;
+        doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(154,154,154);
+        doc.text(entry.by+"  ·  "+fmtDT(entry.at),M+7,y);y+=7;
+      });
+    }
+    if(y>240){doc.addPage();y=20;}
+    y+=6;setDrw("#e4e4e4");doc.line(M,y,W-M,y);y+=8;
+    doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(154,154,154);
+    doc.text("Raised By",M,y);doc.text("Assigned Technician",M+70,y);doc.text("Approved By",M+140,y);
+    y+=14;setDrw("#cacaca");
+    doc.line(M,y,M+50,y);doc.line(M+70,y,M+120,y);doc.line(M+140,y,W-M,y);
+    y+=5;doc.setFontSize(7.5);
+    doc.text("Signature & Date",M,y);doc.text("Signature & Date",M+70,y);doc.text("Signature & Date",M+140,y);
+    var pages=doc.getNumberOfPages();
+    for(var p=1;p<=pages;p++){
+      doc.setPage(p);setFill("#fafafa");doc.rect(0,287,W,10,"F");
+      setDrw("#e4e4e4");doc.setLineWidth(0.2);doc.line(0,287,W,287);
+      doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(154,154,154);
+      doc.text("Strandply LLP — Maintenance Work Tracker",M,293);
+      doc.text("Generated: "+fmtDT(nowISO())+"   |   Page "+p+" of "+pages,W-M,293,{align:"right"});
+    }
+    doc.save(task.id+".pdf");
+  });
+}
+
+/* ── WHATSAPP ── */
+function shareWhatsApp(task){
+  var overdue=task.dueDate<today()&&task.status!=="Completed";
+  var lines=[
+    "\uD83D\uDD27 *Maintenance Work Order \u2014 "+task.id+"*","",
+    "\uD83D\uDCCC *"+task.title+"*","",
+    "\uD83C\uDFF7 Priority: *"+task.priority+"*"+(task.priority==="Critical"?" \uD83D\uDD34":""),
+    "\uD83D\uDCCA Status: *"+task.status+"*",
+    "\u2699\uFE0F Category: "+task.category,
+    "\uD83D\uDCCD Area: "+task.area,
+    "\uD83D\uDC64 Assigned To: "+task.assignee,
+    "\uD83D\uDCC5 Due Date: "+fmtDate(task.dueDate)+(overdue?" \u26A0\uFE0F *OVERDUE*":""),
+  ];
+  if(task.description)lines.push("","📝 *Description:*\n"+task.description);
+  if(task.notes)lines.push("","💬 *Notes:*\n"+task.notes);
+  lines.push("","_Strandply LLP — Maintenance Tracker_");
+  window.open("https://wa.me/?text="+encodeURIComponent(lines.join("\n")),"_blank");
+}
+
+/* ── WA ICON ── */
+var WA_ICON=h("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"#15803d"},
+  h("path",{d:"M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"})
+);
+
+/* ── SMALL COMPONENTS ── */
+function PBadge(props){
+  var c=P_COLOR[props.p]||{};
+  return h("span",{className:"bd",style:{background:c.bg,color:c.color}},
+    h("span",{className:"dot",style:{background:c.dot}}),props.p);
+}
+function SBadge(props){
+  var c=S_COLOR[props.s]||{};
+  return h("span",{className:"bd",style:{background:c.bg,color:c.color}},
+    h("span",{className:"dot",style:{background:c.color}}),props.s);
+}
+function CatPill(props){
+  return h("span",{className:"cp "+(CAT_CLASS[props.cat]||"c7")},props.cat);
+}
+
+/* ── MAIN APP ── */
+function App(){
+  var _t=useState([]); var tasks=_t[0]; var setTasks=_t[1];
+  var _a=useState(DEFAULT_AREAS); var areas=_a[0]; var setAreas=_a[1];
+  var _v=useState("list"); var view=_v[0]; var setView=_v[1];
+  var _sel=useState(null); var selected=_sel[0]; var setSelected=_sel[1];
+  var _at=useState("details"); var activeTab=_at[0]; var setActiveTab=_at[1];
+  var _sf=useState(false); var showForm=_sf[0]; var setShowForm=_sf[1];
+  var _ei=useState(null); var editId=_ei[0]; var setEditId=_ei[1];
+  var _fm=useState(EMPTY_FORM); var form=_fm[0]; var setForm=_fm[1];
+  var _ni=useState(""); var noteInput=_ni[0]; var setNoteInput=_ni[1];
+  var _fp=useState("All"); var fPriority=_fp[0]; var setFPriority=_fp[1];
+  var _fs=useState("All"); var fStatus=_fs[0]; var setFStatus=_fs[1];
+  var _fa=useState("All"); var fArea=_fa[0]; var setFArea=_fa[1];
+  var _sr=useState(""); var search=_sr[0]; var setSearch=_sr[1];
+  var _to=useState(null); var toast=_to[0]; var setToast=_to[1];
+  var _sam=useState(false); var showAreaMgr=_sam[0]; var setShowAreaMgr=_sam[1];
+  var _na=useState(""); var newArea=_na[0]; var setNewArea=_na[1];
+  var _pl=useState(null); var pdfLoading=_pl[0]; var setPdfLoading=_pl[1];
+
+  function showToast(msg,type){setToast({msg:msg,type:type||"ok"});setTimeout(function(){setToast(null);},2800);}
+
+  // ─── API PERSISTENCE HELPERS ───
+  function fetchAPI(endpoint, options) {
+    return fetch(endpoint, options)
+      .then(function(res) {
+        if (!res.ok) throw new Error('API Error: ' + res.statusText);
+        return res.json();
+      })
+      .catch(function(e) {
+        console.error(e);
+        showToast(e.message, "er");
+        return null;
+      });
+  }
+
+  function mapTask(dbTask) {
+    if (!dbTask) return null;
+    return Object.assign({}, dbTask, {
+      dueDate: dbTask.due_date || dbTask.dueDate || "",
+      createdAt: dbTask.created_at || dbTask.createdAt || "",
+      timeline: (dbTask.timeline || []).map(function(tl) {
+        return {
+          id: tl.id,
+          type: tl.entry_type || tl.type || "note",
+          text: tl.entry_text || tl.text || "",
+          by: tl.entry_by || tl.by || "System",
+          at: tl.created_at || tl.at || ""
+        };
+      })
+    });
+  }
+
+  function loadTasks() {
+    fetchAPI('/api/maintenance/work-orders')
+      .then(function(data) {
+        if (data) {
+          setTasks(data.map(mapTask));
+        }
+      });
+  }
+
+  function loadAreas() {
+    fetchAPI('/api/maintenance/areas')
+      .then(function(data) {
+        if (data) {
+          var names = data.map(function(item) { return item.name; });
+          setAreas(names);
+        }
+      });
+  }
+
+  function fetchTaskDetails(id) {
+    if (!id) return;
+    fetchAPI('/api/maintenance/work-orders?id=' + id)
+      .then(function(data) {
+        if (data) {
+          var mapped = mapTask(data);
+          setTasks(function(prev) {
+            return prev.map(function(t) {
+              if (t.id === id) {
+                return mapped;
+              }
+              return t;
+            });
+          });
+        }
+      });
+  }
+
+  useEffect(function() {
+    loadTasks();
+    loadAreas();
+  }, []);
+
+  useEffect(function() {
+    fetchTaskDetails(selected);
+  }, [selected]);
+
+  var filtered=tasks.filter(function(t){
+    if(fPriority!=="All"&&t.priority!==fPriority)return false;
+    if(fStatus!=="All"&&t.status!==fStatus)return false;
+    if(fArea!=="All"&&t.area!==fArea)return false;
+    if(search&&t.title.toLowerCase().indexOf(search.toLowerCase())<0&&t.id.toLowerCase().indexOf(search.toLowerCase())<0)return false;
+    return true;
+  });
+  var selectedTask=tasks.find(function(t){return t.id===selected;})||null;
+  var stats={
+    total:tasks.length,
+    open:tasks.filter(function(t){return t.status==="Open";}).length,
+    inProgress:tasks.filter(function(t){return t.status==="In Progress";}).length,
+    critical:tasks.filter(function(t){return t.priority==="Critical"&&t.status!=="Completed";}).length,
+    completed:tasks.filter(function(t){return t.status==="Completed";}).length
+  };
+
+  function addArea(){
+    var a=newArea.trim();
+    if(!a)return;
+    if(areas.indexOf(a)>=0){showToast("Area already exists.","er");return;}
+    fetchAPI('/api/maintenance/areas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: a })
+    }).then(function(res) {
+      if (res && res.success) {
+        loadAreas();
+        setNewArea("");
+        showToast("Area \"" + a + "\" added ✓");
+      }
+    });
+  }
+  function removeArea(a){
+    if(tasks.some(function(t){return t.area===a;})){showToast("Cannot remove — work orders exist for this area.","er");return;}
+    fetchAPI('/api/maintenance/areas?name=' + encodeURIComponent(a), {
+      method: 'DELETE'
+    }).then(function(res) {
+      if (res && res.success) {
+        loadAreas();
+        showToast("Area \"" + a + "\" removed.");
+      }
+    });
+  }
+  function openCreate(){setForm(Object.assign({},EMPTY_FORM,{area:areas[0]||""}));setEditId(null);setShowForm(true);}
+  function openEdit(task){setForm(Object.assign({},task));setEditId(task.id);setShowForm(true);}
+  function setF(key,val){setForm(function(f){var n=Object.assign({},f);n[key]=val;return n;});}
+
+  function submitForm(){
+    if(!form.title.trim()||!form.assignee.trim()||!form.dueDate){showToast("Title, Assignee & Due Date are required.","er");return;}
+    if(editId){
+      fetchAPI('/api/maintenance/work-orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({}, form, { id: editId, updated_by: 'Jimit Mehta' }))
+      }).then(function(res) {
+        if (res && res.success) {
+          loadTasks();
+          fetchTaskDetails(editId);
+          showToast("Work order updated ✓");
+        }
+      });
+    } else {
+      fetchAPI('/api/maintenance/work-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({}, form, { created_by: 'Jimit Mehta' }))
+      }).then(function(res) {
+        if (res && res.success) {
+          loadTasks();
+          showToast("Work order created ✓");
+        }
+      });
+    }
+    setShowForm(false);
+  }
+  function deleteTask(id){
+    fetchAPI('/api/maintenance/work-orders?id=' + id, {
+      method: 'DELETE'
+    }).then(function(res) {
+      if (res && res.success) {
+        setSelected(null);
+        loadTasks();
+        showToast("Work order deleted.","er");
+      }
+    });
+  }
+  function updateStatus(id,status){
+    fetchAPI('/api/maintenance/timeline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        work_order_id: id,
+        entry_type: 'status',
+        entry_text: 'Status changed to ' + status + '.',
+        entry_by: 'Jimit Mehta',
+        new_status: status
+      })
+    }).then(function(res) {
+      if (res && res.success) {
+        loadTasks();
+        fetchTaskDetails(id);
+        showToast("Status updated ✓");
+      }
+    });
+  }
+  function addNote(id){
+    if(!noteInput.trim())return;
+    var txt=noteInput.trim();
+    fetchAPI('/api/maintenance/timeline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        work_order_id: id,
+        entry_type: 'note',
+        entry_text: txt,
+        entry_by: 'Jimit Mehta'
+      })
+    }).then(function(res) {
+      if (res && res.success) {
+        fetchTaskDetails(id);
+        setNoteInput("");
+        showToast("Note added ✓");
+      }
+    });
+  }
+  function handlePDF(task){
+    setPdfLoading(task.id);
+    generatePDF(task).then(function(){
+      showToast("PDF downloaded: "+task.id+".pdf \u2713");
+    }).catch(function(){
+      showToast("PDF generation failed.","er");
+    }).finally(function(){
+      setPdfLoading(null);
+    });
+  }
+
+  /* ── BUILD UI ── */
+  var todayStr=today();
+
+  /* Topbar */
+  var topbar=h("div",{className:"tb"},
+    h("div",{style:{display:"flex",alignItems:"center",gap:10}},
+      h("button",{className:"home-btn",title:"Back to Home",onClick:function(){window.location.href="index.html";}},
+        h("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},
+          h("path",{d:"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"}),
+          h("polyline",{points:"9 22 9 12 15 12 15 22"})
+        ),
+        "Home"
+      ),
+      h("div",{className:"tb-divider"}),
+      h("div",{className:"tb-logo"},"\u2699"),
+      h("div",null,
+        h("div",{className:"tb-name"},"Strand",h("em",null,"ply")),
+        h("div",{className:"tb-sub"},"Maintenance Work Tracker")
+      )
+    ),
+    h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+      h("div",{className:"uchip"},
+        h("div",{className:"uav"},"JM"),
+        h("div",null,
+          h("div",{style:{fontSize:12,fontWeight:700}},"Jimit Mehta"),
+          h("div",{className:"tb-sub"},"Plant Manager")
+        )
+      ),
+      h("button",{className:"hbtn",onClick:function(){setShowAreaMgr(true);}},"\uD83C\uDFED Manage Areas"),
+      h("button",{className:"hbtn primary",onClick:openCreate},"+ New Work Order")
+    )
+  );
+
+  /* Sidebar */
+  var overviewItems=[
+    {label:"All Work Orders",icon:"\uD83D\uDCCB",count:stats.total,key:"All"},
+    {label:"Open",icon:"\uD83D\uDD34",count:stats.open,key:"Open"},
+    {label:"In Progress",icon:"\uD83D\uDD35",count:stats.inProgress,key:"In Progress"},
+    {label:"On Hold",icon:"\uD83D\uDFE1",count:0,key:"On Hold"},
+    {label:"Completed",icon:"\uD83D\uDFE2",count:stats.completed,key:"Completed"}
+  ];
+  var sidebar=h("div",{className:"sb"},
+    h("div",{className:"nl"},"Overview"),
+    overviewItems.map(function(item){
+      var on=fStatus===item.key||(item.key==="All"&&fStatus==="All");
+      return h("button",{key:item.key,className:"nb"+(on?" on":""),onClick:function(){setFStatus(item.key==="All"?"All":item.key);setSelected(null);}},
+        h("span",{className:"ni"},item.icon),item.label,
+        item.count>0?h("span",{className:"nbd"},item.count):null
+      );
+    }),
+    h("hr",{className:"ndv"}),
+    h("div",{className:"nl"},"Priority"),
+    PRIORITIES.map(function(p){
+      return h("button",{key:p,className:"nb"+(fPriority===p?" on":""),onClick:function(){setFPriority(fPriority===p?"All":p);setSelected(null);}},
+        h("span",{style:{width:7,height:7,borderRadius:"50%",background:P_COLOR[p].dot,display:"inline-block",marginRight:2,flexShrink:0}}),p
+      );
+    }),
+    h("hr",{className:"ndv"}),
+    h("div",{className:"nl-row"},
+      h("span",{className:"nl"},"Areas"),
+      h("button",{className:"nl-add",onClick:function(){setShowAreaMgr(true);}},"+ Add")
+    ),
+    areas.map(function(a){
+      return h("button",{key:a,className:"nb"+(fArea===a?" on":""),onClick:function(){setFArea(fArea===a?"All":a);setSelected(null);}},
+        h("span",{className:"ni"},"\uD83C\uDFED"),h("span",{style:{fontSize:11}},a)
+      );
+    }),
+    h("div",{className:"sb-footer"},h("div",null,"Strandply LLP"),h("div",null,"Maintenance Module v1.0"))
+  );
+
+  /* Stats bar */
+  var statItems=[
+    {label:"Total",value:stats.total,cls:""},
+    {label:"Open",value:stats.open,cls:"scb"},
+    {label:"In Progress",value:stats.inProgress,cls:"sca"},
+    {label:"Critical",value:stats.critical,cls:"scb"},
+    {label:"Completed",value:stats.completed,cls:"scl"}
+  ];
+  var statsBar=h("div",{className:"sr"},
+    statItems.map(function(s){
+      return h("div",{key:s.label,className:"sc "+s.cls},
+        h("div",{className:"sl"},s.label),
+        h("div",{className:"sv"},s.value)
+      );
+    })
+  );
+
+  /* Filter bar */
+  var filterBar=h("div",{className:"fb"},
+    h("div",{className:"sw",style:{minWidth:200}},
+      h("span",{className:"si"},"\uD83D\uDD0D"),
+      h("input",{value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search WO# or title\u2026"})
+    ),
+    h("select",{value:fPriority,onChange:function(e){setFPriority(e.target.value);}},
+      h("option",{value:"All"},"All Priorities"),
+      PRIORITIES.map(function(p){return h("option",{key:p},p);})
+    ),
+    h("select",{value:fArea,onChange:function(e){setFArea(e.target.value);}},
+      h("option",{value:"All"},"All Areas"),
+      areas.map(function(a){return h("option",{key:a},a);})
+    ),
+    h("select",{value:fStatus,onChange:function(e){setFStatus(e.target.value);}},
+      h("option",{value:"All"},"All Statuses"),
+      STATUSES.map(function(s){return h("option",{key:s},s);})
+    ),
+    (fPriority!=="All"||fStatus!=="All"||fArea!=="All"||search)?
+      h("button",{className:"btn bo bsm",onClick:function(){setFPriority("All");setFStatus("All");setFArea("All");setSearch("");}},"\u2715 Clear"):null,
+    h("span",{style:{marginLeft:"auto",fontSize:11,color:"var(--k4)"}},filtered.length+" record"+(filtered.length!==1?"s":""))
+  );
+
+  /* List view */
+  var listView=h("div",{className:"tw"},
+    h("table",{className:"vtbl"},
+      h("thead",null,h("tr",null,
+        h("th",null,"WO #"),h("th",null,"Title"),h("th",null,"Category"),h("th",null,"Area"),
+        h("th",null,"Priority"),h("th",null,"Status"),h("th",null,"Assignee"),h("th",null,"Due"),h("th",null)
+      )),
+      h("tbody",null,
+        filtered.length===0?h("tr",null,h("td",{colSpan:9},
+          h("div",{className:"empty"},h("div",{className:"ei"},"\uD83D\uDD27"),h("h3",null,"No work orders found"),h("p",null,"Try adjusting your filters."))
+        )):null,
+        filtered.map(function(task){
+          var overdue=task.dueDate<todayStr&&task.status!=="Completed";
+          return h("tr",{key:task.id,className:selected===task.id?"sel":"",onClick:function(){setSelected(task.id);setActiveTab("details");}},
+            h("td",null,h("span",{style:{fontSize:11,color:"var(--bl)",fontWeight:700}},task.id)),
+            h("td",{style:{fontWeight:600,maxWidth:180}},task.title),
+            h("td",null,h(CatPill,{cat:task.category})),
+            h("td",{style:{fontSize:11,color:"var(--k4)"}},task.area),
+            h("td",null,h(PBadge,{p:task.priority})),
+            h("td",null,h(SBadge,{s:task.status})),
+            h("td",{style:{fontSize:12}},task.assignee),
+            h("td",{style:{fontSize:11,color:overdue?"var(--r)":"var(--k4)",fontWeight:overdue?700:400}},overdue?"\u26A0 ":null,fmtDate(task.dueDate)),
+            h("td",null,
+              h("div",{className:"ac"},
+                h("button",{className:"btn bg-btn bxs",title:"Edit",onClick:function(e){e.stopPropagation();openEdit(task);}},"\u270E"),
+                h("button",{className:"btn bxs",title:"Download PDF",style:{color:"#D5110A",background:"var(--rs)",border:"none",opacity:pdfLoading===task.id?0.5:1},onClick:function(e){e.stopPropagation();handlePDF(task);}},pdfLoading===task.id?"\u2026":"\u2B07"),
+                h("button",{className:"btn bxs",title:"Share on WhatsApp",style:{color:"#15803d",background:"#f0fdf4",border:"none"},onClick:function(e){e.stopPropagation();shareWhatsApp(task);}},WA_ICON),
+                h("button",{className:"btn bxs",title:"Delete",style:{color:"var(--r)",background:"var(--rs)",border:"none"},onClick:function(e){e.stopPropagation();if(window.confirm("Delete this work order?"))deleteTask(task.id);}},"\uD83D\uDDD1")
+              )
+            )
+          );
+        })
+      )
+    )
+  );
+
+  /* Board view */
+  var boardView=h("div",{className:"board"},
+    STATUSES.map(function(status){
+      var col=filtered.filter(function(t){return t.status===status;});
+      var sc=S_COLOR[status];
+      return h("div",{key:status},
+        h("div",{className:"bcol-hd",style:{borderBottom:"2px solid "+sc.color+"44"}},
+          h("span",{style:{width:8,height:8,borderRadius:"50%",background:sc.color,display:"inline-block",flexShrink:0}}),
+          h("span",{style:{fontSize:10,fontWeight:800,fontFamily:"Urbanist,sans-serif",textTransform:"uppercase",letterSpacing:".06em",color:sc.color}},status),
+          h("span",{style:{marginLeft:"auto",fontSize:11,fontWeight:700,color:"var(--k4)"}},col.length)
+        ),
+        h("div",{style:{display:"flex",flexDirection:"column",gap:8}},
+          col.map(function(task){
+            var overdue=task.dueDate<todayStr&&task.status!=="Completed";
+            return h("div",{key:task.id,className:"wcard"+(selected===task.id?" sel":""),onClick:function(){setSelected(task.id);setActiveTab("details");}},
+              h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}},
+                h("span",{style:{fontSize:10,color:"var(--bl)",fontWeight:700}},task.id),
+                h(PBadge,{p:task.priority})
+              ),
+              h("div",{style:{fontSize:12.5,fontWeight:600,marginBottom:8,lineHeight:1.35}},task.title),
+              h("div",{style:{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}},
+                h(CatPill,{cat:task.category}),
+                h("span",{style:{fontSize:9.5,color:"var(--k4)",background:"var(--bs)",padding:"1px 6px",borderRadius:99}},task.area)
+              ),
+              h("div",{style:{display:"flex",justifyContent:"space-between",fontSize:11,color:"var(--k4)"}},
+                h("span",null,"\uD83D\uDC64 "+task.assignee),
+                h("span",{style:{color:overdue?"var(--r)":"var(--k4)"}},"\uD83D\uDCC5 "+fmtDate(task.dueDate))
+              ),
+              h("div",{className:"wcard-acts"},
+                h("button",{className:"btn bg-btn bxs",style:{flex:1,justifyContent:"center",fontSize:10},onClick:function(e){e.stopPropagation();handlePDF(task);}},pdfLoading===task.id?"\u2026":"\u2B07 PDF"),
+                h("button",{className:"btn bwa bxs",style:{flex:1,justifyContent:"center",fontSize:10},onClick:function(e){e.stopPropagation();shareWhatsApp(task);}},WA_ICON," Share")
+              )
+            );
+          }),
+          col.length===0?h("div",{style:{fontSize:11,color:"var(--k5)",padding:"18px 10px",textAlign:"center",border:"1px dashed var(--br)",borderRadius:7}},"No tasks"):null
+        )
+      );
+    })
+  );
+
+  /* Detail panel */
+  var detailPanel=selectedTask?h("div",{className:"dp"},
+    h("div",{className:"dp-hd"},
+      h("div",{style:{flex:1,minWidth:0}},
+        h("div",{style:{fontSize:10,color:"var(--bl)",fontWeight:700,marginBottom:4}},selectedTask.id),
+        h("div",{style:{fontSize:14,fontWeight:800,fontFamily:"Urbanist,sans-serif",letterSpacing:"-.01em",lineHeight:1.3}},selectedTask.title)
+      ),
+      h("button",{className:"mc",onClick:function(){setSelected(null);}},"\u2715")
+    ),
+    h("div",{className:"dp-acts"},
+      h("button",{className:"btn bp bsm",style:{flex:1,justifyContent:"center",opacity:pdfLoading===selectedTask.id?0.6:1},onClick:function(){handlePDF(selectedTask);}},pdfLoading===selectedTask.id?"Generating\u2026":"\u2B07 Download PDF"),
+      h("button",{className:"btn bwa bsm",style:{flex:1,justifyContent:"center"},onClick:function(){shareWhatsApp(selectedTask);}},WA_ICON," WhatsApp"),
+      h("button",{className:"btn bo bsm",onClick:function(){openEdit(selectedTask);}},"\u270E Edit")
+    ),
+    h("div",{className:"dp-tabs"},
+      ["details","timeline"].map(function(k){
+        var label=k==="details"?"Details":"Timeline";
+        return h("button",{key:k,className:"dp-tab"+(activeTab===k?" on":""),onClick:function(){setActiveTab(k);}},
+          label,
+          k==="timeline"?h("span",{style:{marginLeft:4,background:"var(--bs)",color:"var(--k4)",borderRadius:99,padding:"0 5px",fontSize:10,fontWeight:800}},(selectedTask.timeline||[]).length):null
+        );
+      })
+    ),
+    h("div",{className:"dp-body"},
+      activeTab==="details"?h("div",null,
+        h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}},
+          h(PBadge,{p:selectedTask.priority}),h(SBadge,{s:selectedTask.status}),h(CatPill,{cat:selectedTask.category})
+        ),
+        h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}},
+          [["Assigned To",selectedTask.assignee],["Plant Area",selectedTask.area],["Created",fmtDate(selectedTask.createdAt)],["Due Date",fmtDate(selectedTask.dueDate)]].map(function(pair){
+            return h("div",{key:pair[0]},h("div",{className:"tc-lbl"},pair[0]),h("div",{className:"tc-val"},pair[1]||"—"));
+          })
+        ),
+        selectedTask.description?h("div",{style:{marginBottom:14}},h("div",{className:"pl"},"Description"),h("div",{className:"info-box"},selectedTask.description)):null,
+        selectedTask.notes?h("div",{style:{marginBottom:14}},h("div",{className:"pl"},"Notes"),h("div",{className:"info-box note-box"},selectedTask.notes)):null,
+        h("div",{className:"status-update"},
+          h("div",{className:"pl"},"Update Status"),
+          h("div",{style:{display:"flex",gap:5,flexWrap:"wrap",marginTop:6}},
+            STATUSES.map(function(s){
+              var sc=S_COLOR[s];
+              var on=selectedTask.status===s;
+              return h("button",{key:s,style:{padding:"4px 10px",borderRadius:5,fontSize:10.5,fontWeight:700,fontFamily:"Urbanist,sans-serif",border:"1.5px solid",cursor:"pointer",transition:".13s",background:on?sc.bg:"transparent",borderColor:on?sc.color:"var(--br)",color:on?sc.color:"var(--k4)"},onClick:function(){updateStatus(selectedTask.id,s);}},s);
+            })
+          )
+        ),
+        h("button",{className:"btn bdn bsm",style:{width:"100%",justifyContent:"center"},onClick:function(){if(window.confirm("Delete this work order?"))deleteTask(selectedTask.id);}},"\uD83D\uDDD1 Delete Work Order")
+      ):null,
+      activeTab==="timeline"?h("div",null,
+        h("div",{className:"tl-add"},
+          h("div",{className:"pl"},"Add a Note"),
+          h("textarea",{value:noteInput,onChange:function(e){setNoteInput(e.target.value);},placeholder:"Write an update, observation or action taken\u2026",rows:2}),
+          h("div",{style:{display:"flex",justifyContent:"flex-end",marginTop:7}},
+            h("button",{className:"btn bp bsm",onClick:function(){addNote(selectedTask.id);}},"Post Note")
+          )
+        ),
+        h("div",{className:"tl-wrap"},
+          h("div",{className:"tl-line"}),
+          (selectedTask.timeline||[]).slice().reverse().map(function(entry){
+            var bg=entry.type==="note"?"var(--ams)":entry.type==="status"?"var(--bls)":entry.type==="created"?"var(--rs)":"var(--b2)";
+            return h("div",{key:entry.id,className:"tl-entry"},
+              h("div",{className:"tl-icon",style:{background:bg}},TL_ICON[entry.type]||"\u2022"),
+              h("div",{style:{flex:1,paddingTop:4}},
+                h("div",{className:"tl-text"},entry.text),
+                h("div",{className:"tl-meta"},h("span",{style:{fontWeight:700}},"\uD83D\uDC64 "+entry.by)," \u00B7 "+fmtDT(entry.at))
+              )
+            );
+          }),
+          (!selectedTask.timeline||selectedTask.timeline.length===0)?h("div",{className:"empty"},h("div",{className:"ei"},"\uD83D\uDCCB"),h("h3",null,"No timeline yet")):null
+        )
+      ):null
+    )
+  ):null;
+
+  /* Area manager modal */
+  var areaMgrModal=showAreaMgr?h("div",{className:"ov",onClick:function(e){if(e.target===e.currentTarget)setShowAreaMgr(false);}},
+    h("div",{className:"md sm"},
+      h("div",{className:"mh"},
+        h("div",null,h("h2",null,"Manage Plant Areas"),h("div",{className:"ms"},"Add or remove plant areas used in work orders.")),
+        h("button",{className:"mc",onClick:function(){setShowAreaMgr(false);}},"\u2715")
+      ),
+      h("div",{className:"mb"},
+        h("div",{style:{display:"flex",gap:8,marginBottom:16}},
+          h("input",{value:newArea,onChange:function(e){setNewArea(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")addArea();},placeholder:"e.g. CNC Machine Shop",style:{flex:1,padding:"7px 10px",border:"1.5px solid var(--br)",borderRadius:5,fontSize:13,color:"var(--k)",outline:"none"}}),
+          h("button",{className:"btn bp",onClick:addArea},"+ Add")
+        ),
+        h("div",{style:{display:"flex",flexDirection:"column",gap:6,maxHeight:320,overflowY:"auto"}},
+          areas.map(function(a){
+            var inUse=tasks.some(function(t){return t.area===a;});
+            return h("div",{key:a,className:"area-row"},
+              h("div",{style:{display:"flex",alignItems:"center",gap:8}},
+                h("span",null,"\uD83C\uDFED"),
+                h("span",{style:{fontSize:13,fontWeight:600}},a),
+                inUse?h("span",{className:"in-use"},"IN USE"):null
+              ),
+              h("button",{className:"area-del",disabled:inUse,title:inUse?"Cannot remove — in use":"Remove",onClick:function(){removeArea(a);}},"\u2715")
+            );
+          })
+        )
+      ),
+      h("div",{className:"mf"},h("button",{className:"btn bp",onClick:function(){setShowAreaMgr(false);}},"Done"))
+    )
+  ):null;
+
+  /* Work order form modal */
+  var formModal=showForm?h("div",{className:"ov",onClick:function(e){if(e.target===e.currentTarget)setShowForm(false);}},
+    h("div",{className:"md"},
+      h("div",{className:"mh"},
+        h("div",null,
+          h("h2",null,editId?"Edit Work Order":"New Work Order"),
+          h("div",{className:"ms"},editId?"Update the details below.":"Fill in the details to create a new maintenance task.")
+        ),
+        h("button",{className:"mc",onClick:function(){setShowForm(false);}},"\u2715")
+      ),
+      h("div",{className:"mb"},
+        h("div",{className:"fg"},
+          h("div",{className:"slb ff"},"Task Identity"),
+          h("div",{className:"fd ff"},
+            h("label",null,"Title ",h("span",{className:"rq"},"*")),
+            h("input",{value:form.title,onChange:function(e){setF("title",e.target.value);},placeholder:"e.g. Hydraulic Press Oil Leak \u2014 Unit 3"})
+          ),
+          h("div",{className:"fd"},
+            h("label",null,"Category"),
+            h("select",{value:form.category,onChange:function(e){setF("category",e.target.value);}},CATEGORIES.map(function(c){return h("option",{key:c},c);}))
+          ),
+          h("div",{className:"fd"},
+            h("label",null,"Plant Area"),
+            h("select",{value:form.area,onChange:function(e){setF("area",e.target.value);}},areas.map(function(a){return h("option",{key:a},a);}))
+          ),
+          h("hr",{className:"sdv ff"}),
+          h("div",{className:"slb ff"},"Assignment & Schedule"),
+          h("div",{className:"fd"},
+            h("label",null,"Assigned To ",h("span",{className:"rq"},"*")),
+            h("input",{value:form.assignee,onChange:function(e){setF("assignee",e.target.value);},placeholder:"Technician name"})
+          ),
+          h("div",{className:"fd"},
+            h("label",null,"Due Date ",h("span",{className:"rq"},"*")),
+            h("input",{type:"date",value:form.dueDate,onChange:function(e){setF("dueDate",e.target.value);}})
+          ),
+          h("div",{className:"fd"},
+            h("label",null,"Priority"),
+            h("select",{value:form.priority,onChange:function(e){setF("priority",e.target.value);}},PRIORITIES.map(function(p){return h("option",{key:p},p);}))
+          ),
+          h("div",{className:"fd"},
+            h("label",null,"Status"),
+            h("select",{value:form.status,onChange:function(e){setF("status",e.target.value);}},STATUSES.map(function(s){return h("option",{key:s},s);}))
+          ),
+          h("hr",{className:"sdv ff"}),
+          h("div",{className:"slb ff"},"Details"),
+          h("div",{className:"fd ff"},
+            h("label",null,"Description"),
+            h("textarea",{value:form.description,onChange:function(e){setF("description",e.target.value);},placeholder:"Describe the issue in detail\u2026",rows:3})
+          ),
+          h("div",{className:"fd ff"},
+            h("label",null,"Notes / Remarks"),
+            h("textarea",{value:form.notes,onChange:function(e){setF("notes",e.target.value);},placeholder:"Parts needed, observations, etc.",rows:2})
+          )
+        )
+      ),
+      h("div",{className:"mf"},
+        h("button",{className:"btn bo",onClick:function(){setShowForm(false);}},"Cancel"),
+        h("button",{className:"btn bp",onClick:submitForm},editId?"Save Changes":"Create Work Order")
+      )
+    )
+  ):null;
+
+  /* Toast */
+  var toastEl=toast?h("div",{className:"toast "+(toast.type||"ok")},(toast.type==="er"?"\u26A0 ":"\u2713 ")+toast.msg):null;
+
+  /* Assemble */
+  return h("div",null,
+    topbar,
+    h("div",{className:"lay"},
+      sidebar,
+      h("div",{className:"mn"},
+        h("div",{className:"ph"},
+          h("div",null,
+            h("h1",null,"Maintenance ",h("em",null,"Work Orders")),
+            h("p",null,"Track, assign and resolve plant maintenance tasks.")
+          ),
+          h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
+            h("div",{className:"vt-toggle"},
+              h("button",{className:view==="list"?"on":"",onClick:function(){setView("list");setSelected(null);}},"\u2630 List"),
+              h("button",{className:view==="board"?"on":"",onClick:function(){setView("board");setSelected(null);}},"\u229E Board")
+            ),
+            h("button",{className:"btn bp",onClick:openCreate},"+ New Work Order")
+          )
+        ),
+        statsBar,
+        filterBar,
+        h("div",{className:"split"},
+          h("div",{style:{flex:1,minWidth:0}},view==="list"?listView:boardView),
+          detailPanel
+        )
+      )
+    ),
+    areaMgrModal,
+    formModal,
+    toastEl
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App,null));
+})();
+</script>
+</body>
+</html>
