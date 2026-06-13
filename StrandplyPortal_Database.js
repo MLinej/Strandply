@@ -152,7 +152,34 @@ const MODULES = [
     ]
   },
 
-  /* ── MODULE 6: Accounts Module ── */
+   /* ── MODULE 7: Electricity & Meter MIS ── */
+   {
+     id:         'electricity',
+     name:       'Electricity & Meter MIS',
+     desc:       'Meter Readings, PGVCL Bills & Cost Analysis',
+     icon:       '⚡',
+     color:      'ct-amber',
+     status:     'live',
+     url:        'electricity/index.html',
+     urlDisplay: 'strandply.in/electricity',
+     features: [
+       'AM/PM meter reading punch',
+       '12-Hr & 24-Hr consumption views',
+       'Monthly cost & trend analysis',
+       'PGVCL bill management',
+       'Meter config & tariff history',
+     ],
+     subModules: [
+       { id:'el_dash',    name:'Dashboard',         desc:'KPI summary & monthly trends' },
+       { id:'el_punch',   name:'Meter Reading',     desc:'Punch AM/PM meter readings' },
+       { id:'el_12hr',    name:'12-Hr View',        desc:'Shift-wise consumption breakdown' },
+       { id:'el_24hr',    name:'24-Hr View',        desc:'Daily combined consumption' },
+       { id:'el_monthly', name:'Monthly Report',    desc:'Aggregated monthly analysis' },
+       { id:'el_bills',   name:'PGVCL Bills',       desc:'Bill records & payment tracking' },
+     ]
+   },
+
+   /* ── MODULE 6: Accounts Module ── */
   {
     id:         'accounts',
     name:       'Accounts Module',
@@ -218,6 +245,7 @@ const ROLE_LABELS = {
   vendor:     'Vendor Relations',
   accounts:   'Accounts Executive',
   hr:         'HR Executive',
+  electricity:'Meter Executive',
 
   // Custom roles added via Roles panel are stored in localStorage
   // and merged into this object at runtime — no need to add them here manually
@@ -236,7 +264,7 @@ const ROLE_DEFAULTS = {
 
   /* Full access to everything */
   admin: {
-    modules: ['dispatch','vendor','reports','hr','production','accounts'],
+    modules: ['dispatch','vendor','reports','hr','production','accounts','electricity'],
     subRights: {
       dispatch:   ['req','disp','track','party','courier','product','report','settings'],
       vendor:     ['vend_list','vend_po','vend_inv','vend_pay'],
@@ -244,6 +272,7 @@ const ROLE_DEFAULTS = {
       hr:         ['hr_emp','hr_att','hr_leave','hr_sal'],
       production: ['pr_batch','pr_qual','pr_mat'],
       accounts:   ['ac_inv','ac_recv','ac_pay','ac_gst'],
+      electricity:['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills'],
     }
   },
 
@@ -337,7 +366,7 @@ const SEED_USERS = [
     dept:     'Administration',
     avatar:   'AD',
     color:    '#B91C1C',
-    modules:  ['dispatch','vendor','reports','hr','production','accounts'],
+    modules:  ['dispatch','vendor','reports','hr','production','accounts','electricity'],
     subRights: {
       dispatch:   ['req','disp','track','party','courier','product','report','settings'],
       vendor:     ['vend_list','vend_po','vend_inv','vend_pay'],
@@ -345,6 +374,7 @@ const SEED_USERS = [
       hr:         ['hr_emp','hr_att','hr_leave','hr_sal'],
       production: ['pr_batch','pr_qual','pr_mat'],
       accounts:   ['ac_inv','ac_recv','ac_pay','ac_gst'],
+      electricity:['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills'],
     }
   },
 
@@ -414,6 +444,22 @@ const SEED_USERS = [
     }
   },
 
+  /* ── METER EXECUTIVE ── */
+  {
+    id:       'u006',
+    name:     'Meter Executive',
+    username: 'meter',
+    password: 'meter@123',
+    role:     'electricity',
+    dept:     'Meter Department',
+    avatar:   'ME',
+    color:    '#B45309',
+    modules:  ['electricity'],
+    subRights: {
+      electricity: ['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills']
+    }
+  },
+
   /*
   ── HOW TO ADD A NEW PERMANENT USER ─────────────────────────────
   Copy this template and paste above the closing ]; bracket:
@@ -480,7 +526,7 @@ const AVATAR_COLORS = [
    ════════════════════════════════════════════════════════════════ */
 
 const BUILTIN_ROLE_IDS = [
-  'admin','dispatch','marketing','management','vendor','accounts','hr'
+  'admin','dispatch','marketing','management','vendor','accounts','hr','electricity'
 ];
 
 /* ROLE_REGISTRY is initialized at runtime by initRoles() */
@@ -549,7 +595,8 @@ let ROLE_REGISTRY = {};
    ├── reports     → Reports Hub
    ├── hr          → HR Module
    ├── production  → Production Tracker
-   └── accounts    → Accounts Module
+   ├── accounts    → Accounts Module
+   └── electricity → Electricity & Meter MIS
 
    SUB-MODULE IDs (by module):
 
@@ -592,6 +639,14 @@ let ROLE_REGISTRY = {};
    ├── ac_pay    → Payables
    └── ac_gst    → GST Reports
 
+   electricity:
+   ├── el_dash    → Dashboard
+   ├── el_punch   → Meter Reading
+   ├── el_12hr    → 12-Hr View
+   ├── el_24hr    → 24-Hr View
+   ├── el_monthly → Monthly Report
+   └── el_bills   → PGVCL Bills
+
    ════════════════════════════════════════════════════════════════
 */
 
@@ -603,15 +658,16 @@ let ROLE_REGISTRY = {};
    above and re-uploading to Cloudflare.
    ════════════════════════════════════════════════════════════════
 
-   ┌─────────────────┬──────────────┬───────────────────┬────────────────────────┐
-   │ Name            │ Username     │ Password          │ Access                 │
-   ├─────────────────┼──────────────┼───────────────────┼────────────────────────┤
-   │ Admin           │ admin        │ admin@strandply   │ All modules (full)     │
-   │ Ankit Parmar    │ ankit        │ ankit@123         │ SampleTrack Pro only   │
-   │ Suresh Kumar    │ suresh       │ suresh@123        │ Dispatch + Vendor      │
-   │ Raj Verma       │ raj          │ raj@123           │ Dispatch + Reports     │
-   │ Vendor Manager  │ vendor       │ vendor@123        │ Vendor Portal only     │
-   └─────────────────┴──────────────┴───────────────────┴────────────────────────┘
+   ┌─────────────────┬──────────────┬───────────────────┬──────────────────────────────────┐
+   │ Name            │ Username     │ Password          │ Access                           │
+   ├─────────────────┼──────────────┼───────────────────┼──────────────────────────────────┤
+   │ Admin           │ admin        │ admin@strandply   │ All modules (full)               │
+   │ Ankit Parmar    │ ankit        │ ankit@123         │ SampleTrack Pro only             │
+   │ Suresh Kumar    │ suresh       │ suresh@123        │ Dispatch + Vendor                │
+   │ Raj Verma       │ raj          │ raj@123           │ Dispatch + Reports               │
+   │ Vendor Manager  │ vendor       │ vendor@123        │ Vendor Portal only               │
+   │ Meter Executive │ meter        │ meter@123         │ Electricity & Meter MIS only     │
+   └─────────────────┴──────────────┴───────────────────┴──────────────────────────────────┘
 
    ════════════════════════════════════════════════════════════════
 */

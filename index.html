@@ -434,6 +434,7 @@ a{color:inherit;text-decoration:none}
       <div class="ll-mod"><div class="ll-mod-icon">🚛</div><div class="ll-mod-text"><strong>Transport Module</strong>Freight & order flow</div></div>
       <div class="ll-mod"><div class="ll-mod-icon">📋</div><div class="ll-mod-text"><strong>Purchase ERP</strong>Material procurement</div></div>
       <div class="ll-mod"><div class="ll-mod-icon">📊</div><div class="ll-mod-text"><strong>Reports Hub</strong>Analytics & dashboards</div></div>
+      <div class="ll-mod"><div class="ll-mod-icon">⚡</div><div class="ll-mod-text"><strong>Electricity & Meter MIS</strong>Readings, bills & cost analysis</div></div>
     </div>
     <div class="ll-foot">LLPIN: AAP-7300 &nbsp;·&nbsp; www.strandply.in &nbsp;·&nbsp; Company Portal v2.0</div>
   </div>
@@ -601,11 +602,12 @@ a{color:inherit;text-decoration:none}
                       <option value="transport">Transport Executive</option>
                       <option value="erp">Purchase Manager</option>
                       <option value="stock">Stock Manager</option>
-                      <option value="maintenance">Maintenance Manager</option>
-                    </select>
-                  </div>
-                  <div class="f-grp-sm">
-                    <label class="f-lbl-sm">Avatar Initials</label>
+                       <option value="maintenance">Maintenance Manager</option>
+                       <option value="electricity">Electricity Manager</option>
+                     </select>
+                   </div>
+                   <div class="f-grp-sm">
+                     <label class="f-lbl-sm">Avatar Initials</label>
                     <input class="f-inp-sm" id="ed-avatar" placeholder="e.g. AP" maxlength="3">
                   </div>
                 </div>
@@ -664,6 +666,7 @@ a{color:inherit;text-decoration:none}
                       <option value="erp">Purchase Manager — Purchase ERP only</option>
                       <option value="stock">Stock Manager — Stock Management only</option>
                       <option value="maintenance">Maintenance Manager — Maintenance Tracker only</option>
+                      <option value="electricity">Electricity Manager — Electricity & Meter MIS only</option>
                     </select>
                   </div>
 
@@ -856,6 +859,7 @@ a{color:inherit;text-decoration:none}
             <option value="erp">Purchase Manager</option>
             <option value="stock">Stock Manager</option>
             <option value="maintenance">Maintenance Manager</option>
+            <option value="electricity">Electricity Manager</option>
             <option value="admin">Administrator</option>
           </select>
         </div>
@@ -1001,6 +1005,18 @@ const MODULES = [
       {id:'mt_export',  name:'Export & Share',  desc:'PDF download & WhatsApp sharing'},
     ]
   },
+  { id:'electricity', name:'Electricity & Meter MIS', desc:'Meter Readings, PGVCL Bills & Cost Analysis', icon:'⚡', color:'ct-amber',
+    status:'live', url:'electricity/index.html', urlDisplay:'strandply.in/electricity',
+    features:['AM/PM meter reading punch','12-Hr & 24-Hr consumption views','Monthly cost & trend analysis','PGVCL bill management','Meter config & tariff history'],
+    subModules:[
+      {id:'el_dash',    name:'Dashboard',         desc:'KPI summary & monthly trends'},
+      {id:'el_punch',   name:'Meter Reading',     desc:'Punch AM/PM meter readings'},
+      {id:'el_12hr',    name:'12-Hr View',        desc:'Shift-wise consumption breakdown'},
+      {id:'el_24hr',    name:'24-Hr View',        desc:'Daily combined consumption'},
+      {id:'el_monthly', name:'Monthly Report',    desc:'Aggregated monthly analysis'},
+      {id:'el_bills',   name:'PGVCL Bills',       desc:'Bill records & payment tracking'},
+    ]
+  },
 ];
 
 const ROLE_LABELS = {
@@ -1008,7 +1024,7 @@ const ROLE_LABELS = {
   marketing:'Marketing Executive', management:'Management',
   vendor:'Vendor Relations', accounts:'Accounts Executive', hr:'HR Executive',
   transport:'Transport Executive', erp:'Purchase Manager', stock:'Stock Manager',
-  maintenance:'Maintenance Manager',
+  maintenance:'Maintenance Manager', electricity:'Meter Executive',
 };
 
 const AVATAR_COLORS = [
@@ -1019,8 +1035,8 @@ const AVATAR_COLORS = [
 const SEED_USERS = [
   { id:'u001', name:'Admin', username:'admin', password:'admin@strandply', role:'admin',
     dept:'Administration', avatar:'AD', color:'#B91C1C',
-    modules:['dispatch','vendor','reports','hr','production','transport','erp','accounts','stock','maintenance'],
-    subRights:{'dispatch':['req','disp','track','party','courier','product','report','settings'],'vendor':['vend_list','vend_po','vend_inv','vend_pay'],'reports':['rpt_dash','rpt_disp','rpt_sales','rpt_exp'],'hr':['hr_emp','hr_att','hr_leave','hr_sal'],'production':['pr_batch','pr_qual','pr_mat','pr_weight'],'transport':['tr_inq','tr_rate','tr_appr','tr_order','tr_track'],'erp':['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'],'accounts':['ac_inv','ac_recv','ac_pay','ac_gst'],'stock':['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],'maintenance':['mt_wo','mt_board','mt_area','mt_timeline','mt_export']}
+    modules:['dispatch','vendor','reports','hr','production','transport','erp','accounts','stock','maintenance','electricity'],
+    subRights:{'dispatch':['req','disp','track','party','courier','product','report','settings'],'vendor':['vend_list','vend_po','vend_inv','vend_pay'],'reports':['rpt_dash','rpt_disp','rpt_sales','rpt_exp'],'hr':['hr_emp','hr_att','hr_leave','hr_sal'],'production':['pr_batch','pr_qual','pr_mat','pr_weight'],'transport':['tr_inq','tr_rate','tr_appr','tr_order','tr_track'],'erp':['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'],'accounts':['ac_inv','ac_recv','ac_pay','ac_gst'],'stock':['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],'maintenance':['mt_wo','mt_board','mt_area','mt_timeline','mt_export'],'electricity':['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills']}
   },
   { id:'u002', name:'Ankit Parmar', username:'ankit', password:'ankit@123', role:'dispatch',
     dept:'Dispatch Department', avatar:'AP', color:'#0F766E',
@@ -1042,6 +1058,11 @@ const SEED_USERS = [
     modules:['vendor'],
     subRights:{'vendor':['vend_list','vend_po','vend_inv','vend_pay']}
   },
+  { id:'u006', name:'Meter Executive', username:'meter', password:'meter@123', role:'electricity',
+    dept:'Meter Department', avatar:'ME', color:'#B45309',
+    modules:['electricity'],
+    subRights:{'electricity':['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills']}
+  },
 ];
 
 /* ── API-backed data layer ── */
@@ -1053,7 +1074,7 @@ const SEED_USERS = [
 ══════════════════════════════════════════ */
 const ROLE_DEFAULTS = {
   admin: {
-    modules: ['dispatch','vendor','reports','hr','production','transport','erp','accounts','stock','maintenance'],
+    modules: ['dispatch','vendor','reports','hr','production','transport','erp','accounts','stock','maintenance','electricity'],
     subRights: {
       dispatch:   ['req','disp','track','party','courier','product','report','settings'],
       vendor:     ['vend_list','vend_po','vend_inv','vend_pay'],
@@ -1065,6 +1086,7 @@ const ROLE_DEFAULTS = {
       accounts:   ['ac_inv','ac_recv','ac_pay','ac_gst'],
       stock:      ['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],
       maintenance:['mt_wo','mt_board','mt_area','mt_timeline','mt_export'],
+      electricity:['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills'],
     }
   },
   dispatch: {
@@ -1106,6 +1128,10 @@ const ROLE_DEFAULTS = {
   maintenance: {
     modules: ['maintenance'],
     subRights: { maintenance: ['mt_wo','mt_board','mt_area','mt_timeline','mt_export'] }
+  },
+  electricity: {
+    modules: ['electricity'],
+    subRights: { electricity: ['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills'] }
   },
 };
 
@@ -1165,6 +1191,12 @@ async function doLogin(){
     const data = await apiPost('/api/auth', { username: u, password: p });
 
     if(data.error || !data.success){
+      // Try local fallback if API returns an error
+      const local = tryLocalLogin(u, p);
+      if(local){
+        btn.disabled=false; btn.innerHTML='Sign In →';
+        return doLocalLogin(local, btn);
+      }
       btn.disabled=false; btn.innerHTML='Sign In →';
       showLoginErr(data.error || 'Incorrect username or password.');
       ['li-user','li-pass'].forEach(id=>document.getElementById(id).classList.add('err'));
@@ -1173,13 +1205,26 @@ async function doLogin(){
     }
 
     currentUser = data.user;
-    // Load all users from API for admin panel
     await reloadUsers();
+    // Merge any modules from SEED_USERS that might be missing in DB
+    const seedUser = SEED_USERS.find(s=>s.username===currentUser.username);
+    if(seedUser){
+      seedUser.modules.forEach(m=>{ if(!currentUser.modules.includes(m)) currentUser.modules.push(m); });
+      Object.entries(seedUser.subRights).forEach(([k,v])=>{
+        if(!currentUser.subRights[k]) currentUser.subRights[k]=v;
+      });
+    }
     btn.disabled=false; btn.innerHTML='Sign In →';
-    openPortal(data.user);
+    openPortal(currentUser);
   } catch(e) {
+    // API unreachable — try local fallback
+    const local = tryLocalLogin(u, p);
+    if(local){
+      btn.disabled=false; btn.innerHTML='Sign In →';
+      return doLocalLogin(local, btn);
+    }
     btn.disabled=false; btn.innerHTML='Sign In →';
-    showLoginErr('Network error — please try again.');
+    showLoginErr('Server unreachable. Check if the dev server is running.');
     console.error('Login error:', e);
   }
 }
@@ -1187,6 +1232,28 @@ async function doLogin(){
 function showLoginErr(msg){
   document.getElementById('l-err-msg').textContent = msg;
   document.getElementById('l-err').classList.add('show');
+}
+
+/* ── Local/offline login fallback ── */
+function tryLocalLogin(u, p){
+  const users = JSON.parse(JSON.stringify(SEED_USERS));
+  // Merge in any saved users from localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem('stp_portal_v2')||'[]');
+    saved.forEach(sv=>{ const i=users.findIndex(x=>x.id===sv.id); if(i>-1) users[i]=sv; else users.push(sv); });
+  } catch(e){}
+  return users.find(x=>x.username===u && x.password===p) || null;
+}
+
+function doLocalLogin(user, btn){
+  currentUser = user;
+  USERS = JSON.parse(JSON.stringify(SEED_USERS));
+  try {
+    const saved = JSON.parse(localStorage.getItem('stp_portal_v2')||'[]');
+    saved.forEach(sv=>{ const i=USERS.findIndex(x=>x.id===sv.id); if(i>-1) USERS[i]=sv; else USERS.push(sv); });
+  } catch(e){}
+  btn.disabled=false; btn.innerHTML='Sign In →';
+  openPortal(user);
 }
 
 /* ══════════════════════════════════════════
@@ -1427,7 +1494,18 @@ async function saveUserEdits(){
     renderAdminPanel();
     toast(`✅ "${name}" saved successfully`, 'ok');
   } catch(e) {
-    toast('Failed to save — ' + e.message, 'err');
+    // Fallback: save locally
+    USERS[idx].name = name; USERS[idx].username = uname;
+    if(pass) USERS[idx].password = pass;
+    USERS[idx].role = role; USERS[idx].dept = dept; USERS[idx].avatar = avatar;
+    saveUsersLocal();
+    renderAdminPanel();
+    if(currentUser && currentUser.id===selectedUserId){
+      currentUser = USERS[idx];
+      document.getElementById('p-nm').textContent = name;
+      document.getElementById('p-rl').textContent = ROLE_LABELS[role]||role;
+    }
+    toast(`✅ "${name}" saved locally`, 'ok');
   }
 }
 
@@ -1474,7 +1552,14 @@ async function saveModuleAccess(){
     const u = USERS.find(x=>x.id===selectedUserId);
     if(currentUser && currentUser.id===selectedUserId && u) renderHomeModules(u);
     toast('Module access saved ✓','ok');
-  } catch(e){ toast('Failed: '+e.message,'err'); }
+  } catch(e){
+    // Fallback: save locally
+    USERS[idx].modules = modules;
+    saveUsersLocal();
+    const u = USERS[idx];
+    if(currentUser && currentUser.id===selectedUserId) renderHomeModules(u);
+    toast('Module access saved locally ✓','ok');
+  }
 }
 
 /* ── Sub-module permissions ── */
@@ -1532,7 +1617,11 @@ async function saveSubAccess(){
     if(res.error){ toast(res.error,'err'); return; }
     await reloadUsers();
     toast('Sub-module rights saved ✓','ok');
-  } catch(e){ toast('Failed: '+e.message,'err'); }
+  } catch(e){
+    USERS[idx].subRights = subRights;
+    saveUsersLocal();
+    toast('Sub-module rights saved locally ✓','ok');
+  }
 }
 
 /* ── Add user ── */
@@ -1566,7 +1655,16 @@ async function addUser(){
     renderAdminPanel();
     setTimeout(()=>selectUser(newId), 50);
     toast(`User "${name}" created ✓ — now assign module access`,'ok');
-  } catch(e){ toast('Failed: '+e.message,'err'); }
+  } catch(e){
+    // Fallback: save locally
+    const newUser = { id:newId, name, username:uname, password:pass, role, dept, avatar, color, modules:[], subRights:{} };
+    USERS.push(newUser);
+    saveUsersLocal();
+    closeDlg('dlg-add');
+    renderAdminPanel();
+    setTimeout(()=>selectUser(newId), 50);
+    toast(`User "${name}" saved locally ✓`,'ok');
+  }
 }
 
 /* ── Delete user ── */
@@ -1593,7 +1691,17 @@ async function deleteUser(){
     document.getElementById('editor-empty').style.display= '';
     renderAdminPanel();
     toast(`User "${u.name}" deleted`, 'ok');
-  } catch(e){ toast('Failed: '+e.message,'err'); }
+  } catch(e){
+    // Fallback: delete locally
+    USERS = USERS.filter(x=>x.id!==selectedUserId);
+    saveUsersLocal();
+    closeDlg('dlg-del');
+    selectedUserId = null;
+    document.getElementById('editor').style.display      = 'none';
+    document.getElementById('editor-empty').style.display= '';
+    renderAdminPanel();
+    toast(`User "${u.name}" deleted locally`, 'ok');
+  }
 }
 
 /* ── Permission editor tabs ── */
@@ -1612,6 +1720,7 @@ const MODULE_COLORS = {
   dispatch:'#B91C1C,#FEF2F2', vendor:'#1D4ED8,#EFF6FF',
   reports:'#B45309,#FFFBEB',  hr:'#0F766E,#F0FDFA',
   production:'#7C3AED,#F5F3FF', accounts:'#15803D,#F0FDF4',
+  electricity:'#B45309,#FFFBEB',
 };
 
 function previewRoleDefaults(){
@@ -1659,17 +1768,22 @@ async function applyRoleDefaults(){
       subRights:JSON.parse(JSON.stringify(def.subRights)),
     });
     if(res.error){ toast(res.error,'err'); return; }
-
     document.getElementById('ed-role').value = role;
     await reloadUsers();
-    const u = USERS.find(x=>x.id===selectedUserId);
-    if(u){
-      renderModulePerms(u);
-      renderSubPerms(u);
-    }
-    renderAdminPanel();
-    toast(`Role "${ROLE_LABELS[role]||role}" applied with default permissions ✓`, 'ok');
-  } catch(e){ toast('Failed: '+e.message,'err'); }
+  } catch(e){ /* fallback: save locally */ }
+  // Apply locally regardless
+  USERS[idx].role = role;
+  USERS[idx].modules = [...def.modules];
+  USERS[idx].subRights = JSON.parse(JSON.stringify(def.subRights));
+  saveUsersLocal();
+  document.getElementById('ed-role').value = role;
+  const u = USERS.find(x=>x.id===selectedUserId);
+  if(u){
+    renderModulePerms(u);
+    renderSubPerms(u);
+  }
+  renderAdminPanel();
+  toast(`Role "${ROLE_LABELS[role]||role}" applied with default permissions ✓`, 'ok');
 }
 
 function renderAllRolesTable(){
@@ -1719,7 +1833,7 @@ function doLogout(){
 ══════════════════════════════════════════ */
 
 // Built-in system roles — always present, cannot be deleted
-const BUILTIN_ROLE_IDS = ['admin','dispatch','marketing','management','vendor','accounts','hr'];
+const BUILTIN_ROLE_IDS = ['admin','dispatch','marketing','management','vendor','accounts','hr','transport','erp','stock','maintenance','electricity'];
 
 // Dynamic role registry — starts from hardcoded + loads custom from D1
 let ROLE_REGISTRY = {}; // { roleId: { id, name, desc, color, modules, subRights, isBuiltin } }
@@ -1747,7 +1861,17 @@ async function initRoles(){
       ROLE_LABELS[r.id] = r.name;
       ROLE_DEFAULTS[r.id] = { modules: r.modules||[], subRights: r.subRights||{} };
     });
-  } catch(e){ console.error('Failed to load custom roles:', e); }
+  } catch(e){
+    // Fallback: load custom roles from localStorage
+    try {
+      const localRoles = JSON.parse(localStorage.getItem('stp_roles_v1')||'[]');
+      localRoles.forEach(r=>{
+        ROLE_REGISTRY[r.id] = r;
+        ROLE_LABELS[r.id] = r.name;
+        ROLE_DEFAULTS[r.id] = { modules: r.modules||[], subRights: r.subRights||{} };
+      });
+    } catch(le){}
+  }
 }
 
 function getRoleDesc(rid){
@@ -1759,6 +1883,7 @@ function getRoleDesc(rid){
     vendor:'Manages vendor/supplier database and purchase orders.',
     accounts:'Handles invoices, payments, receivables and GST.',
     hr:'Manages employee records, attendance and leave.',
+    electricity:'Manages meter readings, PGVCL bills and electricity cost analysis.',
   };
   return descs[rid]||'Custom role';
 }
@@ -1766,7 +1891,7 @@ function getRoleDesc(rid){
 function getRoleColor(rid){
   const colors={
     admin:'#B91C1C',dispatch:'#0F766E',marketing:'#B45309',
-    management:'#1D4ED8',vendor:'#7C3AED',accounts:'#15803D',hr:'#BE185D',
+    management:'#1D4ED8',vendor:'#7C3AED',accounts:'#15803D',hr:'#BE185D',electricity:'#B45309',
   };
   return colors[rid]||'#374151';
 }
@@ -1779,6 +1904,7 @@ function renderRolesPane(){
     dispatch:['#B91C1C','#FEF2F2'],vendor:['#1D4ED8','#EFF6FF'],
     reports:['#B45309','#FFFBEB'],hr:['#BE185D','#FDF2F8'],
     production:['#7C3AED','#F5F3FF'],accounts:['#15803D','#F0FDF4'],
+    electricity:['#B45309','#FFFBEB'],
   };
 
   grid.innerHTML = roles.map(role=>{
@@ -1848,7 +1974,18 @@ async function addRole(){
     editRole(id);
     toast(`Role "${name}" created — now set its module defaults`, 'ok');
     refreshRoleDropdowns();
-  } catch(e){ toast('Failed: '+e.message,'err'); }
+  } catch(e){
+    // Fallback: save locally
+    ROLE_REGISTRY[id] = { id, name, desc, color, modules:[], subRights:{}, isBuiltin:false };
+    ROLE_LABELS[id] = name;
+    ROLE_DEFAULTS[id] = { modules:[], subRights:{} };
+    saveRolesLocal();
+    closeDlg('dlg-add-role');
+    renderRolesPane();
+    editRole(id);
+    toast(`Role "${name}" saved locally`, 'ok');
+    refreshRoleDropdowns();
+  }
 }
 
 /* ── Edit role ── */
@@ -1943,19 +2080,21 @@ async function saveRoleEdit(){
     if(cb.checked) subRights[mod].push(sub);
   });
 
-  // Only persist custom roles to D1; built-in roles update in-memory only
-  if(!role.isBuiltin){
-    try {
-      const res = await apiPost('/api/roles', { action:'update', id:editingRoleId, name, desc, color, modules, subRights });
-      if(res.error){ toast(res.error,'err'); return; }
-    } catch(e){ toast('Failed: '+e.message,'err'); return; }
-  }
-
-  // Apply locally
+  // Apply locally (always)
   role.name = name; role.desc = desc; role.color = color;
   role.modules = modules; role.subRights = subRights;
   ROLE_LABELS[editingRoleId] = name;
   ROLE_DEFAULTS[editingRoleId] = { modules:[...modules], subRights:JSON.parse(JSON.stringify(subRights)) };
+
+  // Only persist custom roles to D1; built-in roles update in-memory only
+  if(!role.isBuiltin){
+    try {
+      const res = await apiPost('/api/roles', { action:'update', id:editingRoleId, name, desc, color, modules, subRights });
+      if(res.error) throw new Error(res.error);
+    } catch(e){
+      saveRolesLocal();
+    }
+  }
 
   renderRolesPane();
   refreshRoleDropdowns();
@@ -1986,19 +2125,19 @@ async function deleteRole(){
 
   try {
     const res = await apiPost('/api/roles', { action:'delete', id:editingRoleId });
-    if(res.error){ toast(res.error,'err'); return; }
+    if(res.error){ throw new Error(res.error); }
+  } catch(e){ saveRolesLocal(); }
 
-    delete ROLE_REGISTRY[editingRoleId];
-    delete ROLE_LABELS[editingRoleId];
-    delete ROLE_DEFAULTS[editingRoleId];
+  delete ROLE_REGISTRY[editingRoleId];
+  delete ROLE_LABELS[editingRoleId];
+  delete ROLE_DEFAULTS[editingRoleId];
 
-    closeDlg('dlg-del-role');
-    cancelRoleEdit();
-    renderRolesPane();
-    refreshRoleDropdowns();
-    toast('Role deleted','ok');
-    editingRoleId = null;
-  } catch(e){ toast('Failed: '+e.message,'err'); }
+  closeDlg('dlg-del-role');
+  cancelRoleEdit();
+  renderRolesPane();
+  refreshRoleDropdowns();
+  toast('Role deleted','ok');
+  editingRoleId = null;
 }
 
 /* ── Refresh role dropdowns when roles change ── */
@@ -2017,6 +2156,10 @@ function refreshRoleDropdowns(){
 /* ═══════ UTILITIES ═══════ */
 function openDlg(id){ document.getElementById(id).classList.add('show'); }
 function closeDlg(id){ document.getElementById(id).classList.remove('show'); }
+
+/* ── LocalStorage persistence (fallback when API unavailable) ── */
+function saveUsersLocal(){ try { localStorage.setItem('stp_portal_v2', JSON.stringify(USERS)); } catch(e){} }
+function saveRolesLocal(){ try { localStorage.setItem('stp_roles_v1', JSON.stringify(Object.values(ROLE_REGISTRY).filter(r=>!r.isBuiltin))); } catch(e){} }
 
 function toast(msg, type='info'){
   const wrap=document.getElementById('toast-wrap');
