@@ -228,8 +228,8 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_entity ON activity_log(entity_type, 
 INSERT OR IGNORE INTO users (id, name, username, password, role, dept, avatar, color, modules, sub_rights)
 VALUES
   ('u001', 'Admin', 'admin', 'admin@strandply', 'admin', 'Administration', 'AD', '#B91C1C',
-   '["dispatch","vendor","reports","hr","production","transport","erp","accounts","stock","maintenance"]',
-   '{"dispatch":["req","disp","track","party","courier","product","report","settings"],"vendor":["vend_list","vend_po","vend_inv","vend_pay"],"reports":["rpt_dash","rpt_disp","rpt_sales","rpt_exp"],"hr":["hr_emp","hr_att","hr_leave","hr_sal"],"production":["pr_batch","pr_qual","pr_mat","pr_weight"],"transport":["tr_inq","tr_rate","tr_appr","tr_order","tr_track"],"erp":["erp_entry","erp_po","erp_truck","erp_dncn","erp_inv","erp_report"],"accounts":["ac_inv","ac_recv","ac_pay","ac_gst"],"stock":["stk_slip","stk_ledger","stk_stock","stk_reclass","stk_master"],"maintenance":["mt_wo","mt_board","mt_area","mt_timeline","mt_export"]}'),
+   '["dispatch","vendor","reports","hr","production","transport","erp","accounts","stock","maintenance","electricity","dwpas"]',
+   '{"dispatch":["req","disp","track","party","courier","product","report","settings"],"vendor":["vend_list","vend_po","vend_inv","vend_pay"],"reports":["rpt_dash","rpt_disp","rpt_sales","rpt_exp"],"hr":["hr_emp","hr_att","hr_leave","hr_sal"],"production":["pr_batch","pr_qual","pr_mat","pr_weight"],"transport":["tr_inq","tr_rate","tr_appr","tr_order","tr_track"],"erp":["erp_entry","erp_po","erp_truck","erp_dncn","erp_inv","erp_report"],"accounts":["ac_inv","ac_recv","ac_pay","ac_gst"],"stock":["stk_slip","stk_ledger","stk_stock","stk_reclass","stk_master"],"maintenance":["mt_wo","mt_board","mt_area","mt_timeline","mt_export"],"electricity":["el_dash","el_punch","el_12hr","el_24hr","el_monthly","el_bills"],"dwpas":["dw_dash","dw_plan","dw_register","dw_achieve","dw_variance","dw_hr","dw_dept","dw_emp"]}'),
 
   ('u002', 'Ankit Parmar', 'ankit', 'ankit@123', 'dispatch', 'Dispatch Department', 'AP', '#0F766E',
    '["dispatch"]',
@@ -1092,3 +1092,73 @@ INSERT OR IGNORE INTO electricity_mf_history (id, mf, effective_date) VALUES ('m
 INSERT OR IGNORE INTO electricity_fc_history (id, fc, effective_date) VALUES ('fc-default', 638675, '2022-10-01');
 INSERT OR IGNORE INTO electricity_er_history (id, rate, effective_date) VALUES ('er-default', 4.20, '2018-04-01');
 INSERT OR IGNORE INTO electricity_fr_history (id, rate, effective_date) VALUES ('fr-default', 2.30, '2018-04-01');
+
+
+-- ══════════════════════════════════════════════════════════
+-- DWPAS — Daily Work Planning & Achievement System
+-- ══════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS dwpas_departments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT UNIQUE NOT NULL,
+  head TEXT NOT NULL DEFAULT '',
+  code TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  is_active INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS dwpas_employees (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  dept TEXT DEFAULT '',
+  desg TEXT DEFAULT '',
+  type TEXT CHECK(type IN ('Skilled','Unskilled','Supervisor','Manager')) DEFAULT 'Skilled',
+  code TEXT DEFAULT '',
+  is_active INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS dwpas_plans (
+  id TEXT PRIMARY KEY,
+  plan_date TEXT NOT NULL,
+  plan_type TEXT DEFAULT 'Regular Day',
+  status TEXT CHECK(status IN ('Draft','Submitted','Approved')) DEFAULT 'Draft',
+  prepared_by TEXT DEFAULT '',
+  remarks TEXT DEFAULT '',
+  lines TEXT DEFAULT '[]',
+  saved_at TEXT DEFAULT (datetime('now')),
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- DWPAS indexes
+CREATE INDEX IF NOT EXISTS idx_dwpas_plans_date ON dwpas_plans(plan_date);
+CREATE INDEX IF NOT EXISTS idx_dwpas_plans_status ON dwpas_plans(status);
+CREATE INDEX IF NOT EXISTS idx_dwpas_dept_name ON dwpas_departments(name);
+CREATE INDEX IF NOT EXISTS idx_dwpas_emp_dept ON dwpas_employees(dept);
+
+-- Seed default DWPAS departments
+INSERT OR IGNORE INTO dwpas_departments (id, name, head, code, description) VALUES
+(1, 'Log Yard', 'Yard Manager', 'LY', 'Incoming log sorting & storage'),
+(2, 'Peeling', 'Rajesh Patel', 'PL', 'Log peeling & core veneer production'),
+(3, 'Dryer', 'Mahesh Joshi', 'DR', 'Veneer drying operations'),
+(4, 'Core Composer', 'Supervisor', 'CC', 'Core layer composition'),
+(5, 'Glue Kitchen', 'Resin Manager', 'GK', 'Glue/resin preparation'),
+(6, 'Hot Press', 'Vikram Sharma', 'HP', 'Board pressing operations'),
+(7, 'Trimming & Sanding', 'Finishing Head', 'TS', 'Panel finishing'),
+(8, 'Lamination', 'Lamination Head', 'LM', 'Surface lamination'),
+(9, 'Dispatch', 'Dispatch Manager', 'DS', 'Outward logistics'),
+(10, 'Maintenance', 'Maintenance Head', 'MT', 'Equipment maintenance'),
+(11, 'Store', 'Sanjay Rao', 'ST', 'Inventory & stores'),
+(12, 'Quality', 'QC Head', 'QC', 'Quality control & inspection');
+
+-- Seed default DWPAS employees
+INSERT OR IGNORE INTO dwpas_employees (id, name, dept, desg, type, code) VALUES
+(1, 'Jimit Mehta', 'Management', 'Plant Manager', 'Manager', 'MGR001'),
+(2, 'P K Sinha', 'Production', 'Production Head', 'Manager', 'MGR002'),
+(3, 'Sanjay Rao', 'Store', 'Store Manager', 'Manager', 'MGR003'),
+(4, 'Rahul', 'Log Yard', 'Unloading Supervisor', 'Supervisor', 'SUP001'),
+(5, 'Rajesh Patel', 'Peeling', 'Peeling Supervisor', 'Supervisor', 'SUP002'),
+(6, 'Mahesh Joshi', 'Dryer', 'Dryer Incharge', 'Supervisor', 'SUP003'),
+(7, 'Vikram Sharma', 'Hot Press', 'Press Supervisor', 'Supervisor', 'SUP004');

@@ -1,0 +1,2060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Daily Work Planning & Achievement System — Strandply LLP</title>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#C8102E;--red2:#a00d24;--red3:#7d0a1d;--redlt:#fff0f2;--redmid:#ffd7dc;
+  --off:#f4f6fa;--g0:#f8f9fb;--g1:#f1f3f7;--g2:#e4e8ef;--g3:#c5cdd8;
+  --g4:#8a96a8;--g5:#4a5568;--g6:#1a202c;--border:#dde3ec;
+  --green:#16a34a;--amber:#d97706;--purple:#7c3aed;--teal:#0891b2;
+  --shadow:0 1px 3px rgba(0,0,0,.08);--shadow2:0 4px 16px rgba(0,0,0,.12);--shadow3:0 8px 32px rgba(0,0,0,.16);
+  --fh:'Urbanist',sans-serif;--fb:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;
+  --sidebar:240px;--topbar:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--off);color:var(--g6);font-family:var(--fb);font-size:14px;line-height:1.6;overflow-x:hidden}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar);background:var(--red2);display:flex;align-items:center;gap:12px;padding:0 20px;z-index:200;box-shadow:var(--shadow2);border-bottom:1px solid var(--red3)}
+.topbar-logo{width:34px;height:34px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:15px;font-weight:900;color:var(--red);flex-shrink:0}
+.topbar-title{font-family:var(--fh);font-size:16px;font-weight:800;color:#fff;letter-spacing:.3px}
+.topbar-sub{font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.topbar-date{font-family:var(--fm);font-size:11px;color:rgba(255,255,255,.55);letter-spacing:.5px}
+.topbar-user{font-family:var(--fh);font-size:12px;font-weight:700;color:rgba(255,255,255,.8);background:rgba(255,255,255,.1);padding:5px 12px;border-radius:4px;cursor:pointer}
+.hamburger{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px;align-items:center;justify-content:center}
+
+/* SIDEBAR */
+.sidebar{position:fixed;top:var(--topbar);left:0;width:var(--sidebar);height:calc(100vh - var(--topbar));background:var(--red);overflow-y:auto;z-index:150;transition:transform .25s ease;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.sidebar-section{padding:10px 14px 4px;font-family:var(--fm);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:8px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;font-family:var(--fb);font-size:13px;font-weight:500;color:rgba(255,255,255,.72);cursor:pointer;transition:all .15s;border-left:3px solid transparent;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.15);color:#fff;border-left-color:#fff;font-weight:700}
+.nav-item .nav-icon{font-size:15px;flex-shrink:0;width:20px;text-align:center}
+
+/* CONTENT */
+.content{margin-left:var(--sidebar);margin-top:var(--topbar);padding:24px;min-height:calc(100vh - var(--topbar))}
+.page-section{display:none;animation:fadeIn .2s ease}
+.page-section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:24px}
+.page-title{font-family:var(--fh);font-size:24px;font-weight:800;color:var(--g6);margin-bottom:4px}
+.page-subtitle{font-family:var(--fm);font-size:11px;color:var(--g4);letter-spacing:.5px}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:18px 20px;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s;cursor:default}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow2)}
+.kpi-accent{height:3px;width:40px;border-radius:2px;margin-bottom:12px}
+.kpi-label{font-family:var(--fm);font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--g4);margin-bottom:6px}
+.kpi-value{font-family:var(--fh);font-size:26px;font-weight:800;color:var(--g6);line-height:1}
+.kpi-sub{font-family:var(--fm);font-size:10px;color:var(--g4);margin-top:5px}
+
+/* CARDS */
+.card{background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--g1);display:flex;align-items:center;gap:10px;background:var(--g0);flex-wrap:wrap}
+.card-header-title{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--g6)}
+.card-header-sub{font-family:var(--fm);font-size:10px;color:var(--g4);margin-left:auto;letter-spacing:.5px}
+.card-body{padding:18px}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+table.tbl thead tr{background:var(--red)}
+table.tbl thead th{padding:10px 12px;font-family:var(--fh);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap}
+table.tbl tbody tr{border-bottom:1px solid var(--g1);transition:background .1s}
+table.tbl tbody tr:hover{background:var(--redlt)}
+table.tbl tbody tr:nth-child(even){background:var(--g0)}
+table.tbl tbody tr:nth-child(even):hover{background:var(--redlt)}
+table.tbl td{padding:9px 12px;color:var(--g6);vertical-align:middle}
+table.tbl td.mono{font-family:var(--fm);font-size:11px}
+table.tbl td.num{font-family:var(--fm);font-weight:600;color:var(--red)}
+table.tbl tfoot tr{background:var(--g1)}
+table.tbl tfoot td{padding:9px 12px;font-family:var(--fh);font-size:12px;font-weight:700}
+
+/* TRAFFIC LIGHT TAGS */
+.tl-green{display:inline-block;padding:3px 10px;border-radius:3px;font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:1px;background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0}
+.tl-amber{display:inline-block;padding:3px 10px;border-radius:3px;font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:1px;background:#fffbeb;color:var(--amber);border:1px solid #fde68a}
+.tl-red{display:inline-block;padding:3px 10px;border-radius:3px;font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:1px;background:var(--redlt);color:var(--red);border:1px solid var(--redmid)}
+.tl-draft{display:inline-block;padding:3px 10px;border-radius:3px;font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:1px;background:var(--g1);color:var(--g4);border:1px solid var(--border)}
+.tl-submitted{display:inline-block;padding:3px 10px;border-radius:3px;font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:1px;background:#fffbeb;color:var(--amber);border:1px solid #fde68a}
+.tl-approved{display:inline-block;padding:3px 10px;border-radius:3px;font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:1px;background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0}
+.tag-pri-high{display:inline-block;padding:2px 8px;border-radius:3px;font-family:var(--fm);font-size:9px;font-weight:600;background:var(--redlt);color:var(--red);border:1px solid var(--redmid);text-transform:uppercase;letter-spacing:1px}
+.tag-pri-med{display:inline-block;padding:2px 8px;border-radius:3px;font-family:var(--fm);font-size:9px;font-weight:600;background:#fffbeb;color:var(--amber);border:1px solid #fde68a;text-transform:uppercase;letter-spacing:1px}
+.tag-pri-low{display:inline-block;padding:2px 8px;border-radius:3px;font-family:var(--fm);font-size:9px;font-weight:600;background:#f0fdf4;color:var(--green);border:1px solid #bbf7d0;text-transform:uppercase;letter-spacing:1px}
+
+/* FORMS */
+.form-grid{display:grid;gap:16px}
+.fg-2{grid-template-columns:1fr 1fr}
+.fg-3{grid-template-columns:1fr 1fr 1fr}
+.fg-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.fgroup{display:flex;flex-direction:column;gap:5px}
+.flabel{font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--g4)}
+.flabel span{color:var(--red)}
+.finput{width:100%;border:1px solid var(--g3);border-radius:5px;padding:8px 11px;font-family:var(--fb);font-size:13px;color:var(--g6);background:#fff;transition:border .15s,box-shadow .15s;outline:none}
+.finput:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(200,16,46,.08)}
+.finput[readonly]{background:var(--g1);color:var(--g5);cursor:not-allowed}
+select.finput{cursor:pointer}
+textarea.finput{resize:vertical;min-height:68px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:5px;border:none;font-family:var(--fh);font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:var(--red2)}
+.btn-outline{background:#fff;color:var(--red);border:1px solid var(--red)}
+.btn-outline:hover{background:var(--redlt)}
+.btn-gray{background:var(--g1);color:var(--g5);border:1px solid var(--g2)}
+.btn-gray:hover{background:var(--g2)}
+.btn-green{background:var(--green);color:#fff}
+.btn-green:hover{background:#15803d}
+.btn-sm{padding:5px 11px;font-size:11px}
+.btn-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.act-btn{background:none;border:none;cursor:pointer;font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 8px;border-radius:3px;transition:all .15s}
+.act-edit{color:var(--red)}
+.act-edit:hover{background:var(--redlt)}
+.act-del{color:#dc2626}
+.act-del:hover{background:#fee2e2}
+.act-view{color:var(--green)}
+.act-view:hover{background:#f0fdf4}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:8px;box-shadow:var(--shadow3);width:100%;max-width:1040px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.modal-hd{background:var(--red);padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.modal-hd-title{font-family:var(--fh);font-size:16px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#fff;flex:1}
+.modal-hd-close{background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:4px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0}
+.modal-hd-close:hover{background:rgba(255,255,255,.3)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--g0);flex-shrink:0}
+
+/* WORKFLOW */
+.wf-wrap{position:relative;display:flex;align-items:center;flex-direction:column;flex:1;padding-bottom:28px}
+.wf-bubble{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:13px;font-weight:800;flex-shrink:0;position:relative;z-index:1}
+.wf-bubble.done{background:var(--green);color:#fff}
+.wf-bubble.active{background:var(--red);color:#fff;box-shadow:0 0 0 4px var(--redmid)}
+.wf-bubble.pending{background:var(--g2);color:var(--g4)}
+.wf-info{position:absolute;top:44px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:var(--fm);font-size:9px;color:var(--g4);letter-spacing:.5px;text-align:center}
+
+/* PROGRESS */
+.pbar-wrap{width:100%;background:var(--g2);border-radius:4px;height:8px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+
+/* VARIANCE */
+.var-pos{color:var(--green);font-family:var(--fm);font-weight:600}
+.var-neg{color:#dc2626;font-family:var(--fm);font-weight:600}
+
+/* CHART BARS */
+.chart-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.chart-bar-label{font-family:var(--fb);font-size:12px;color:var(--g5);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chart-bar-track{flex:1;background:var(--g2);border-radius:4px;height:14px;overflow:hidden}
+.chart-bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+
+/* INLINE TABLE for plan lines */
+.inline-tbl-wrap{overflow-x:auto}
+.inline-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.inline-tbl th{padding:9px 10px;font-family:var(--fh);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:var(--red);color:#fff;white-space:nowrap;text-align:left}
+.inline-tbl td{padding:7px 10px;border-bottom:1px solid var(--g1);vertical-align:middle}
+.inline-tbl input,.inline-tbl select,.inline-tbl textarea{width:100%;border:1px solid var(--g3);border-radius:4px;padding:5px 8px;font-family:var(--fb);font-size:12px;color:var(--g6);background:#fff;outline:none;transition:border .1s}
+.inline-tbl input:focus,.inline-tbl select:focus,.inline-tbl textarea:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(200,16,46,.07)}
+.inline-tbl tr:nth-child(even) td{background:var(--g0)}
+.inline-tbl tr:hover td{background:var(--redlt)}
+
+/* PLAN REGISTER — split layout */
+.reg-layout{display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start}
+.reg-list-wrap{background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;position:sticky;top:calc(var(--topbar) + 24px)}
+.reg-list-header{padding:12px 16px;background:var(--red);display:flex;align-items:center;gap:8px}
+.reg-list-header-title{font-family:var(--fh);font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff}
+.reg-list-search{padding:10px 12px;border-bottom:1px solid var(--border);background:var(--g0)}
+.reg-list-search input{width:100%;border:1px solid var(--g3);border-radius:5px;padding:6px 10px;font-family:var(--fb);font-size:12px;outline:none}
+.reg-list-search input:focus{border-color:var(--red)}
+.reg-list-body{max-height:calc(100vh - 240px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--g3) transparent}
+.reg-list-body::-webkit-scrollbar{width:4px}
+.reg-list-body::-webkit-scrollbar-thumb{background:var(--g3);border-radius:2px}
+.reg-card{padding:12px 14px;border-bottom:1px solid var(--g1);cursor:pointer;transition:background .12s;display:flex;flex-direction:column;gap:5px}
+.reg-card:hover{background:var(--redlt)}
+.reg-card.selected{background:var(--redlt);border-left:3px solid var(--red)}
+.reg-card-date{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--g6)}
+.reg-card-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.reg-card-type{font-family:var(--fm);font-size:10px;color:var(--g5)}
+.reg-card-depts{font-family:var(--fm);font-size:10px;color:var(--g4)}
+.reg-card-by{font-family:var(--fm);font-size:10px;color:var(--g4)}
+.reg-empty{padding:30px;text-align:center;font-family:var(--fm);font-size:12px;color:var(--g4)}
+
+/* PLAN DETAIL VIEW */
+.plan-detail-wrap{background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);overflow:hidden}
+.plan-detail-hd{background:var(--red);padding:16px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.plan-detail-date{font-family:var(--fh);font-size:20px;font-weight:900;color:#fff}
+.plan-detail-chips{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.plan-detail-body{padding:18px}
+.plan-detail-empty{padding:60px;text-align:center;font-family:var(--fm);font-size:13px;color:var(--g4)}
+
+/* DEPT LINE CARD (inside plan detail) */
+.dline-card{border:1px solid var(--border);border-radius:6px;margin-bottom:10px;overflow:hidden}
+.dline-hd{padding:8px 14px;background:var(--g0);display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.dline-dept{font-family:var(--fh);font-size:13px;font-weight:800;color:var(--g6)}
+.dline-head{font-family:var(--fm);font-size:10px;color:var(--g4)}
+.dline-body{padding:10px 14px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+.dline-field{display:flex;flex-direction:column;gap:2px}
+.dline-label{font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--g4)}
+.dline-value{font-family:var(--fb);font-size:12px;color:var(--g6);font-weight:500}
+.dline-value.num{font-family:var(--fm);font-weight:700;color:var(--red)}
+.dline-value.ach{font-family:var(--fm);font-weight:700}
+
+/* MANPOWER */
+.mp-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px;box-shadow:var(--shadow);text-align:center}
+.mp-num{font-family:var(--fh);font-size:32px;font-weight:900;color:var(--red);line-height:1}
+.mp-label{font-family:var(--fm);font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--g4);margin-top:4px}
+
+/* DATE BADGE */
+.date-badge{display:inline-flex;align-items:center;gap:6px;background:var(--redlt);border:1px solid var(--redmid);border-radius:5px;padding:5px 12px;font-family:var(--fm);font-size:12px;color:var(--red);font-weight:600}
+
+/* NOTICE BANNER */
+.notice{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-radius:6px;font-family:var(--fb);font-size:13px;margin-bottom:16px}
+.notice-info{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d}
+.notice-warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.notice-red{background:var(--redlt);border:1px solid var(--redmid);color:var(--red)}
+
+/* MASTER PAGE */
+.master-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.master-list{background:var(--g0);border-radius:6px;max-height:380px;overflow-y:auto;border:1px solid var(--border)}
+.master-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--g1);transition:background .1s}
+.master-item:last-child{border-bottom:none}
+.master-item:hover{background:var(--redlt)}
+.master-item-num{font-family:var(--fm);font-size:10px;color:var(--g4);width:24px;flex-shrink:0}
+.master-item-name{font-family:var(--fb);font-size:13px;font-weight:500;color:var(--g6);flex:1}
+.master-item-sub{font-family:var(--fm);font-size:10px;color:var(--g4)}
+.master-del{background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;padding:3px 6px;border-radius:3px;transition:background .15s}
+.master-del:hover{background:#fee2e2}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:600;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:var(--g5);color:#fff;padding:12px 18px;border-radius:6px;font-family:var(--fb);font-size:13px;box-shadow:var(--shadow3);display:flex;align-items:center;gap:10px;animation:toastIn .3s ease;max-width:320px;pointer-events:auto}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.toast.success{border-left:4px solid var(--green)}
+.toast.error{border-left:4px solid #dc2626}
+.toast.info{border-left:4px solid var(--amber)}
+
+/* SEPARATOR */
+.fsection{font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g5);padding:10px 0 8px;border-bottom:2px solid var(--redmid);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.fsection::before{content:'';width:4px;height:14px;background:var(--red);border-radius:3px;flex-shrink:0}
+
+/* RESPONSIVE */
+@media(max-width:1100px){.reg-layout{grid-template-columns:260px 1fr}}
+@media(max-width:1024px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.dline-body{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.reg-layout{grid-template-columns:1fr}.reg-list-wrap{position:static}}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .content{margin-left:0}
+  .hamburger{display:flex}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .fg-2,.fg-3,.fg-4{grid-template-columns:1fr}
+  .master-grid{grid-template-columns:1fr}
+  .dline-body{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr}.dline-body{grid-template-columns:1fr}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <div class="topbar-logo">S</div>
+  <div>
+    <div class="topbar-title">Strandply LLP</div>
+    <div class="topbar-sub">Daily Work Planning & Achievement System</div>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-date" id="topbarDate"></div>
+    <div class="topbar-user">Admin ▾</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-section">Overview</div>
+  <div class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard"><span class="nav-icon">📊</span>Dashboard</div>
+  <div class="sidebar-section">Planning</div>
+  <div class="nav-item" onclick="showPage('planning')" data-page="planning"><span class="nav-icon">📋</span>Daily Plan Entry</div>
+  <div class="nav-item" onclick="showPage('register')" data-page="register"><span class="nav-icon">📒</span>Plan Register</div>
+  <div class="nav-item" onclick="showPage('achievement')" data-page="achievement"><span class="nav-icon">✅</span>Achievement Entry</div>
+  <div class="sidebar-section">Reports</div>
+  <div class="nav-item" onclick="showPage('variance')" data-page="variance"><span class="nav-icon">📈</span>Variance Analysis</div>
+  <div class="nav-item" onclick="showPage('hr')" data-page="hr"><span class="nav-icon">👥</span>HR Manpower</div>
+  <div class="sidebar-section">Masters</div>
+  <div class="nav-item" onclick="showPage('deptmaster')" data-page="deptmaster"><span class="nav-icon">🏭</span>Department Master</div>
+  <div class="nav-item" onclick="showPage('opmaster')" data-page="opmaster"><span class="nav-icon">👤</span>Employee Master</div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+<!-- ══════════ DASHBOARD ══════════ -->
+<div class="page-section active" id="page-dashboard">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div>
+        <div class="page-title">Management Dashboard</div>
+        <div class="page-subtitle">Daily Work Planning & Achievement System · Strandply LLP</div>
+      </div>
+      <div class="date-badge" style="margin-left:auto">📅 <span id="dashDateLabel"></span></div>
+    </div>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--red)"></div><div class="kpi-label">Depts Planned Today</div><div class="kpi-value" id="kpiPlanned">0</div><div class="kpi-sub">dept lines active</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--green)"></div><div class="kpi-label">Achievement ≥ 95%</div><div class="kpi-value" id="kpiGreen" style="color:var(--green)">0</div><div class="kpi-sub">🟢 On Target</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--amber)"></div><div class="kpi-label">Achievement 80–95%</div><div class="kpi-value" id="kpiAmber" style="color:var(--amber)">0</div><div class="kpi-sub">🟡 Needs Attention</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:#dc2626"></div><div class="kpi-label">Achievement &lt; 80%</div><div class="kpi-value" id="kpiRed" style="color:#dc2626">0</div><div class="kpi-sub">🔴 Critical</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+    <div class="card">
+      <div class="card-header"><div class="card-header-title">Today's Plan vs Achievement</div><div class="card-header-sub" id="dashDateSub"></div></div>
+      <div class="card-body" id="dashChartWrap"><div style="text-align:center;padding:30px;color:var(--g4);font-family:var(--fm);font-size:12px">No plans for today.<br>Go to Daily Plan Entry to add.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-header-title">Manpower Summary — Today</div></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div class="mp-card"><div class="mp-num" id="dashSkilled">0</div><div class="mp-label">Skilled Required</div></div>
+          <div class="mp-card"><div class="mp-num" style="color:var(--teal)" id="dashUnskilled">0</div><div class="mp-label">Unskilled Required</div></div>
+        </div>
+        <div id="dashMpTable"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-title">Department-wise Status Summary</div>
+      <div class="card-header-sub">🟢 ≥95% · 🟡 80–95% · 🔴 &lt;80%</div>
+      <button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="showPage('register')">📒 View All Plans</button>
+    </div>
+    <div class="card-body" style="padding:0">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Department</th><th>Head</th><th>Work Planned</th><th>Plan Qty</th><th>Actual Qty</th><th>Achievement</th><th>Status</th><th>Head Remarks</th></tr></thead>
+          <tbody id="dashSummaryBody"><tr><td colspan="9" style="text-align:center;padding:32px;color:var(--g4);font-family:var(--fm);font-size:12px">No plans for today. Add plans in Daily Plan Entry.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DAILY PLAN ENTRY ══════════ -->
+<div class="page-section" id="page-planning">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div>
+        <div class="page-title">Daily Plan Entry</div>
+        <div class="page-subtitle">Create or edit department-wise work plan · manpower & machine requirements</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="showPage('register')">📒 View Plan Register</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Date Loader -->
+  <div class="card" style="border:2px solid var(--redmid)">
+    <div class="card-header" style="background:var(--redlt)">
+      <div class="card-header-title" style="color:var(--red)">🔍 Check / Load Existing Plan</div>
+      <div class="card-header-sub">Select a date to check if a plan already exists — load it to view or edit</div>
+    </div>
+    <div class="card-body">
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div class="fgroup" style="flex:0 0 200px">
+          <div class="flabel">Plan Date</div>
+          <input class="finput" type="date" id="checkDate" />
+        </div>
+        <button class="btn btn-red" onclick="checkAndLoadPlan()">🔍 Check Plan</button>
+        <button class="btn btn-outline" onclick="startNewPlan()">＋ Start New Plan</button>
+      </div>
+      <div id="checkResult" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- Workflow -->
+  <div style="position:relative;margin-bottom:32px">
+    <div style="display:flex;justify-content:space-between;position:relative">
+      <div style="position:absolute;top:18px;left:5%;right:5%;height:3px;background:var(--g2);z-index:0">
+        <div style="height:100%;background:var(--green);transition:width .5s" id="wfBar"></div>
+      </div>
+      <div class="wf-wrap"><div class="wf-bubble active" id="wf1">1</div><div class="wf-info">Supervisor<br>Entry</div></div>
+      <div class="wf-wrap"><div class="wf-bubble pending" id="wf2">2</div><div class="wf-info">Dept Head<br>Approval</div></div>
+      <div class="wf-wrap"><div class="wf-bubble pending" id="wf3">3</div><div class="wf-info">Production<br>Head Review</div></div>
+      <div class="wf-wrap"><div class="wf-bubble pending" id="wf4">4</div><div class="wf-info">Dashboard<br>Update</div></div>
+    </div>
+  </div>
+
+  <!-- Plan Form -->
+  <div id="planFormWrap">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-title">📋 Plan Header</div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+          <span id="planEditingBadge"></span>
+          <select class="finput" style="width:auto;padding:5px 10px;font-size:12px" id="planStatus">
+            <option value="Draft">Draft</option>
+            <option value="Submitted">Submitted for Approval</option>
+            <option value="Approved">Approved</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid fg-3" style="margin-bottom:16px">
+          <div class="fgroup">
+            <div class="flabel">Planning Date <span>*</span></div>
+            <input class="finput" type="date" id="planDate" />
+          </div>
+          <div class="fgroup">
+            <div class="flabel">Plan Type</div>
+            <select class="finput" id="planType">
+              <option>Regular Day</option><option>Extra Shift</option><option>Overtime</option><option>Holiday Planning</option>
+            </select>
+          </div>
+          <div class="fgroup">
+            <div class="flabel">Prepared By</div>
+            <select class="finput" id="planPreparedBy"><option value="">— Select Employee —</option></select>
+          </div>
+        </div>
+        <div class="fgroup">
+          <div class="flabel">Overall Remarks / Special Instructions</div>
+          <textarea class="finput" id="planRemarks" placeholder="Any special instructions for this shift..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-title">📦 Department-wise Plan Lines</div>
+        <div class="card-header-sub" id="lineCountLabel">0 lines</div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="inline-tbl-wrap">
+          <table class="inline-tbl" id="planLinesTable">
+            <thead>
+              <tr>
+                <th style="width:28px">#</th>
+                <th style="min-width:155px">Department <span style="color:rgba(255,255,255,.5)">*</span></th>
+                <th style="min-width:130px">Dept Head</th>
+                <th style="min-width:200px">Work Planned</th>
+                <th style="min-width:80px">Qty Target</th>
+                <th style="min-width:80px">Unit</th>
+                <th style="min-width:70px">Skilled</th>
+                <th style="min-width:70px">Unskilled</th>
+                <th style="min-width:140px">Machine / Resource</th>
+                <th style="min-width:85px">Priority</th>
+                <th style="min-width:120px">Operator</th>
+                <th style="width:34px"></th>
+              </tr>
+            </thead>
+            <tbody id="planLinesBody"></tbody>
+          </table>
+        </div>
+        <div style="padding:12px 14px;border-top:1px solid var(--g1)">
+          <button class="btn btn-outline btn-sm" onclick="addPlanLine()">＋ Add Department Line</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-bar">
+      <button class="btn btn-gray" onclick="resetPlanForm()">↺ Reset</button>
+      <button class="btn btn-outline" onclick="savePlan('Draft')">💾 Save Draft</button>
+      <button class="btn btn-red" onclick="savePlan('Submitted')">📤 Submit for Approval</button>
+      <button class="btn btn-green" onclick="savePlan('Approved')">✅ Approve & Activate</button>
+      <button class="btn btn-outline" onclick="exportPlanPDF()">🖨 Export Plan PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PLAN REGISTER ══════════ -->
+<div class="page-section" id="page-register">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div>
+        <div class="page-title">Plan Register</div>
+        <div class="page-subtitle">All daily work plans — click any date to view full details · edit or load into form</div>
+      </div>
+      <button class="btn btn-red btn-sm" style="margin-left:auto" onclick="showPage('planning')">＋ New Plan</button>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-body" style="padding:12px 18px">
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div class="fgroup" style="flex:0 0 160px">
+          <div class="flabel">From Date</div>
+          <input class="finput" type="date" id="regFrom" onchange="renderRegisterList()" />
+        </div>
+        <div class="fgroup" style="flex:0 0 160px">
+          <div class="flabel">To Date</div>
+          <input class="finput" type="date" id="regTo" onchange="renderRegisterList()" />
+        </div>
+        <div class="fgroup" style="flex:0 0 160px">
+          <div class="flabel">Status</div>
+          <select class="finput" id="regStatus" onchange="renderRegisterList()">
+            <option value="">All Status</option>
+            <option value="Draft">Draft</option>
+            <option value="Submitted">Submitted</option>
+            <option value="Approved">Approved</option>
+          </select>
+        </div>
+        <div class="fgroup" style="flex:1;min-width:160px">
+          <div class="flabel">Search Date / Prepared By</div>
+          <input class="finput" type="text" id="regSearch" placeholder="Type to search..." oninput="renderRegisterList()" />
+        </div>
+        <button class="btn btn-gray btn-sm" onclick="clearRegFilter()">✕ Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register count -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+    <div style="font-family:var(--fm);font-size:11px;color:var(--g4)">Showing <strong id="regCount" style="color:var(--g6)">0</strong> plans</div>
+  </div>
+
+  <!-- Split: list + detail -->
+  <div class="reg-layout">
+    <!-- LEFT: scrollable card list -->
+    <div class="reg-list-wrap">
+      <div class="reg-list-header">
+        <span class="reg-list-header-title">📒 All Plans</span>
+        <span id="regListCount" style="font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.6);margin-left:auto"></span>
+      </div>
+      <div class="reg-list-body" id="regListBody">
+        <div class="reg-empty">No plans saved yet.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: plan detail panel -->
+    <div id="regDetailPanel">
+      <div class="plan-detail-wrap">
+        <div class="plan-detail-empty">
+          ← Select a plan from the list to view details
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ ACHIEVEMENT ENTRY ══════════ -->
+<div class="page-section" id="page-achievement">
+  <div class="page-header">
+    <div class="page-title">Achievement Entry</div>
+    <div class="page-subtitle">Enter actual work completed against a plan — select date to load</div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-header-title">Select Plan Date</div></div>
+    <div class="card-body">
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div class="fgroup" style="flex:0 0 200px">
+          <div class="flabel">Plan Date <span>*</span></div>
+          <input class="finput" type="date" id="achDate" />
+        </div>
+        <button class="btn btn-red" onclick="loadAchievement()">🔍 Load Plan</button>
+      </div>
+    </div>
+  </div>
+  <div id="achContent" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-title">✅ Achievement vs Plan</div>
+        <div class="card-header-sub" id="achDateLabel"></div>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="inline-tbl-wrap">
+          <table class="inline-tbl" id="achTable">
+            <thead>
+              <tr>
+                <th>#</th><th>Department</th><th>Work Planned</th>
+                <th>Planned Qty</th><th>Actual Qty</th><th>Unit</th>
+                <th>Skilled Pl.</th><th>Skilled Used</th>
+                <th>Unskilled Pl.</th><th>Unskilled Used</th>
+                <th>Achievement</th><th>Status</th>
+                <th>Reason (if deviation)</th><th>Head Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="achBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="btn-bar">
+      <button class="btn btn-gray" onclick="clearAchievement()">✕ Clear</button>
+      <button class="btn btn-red" onclick="saveAchievement()">💾 Save Achievement</button>
+      <button class="btn btn-outline" onclick="exportAchievementPDF()">🖨 Export Plan vs Achievement PDF</button>
+    </div>
+  </div>
+  <div id="achEmpty" style="text-align:center;padding:60px;color:var(--g4);font-family:var(--fm);font-size:13px">
+    Select a date and click Load Plan.
+  </div>
+</div>
+
+<!-- ══════════ VARIANCE ══════════ -->
+<div class="page-section" id="page-variance">
+  <div class="page-header">
+    <div class="page-title">Variance Analysis</div>
+    <div class="page-subtitle">Plan vs actual · deviation reasons · department performance tracking</div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-header-title">Filter</div></div>
+    <div class="card-body">
+      <div class="form-grid fg-3">
+        <div class="fgroup"><div class="flabel">From Date</div><input class="finput" type="date" id="varFrom" /></div>
+        <div class="fgroup"><div class="flabel">To Date</div><input class="finput" type="date" id="varTo" /></div>
+        <div class="fgroup"><div class="flabel">Department</div><select class="finput" id="varDept"><option value="">All Departments</option></select></div>
+      </div>
+      <div style="margin-top:12px"><button class="btn btn-red" onclick="renderVariance()">🔍 Analyse</button></div>
+    </div>
+  </div>
+  <div class="card" id="varCard" style="display:none">
+    <div class="card-header"><div class="card-header-title">Variance Report</div><div class="card-header-sub" id="varCount"></div></div>
+    <div class="card-body" style="padding:0">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Date</th><th>Department</th><th>Work</th><th>Planned</th><th>Actual</th><th>Variance</th><th>Achievement</th><th>Traffic</th><th>Reason</th><th>Head Remarks</th></tr></thead>
+          <tbody id="varBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ HR MANPOWER ══════════ -->
+<div class="page-section" id="page-hr">
+  <div class="page-header">
+    <div class="page-title">HR Manpower Requirement</div>
+    <div class="page-subtitle">Department-wise manpower requirement · auto-generated from daily plans</div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-header-title">Select Date</div></div>
+    <div class="card-body">
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div class="fgroup" style="flex:0 0 200px">
+          <div class="flabel">For Date</div>
+          <input class="finput" type="date" id="hrDate" onchange="renderHR()" />
+        </div>
+        <button class="btn btn-outline" onclick="exportManpowerPDF()">🖨 Export Manpower PDF</button>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--red)"></div><div class="kpi-label">Total Skilled</div><div class="kpi-value" id="hrTotalSkilled">—</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--teal)"></div><div class="kpi-label">Total Unskilled</div><div class="kpi-value" id="hrTotalUnskilled">—</div></div>
+    <div class="kpi-card"><div class="kpi-accent" style="background:var(--green)"></div><div class="kpi-label">Total Manpower</div><div class="kpi-value" id="hrTotal">—</div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-header-title">Department-wise Manpower Requirement</div></div>
+    <div class="card-body" style="padding:0">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Department</th><th>Dept Head</th><th>Work Planned</th><th>Skilled Required</th><th>Unskilled Required</th><th>Total</th><th>Priority</th></tr></thead>
+          <tbody id="hrBody"><tr><td colspan="8" style="text-align:center;padding:32px;color:var(--g4);font-family:var(--fm);font-size:12px">Select a date to view manpower requirements.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DEPT MASTER ══════════ -->
+<div class="page-section" id="page-deptmaster">
+  <div class="page-header">
+    <div class="page-title">Department Master</div>
+    <div class="page-subtitle">Add / remove departments — reflected immediately in all plan dropdowns</div>
+  </div>
+  <div class="master-grid">
+    <div class="card">
+      <div class="card-header"><div class="card-header-title">Add Department</div></div>
+      <div class="card-body">
+        <div class="form-grid" style="gap:14px">
+          <div class="fgroup"><div class="flabel">Department Name <span>*</span></div><input class="finput" id="deptName" placeholder="e.g. Hot Press" /></div>
+          <div class="fgroup"><div class="flabel">Department Head <span>*</span></div><input class="finput" id="deptHead" placeholder="e.g. Vikram Sharma" /></div>
+          <div class="fgroup"><div class="flabel">Code</div><input class="finput" id="deptCode" placeholder="e.g. HP" /></div>
+          <div class="fgroup"><div class="flabel">Description</div><textarea class="finput" id="deptDesc" placeholder="Brief description..." style="min-height:52px"></textarea></div>
+          <button class="btn btn-red" onclick="addDept()">＋ Add Department</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-header-title">Departments <span id="deptCount" style="font-family:var(--fm);font-size:11px;color:var(--g4);margin-left:6px"></span></div></div>
+      <div class="master-list" id="deptList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ EMPLOYEE MASTER ══════════ -->
+<div class="page-section" id="page-opmaster">
+  <div class="page-header">
+    <div class="page-title">Employee Master</div>
+    <div class="page-subtitle">Add / remove employees · used as operators and preparedBy in plans</div>
+  </div>
+  <div class="master-grid">
+    <div class="card">
+      <div class="card-header"><div class="card-header-title">Add Employee</div></div>
+      <div class="card-body">
+        <div class="form-grid" style="gap:14px">
+          <div class="fgroup"><div class="flabel">Employee Name <span>*</span></div><input class="finput" id="empName" placeholder="e.g. Rahul Kumar" /></div>
+          <div class="fgroup"><div class="flabel">Department</div><select class="finput" id="empDept"><option value="">— Select Dept —</option></select></div>
+          <div class="fgroup"><div class="flabel">Designation</div><input class="finput" id="empDesg" placeholder="e.g. Supervisor" /></div>
+          <div class="fgroup"><div class="flabel">Type</div><select class="finput" id="empType"><option>Skilled</option><option>Unskilled</option><option>Supervisor</option><option>Manager</option></select></div>
+          <div class="fgroup"><div class="flabel">Employee Code</div><input class="finput" id="empCode" placeholder="e.g. EMP001" /></div>
+          <button class="btn btn-red" onclick="addEmployee()">＋ Add Employee</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-header-title">Employees <span id="empCount" style="font-family:var(--fm);font-size:11px;color:var(--g4);margin-left:6px"></span></div></div>
+      <div class="master-list" id="empList"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<!-- VIEW PLAN MODAL (full detail popup) -->
+<div class="modal-overlay" id="viewModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-hd-title" id="viewModalTitle">Plan Details</div>
+      <button class="modal-hd-close" onclick="closeModal('viewModal')">✕</button>
+    </div>
+    <div class="modal-body" id="viewModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="editPlanFromModal()">✏️ Edit This Plan</button>
+      <button class="btn btn-gray" onclick="closeModal('viewModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA — loaded from D1 API, with hardcoded fallback
+// ══════════════════════════════════════════
+var SEED_DEPARTMENTS = [
+  {id:1,name:'Log Yard',head:'Yard Manager',code:'LY',desc:'Incoming log sorting & storage'},
+  {id:2,name:'Peeling',head:'Rajesh Patel',code:'PL',desc:'Log peeling & core veneer production'},
+  {id:3,name:'Dryer',head:'Mahesh Joshi',code:'DR',desc:'Veneer drying operations'},
+  {id:4,name:'Core Composer',head:'Supervisor',code:'CC',desc:'Core layer composition'},
+  {id:5,name:'Glue Kitchen',head:'Resin Manager',code:'GK',desc:'Glue/resin preparation'},
+  {id:6,name:'Hot Press',head:'Vikram Sharma',code:'HP',desc:'Board pressing operations'},
+  {id:7,name:'Trimming & Sanding',head:'Finishing Head',code:'TS',desc:'Panel finishing'},
+  {id:8,name:'Lamination',head:'Lamination Head',code:'LM',desc:'Surface lamination'},
+  {id:9,name:'Dispatch',head:'Dispatch Manager',code:'DS',desc:'Outward logistics'},
+  {id:10,name:'Maintenance',head:'Maintenance Head',code:'MT',desc:'Equipment maintenance'},
+  {id:11,name:'Store',head:'Sanjay Rao',code:'ST',desc:'Inventory & stores'},
+  {id:12,name:'Quality',head:'QC Head',code:'QC',desc:'Quality control & inspection'}
+];
+var SEED_EMPLOYEES = [
+  {id:1,name:'Jimit Mehta',dept:'Management',desg:'Plant Manager',type:'Manager',code:'MGR001'},
+  {id:2,name:'P K Sinha',dept:'Production',desg:'Production Head',type:'Manager',code:'MGR002'},
+  {id:3,name:'Sanjay Rao',dept:'Store',desg:'Store Manager',type:'Manager',code:'MGR003'},
+  {id:4,name:'Rahul',dept:'Log Yard',desg:'Unloading Supervisor',type:'Supervisor',code:'SUP001'},
+  {id:5,name:'Rajesh Patel',dept:'Peeling',desg:'Peeling Supervisor',type:'Supervisor',code:'SUP002'},
+  {id:6,name:'Mahesh Joshi',dept:'Dryer',desg:'Dryer Incharge',type:'Supervisor',code:'SUP003'},
+  {id:7,name:'Vikram Sharma',dept:'Hot Press',desg:'Press Supervisor',type:'Supervisor',code:'SUP004'}
+];
+var DEPARTMENTS = JSON.parse(JSON.stringify(SEED_DEPARTMENTS));
+var EMPLOYEES = JSON.parse(JSON.stringify(SEED_EMPLOYEES));
+var PLANS = [];
+var NEXT_DEPT_ID = 13;
+var NEXT_EMP_ID = 8;
+var ACTIVE_MODAL_DATE = null;
+var planLines = [];
+var API_AVAILABLE = false;
+
+// ══════════════════════════════════════════
+// API HELPERS
+// ══════════════════════════════════════════
+function dwpasGet(url) {
+  return fetch(url).then(function(r){return r.json()}).catch(function(){return null});
+}
+function dwpasPost(url, body) {
+  return fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}).then(function(r){return r.json()}).catch(function(){return null});
+}
+async function loadDataFromAPI() {
+  try {
+    // Load departments
+    var deptData = await dwpasGet('/api/dwpas/departments');
+    if (deptData && deptData.departments && deptData.departments.length > 0) {
+      DEPARTMENTS = deptData.departments.map(function(d){
+        return {id:d.id, name:d.name, head:d.head, code:d.code||'', desc:d.description||''};
+      });
+      NEXT_DEPT_ID = Math.max.apply(null, DEPARTMENTS.map(function(d){return d.id})) + 1;
+      API_AVAILABLE = true;
+    }
+    // Load employees
+    var empData = await dwpasGet('/api/dwpas/employees');
+    if (empData && empData.employees && empData.employees.length > 0) {
+      EMPLOYEES = empData.employees.map(function(e){
+        return {id:e.id, name:e.name, dept:e.dept||'', desg:e.desg||'', type:e.type||'Skilled', code:e.code||''};
+      });
+      NEXT_EMP_ID = Math.max.apply(null, EMPLOYEES.map(function(e){return e.id})) + 1;
+    }
+    // Load plans
+    var planData = await dwpasGet('/api/dwpas/plans');
+    if (planData && planData.plans) {
+      PLANS = planData.plans.map(function(p){
+        return {
+          id: p.id,
+          date: p.plan_date,
+          type: p.plan_type || 'Regular Day',
+          preparedBy: p.prepared_by || '',
+          remarks: p.remarks || '',
+          status: p.status || 'Draft',
+          lines: p.lines || [],
+          savedAt: p.saved_at || p.created_at
+        };
+      });
+      PLANS.sort(function(a,b){return b.date.localeCompare(a.date)});
+    }
+    if(API_AVAILABLE) console.log('DWPAS: Loaded from D1 API — ' + DEPARTMENTS.length + ' depts, ' + EMPLOYEES.length + ' emps, ' + PLANS.length + ' plans');
+  } catch(e) {
+    console.warn('DWPAS: API not available, using seed data', e);
+  }
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page-section').forEach(function(s){s.classList.remove('active')});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active')});
+  var pg = document.getElementById('page-'+id);
+  var ni = document.querySelector('[data-page="'+id+'"]');
+  if(pg) pg.classList.add('active');
+  if(ni) ni.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  if(id==='register') { setRegDates(); renderRegisterList(); }
+  if(id==='deptmaster') renderDeptMaster();
+  if(id==='opmaster') renderEmpMaster();
+  if(id==='planning') { populateDropdowns(); if(planLines.length===0) addPlanLine(); renderPlanLines(); }
+  if(id==='variance') populateVarDeptFilter();
+  if(window.innerWidth<=768) { var sb=document.getElementById('sidebar'); if(sb) sb.classList.remove('open'); }
+}
+function toggleSidebar(){var sb=document.getElementById('sidebar');if(sb)sb.classList.toggle('open')}
+function closeModal(id){var m=document.getElementById(id);if(m)m.classList.remove('open')}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function toast(msg,type) {
+  type=type||'success';
+  var w=document.getElementById('toastWrap');
+  var t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML=(type==='success'?'✅ ':type==='error'?'❌ ':'ℹ️ ')+msg;
+  w.appendChild(t);
+  setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t)},3500);
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function today(){var d=new Date();return d.toISOString().split('T')[0]}
+function fmt(d){if(!d)return'—';var p=d.split('-');return p[2]+'-'+p[1]+'-'+p[0]}
+function fmtLong(d){if(!d)return'—';var months=['January','February','March','April','May','June','July','August','September','October','November','December'];var p=d.split('-');return p[2]+' '+months[parseInt(p[1])-1]+' '+p[0]}
+function escH(s){if(s===null||s===undefined)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function trafficLight(pct) {
+  if(pct>=95) return '<span class="tl-green">🟢 '+pct+'%</span>';
+  if(pct>=80) return '<span class="tl-amber">🟡 '+pct+'%</span>';
+  return '<span class="tl-red">🔴 '+pct+'%</span>';
+}
+function statusBadge(s) {
+  if(s==='Approved') return '<span class="tl-approved">✅ APPROVED</span>';
+  if(s==='Submitted') return '<span class="tl-submitted">📤 SUBMITTED</span>';
+  return '<span class="tl-draft">📝 DRAFT</span>';
+}
+function priTag(p) {
+  if(p==='High') return '<span class="tag-pri-high">HIGH</span>';
+  if(p==='Low') return '<span class="tag-pri-low">LOW</span>';
+  return '<span class="tag-pri-med">MED</span>';
+}
+function getDeptHead(name){var d=DEPARTMENTS.find(function(x){return x.name===name});return d?d.head:''}
+
+// ══════════════════════════════════════════
+// TOPBAR DATE
+// ══════════════════════════════════════════
+function updateTopbarDate(){
+  var now=new Date();
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var str=days[now.getDay()]+', '+now.getDate()+' '+months[now.getMonth()]+' '+now.getFullYear();
+  var el=document.getElementById('topbarDate'); if(el) el.textContent=str;
+  var dl=document.getElementById('dashDateLabel'); if(dl) dl.textContent=str;
+  var ds=document.getElementById('dashDateSub'); if(ds) ds.textContent=today();
+}
+
+// ══════════════════════════════════════════
+// PLAN FORM — LINE MANAGEMENT
+// ══════════════════════════════════════════
+function addPlanLine() {
+  planLines.push({dept:'',head:'',work:'',qty:'',unit:'Sheets',skilled:0,unskilled:0,machine:'',priority:'High',operator:''});
+  renderPlanLines();
+}
+function removePlanLine(i) {
+  planLines.splice(i,1);
+  if(planLines.length===0) addPlanLine();
+  else renderPlanLines();
+}
+function onDeptChange(i, val) {
+  planLines[i].dept = val;
+  planLines[i].head = getDeptHead(val);
+  var hEl = document.getElementById('plhead_'+i);
+  if(hEl) hEl.value = planLines[i].head;
+}
+function onLineField(i, field, val) {
+  planLines[i][field] = (field==='qty'||field==='skilled'||field==='unskilled') ? (parseFloat(val)||0) : val;
+  if(field==='qty'||field==='skilled'||field==='unskilled') updateLineCount();
+}
+function updateLineCount() {
+  var lc = document.getElementById('lineCountLabel');
+  if(lc) lc.textContent = planLines.filter(function(l){return l.dept}).length + ' lines';
+}
+function renderPlanLines() {
+  var tbody = document.getElementById('planLinesBody');
+  if(!tbody) return;
+  var dOpts = DEPARTMENTS.map(function(d){return '<option value="'+escH(d.name)+'">'+escH(d.name)+(d.code?' ['+d.code+']':'')+'</option>'}).join('');
+  var eOpts = EMPLOYEES.map(function(e){return '<option value="'+escH(e.name)+'">'+escH(e.name)+'</option>'}).join('');
+  var units = ['Sheets','Boards','Kg','MT','Liters','Nos','Hours','Trips'];
+  var unitOpts = units.map(function(u){return '<option>'+u+'</option>'}).join('');
+  tbody.innerHTML = planLines.map(function(ln, i) {
+    return '<tr>'+
+      '<td style="color:var(--g4);font-family:var(--fm);font-size:10px;text-align:center">'+(i+1)+'</td>'+
+      '<td><select onchange="onDeptChange('+i+',this.value)"><option value="">— Select —</option>'+dOpts+'</select></td>'+
+      '<td><input type="text" id="plhead_'+i+'" value="'+escH(ln.head)+'" readonly style="background:var(--g1);color:var(--g5)" /></td>'+
+      '<td><input type="text" placeholder="Work to be done..." value="'+escH(ln.work)+'" oninput="onLineField('+i+',\'work\',this.value)" /></td>'+
+      '<td><input type="number" min="0" placeholder="0" value="'+(ln.qty||'')+'" oninput="onLineField('+i+',\'qty\',this.value)" /></td>'+
+      '<td><select onchange="onLineField('+i+',\'unit\',this.value)">'+unitOpts+'</select></td>'+
+      '<td><input type="number" min="0" value="'+(ln.skilled||0)+'" oninput="onLineField('+i+',\'skilled\',this.value)" style="width:65px" /></td>'+
+      '<td><input type="number" min="0" value="'+(ln.unskilled||0)+'" oninput="onLineField('+i+',\'unskilled\',this.value)" style="width:65px" /></td>'+
+      '<td><input type="text" placeholder="Machine / Resource" value="'+escH(ln.machine)+'" oninput="onLineField('+i+',\'machine\',this.value)" /></td>'+
+      '<td><select onchange="onLineField('+i+',\'priority\',this.value)"><option>High</option><option>Medium</option><option>Low</option></select></td>'+
+      '<td><select onchange="onLineField('+i+',\'operator\',this.value)"><option value="">— None —</option>'+eOpts+'</select></td>'+
+      '<td><button onclick="removePlanLine('+i+')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:15px;padding:4px 6px;border-radius:3px" title="Remove row">✕</button></td>'+
+    '</tr>';
+  }).join('');
+  // Restore select values after render
+  var rows = tbody.querySelectorAll('tr');
+  planLines.forEach(function(ln, i) {
+    if(!rows[i]) return;
+    var sels = rows[i].querySelectorAll('select');
+    if(sels[0] && ln.dept) sels[0].value = ln.dept;
+    if(sels[1] && ln.unit) sels[1].value = ln.unit;
+    if(sels[2] && ln.priority) sels[2].value = ln.priority;
+    if(sels[3] && ln.operator) sels[3].value = ln.operator;
+  });
+  updateLineCount();
+}
+
+// ══════════════════════════════════════════
+// PLAN FORM — SAVE / RESET / CHECK
+// ══════════════════════════════════════════
+function checkAndLoadPlan() {
+  var cd = document.getElementById('checkDate');
+  var cr = document.getElementById('checkResult');
+  if(!cd||!cd.value) { toast('Select a date first','error'); return; }
+  var plan = PLANS.find(function(p){return p.date===cd.value});
+  if(!plan) {
+    cr.innerHTML = '<div class="notice notice-warn">⚠️ No plan found for <strong>'+fmt(cd.value)+'</strong>. You can start a new plan for this date.</div>';
+  } else {
+    cr.innerHTML = '<div class="notice notice-info">✅ Plan found for <strong>'+fmt(cd.value)+'</strong> — Status: <strong>'+plan.status+'</strong> · '+plan.lines.filter(function(l){return l.dept}).length+' departments · Prepared by: '+escH(plan.preparedBy||'—')+'.<br>'+
+      '<div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap">'+
+      '<button class="btn btn-red btn-sm" onclick="loadPlanIntoForm(\''+cd.value+'\')">✏️ Load & Edit</button>'+
+      '<button class="btn btn-outline btn-sm" onclick="viewPlanModal(\''+cd.value+'\')">👁 View Details</button>'+
+      '</div></div>';
+  }
+}
+function startNewPlan() {
+  var cd = document.getElementById('checkDate');
+  planLines = [{dept:'',head:'',work:'',qty:'',unit:'Sheets',skilled:0,unskilled:0,machine:'',priority:'High',operator:''}];
+  var planDate = document.getElementById('planDate');
+  if(planDate && cd && cd.value) planDate.value = cd.value;
+  var badge = document.getElementById('planEditingBadge');
+  if(badge) badge.innerHTML = '';
+  renderPlanLines();
+  var cr = document.getElementById('checkResult');
+  if(cr) cr.innerHTML = '';
+  toast('New plan started','info');
+}
+function loadPlanIntoForm(date) {
+  var plan = PLANS.find(function(p){return p.date===date});
+  if(!plan) { toast('Plan not found','error'); return; }
+  planLines = JSON.parse(JSON.stringify(plan.lines));
+  if(planLines.length===0) addPlanLine();
+  var planDate = document.getElementById('planDate');
+  var planType = document.getElementById('planType');
+  var planRemarks = document.getElementById('planRemarks');
+  var planStatus = document.getElementById('planStatus');
+  var planPreparedBy = document.getElementById('planPreparedBy');
+  if(planDate) planDate.value = plan.date;
+  if(planType) planType.value = plan.type||'Regular Day';
+  if(planRemarks) planRemarks.value = plan.remarks||'';
+  if(planStatus) planStatus.value = plan.status||'Draft';
+  var badge = document.getElementById('planEditingBadge');
+  if(badge) badge.innerHTML = '<span style="font-family:var(--fm);font-size:10px;background:var(--amber);color:#fff;padding:3px 9px;border-radius:3px;letter-spacing:1px">EDITING '+fmt(date)+'</span>';
+  renderPlanLines();
+  // populate preparedBy after a tick
+  setTimeout(function(){
+    populateDropdowns();
+    if(planPreparedBy) planPreparedBy.value = plan.preparedBy||'';
+  }, 50);
+  var cr = document.getElementById('checkResult');
+  if(cr) cr.innerHTML = '<div class="notice notice-info">✏️ Plan for <strong>'+fmt(date)+'</strong> loaded into form. Make changes and save.</div>';
+  toast('Plan loaded for editing','info');
+}
+function resetPlanForm() {
+  planLines = [{dept:'',head:'',work:'',qty:'',unit:'Sheets',skilled:0,unskilled:0,machine:'',priority:'High',operator:''}];
+  renderPlanLines();
+  var planDate=document.getElementById('planDate'); if(planDate) planDate.value=today();
+  var planRemarks=document.getElementById('planRemarks'); if(planRemarks) planRemarks.value='';
+  var badge=document.getElementById('planEditingBadge'); if(badge) badge.innerHTML='';
+  var cr=document.getElementById('checkResult'); if(cr) cr.innerHTML='';
+  toast('Form reset','info');
+}
+function savePlan(status) {
+  var planDate = document.getElementById('planDate');
+  if(!planDate||!planDate.value) { toast('Select a planning date','error'); return; }
+  var filled = planLines.filter(function(l){return l.dept&&l.work});
+  if(filled.length===0) { toast('Add at least one department line with dept & work','error'); return; }
+  var pb = document.getElementById('planPreparedBy');
+  var pr = document.getElementById('planRemarks');
+  var pt = document.getElementById('planType');
+  var plan = {
+    date: planDate.value,
+    type: pt?pt.value:'Regular Day',
+    preparedBy: pb?pb.value:'',
+    remarks: pr?pr.value:'',
+    status: status,
+    lines: JSON.parse(JSON.stringify(planLines)),
+    savedAt: new Date().toISOString()
+  };
+  // Find existing plan by date (to reuse its id)
+  var existing = PLANS.findIndex(function(p){return p.date===plan.date});
+  var planId = (existing>=0 && PLANS[existing].id) ? PLANS[existing].id : 'dwp-'+Date.now();
+  plan.id = planId;
+  if(existing>=0) PLANS[existing]=plan; else PLANS.push(plan);
+  // Sort plans by date desc
+  PLANS.sort(function(a,b){return b.date.localeCompare(a.date)});
+  toast('Plan saved as "'+status+'" for '+fmt(plan.date),'success');
+  advanceWorkflow(status==='Approved'?4:status==='Submitted'?2:1);
+  var badge=document.getElementById('planEditingBadge');
+  if(badge) badge.innerHTML='<span style="font-family:var(--fm);font-size:10px;background:var(--green);color:#fff;padding:3px 9px;border-radius:3px;letter-spacing:1px">SAVED ✓</span>';
+  // Persist to API
+  dwpasPost('/api/dwpas/plans', {
+    action: existing>=0 ? 'update' : 'create',
+    id: planId,
+    plan_date: plan.date,
+    plan_type: plan.type,
+    status: plan.status,
+    prepared_by: plan.preparedBy,
+    remarks: plan.remarks,
+    lines: plan.lines,
+    saved_at: plan.savedAt
+  }).then(function(res){
+    if(res && res.success) console.log('Plan persisted to D1');
+    else console.warn('Plan saved locally only');
+  });
+}
+function advanceWorkflow(step) {
+  for(var i=1;i<=4;i++){
+    var b=document.getElementById('wf'+i); if(!b) continue;
+    b.className='wf-bubble '+(i<step?'done':i===step?'active':'pending');
+  }
+}
+function populateDropdowns() {
+  var sel = document.getElementById('planPreparedBy');
+  if(!sel) return;
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">— Select Employee —</option>';
+  EMPLOYEES.forEach(function(e){
+    var o=document.createElement('option'); o.value=e.name; o.textContent=e.name+' ('+e.code+')'; sel.appendChild(o);
+  });
+  if(cur) sel.value=cur;
+}
+
+// ══════════════════════════════════════════
+// PLAN REGISTER
+// ══════════════════════════════════════════
+function setRegDates() {
+  var rf=document.getElementById('regFrom'); var rt=document.getElementById('regTo');
+  if(rf&&!rf.value) { var d=new Date(); d.setMonth(d.getMonth()-1); rf.value=d.toISOString().split('T')[0]; }
+  if(rt&&!rt.value) rt.value=today();
+}
+function clearRegFilter() {
+  var rf=document.getElementById('regFrom'); var rt=document.getElementById('regTo');
+  var rs=document.getElementById('regStatus'); var rsrc=document.getElementById('regSearch');
+  if(rf) rf.value=''; if(rt) rt.value=''; if(rs) rs.value=''; if(rsrc) rsrc.value='';
+  renderRegisterList();
+}
+function getFilteredPlans() {
+  var from=document.getElementById('regFrom'); var to=document.getElementById('regTo');
+  var st=document.getElementById('regStatus'); var src=document.getElementById('regSearch');
+  var fv=from?from.value:''; var tv=to?to.value:'';
+  var sv=st?st.value:''; var srch=src?src.value.toLowerCase():'';
+  return PLANS.filter(function(p){
+    if(fv&&p.date<fv) return false;
+    if(tv&&p.date>tv) return false;
+    if(sv&&p.status!==sv) return false;
+    if(srch&&!(fmt(p.date).includes(srch)||p.date.includes(srch)||(p.preparedBy||'').toLowerCase().includes(srch)||(p.type||'').toLowerCase().includes(srch))) return false;
+    return true;
+  });
+}
+function renderRegisterList() {
+  var plans = getFilteredPlans();
+  var lb = document.getElementById('regListBody');
+  var lc = document.getElementById('regListCount');
+  var rc = document.getElementById('regCount');
+  if(lc) lc.textContent = plans.length+' plans';
+  if(rc) rc.textContent = plans.length;
+  if(!lb) return;
+  if(plans.length===0) { lb.innerHTML='<div class="reg-empty">No plans match the filter.</div>'; return; }
+  lb.innerHTML = plans.map(function(p){
+    var lines = p.lines.filter(function(l){return l.dept});
+    var totS = lines.reduce(function(a,l){return a+(parseInt(l.skilled)||0)},0);
+    var totU = lines.reduce(function(a,l){return a+(parseInt(l.unskilled)||0)},0);
+    var dotColor = p.status==='Approved'?'var(--green)':p.status==='Submitted'?'var(--amber)':'var(--g3)';
+    return '<div class="reg-card" onclick="selectRegPlan(\''+p.date+'\')" id="regcard_'+p.date+'">' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<div style="width:8px;height:8px;border-radius:50%;background:'+dotColor+';flex-shrink:0"></div>' +
+        '<div class="reg-card-date">'+fmt(p.date)+'</div>' +
+        '<div style="margin-left:auto">'+statusBadge(p.status)+'</div>' +
+      '</div>' +
+      '<div class="reg-card-meta">' +
+        '<span class="reg-card-type">'+escH(p.type)+'</span>' +
+        '<span style="color:var(--g3)">·</span>' +
+        '<span class="reg-card-depts">'+lines.length+' dept'+(lines.length!==1?'s':'')+'</span>' +
+        '<span style="color:var(--g3)">·</span>' +
+        '<span class="reg-card-by">'+(p.preparedBy?escH(p.preparedBy):'—')+'</span>' +
+      '</div>' +
+      '<div style="display:flex;gap:14px;margin-top:3px">' +
+        '<span style="font-family:var(--fm);font-size:10px;color:var(--red)">Skilled: '+totS+'</span>' +
+        '<span style="font-family:var(--fm);font-size:10px;color:var(--teal)">Unskilled: '+totU+'</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+var SELECTED_REG_DATE = null;
+function selectRegPlan(date) {
+  SELECTED_REG_DATE = date;
+  // highlight
+  document.querySelectorAll('.reg-card').forEach(function(c){c.classList.remove('selected')});
+  var card = document.getElementById('regcard_'+date);
+  if(card) card.classList.add('selected');
+  renderPlanDetailPanel(date);
+}
+function renderPlanDetailPanel(date) {
+  var plan = PLANS.find(function(p){return p.date===date});
+  var panel = document.getElementById('regDetailPanel');
+  if(!panel) return;
+  if(!plan) { panel.innerHTML='<div class="plan-detail-wrap"><div class="plan-detail-empty">Plan not found.</div></div>'; return; }
+  var lines = plan.lines.filter(function(l){return l.dept});
+  var totS = lines.reduce(function(a,l){return a+(parseInt(l.skilled)||0)},0);
+  var totU = lines.reduce(function(a,l){return a+(parseInt(l.unskilled)||0)},0);
+  var hasAch = lines.some(function(l){return l.actualQty!==undefined});
+
+  var linesHtml = lines.map(function(ln, i) {
+    var pct = (ln.actualQty!==undefined && ln.qty) ? Math.round(ln.actualQty/ln.qty*100) : null;
+    var achColor = pct===null?'var(--g4)':pct>=95?'var(--green)':pct>=80?'var(--amber)':'#dc2626';
+    return '<div class="dline-card">' +
+      '<div class="dline-hd">' +
+        '<div style="width:6px;height:24px;background:var(--red);border-radius:3px;flex-shrink:0"></div>' +
+        '<div style="flex:1">' +
+          '<div class="dline-dept">'+(i+1)+'. '+escH(ln.dept)+'</div>' +
+          '<div class="dline-head">Head: '+escH(ln.head||'—')+'</div>' +
+        '</div>' +
+        priTag(ln.priority) +
+        (pct!==null ? trafficLight(pct) : '') +
+      '</div>' +
+      '<div class="dline-body">' +
+        '<div class="dline-field"><div class="dline-label">Work Planned</div><div class="dline-value">'+escH(ln.work||'—')+'</div></div>' +
+        '<div class="dline-field"><div class="dline-label">Target Qty</div><div class="dline-value num">'+(ln.qty||0)+' '+escH(ln.unit)+'</div></div>' +
+        '<div class="dline-field"><div class="dline-label">Actual Qty</div><div class="dline-value ach" style="color:'+achColor+'">'+(ln.actualQty!==undefined?ln.actualQty+' '+escH(ln.unit):'— Not recorded')+'</div></div>' +
+        '<div class="dline-field"><div class="dline-label">Machine</div><div class="dline-value">'+escH(ln.machine||'—')+'</div></div>' +
+        '<div class="dline-field"><div class="dline-label">Skilled Req.</div><div class="dline-value">'+(ln.skilled||0)+' workers</div></div>' +
+        '<div class="dline-field"><div class="dline-label">Unskilled Req.</div><div class="dline-value">'+(ln.unskilled||0)+' workers</div></div>' +
+        (ln.reason?'<div class="dline-field"><div class="dline-label">Deviation Reason</div><div class="dline-value" style="color:var(--amber)">'+escH(ln.reason)+'</div></div>':'') +
+        (ln.headRemarks?'<div class="dline-field"><div class="dline-label">Head Remarks</div><div class="dline-value" style="color:var(--g5)">'+escH(ln.headRemarks)+'</div></div>':'') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  panel.innerHTML = '<div class="plan-detail-wrap">' +
+    '<div class="plan-detail-hd">' +
+      '<div>' +
+        '<div class="plan-detail-date">'+fmtLong(plan.date)+'</div>' +
+        '<div style="font-family:var(--fm);font-size:10px;color:rgba(255,255,255,.5);margin-top:2px">'+escH(plan.type)+' · Saved '+new Date(plan.savedAt).toLocaleString()+'</div>' +
+      '</div>' +
+      '<div class="plan-detail-chips">' +
+        statusBadge(plan.status) +
+        (plan.preparedBy?'<span style="font-family:var(--fm);font-size:10px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);padding:3px 9px;border-radius:3px">By: '+escH(plan.preparedBy)+'</span>':'') +
+      '</div>' +
+    '</div>' +
+    '<div class="plan-detail-body">' +
+      // Stat row
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">' +
+        '<div style="background:var(--g0);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center"><div style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--red)">'+lines.length+'</div><div style="font-family:var(--fm);font-size:9px;color:var(--g4);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Departments</div></div>' +
+        '<div style="background:var(--g0);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center"><div style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--red)">'+totS+'</div><div style="font-family:var(--fm);font-size:9px;color:var(--g4);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Skilled Req.</div></div>' +
+        '<div style="background:var(--g0);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center"><div style="font-family:var(--fh);font-size:22px;font-weight:800;color:var(--teal)">'+totU+'</div><div style="font-family:var(--fm);font-size:9px;color:var(--g4);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Unskilled Req.</div></div>' +
+        '<div style="background:var(--g0);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center"><div style="font-family:var(--fh);font-size:22px;font-weight:800;color:'+(hasAch?'var(--green)':'var(--g3)')+'">'+((hasAch)?'✓':'—')+'</div><div style="font-family:var(--fm);font-size:9px;color:var(--g4);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Achievement</div></div>' +
+      '</div>' +
+      // Remarks
+      (plan.remarks?'<div class="notice notice-warn" style="margin-bottom:16px">📝 '+escH(plan.remarks)+'</div>':'') +
+      // Action buttons
+      '<div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap">' +
+        '<button class="btn btn-red btn-sm" onclick="loadPlanIntoForm(\''+plan.date+'\');showPage(\'planning\')">✏️ Edit This Plan</button>' +
+        '<button class="btn btn-outline btn-sm" onclick="prefillAchDate(\''+plan.date+'\');showPage(\'achievement\')">✅ Enter Achievement</button>' +
+        '<button class="btn btn-gray btn-sm" onclick="prefillHRDate(\''+plan.date+'\');showPage(\'hr\')">👥 View Manpower</button>' +
+        '<button class="btn btn-outline btn-sm" onclick="exportPlanPDF(\''+plan.date+'\')">🖨 Plan PDF</button>' +
+        '<button class="btn btn-outline btn-sm" onclick="exportAchievementPDF(\''+plan.date+'\')">🖨 Achievement PDF</button>' +
+        '<button class="btn btn-outline btn-sm" onclick="exportManpowerPDF(\''+plan.date+'\')">🖨 Manpower PDF</button>' +
+      '</div>' +
+      // Department lines
+      '<div class="fsection">Department-wise Work Lines</div>' +
+      (lines.length===0 ? '<div style="text-align:center;padding:30px;color:var(--g4);font-family:var(--fm);font-size:12px">No department lines in this plan.</div>' : linesHtml) +
+    '</div>' +
+  '</div>';
+}
+function prefillAchDate(date){var el=document.getElementById('achDate');if(el){el.value=date;loadAchievement()}}
+function prefillHRDate(date){var el=document.getElementById('hrDate');if(el){el.value=date;renderHR()}}
+
+// ══════════════════════════════════════════
+// ACHIEVEMENT ENTRY
+// ══════════════════════════════════════════
+function loadAchievement() {
+  var dateEl = document.getElementById('achDate');
+  if(!dateEl||!dateEl.value) return;
+  var plan = PLANS.find(function(p){return p.date===dateEl.value});
+  var ac = document.getElementById('achContent');
+  var ae = document.getElementById('achEmpty');
+  if(!plan) {
+    if(ac) ac.style.display='none';
+    if(ae) { ae.style.display='block'; ae.textContent='No plan found for '+fmt(dateEl.value)+'. Create a plan first.'; }
+    return;
+  }
+  if(ac) ac.style.display='block';
+  if(ae) ae.style.display='none';
+  var lbl = document.getElementById('achDateLabel');
+  if(lbl) lbl.textContent = fmt(dateEl.value)+' · '+plan.status;
+  var tbody = document.getElementById('achBody');
+  if(!tbody) return;
+  var lines = plan.lines.filter(function(l){return l.dept});
+  tbody.innerHTML = lines.map(function(ln, i){
+    var ach = ln.actualQty!==undefined ? ln.actualQty : '';
+    var pct = (ach!==''&&ln.qty) ? Math.round(ach/ln.qty*100) : null;
+    return '<tr>'+
+      '<td style="font-family:var(--fm);font-size:10px;color:var(--g4);text-align:center">'+(i+1)+'</td>'+
+      '<td><strong>'+escH(ln.dept)+'</strong><br><span style="font-family:var(--fm);font-size:10px;color:var(--g4)">'+escH(ln.head||'')+'</span></td>'+
+      '<td style="font-size:12px">'+escH(ln.work||'')+'</td>'+
+      '<td style="font-family:var(--fm);font-weight:700;color:var(--red);text-align:center">'+(ln.qty||0)+' '+escH(ln.unit)+'</td>'+
+      '<td><input type="number" min="0" data-date="'+dateEl.value+'" data-idx="'+i+'" data-field="actualQty" style="width:80px;border:1px solid var(--g3);border-radius:4px;padding:5px 8px;font-family:var(--fm);font-size:12px" value="'+(ach)+'" oninput="updateAchLine(this)" /></td>'+
+      '<td style="font-family:var(--fm);font-size:11px;color:var(--g4)">'+escH(ln.unit)+'</td>'+
+      '<td style="font-family:var(--fm);text-align:center">'+(ln.skilled||0)+'</td>'+
+      '<td><input type="number" min="0" data-date="'+dateEl.value+'" data-idx="'+i+'" data-field="actualSkilled" style="width:65px;border:1px solid var(--g3);border-radius:4px;padding:5px 8px;font-family:var(--fm);font-size:12px" value="'+(ln.actualSkilled!==undefined?ln.actualSkilled:'')+'" oninput="updateAchLine(this)" /></td>'+
+      '<td style="font-family:var(--fm);text-align:center">'+(ln.unskilled||0)+'</td>'+
+      '<td><input type="number" min="0" data-date="'+dateEl.value+'" data-idx="'+i+'" data-field="actualUnskilled" style="width:65px;border:1px solid var(--g3);border-radius:4px;padding:5px 8px;font-family:var(--fm);font-size:12px" value="'+(ln.actualUnskilled!==undefined?ln.actualUnskilled:'')+'" oninput="updateAchLine(this)" /></td>'+
+      '<td style="font-family:var(--fm);font-weight:700" id="achPct_'+i+'">'+(pct!==null?pct+'%':'—')+'</td>'+
+      '<td id="achTl_'+i+'">'+(pct!==null?trafficLight(pct):'—')+'</td>'+
+      '<td><input type="text" data-date="'+dateEl.value+'" data-idx="'+i+'" data-field="reason" style="width:130px;border:1px solid var(--g3);border-radius:4px;padding:5px 8px;font-family:var(--fb);font-size:12px" placeholder="Deviation reason..." value="'+escH(ln.reason||'')+'" oninput="updateAchLine(this)" /></td>'+
+      '<td><input type="text" data-date="'+dateEl.value+'" data-idx="'+i+'" data-field="headRemarks" style="width:130px;border:1px solid var(--g3);border-radius:4px;padding:5px 8px;font-family:var(--fb);font-size:12px" placeholder="Head remarks..." value="'+escH(ln.headRemarks||'')+'" oninput="updateAchLine(this)" /></td>'+
+    '</tr>';
+  }).join('');
+}
+function updateAchLine(input) {
+  var date = input.getAttribute('data-date');
+  var idx = parseInt(input.getAttribute('data-idx'));
+  var field = input.getAttribute('data-field');
+  var plan = PLANS.find(function(p){return p.date===date});
+  if(!plan||!plan.lines[idx]) return;
+  var val = (field==='actualQty'||field==='actualSkilled'||field==='actualUnskilled') ? (parseFloat(input.value)||0) : input.value;
+  plan.lines[idx][field] = val;
+  if(field==='actualQty') {
+    var pct = plan.lines[idx].qty ? Math.round(val/plan.lines[idx].qty*100) : 0;
+    var pe = document.getElementById('achPct_'+idx); if(pe) pe.textContent = pct+'%';
+    var te = document.getElementById('achTl_'+idx); if(te) te.innerHTML = trafficLight(pct);
+  }
+}
+function clearAchievement() {
+  var ac=document.getElementById('achContent'); if(ac) ac.style.display='none';
+  var ae=document.getElementById('achEmpty'); if(ae) { ae.style.display='block'; ae.textContent='Select a date and click Load Plan.'; }
+}
+function saveAchievement() {
+  var dateEl = document.getElementById('achDate');
+  if(!dateEl||!dateEl.value) { toast('No date selected','error'); return; }
+  // Persist plan with achievement data to API
+  var plan = PLANS.find(function(p){return p.date===dateEl.value});
+  if(plan && plan.id) {
+    dwpasPost('/api/dwpas/plans', {
+      action:'update', id:plan.id, plan_date:plan.date, plan_type:plan.type,
+      status:plan.status, prepared_by:plan.preparedBy, remarks:plan.remarks,
+      lines:plan.lines, saved_at:new Date().toISOString()
+    }).then(function(res){
+      if(res && res.success) console.log('Achievement persisted to D1');
+    });
+  }
+  toast('Achievement saved for '+fmt(dateEl.value),'success');
+  renderDashboard();
+}
+
+// ══════════════════════════════════════════
+// VARIANCE
+// ══════════════════════════════════════════
+function populateVarDeptFilter() {
+  var sel = document.getElementById('varDept');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">All Departments</option>';
+  DEPARTMENTS.forEach(function(d){var o=document.createElement('option');o.value=d.name;o.textContent=d.name;sel.appendChild(o)});
+}
+function renderVariance() {
+  var fv = document.getElementById('varFrom').value;
+  var tv = document.getElementById('varTo').value;
+  var dv = document.getElementById('varDept').value;
+  var rows = [];
+  PLANS.forEach(function(plan){
+    if(fv&&plan.date<fv) return;
+    if(tv&&plan.date>tv) return;
+    plan.lines.forEach(function(ln){
+      if(!ln.dept) return;
+      if(dv&&ln.dept!==dv) return;
+      if(ln.actualQty===undefined) return;
+      var diff = ln.actualQty - ln.qty;
+      var pct = ln.qty ? Math.round(ln.actualQty/ln.qty*100) : 0;
+      rows.push({date:plan.date,dept:ln.dept,work:ln.work,planned:ln.qty,actual:ln.actualQty,unit:ln.unit,diff:diff,pct:pct,reason:ln.reason,headRemarks:ln.headRemarks});
+    });
+  });
+  var varCard = document.getElementById('varCard');
+  var varCount = document.getElementById('varCount');
+  var tbody = document.getElementById('varBody');
+  if(!varCard||!tbody) return;
+  varCard.style.display = 'block';
+  if(varCount) varCount.textContent = rows.length+' entries';
+  if(rows.length===0){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--g4);font-family:var(--fm)">No achievement data for selected filters.</td></tr>';return}
+  tbody.innerHTML = rows.map(function(r){
+    return '<tr>'+
+      '<td class="mono">'+fmt(r.date)+'</td>'+
+      '<td><strong>'+escH(r.dept)+'</strong></td>'+
+      '<td style="font-size:12px">'+escH(r.work||'—')+'</td>'+
+      '<td class="num">'+r.planned+' '+r.unit+'</td>'+
+      '<td class="num">'+r.actual+' '+r.unit+'</td>'+
+      '<td class="'+(r.diff>=0?'var-pos':'var-neg')+'">'+(r.diff>=0?'+':'')+r.diff+' '+r.unit+'</td>'+
+      '<td class="mono" style="font-weight:700">'+r.pct+'%</td>'+
+      '<td>'+trafficLight(r.pct)+'</td>'+
+      '<td style="font-size:12px;color:var(--g5)">'+escH(r.reason||'—')+'</td>'+
+      '<td style="font-size:12px;color:var(--g5)">'+escH(r.headRemarks||'—')+'</td>'+
+    '</tr>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// HR MANPOWER
+// ══════════════════════════════════════════
+function renderHR() {
+  var dateEl = document.getElementById('hrDate');
+  if(!dateEl||!dateEl.value) return;
+  var plan = PLANS.find(function(p){return p.date===dateEl.value});
+  var tbody = document.getElementById('hrBody');
+  var ts=document.getElementById('hrTotalSkilled'); var tu=document.getElementById('hrTotalUnskilled'); var tt=document.getElementById('hrTotal');
+  if(!tbody) return;
+  if(!plan) {
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--g4);font-family:var(--fm)">No plan found for '+fmt(dateEl.value)+'.</td></tr>';
+    if(ts)ts.textContent='—';if(tu)tu.textContent='—';if(tt)tt.textContent='—';
+    return;
+  }
+  var lines = plan.lines.filter(function(l){return l.dept});
+  var totS=lines.reduce(function(a,l){return a+(parseInt(l.skilled)||0)},0);
+  var totU=lines.reduce(function(a,l){return a+(parseInt(l.unskilled)||0)},0);
+  if(ts)ts.textContent=totS;if(tu)tu.textContent=totU;if(tt)tt.textContent=totS+totU;
+  tbody.innerHTML = lines.map(function(ln,i){
+    return '<tr>'+
+      '<td class="mono">'+(i+1)+'</td>'+
+      '<td><strong>'+escH(ln.dept)+'</strong></td>'+
+      '<td style="font-family:var(--fm);font-size:11px;color:var(--g5)">'+escH(ln.head||'')+'</td>'+
+      '<td style="font-size:12px">'+escH(ln.work||'')+'</td>'+
+      '<td style="font-family:var(--fm);font-weight:700;color:var(--red);text-align:center">'+(ln.skilled||0)+'</td>'+
+      '<td style="font-family:var(--fm);font-weight:700;color:var(--teal);text-align:center">'+(ln.unskilled||0)+'</td>'+
+      '<td style="font-family:var(--fm);font-weight:700;text-align:center">'+((parseInt(ln.skilled)||0)+(parseInt(ln.unskilled)||0))+'</td>'+
+      '<td>'+priTag(ln.priority)+'</td>'+
+    '</tr>';
+  }).join('') + '<tr style="background:var(--g1)"><td colspan="4" style="font-family:var(--fh);font-size:12px;font-weight:700;padding:10px 12px">TOTAL</td><td style="font-family:var(--fm);font-weight:700;color:var(--red);text-align:center;padding:10px 12px">'+totS+'</td><td style="font-family:var(--fm);font-weight:700;color:var(--teal);text-align:center;padding:10px 12px">'+totU+'</td><td style="font-family:var(--fm);font-weight:700;text-align:center;padding:10px 12px">'+(totS+totU)+'</td><td></td></tr>';
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function renderDashboard() {
+  var t = today();
+  var plan = PLANS.find(function(p){return p.date===t});
+  var lines = plan ? plan.lines.filter(function(l){return l.dept}) : [];
+  var kp=document.getElementById('kpiPlanned'); var kg=document.getElementById('kpiGreen');
+  var ka=document.getElementById('kpiAmber'); var kr=document.getElementById('kpiRed');
+  if(kp) kp.textContent = lines.length;
+  var green=0,amber=0,red=0;
+  lines.forEach(function(l){
+    if(l.actualQty!==undefined&&l.qty){var pct=Math.round(l.actualQty/l.qty*100);if(pct>=95)green++;else if(pct>=80)amber++;else red++;}
+  });
+  if(kg)kg.textContent=green;if(ka)ka.textContent=amber;if(kr)kr.textContent=red;
+  var totS=lines.reduce(function(a,l){return a+(parseInt(l.skilled)||0)},0);
+  var totU=lines.reduce(function(a,l){return a+(parseInt(l.unskilled)||0)},0);
+  var ds=document.getElementById('dashSkilled'); var du=document.getElementById('dashUnskilled');
+  if(ds)ds.textContent=totS; if(du)du.textContent=totU;
+  var dmt=document.getElementById('dashMpTable');
+  if(dmt){
+    if(lines.length===0){dmt.innerHTML='<div style="text-align:center;padding:12px;color:var(--g4);font-family:var(--fm);font-size:11px">No plans today</div>';}
+    else{dmt.innerHTML='<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr><th style="text-align:left;padding:5px 8px;background:var(--g1);font-family:var(--fm);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--g4)">Dept</th><th style="text-align:center;padding:5px 8px;background:var(--g1);font-family:var(--fm);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--red)">Skilled</th><th style="text-align:center;padding:5px 8px;background:var(--g1);font-family:var(--fm);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--teal)">Unskilled</th></tr></thead><tbody>'+lines.map(function(l){return'<tr><td style="padding:5px 8px;border-bottom:1px solid var(--g1);font-size:12px">'+escH(l.dept)+'</td><td style="text-align:center;padding:5px 8px;border-bottom:1px solid var(--g1);font-family:var(--fm);color:var(--red);font-weight:600">'+(l.skilled||0)+'</td><td style="text-align:center;padding:5px 8px;border-bottom:1px solid var(--g1);font-family:var(--fm);color:var(--teal);font-weight:600">'+(l.unskilled||0)+'</td></tr>'}).join('')+'</tbody></table>';}
+  }
+  var cw=document.getElementById('dashChartWrap');
+  if(cw){
+    if(lines.length===0){cw.innerHTML='<div style="text-align:center;padding:30px;color:var(--g4);font-family:var(--fm);font-size:12px">No plans for today.<br>Use Daily Plan Entry.</div>';}
+    else{cw.innerHTML=lines.map(function(ln){
+      var pct=ln.actualQty!==undefined&&ln.qty?Math.round(ln.actualQty/ln.qty*100):null;
+      var bc=pct===null?'var(--g3)':pct>=95?'var(--green)':pct>=80?'var(--amber)':'#dc2626';
+      return '<div class="chart-bar-row">'+
+        '<div class="chart-bar-label" title="'+escH(ln.dept)+'">'+escH(ln.dept)+'</div>'+
+        '<div style="flex:1">'+
+          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px"><div class="chart-bar-track" style="flex:1"><div class="chart-bar-fill" style="width:100%;background:var(--g3)"></div></div><span style="font-family:var(--fm);font-size:9px;color:var(--g4);width:55px">'+( ln.qty||0)+' '+ln.unit+'</span></div>'+
+          '<div style="display:flex;align-items:center;gap:6px"><div class="chart-bar-track" style="flex:1"><div class="chart-bar-fill" style="width:'+(pct!==null?Math.min(pct,130)+'%':'0%')+';background:'+bc+'"></div></div><span style="font-family:var(--fm);font-size:9px;color:var(--g5);width:55px">'+(pct!==null?pct+'%':'—')+'</span></div>'+
+        '</div>'+
+      '</div>';
+    }).join('');}
+  }
+  var sb=document.getElementById('dashSummaryBody');
+  if(sb){
+    if(lines.length===0){sb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--g4);font-family:var(--fm);font-size:12px">No plans for today.</td></tr>';return}
+    sb.innerHTML=lines.map(function(ln,i){
+      var pct=ln.actualQty!==undefined&&ln.qty?Math.round(ln.actualQty/ln.qty*100):null;
+      return '<tr>'+
+        '<td class="mono">'+(i+1)+'</td>'+
+        '<td><strong>'+escH(ln.dept)+'</strong></td>'+
+        '<td style="font-family:var(--fm);font-size:11px;color:var(--g5)">'+escH(ln.head||'—')+'</td>'+
+        '<td style="font-size:12px">'+escH(ln.work||'—')+'</td>'+
+        '<td class="num">'+(ln.qty||0)+' '+escH(ln.unit)+'</td>'+
+        '<td class="num">'+(ln.actualQty!==undefined?ln.actualQty+' '+escH(ln.unit):'—')+'</td>'+
+        '<td>'+(pct!==null?'<span style="font-family:var(--fm);font-weight:700">'+pct+'%</span>':'—')+'</td>'+
+        '<td>'+(pct!==null?trafficLight(pct):priTag(ln.priority))+'</td>'+
+        '<td style="font-size:12px;color:var(--g5)">'+escH(ln.headRemarks||'—')+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+}
+
+// ══════════════════════════════════════════
+// DEPT MASTER
+// ══════════════════════════════════════════
+function renderDeptMaster() {
+  var list=document.getElementById('deptList'); var cnt=document.getElementById('deptCount');
+  if(!list) return;
+  if(cnt) cnt.textContent='('+DEPARTMENTS.length+')';
+  list.innerHTML = DEPARTMENTS.map(function(d,i){
+    return '<div class="master-item">'+
+      '<div class="master-item-num">'+(i+1)+'</div>'+
+      '<div style="flex:1"><div class="master-item-name">'+escH(d.name)+(d.code?'<span style="font-family:var(--fm);font-size:10px;color:var(--g4);margin-left:8px">['+escH(d.code)+']</span>':'')+'</div>'+
+      '<div class="master-item-sub">Head: '+escH(d.head)+(d.desc?' · '+escH(d.desc):'')+'</div></div>'+
+      '<button class="master-del" onclick="deleteDept('+d.id+')" title="Delete">✕</button>'+
+    '</div>';
+  }).join('');
+  syncEmpDeptDropdown();
+}
+function addDept() {
+  var n=document.getElementById('deptName'); var h=document.getElementById('deptHead');
+  var c=document.getElementById('deptCode'); var d=document.getElementById('deptDesc');
+  if(!n||!n.value.trim()){toast('Department name required','error');return}
+  if(!h||!h.value.trim()){toast('Department head required','error');return}
+  if(DEPARTMENTS.find(function(x){return x.name.toLowerCase()===n.value.trim().toLowerCase()})){toast('Department already exists','error');return}
+  var newDept = {id:NEXT_DEPT_ID++,name:n.value.trim(),head:h.value.trim(),code:c?c.value.trim():'',desc:d?d.value.trim():''};
+  DEPARTMENTS.push(newDept);
+  n.value='';h.value='';if(c)c.value='';if(d)d.value='';
+  toast('Department added','success');
+  renderDeptMaster();
+  // Persist to API
+  dwpasPost('/api/dwpas/departments', {
+    action:'create', name:newDept.name, head:newDept.head, code:newDept.code, description:newDept.desc
+  }).then(function(res){
+    if(res && res.success && res.department) newDept.id = res.department.id;
+  });
+}
+function deleteDept(id) {
+  var idx=DEPARTMENTS.findIndex(function(d){return d.id===id});
+  if(idx<0) return;
+  if(!confirm('Delete department "'+DEPARTMENTS[idx].name+'"?')) return;
+  DEPARTMENTS.splice(idx,1);
+  toast('Department deleted','info');
+  renderDeptMaster();
+  // Persist to API
+  dwpasPost('/api/dwpas/departments', {action:'delete', id:id});
+}
+function syncEmpDeptDropdown() {
+  var sel=document.getElementById('empDept'); if(!sel) return;
+  var cur=sel.value; sel.innerHTML='<option value="">— Select Dept —</option>';
+  DEPARTMENTS.forEach(function(d){var o=document.createElement('option');o.value=d.name;o.textContent=d.name;sel.appendChild(o)});
+  if(cur) sel.value=cur;
+}
+
+// ══════════════════════════════════════════
+// EMPLOYEE MASTER
+// ══════════════════════════════════════════
+function renderEmpMaster() {
+  var list=document.getElementById('empList'); var cnt=document.getElementById('empCount');
+  if(!list) return;
+  if(cnt) cnt.textContent='('+EMPLOYEES.length+')';
+  list.innerHTML = EMPLOYEES.map(function(e,i){
+    return '<div class="master-item">'+
+      '<div class="master-item-num">'+(i+1)+'</div>'+
+      '<div style="flex:1"><div class="master-item-name">'+escH(e.name)+(e.code?'<span style="font-family:var(--fm);font-size:10px;color:var(--g4);margin-left:8px">['+escH(e.code)+']</span>':'')+'</div>'+
+      '<div class="master-item-sub">'+escH(e.dept||'—')+' · '+escH(e.desg||'—')+' · <span style="color:var(--red)">'+escH(e.type)+'</span></div></div>'+
+      '<button class="master-del" onclick="deleteEmployee('+e.id+')" title="Delete">✕</button>'+
+    '</div>';
+  }).join('');
+  syncEmpDeptDropdown();
+}
+function addEmployee() {
+  var n=document.getElementById('empName'); var dp=document.getElementById('empDept');
+  var dg=document.getElementById('empDesg'); var tp=document.getElementById('empType'); var cd=document.getElementById('empCode');
+  if(!n||!n.value.trim()){toast('Employee name required','error');return}
+  var newEmp = {id:NEXT_EMP_ID++,name:n.value.trim(),dept:dp?dp.value:'',desg:dg?dg.value.trim():'',type:tp?tp.value:'Skilled',code:cd?cd.value.trim():''};
+  EMPLOYEES.push(newEmp);
+  n.value='';if(dg)dg.value='';if(cd)cd.value='';
+  toast('Employee added','success');
+  renderEmpMaster();
+  // Persist to API
+  dwpasPost('/api/dwpas/employees', {
+    action:'create', name:newEmp.name, dept:newEmp.dept, desg:newEmp.desg, type:newEmp.type, code:newEmp.code
+  }).then(function(res){
+    if(res && res.success && res.employee) newEmp.id = res.employee.id;
+  });
+}
+function deleteEmployee(id) {
+  var idx=EMPLOYEES.findIndex(function(e){return e.id===id});
+  if(idx<0) return;
+  if(!confirm('Delete employee "'+EMPLOYEES[idx].name+'"?')) return;
+  EMPLOYEES.splice(idx,1);
+  toast('Employee deleted','info');
+  renderEmpMaster();
+  // Persist to API
+  dwpasPost('/api/dwpas/employees', {action:'delete', id:id});
+}
+
+// ══════════════════════════════════════════
+// PDF GENERATION — shared helpers
+// Theme: Red #C8102E header bands, white body, grey strips.
+// NO black bands anywhere. Font: Times (Helvetica excluded per spec).
+// ══════════════════════════════════════════
+var PDF_RED = [200,16,46];
+var PDF_RED_DARK = [160,13,36];
+var PDF_RED_LIGHT = [255,240,242];
+var PDF_RED_MID = [255,215,220];
+var PDF_GREY_TEXT = [26,32,44];
+var PDF_GREY_SUB = [74,85,104];
+var PDF_GREY_LIGHT = [248,249,251];
+var PDF_GREY_BORDER = [221,227,236];
+var PDF_GREEN = [22,163,74];
+var PDF_GREEN_BG = [240,253,244];
+var PDF_AMBER = [217,119,6];
+var PDF_AMBER_BG = [255,251,235];
+var PDF_DANGER = [220,38,38];
+var PDF_DANGER_BG = [255,247,247];
+var PDF_FONT = 'times';
+
+function pdfHeader(doc, title, subtitle, pageW) {
+  doc.setFillColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+  doc.rect(0,0,pageW,22,'F');
+  doc.setFillColor(PDF_RED_DARK[0],PDF_RED_DARK[1],PDF_RED_DARK[2]);
+  doc.rect(0,22,pageW,1.2,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont(PDF_FONT,'bold');
+  doc.setFontSize(16);
+  doc.text('STRANDPLY LLP', 10, 10);
+  doc.setFont(PDF_FONT,'normal');
+  doc.setFontSize(7.5);
+  doc.text('Wankaner, Gujarat, India', 10, 15.5);
+  doc.setFont(PDF_FONT,'bold');
+  doc.setFontSize(11);
+  doc.text(title, pageW-10, 10, {align:'right'});
+  doc.setFont(PDF_FONT,'normal');
+  doc.setFontSize(7.5);
+  doc.text(subtitle, pageW-10, 15.5, {align:'right'});
+  return 28;
+}
+function pdfFooter(doc, pageW, pageH) {
+  doc.setDrawColor(PDF_GREY_BORDER[0],PDF_GREY_BORDER[1],PDF_GREY_BORDER[2]);
+  doc.setLineWidth(0.3);
+  doc.line(10, pageH-12, pageW-10, pageH-12);
+  doc.setFont(PDF_FONT,'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(PDF_GREY_SUB[0],PDF_GREY_SUB[1],PDF_GREY_SUB[2]);
+  doc.text('Generated by Strandply LLP — Daily Work Planning & Achievement System', 10, pageH-7);
+  doc.text(new Date().toLocaleString(), pageW-10, pageH-7, {align:'right'});
+}
+function pdfInfoStrip(doc, y, pageW, fields) {
+  // fields: array of {label, value}
+  doc.setFillColor(PDF_RED_LIGHT[0],PDF_RED_LIGHT[1],PDF_RED_LIGHT[2]);
+  doc.setDrawColor(PDF_RED_MID[0],PDF_RED_MID[1],PDF_RED_MID[2]);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(10, y, pageW-20, 14, 1.5, 1.5, 'FD');
+  var colW = (pageW-20) / fields.length;
+  fields.forEach(function(f, i) {
+    var x = 10 + i*colW + 4;
+    doc.setFont(PDF_FONT,'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+    doc.text(f.label.toUpperCase(), x, y+5.5);
+    doc.setFont(PDF_FONT,'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text(String(f.value||'—'), x, y+10.5);
+  });
+  return y+14+5;
+}
+function pdfSectionTitle(doc, y, pageW, text) {
+  doc.setFillColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+  doc.rect(10, y, 1.4, 4.5, 'F');
+  doc.setFont(PDF_FONT,'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+  doc.text(text, 14, y+3.5);
+  return y+9;
+}
+function pdfNoticeBox(doc, y, pageW, text, kind) {
+  var bg = kind==='warn'?PDF_AMBER_BG:PDF_RED_LIGHT;
+  var bd = kind==='warn'?[253,230,138]:PDF_RED_MID;
+  var tc = kind==='warn'?PDF_AMBER:PDF_RED;
+  var lines = doc.splitTextToSize(text, pageW-26);
+  var h = 6 + lines.length*4;
+  doc.setFillColor(bg[0],bg[1],bg[2]);
+  doc.setDrawColor(bd[0],bd[1],bd[2]);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(10, y, pageW-20, h, 1.5, 1.5, 'FD');
+  doc.setFont(PDF_FONT,'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(tc[0],tc[1],tc[2]);
+  doc.text(lines, 13, y+5);
+  return y+h+5;
+}
+function pdfCheckPageBreak(doc, y, pageH, needed) {
+  if(y + needed > pageH - 16) {
+    doc.addPage();
+    return 28;
+  }
+  return y;
+}
+function getAchColorSet(pct) {
+  if(pct===null) return {tc:PDF_GREY_SUB, bg:PDF_GREY_LIGHT, bd:PDF_GREY_BORDER, label:'—'};
+  if(pct>=95) return {tc:PDF_GREEN, bg:PDF_GREEN_BG, bd:[187,247,208], label:'ON TARGET'};
+  if(pct>=80) return {tc:PDF_AMBER, bg:PDF_AMBER_BG, bd:[253,230,138], label:'ATTENTION'};
+  return {tc:PDF_DANGER, bg:PDF_DANGER_BG, bd:[254,202,202], label:'CRITICAL'};
+}
+
+// ══════════════════════════════════════════
+// PDF 1 — DAILY PLAN ENTRY
+// ══════════════════════════════════════════
+function exportPlanPDF(forcedDate) {
+  var date = forcedDate || (document.getElementById('planDate') ? document.getElementById('planDate').value : null);
+  var plan = PLANS.find(function(p){return p.date===date});
+  var lines, planType, preparedBy, remarks, status;
+  if(plan) {
+    lines = plan.lines.filter(function(l){return l.dept});
+    planType = plan.type; preparedBy = plan.preparedBy; remarks = plan.remarks; status = plan.status;
+  } else {
+    // use current unsaved form state
+    lines = planLines.filter(function(l){return l.dept});
+    var ptEl=document.getElementById('planType'); var pbEl=document.getElementById('planPreparedBy');
+    var prEl=document.getElementById('planRemarks'); var psEl=document.getElementById('planStatus');
+    planType = ptEl?ptEl.value:'Regular Day';
+    preparedBy = pbEl?pbEl.value:'';
+    remarks = prEl?prEl.value:'';
+    status = psEl?psEl.value:'Draft';
+  }
+  if(!date) { toast('Select a planning date first','error'); return; }
+  if(lines.length===0) { toast('No department lines to export','error'); return; }
+
+  var doc = new jspdf.jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  var pageW = doc.internal.pageSize.getWidth();
+  var pageH = doc.internal.pageSize.getHeight();
+  var y = pdfHeader(doc, 'DAILY WORK PLAN', 'Department-wise Planning Sheet', pageW);
+
+  y = pdfInfoStrip(doc, y, pageW, [
+    {label:'Plan Date', value: fmt(date)},
+    {label:'Plan Type', value: planType||'—'},
+    {label:'Prepared By', value: preparedBy||'—'},
+    {label:'Status', value: status||'Draft'},
+    {label:'Departments', value: lines.length},
+    {label:'Generated On', value: fmt(today())}
+  ]);
+
+  if(remarks) y = pdfNoticeBox(doc, y, pageW, 'Special Instructions: '+remarks, 'warn');
+
+  y = pdfSectionTitle(doc, y, pageW, 'Department-wise Work Plan');
+
+  var totS=0, totU=0;
+  lines.forEach(function(l){totS+=parseInt(l.skilled)||0; totU+=parseInt(l.unskilled)||0});
+
+  var colX = [10, 20, 50, 75, 130, 150, 168, 186, 204, 232, 254, pageW-10];
+  var headers = ['#','Department','Dept Head','Work Planned','Qty Target','Unit','Skilled','Unskilled','Machine/Resource','Priority','Operator'];
+  function drawTableHeader(yy) {
+    doc.setFillColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+    doc.rect(10, yy, pageW-20, 6.5, 'F');
+    doc.setFont(PDF_FONT,'bold');
+    doc.setFontSize(6.8);
+    doc.setTextColor(255,255,255);
+    for(var i=0;i<headers.length;i++){
+      doc.text(headers[i], colX[i]+1.5, yy+4.3);
+    }
+    return yy+6.5;
+  }
+  y = drawTableHeader(y);
+  doc.setFont(PDF_FONT,'normal');
+  doc.setFontSize(7);
+  lines.forEach(function(ln, i) {
+    y = pdfCheckPageBreak(doc, y, pageH, 7);
+    if(y===28) y = drawTableHeader(y);
+    var rowH = 7;
+    if(i%2===1) { doc.setFillColor(PDF_GREY_LIGHT[0],PDF_GREY_LIGHT[1],PDF_GREY_LIGHT[2]); doc.rect(10,y,pageW-20,rowH,'F'); }
+    doc.setDrawColor(PDF_GREY_BORDER[0],PDF_GREY_BORDER[1],PDF_GREY_BORDER[2]);
+    doc.setLineWidth(0.2);
+    doc.line(10,y+rowH,pageW-10,y+rowH);
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text(String(i+1), colX[0]+1.5, y+4.8);
+    doc.setFont(PDF_FONT,'bold');
+    doc.text(doc.splitTextToSize(ln.dept||'—', 28), colX[1]+1.5, y+4.8);
+    doc.setFont(PDF_FONT,'normal');
+    doc.text(doc.splitTextToSize(ln.head||'—', 23), colX[2]+1.5, y+4.8);
+    doc.text(doc.splitTextToSize(ln.work||'—', 53), colX[3]+1.5, y+4.8);
+    doc.setTextColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+    doc.setFont(PDF_FONT,'bold');
+    doc.text(String(ln.qty||0), colX[4]+1.5, y+4.8);
+    doc.setFont(PDF_FONT,'normal');
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text(ln.unit||'—', colX[5]+1.5, y+4.8);
+    doc.text(String(ln.skilled||0), colX[6]+1.5, y+4.8);
+    doc.text(String(ln.unskilled||0), colX[7]+1.5, y+4.8);
+    doc.text(doc.splitTextToSize(ln.machine||'—', 26), colX[8]+1.5, y+4.8);
+    var pc = ln.priority==='High'?PDF_DANGER:ln.priority==='Low'?PDF_GREEN:PDF_AMBER;
+    doc.setTextColor(pc[0],pc[1],pc[2]);
+    doc.setFont(PDF_FONT,'bold');
+    doc.text((ln.priority||'Medium').toUpperCase(), colX[9]+1.5, y+4.8);
+    doc.setFont(PDF_FONT,'normal');
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text(doc.splitTextToSize(ln.operator||'—', 22), colX[10]+1.5, y+4.8);
+    y += rowH;
+  });
+
+  // Totals bar
+  y = pdfCheckPageBreak(doc, y, pageH, 10);
+  doc.setFillColor(PDF_RED_LIGHT[0],PDF_RED_LIGHT[1],PDF_RED_LIGHT[2]);
+  doc.setDrawColor(PDF_RED_MID[0],PDF_RED_MID[1],PDF_RED_MID[2]);
+  doc.roundedRect(10, y+2, pageW-20, 9, 1.5, 1.5, 'FD');
+  doc.setFont(PDF_FONT,'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+  doc.text('TOTAL MANPOWER REQUIRED:  Skilled = '+totS+'   |   Unskilled = '+totU+'   |   Combined = '+(totS+totU), 14, y+8);
+  y += 16;
+
+  // Sign-off
+  y = pdfCheckPageBreak(doc, y, pageH, 24);
+  y += 6;
+  var sigCols = [10, pageW/3+3, (pageW/3)*2-4];
+  var sigLabels = ['Prepared By (Supervisor)','Dept Head Approval','Production Head Review'];
+  sigCols.forEach(function(x, i) {
+    doc.setDrawColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.setLineWidth(0.3);
+    doc.line(x, y, x+pageW/3-12, y);
+    doc.setFont(PDF_FONT,'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text(sigLabels[i], x, y+4.5);
+    doc.setFont(PDF_FONT,'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(PDF_GREY_SUB[0],PDF_GREY_SUB[1],PDF_GREY_SUB[2]);
+    doc.text('Name & Signature', x, y+8);
+  });
+
+  pdfFooter(doc, pageW, pageH);
+  doc.save('Daily_Plan_'+date+'.pdf');
+  toast('Plan PDF generated','success');
+}
+
+// ══════════════════════════════════════════
+// PDF 2 — PLAN VS ACHIEVEMENT
+// ══════════════════════════════════════════
+function exportAchievementPDF(forcedDate) {
+  var date = forcedDate || (document.getElementById('achDate') ? document.getElementById('achDate').value : null);
+  if(!date) { toast('Select a date first','error'); return; }
+  var plan = PLANS.find(function(p){return p.date===date});
+  if(!plan) { toast('No plan found for '+fmt(date),'error'); return; }
+  var lines = plan.lines.filter(function(l){return l.dept});
+  if(lines.length===0) { toast('No department lines to export','error'); return; }
+
+  var doc = new jspdf.jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  var pageW = doc.internal.pageSize.getWidth();
+  var pageH = doc.internal.pageSize.getHeight();
+  var y = pdfHeader(doc, 'PLAN vs ACHIEVEMENT', 'Daily Performance Report', pageW);
+
+  var totPlan=0, totAct=0, green=0, amber=0, red=0, noData=0;
+  lines.forEach(function(l){
+    totPlan += parseFloat(l.qty)||0;
+    if(l.actualQty!==undefined){
+      totAct += parseFloat(l.actualQty)||0;
+      var pct = l.qty? Math.round(l.actualQty/l.qty*100) : 0;
+      if(pct>=95) green++; else if(pct>=80) amber++; else red++;
+    } else noData++;
+  });
+  var overallPct = totPlan? Math.round(totAct/totPlan*100) : 0;
+
+  y = pdfInfoStrip(doc, y, pageW, [
+    {label:'Plan Date', value: fmt(date)},
+    {label:'Status', value: plan.status},
+    {label:'Departments', value: lines.length},
+    {label:'Overall Achievement', value: overallPct+'%'},
+    {label:'On Target / Attention / Critical', value: green+' / '+amber+' / '+red},
+    {label:'Generated On', value: fmt(today())}
+  ]);
+
+  y = pdfSectionTitle(doc, y, pageW, 'Department-wise Plan vs Actual');
+
+  var colX = [10, 20, 50, 100, 118, 136, 152, 170, 188, 210, pageW-10];
+  var headers = ['#','Department','Work Planned','Planned Qty','Actual Qty','Achieve %','Status','Skilled (P/A)','Unskilled (P/A)','Reason / Remarks'];
+  function drawHd(yy) {
+    doc.setFillColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+    doc.rect(10, yy, pageW-20, 6.5, 'F');
+    doc.setFont(PDF_FONT,'bold');
+    doc.setFontSize(6.8);
+    doc.setTextColor(255,255,255);
+    for(var i=0;i<headers.length;i++) doc.text(headers[i], colX[i]+1.5, yy+4.3);
+    return yy+6.5;
+  }
+  y = drawHd(y);
+  doc.setFont(PDF_FONT,'normal');
+  doc.setFontSize(7);
+  lines.forEach(function(ln, i) {
+    y = pdfCheckPageBreak(doc, y, pageH, 7);
+    if(y===28) y = drawHd(y);
+    var pct = (ln.actualQty!==undefined && ln.qty) ? Math.round(ln.actualQty/ln.qty*100) : null;
+    var cs = getAchColorSet(pct);
+    var rowH = 7;
+    if(i%2===1){ doc.setFillColor(PDF_GREY_LIGHT[0],PDF_GREY_LIGHT[1],PDF_GREY_LIGHT[2]); doc.rect(10,y,pageW-20,rowH,'F'); }
+    // Achievement % cell gets tinted background
+    doc.setFillColor(cs.bg[0],cs.bg[1],cs.bg[2]);
+    doc.rect(colX[5], y, colX[6]-colX[5], rowH, 'F');
+    doc.setFillColor(cs.bg[0],cs.bg[1],cs.bg[2]);
+    doc.rect(colX[6], y, colX[7]-colX[6], rowH, 'F');
+    doc.setDrawColor(PDF_GREY_BORDER[0],PDF_GREY_BORDER[1],PDF_GREY_BORDER[2]);
+    doc.setLineWidth(0.2);
+    doc.line(10,y+rowH,pageW-10,y+rowH);
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text(String(i+1), colX[0]+1.5, y+4.8);
+    doc.setFont(PDF_FONT,'bold');
+    doc.text(doc.splitTextToSize(ln.dept||'—',28), colX[1]+1.5, y+4.8);
+    doc.setFont(PDF_FONT,'normal');
+    doc.text(doc.splitTextToSize(ln.work||'—',48), colX[2]+1.5, y+4.8);
+    doc.setTextColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+    doc.setFont(PDF_FONT,'bold');
+    doc.text((ln.qty||0)+' '+(ln.unit||''), colX[3]+1.5, y+4.8);
+    doc.setTextColor(ln.actualQty!==undefined?PDF_RED[0]:PDF_GREY_SUB[0], ln.actualQty!==undefined?PDF_RED[1]:PDF_GREY_SUB[1], ln.actualQty!==undefined?PDF_RED[2]:PDF_GREY_SUB[2]);
+    doc.text(ln.actualQty!==undefined? (ln.actualQty+' '+(ln.unit||'')) : 'Not recorded', colX[4]+1.5, y+4.8);
+    doc.setTextColor(cs.tc[0],cs.tc[1],cs.tc[2]);
+    doc.setFont(PDF_FONT,'bold');
+    doc.text(pct!==null?(pct+'%'):'—', colX[5]+1.5, y+4.8);
+    doc.setFontSize(6.2);
+    doc.text(cs.label, colX[6]+1.5, y+4.8);
+    doc.setFontSize(7);
+    doc.setFont(PDF_FONT,'normal');
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text((ln.skilled||0)+' / '+(ln.actualSkilled!==undefined?ln.actualSkilled:'—'), colX[7]+1.5, y+4.8);
+    doc.text((ln.unskilled||0)+' / '+(ln.actualUnskilled!==undefined?ln.actualUnskilled:'—'), colX[8]+1.5, y+4.8);
+    var remarkTxt = [ln.reason, ln.headRemarks].filter(Boolean).join(' · ') || '—';
+    doc.text(doc.splitTextToSize(remarkTxt, pageW-10-colX[9]-2), colX[9]+1.5, y+4.8);
+    y += rowH;
+  });
+
+  // Summary bar
+  y = pdfCheckPageBreak(doc, y, pageH, 10);
+  doc.setFillColor(PDF_RED_LIGHT[0],PDF_RED_LIGHT[1],PDF_RED_LIGHT[2]);
+  doc.setDrawColor(PDF_RED_MID[0],PDF_RED_MID[1],PDF_RED_MID[2]);
+  doc.roundedRect(10, y+2, pageW-20, 9, 1.5, 1.5, 'FD');
+  doc.setFont(PDF_FONT,'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+  doc.text('TOTAL: Planned = '+totPlan+'   |   Actual = '+totAct+'   |   Overall Achievement = '+overallPct+'%   |   🟢 '+green+'  🟡 '+amber+'  🔴 '+red+'  ⚪ '+noData+' pending', 14, y+8);
+  y += 16;
+
+  // Legend
+  y = pdfCheckPageBreak(doc, y, pageH, 8);
+  doc.setFont(PDF_FONT,'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(PDF_GREEN[0],PDF_GREEN[1],PDF_GREEN[2]); doc.text('■ ON TARGET (≥95%)', 10, y);
+  doc.setTextColor(PDF_AMBER[0],PDF_AMBER[1],PDF_AMBER[2]); doc.text('■ ATTENTION (80–95%)', 60, y);
+  doc.setTextColor(PDF_DANGER[0],PDF_DANGER[1],PDF_DANGER[2]); doc.text('■ CRITICAL (<80%)', 115, y);
+
+  pdfFooter(doc, pageW, pageH);
+  doc.save('Plan_vs_Achievement_'+date+'.pdf');
+  toast('Plan vs Achievement PDF generated','success');
+}
+
+// ══════════════════════════════════════════
+// PDF 3 — TOTAL MANPOWER REQUIRED
+// ══════════════════════════════════════════
+function exportManpowerPDF(forcedDate) {
+  var date = forcedDate || (document.getElementById('hrDate') ? document.getElementById('hrDate').value : null);
+  if(!date) { toast('Select a date first','error'); return; }
+  var plan = PLANS.find(function(p){return p.date===date});
+  if(!plan) { toast('No plan found for '+fmt(date),'error'); return; }
+  var lines = plan.lines.filter(function(l){return l.dept});
+  if(lines.length===0) { toast('No department lines to export','error'); return; }
+
+  var doc = new jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+  var pageW = doc.internal.pageSize.getWidth();
+  var pageH = doc.internal.pageSize.getHeight();
+  var y = pdfHeader(doc, 'MANPOWER REQUIREMENT', 'HR Requisition Sheet', pageW);
+
+  var totS=0, totU=0, highCount=0;
+  lines.forEach(function(l){totS+=parseInt(l.skilled)||0; totU+=parseInt(l.unskilled)||0; if(l.priority==='High') highCount++;});
+
+  y = pdfInfoStrip(doc, y, pageW, [
+    {label:'For Date', value: fmt(date)},
+    {label:'Departments', value: lines.length},
+    {label:'High Priority', value: highCount}
+  ]);
+
+  // Big totals row — 3 stat boxes
+  y = pdfCheckPageBreak(doc, y, pageH, 26);
+  var boxW = (pageW-20-8)/3;
+  var statBoxes = [
+    {label:'TOTAL SKILLED REQUIRED', value:totS, color:PDF_RED},
+    {label:'TOTAL UNSKILLED REQUIRED', value:totU, color:[8,145,178]},
+    {label:'TOTAL MANPOWER REQUIRED', value:totS+totU, color:PDF_GREEN}
+  ];
+  statBoxes.forEach(function(b, i) {
+    var x = 10 + i*(boxW+4);
+    doc.setFillColor(PDF_GREY_LIGHT[0],PDF_GREY_LIGHT[1],PDF_GREY_LIGHT[2]);
+    doc.setDrawColor(PDF_GREY_BORDER[0],PDF_GREY_BORDER[1],PDF_GREY_BORDER[2]);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, boxW, 22, 1.5, 1.5, 'FD');
+    doc.setFillColor(b.color[0],b.color[1],b.color[2]);
+    doc.rect(x, y, boxW, 1.5, 'F');
+    doc.setFont(PDF_FONT,'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(b.color[0],b.color[1],b.color[2]);
+    doc.text(String(b.value), x+boxW/2, y+13, {align:'center'});
+    doc.setFont(PDF_FONT,'normal');
+    doc.setFontSize(6.3);
+    doc.setTextColor(PDF_GREY_SUB[0],PDF_GREY_SUB[1],PDF_GREY_SUB[2]);
+    doc.text(b.label, x+boxW/2, y+18.5, {align:'center'});
+  });
+  y += 28;
+
+  y = pdfSectionTitle(doc, y, pageW, 'Department-wise Manpower Breakdown');
+
+  var colX = [10, 20, 78, 122, 142, 162, pageW-10];
+  var headers = ['#','Department','Work Planned','Skilled','Unskilled','Total','Priority'];
+  function drawHd(yy) {
+    doc.setFillColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+    doc.rect(10, yy, pageW-20, 7, 'F');
+    doc.setFont(PDF_FONT,'bold');
+    doc.setFontSize(7.2);
+    doc.setTextColor(255,255,255);
+    for(var i=0;i<headers.length;i++) doc.text(headers[i], colX[i]+2, yy+4.7);
+    return yy+7;
+  }
+  y = drawHd(y);
+  doc.setFont(PDF_FONT,'normal');
+  doc.setFontSize(7.5);
+  lines.forEach(function(ln, i) {
+    y = pdfCheckPageBreak(doc, y, pageH, 8);
+    if(y===28) y = drawHd(y);
+    var rowH = 8;
+    if(i%2===1){ doc.setFillColor(PDF_GREY_LIGHT[0],PDF_GREY_LIGHT[1],PDF_GREY_LIGHT[2]); doc.rect(10,y,pageW-20,rowH,'F'); }
+    doc.setDrawColor(PDF_GREY_BORDER[0],PDF_GREY_BORDER[1],PDF_GREY_BORDER[2]);
+    doc.setLineWidth(0.2);
+    doc.line(10,y+rowH,pageW-10,y+rowH);
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text(String(i+1), colX[0]+2, y+5.3);
+    doc.setFont(PDF_FONT,'bold');
+    doc.text(doc.splitTextToSize(ln.dept||'—', 54), colX[1]+2, y+5.3);
+    doc.setFont(PDF_FONT,'normal');
+    doc.text(doc.splitTextToSize(ln.work||'—', 40), colX[2]+2, y+5.3);
+    doc.setTextColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+    doc.setFont(PDF_FONT,'bold');
+    doc.text(String(ln.skilled||0), colX[3]+2, y+5.3);
+    doc.setTextColor(8,145,178);
+    doc.text(String(ln.unskilled||0), colX[4]+2, y+5.3);
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text(String((parseInt(ln.skilled)||0)+(parseInt(ln.unskilled)||0)), colX[5]+2, y+5.3);
+    var pc = ln.priority==='High'?PDF_DANGER:ln.priority==='Low'?PDF_GREEN:PDF_AMBER;
+    doc.setTextColor(pc[0],pc[1],pc[2]);
+    doc.text((ln.priority||'Medium').toUpperCase(), colX[6]+2, y+5.3);
+    doc.setFont(PDF_FONT,'normal');
+    y += rowH;
+  });
+
+  // Totals
+  y = pdfCheckPageBreak(doc, y, pageH, 10);
+  doc.setFillColor(PDF_RED_LIGHT[0],PDF_RED_LIGHT[1],PDF_RED_LIGHT[2]);
+  doc.setDrawColor(PDF_RED_MID[0],PDF_RED_MID[1],PDF_RED_MID[2]);
+  doc.roundedRect(10, y+2, pageW-20, 9, 1.5, 1.5, 'FD');
+  doc.setFont(PDF_FONT,'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(PDF_RED[0],PDF_RED[1],PDF_RED[2]);
+  doc.text('GRAND TOTAL — Skilled: '+totS+'   Unskilled: '+totU+'   Combined: '+(totS+totU), 14, y+8);
+  y += 18;
+
+  // HR notice + sign-off
+  y = pdfCheckPageBreak(doc, y, pageH, 28);
+  y = pdfNoticeBox(doc, y, pageW, 'This requirement is auto-generated from the Daily Work Plan and shared with HR / Contractor for manpower arrangement for '+fmtLong(date)+'.', 'warn');
+
+  var sigCols = [10, pageW/2+5];
+  var sigLabels = ['Production Head','HR Manager'];
+  sigCols.forEach(function(x, i) {
+    doc.setDrawColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.setLineWidth(0.3);
+    doc.line(x, y+6, x+pageW/2-15, y+6);
+    doc.setFont(PDF_FONT,'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(PDF_GREY_TEXT[0],PDF_GREY_TEXT[1],PDF_GREY_TEXT[2]);
+    doc.text(sigLabels[i], x, y+10.5);
+    doc.setFont(PDF_FONT,'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(PDF_GREY_SUB[0],PDF_GREY_SUB[1],PDF_GREY_SUB[2]);
+    doc.text('Name & Signature', x, y+14);
+  });
+
+  pdfFooter(doc, pageW, pageH);
+  doc.save('Manpower_Requirement_'+date+'.pdf');
+  toast('Manpower Requirement PDF generated','success');
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async function(){
+  updateTopbarDate();
+  // Set default dates
+  var t=today();
+  var fields=['checkDate','achDate','hrDate','varFrom','varTo'];
+  fields.forEach(function(id){var el=document.getElementById(id);if(el&&!el.value)el.value=t});
+  // Load data from API (with fallback to seed data)
+  await loadDataFromAPI();
+  renderDashboard();
+  populateDropdowns();
+  // Mobile sidebar close on outside tap
+  document.addEventListener('click',function(e){
+    var sb=document.getElementById('sidebar');
+    if(window.innerWidth<=768&&sb&&sb.classList.contains('open')&&!sb.contains(e.target)&&!e.target.closest('.hamburger')){
+      sb.classList.remove('open');
+    }
+  });
+});
+</script>
+</body>
+</html>

@@ -64,8 +64,8 @@ const MODULES = [
     desc:       'Supplier & Raw Material Management',
     icon:       '🏭',
     color:      'ct-blue',
-    status:     'soon',             // shows amber Coming Soon badge
-    url:        null,               // set to 'vendor/index.html' when ready
+    status:     'live',
+    url:        'vendor/index.html',
     urlDisplay: 'strandply.in/vendor',
     features: [
       'Vendor / supplier database',
@@ -129,57 +129,85 @@ const MODULES = [
     ]
   },
 
-  /* ── MODULE 5: Production Tracker ── */
+  /* ── MODULE 5: Production MIS ── */
   {
     id:         'production',
-    name:       'Production Tracker',
-    desc:       'OSB/S-OSB Production Line Management',
+    name:       'Production MIS',
+    desc:       'Chipping, Hot Press & Matt Weight System',
     icon:       '⚙️',
     color:      'ct-purple',
-    status:     'planned',          // shows amber Planned badge
-    url:        null,
+    status:     'live',
+    url:        'production/index.html',
     urlDisplay: 'strandply.in/production',
     features: [
-      'Production batch tracking',
-      'Hot Press → Dispatch flow',
-      'Quality grading records',
-      'Material consumption',
+      'Chipping report & lot tracking',
+      'Hot Press charge management',
+      'Matt Weight recording system',
+      'Production summary & analytics',
+      'Material consumption tracking',
     ],
     subModules: [
-      { id:'pr_batch', name:'Batch Records',  desc:'Production batch entry & tracking' },
-      { id:'pr_qual',  name:'Quality Grades', desc:'Grade inspection records' },
-      { id:'pr_mat',   name:'Material Log',   desc:'Material consumption tracking' },
+      { id:'pr_batch',  name:'Batch Records',   desc:'Production batch entry & tracking' },
+      { id:'pr_qual',   name:'Quality Grades',  desc:'Grade inspection records' },
+      { id:'pr_mat',    name:'Material Log',    desc:'Material consumption tracking' },
+      { id:'pr_weight', name:'Weight System',   desc:'Matt weight punch & batch management' },
     ]
   },
 
-   /* ── MODULE 7: Electricity & Meter MIS ── */
-   {
-     id:         'electricity',
-     name:       'Electricity & Meter MIS',
-     desc:       'Meter Readings, PGVCL Bills & Cost Analysis',
-     icon:       '⚡',
-     color:      'ct-amber',
-     status:     'live',
-     url:        'electricity/index.html',
-     urlDisplay: 'strandply.in/electricity',
-     features: [
-       'AM/PM meter reading punch',
-       '12-Hr & 24-Hr consumption views',
-       'Monthly cost & trend analysis',
-       'PGVCL bill management',
-       'Meter config & tariff history',
-     ],
-     subModules: [
-       { id:'el_dash',    name:'Dashboard',         desc:'KPI summary & monthly trends' },
-       { id:'el_punch',   name:'Meter Reading',     desc:'Punch AM/PM meter readings' },
-       { id:'el_12hr',    name:'12-Hr View',        desc:'Shift-wise consumption breakdown' },
-       { id:'el_24hr',    name:'24-Hr View',        desc:'Daily combined consumption' },
-       { id:'el_monthly', name:'Monthly Report',    desc:'Aggregated monthly analysis' },
-       { id:'el_bills',   name:'PGVCL Bills',       desc:'Bill records & payment tracking' },
-     ]
-   },
+  /* ── MODULE 6: Transport Module ── */
+  {
+    id:         'transport',
+    name:       'Transport Module',
+    desc:       'Freight Inquiry, Rate Comparison & Order Flow',
+    icon:       '🚛',
+    color:      'ct-rose',
+    status:     'live',
+    url:        'transport/index.html',
+    urlDisplay: 'strandply.in/transport',
+    features: [
+      'Transport inquiry management',
+      'Multi-transporter rate comparison',
+      'Freight approval workflow',
+      'Order form generation',
+      'Trip tracking & reports',
+    ],
+    subModules: [
+      { id:'tr_inq',   name:'Inquiries',       desc:'Create & manage transport inquiries' },
+      { id:'tr_rate',  name:'Rate Comparison',  desc:'Compare transporter rates' },
+      { id:'tr_appr',  name:'Approvals',        desc:'Freight approval workflow' },
+      { id:'tr_order', name:'Order Forms',      desc:'Generate transport order forms' },
+      { id:'tr_track', name:'Trip Tracking',    desc:'Track active shipments' },
+    ]
+  },
 
-   /* ── MODULE 6: Accounts Module ── */
+  /* ── MODULE 7: Purchase ERP ── */
+  {
+    id:         'erp',
+    name:       'Purchase ERP',
+    desc:       'Raw Material Purchase & Inventory Management',
+    icon:       '📋',
+    color:      'ct-amber',
+    status:     'live',
+    url:        'erp/index.html',
+    urlDisplay: 'strandply.in/erp',
+    features: [
+      'Multi-material purchase registers',
+      'Purchase order management',
+      'Vendor-linked invoicing',
+      'Debit/Credit note tracking',
+      'Inventory & analytics dashboard',
+    ],
+    subModules: [
+      { id:'erp_entry',  name:'Purchase Entry',    desc:'Material-wise purchase records' },
+      { id:'erp_po',     name:'Purchase Orders',   desc:'PO creation & tracking' },
+      { id:'erp_truck',  name:'Truck Register',    desc:'Truck-wise inward register' },
+      { id:'erp_dncn',   name:'Debit/Credit Notes', desc:'DN/CN management' },
+      { id:'erp_inv',    name:'Inventory',         desc:'Stock levels & analytics' },
+      { id:'erp_report', name:'Reports',           desc:'Purchase analytics & export' },
+    ]
+  },
+
+  /* ── MODULE 8: Accounts Module ── */
   {
     id:         'accounts',
     name:       'Accounts Module',
@@ -203,29 +231,113 @@ const MODULES = [
     ]
   },
 
-  /*
-  ── HOW TO ADD A NEW MODULE ──────────────────────────────────────
-  Copy this template and paste at the end of the array above:
-
+  /* ── MODULE 9: Stock Management ── */
   {
-    id:         'mymodule',          // unique lowercase ID, no spaces
-    name:       'My Module Name',
-    desc:       'Short description',
-    icon:       '🔧',               // any emoji
-    color:      'ct-red',           // ct-red | ct-blue | ct-green | ct-amber | ct-teal | ct-purple | ct-rose
-    status:     'soon',             // live | soon | planned
-    url:        null,               // 'mymodule/index.html' when file is ready
-    urlDisplay: 'strandply.in/mymodule',
-    features:   ['Feature 1','Feature 2','Feature 3'],
+    id:         'stock',
+    name:       'Stock Management',
+    desc:       'Raw Material & SKU Stock tracking, SIS/SRS slips',
+    icon:       '📦',
+    color:      'ct-teal',
+    status:     'live',
+    url:        'stock/index.html',
+    urlDisplay: 'strandply.in/stock',
+    features: [
+      'Live Stock tracking',
+      'Stock Inward/Outward slips',
+      'Ledger & transaction logs',
+      'Department reclassifications',
+      'Master data management',
+    ],
     subModules: [
-      { id:'sub1', name:'Sub Feature 1', desc:'What it does' },
-      { id:'sub2', name:'Sub Feature 2', desc:'What it does' },
+      { id:'stk_slip',   name:'Stock Slips',       desc:'Create & view SIS/SRS stock slips' },
+      { id:'stk_ledger', name:'SKU Ledger',        desc:'Transaction history ledger per SKU' },
+      { id:'stk_stock',  name:'Live Stock',        desc:'Real-time stock reports' },
+      { id:'stk_reclass',name:'Reclassification',  desc:'Reclassify stock between departments' },
+      { id:'stk_master', name:'Master SKU',        desc:'Manage SKU catalogue' },
     ]
   },
 
-  Then create folder: StrandplyPortal/mymodule/index.html
-  ────────────────────────────────────────────────────────────────
-  */
+  /* ── MODULE 10: Maintenance Tracker ── */
+  {
+    id:         'maintenance',
+    name:       'Maintenance Tracker',
+    desc:       'Plant Maintenance Work Order Management',
+    icon:       '🔧',
+    color:      'ct-green',
+    status:     'live',
+    url:        'maintenance/index.html',
+    urlDisplay: 'strandply.in/maintenance',
+    features: [
+      'Work order creation & tracking',
+      'Priority & status management',
+      'Plant area mapping',
+      'Activity timeline & notes',
+      'PDF generation & WhatsApp share',
+    ],
+    subModules: [
+      { id:'mt_wo',       name:'Work Orders',      desc:'Create & manage maintenance work orders' },
+      { id:'mt_board',    name:'Kanban Board',     desc:'Visual board view of work orders' },
+      { id:'mt_area',     name:'Area Management',  desc:'Manage plant areas' },
+      { id:'mt_timeline', name:'Timeline & Notes', desc:'Activity log & note posting' },
+      { id:'mt_export',   name:'Export & Share',   desc:'PDF download & WhatsApp sharing' },
+    ]
+  },
+
+  /* ── MODULE 11: Electricity & Meter MIS ── */
+  {
+    id:         'electricity',
+    name:       'Electricity & Meter MIS',
+    desc:       'Meter Readings, PGVCL Bills & Cost Analysis',
+    icon:       '⚡',
+    color:      'ct-amber',
+    status:     'live',
+    url:        'electricity/index.html',
+    urlDisplay: 'strandply.in/electricity',
+    features: [
+      'AM/PM meter reading punch',
+      '12-Hr & 24-Hr consumption views',
+      'Monthly cost & trend analysis',
+      'PGVCL bill management',
+      'Meter config & tariff history',
+    ],
+    subModules: [
+      { id:'el_dash',    name:'Dashboard',         desc:'KPI summary & monthly trends' },
+      { id:'el_punch',   name:'Meter Reading',     desc:'Punch AM/PM meter readings' },
+      { id:'el_12hr',    name:'12-Hr View',        desc:'Shift-wise consumption breakdown' },
+      { id:'el_24hr',    name:'24-Hr View',        desc:'Daily combined consumption' },
+      { id:'el_monthly', name:'Monthly Report',    desc:'Aggregated monthly analysis' },
+      { id:'el_bills',   name:'PGVCL Bills',       desc:'Bill records & payment tracking' },
+    ]
+  },
+
+  /* ── MODULE 12: DWPAS ── */
+  {
+    id:         'dwpas',
+    name:       'DWPAS',
+    desc:       'Daily Work Planning & Achievement System',
+    icon:       '📋',
+    color:      'ct-red',
+    status:     'live',
+    url:        'dwpas/index.html',
+    urlDisplay: 'strandply.in/dwpas',
+    features: [
+      'Daily plan entry & register',
+      'Achievement entry & tracking',
+      'Variance analysis & reports',
+      'HR manpower management',
+      'Department & employee master data',
+    ],
+    subModules: [
+      { id:'dw_dash',     name:'Dashboard',          desc:'KPI summary & dept-wise overview' },
+      { id:'dw_plan',     name:'Daily Plan Entry',    desc:'Create & manage daily work plans' },
+      { id:'dw_register', name:'Plan Register',       desc:'View & edit all planned dates' },
+      { id:'dw_achieve',  name:'Achievement Entry',   desc:'Record actual vs planned achievements' },
+      { id:'dw_variance', name:'Variance Analysis',   desc:'Analyze plan vs achievement gaps' },
+      { id:'dw_hr',       name:'HR Manpower',         desc:'Manpower tracking per department' },
+      { id:'dw_dept',     name:'Department Master',   desc:'Manage department records' },
+      { id:'dw_emp',      name:'Employee Master',     desc:'Manage employee records' },
+    ]
+  },
 
 ]; // end MODULES
 
@@ -245,7 +357,12 @@ const ROLE_LABELS = {
   vendor:     'Vendor Relations',
   accounts:   'Accounts Executive',
   hr:         'HR Executive',
+  transport:  'Transport Executive',
+  erp:        'Purchase Manager',
+  stock:      'Stock Manager',
+  maintenance:'Maintenance Manager',
   electricity:'Meter Executive',
+  dwpas:      'DWPAS Manager',
 
   // Custom roles added via Roles panel are stored in localStorage
   // and merged into this object at runtime — no need to add them here manually
@@ -264,15 +381,20 @@ const ROLE_DEFAULTS = {
 
   /* Full access to everything */
   admin: {
-    modules: ['dispatch','vendor','reports','hr','production','accounts','electricity'],
+    modules: ['dispatch','vendor','reports','hr','production','transport','erp','accounts','stock','maintenance','electricity','dwpas'],
     subRights: {
       dispatch:   ['req','disp','track','party','courier','product','report','settings'],
       vendor:     ['vend_list','vend_po','vend_inv','vend_pay'],
       reports:    ['rpt_dash','rpt_disp','rpt_sales','rpt_exp'],
       hr:         ['hr_emp','hr_att','hr_leave','hr_sal'],
-      production: ['pr_batch','pr_qual','pr_mat'],
+      production: ['pr_batch','pr_qual','pr_mat','pr_weight'],
+      transport:  ['tr_inq','tr_rate','tr_appr','tr_order','tr_track'],
+      erp:        ['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'],
       accounts:   ['ac_inv','ac_recv','ac_pay','ac_gst'],
+      stock:      ['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],
+      maintenance:['mt_wo','mt_board','mt_area','mt_timeline','mt_export'],
       electricity:['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills'],
+      dwpas:      ['dw_dash','dw_plan','dw_register','dw_achieve','dw_variance','dw_hr','dw_dept','dw_emp'],
     }
   },
 
@@ -326,6 +448,36 @@ const ROLE_DEFAULTS = {
     }
   },
 
+  transport: {
+    modules: ['transport'],
+    subRights: { transport: ['tr_inq','tr_rate','tr_appr','tr_order','tr_track'] }
+  },
+
+  erp: {
+    modules: ['erp'],
+    subRights: { erp: ['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'] }
+  },
+
+  stock: {
+    modules: ['stock'],
+    subRights: { stock: ['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'] }
+  },
+
+  maintenance: {
+    modules: ['maintenance'],
+    subRights: { maintenance: ['mt_wo','mt_board','mt_area','mt_timeline','mt_export'] }
+  },
+
+  electricity: {
+    modules: ['electricity'],
+    subRights: { electricity: ['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills'] }
+  },
+
+  dwpas: {
+    modules: ['dwpas'],
+    subRights: { dwpas: ['dw_dash','dw_plan','dw_register','dw_achieve','dw_variance','dw_hr','dw_dept','dw_emp'] }
+  },
+
 }; // end ROLE_DEFAULTS
 
 
@@ -366,15 +518,20 @@ const SEED_USERS = [
     dept:     'Administration',
     avatar:   'AD',
     color:    '#B91C1C',
-    modules:  ['dispatch','vendor','reports','hr','production','accounts','electricity'],
+    modules:  ['dispatch','vendor','reports','hr','production','transport','erp','accounts','stock','maintenance','electricity','dwpas'],
     subRights: {
       dispatch:   ['req','disp','track','party','courier','product','report','settings'],
       vendor:     ['vend_list','vend_po','vend_inv','vend_pay'],
       reports:    ['rpt_dash','rpt_disp','rpt_sales','rpt_exp'],
       hr:         ['hr_emp','hr_att','hr_leave','hr_sal'],
-      production: ['pr_batch','pr_qual','pr_mat'],
+      production: ['pr_batch','pr_qual','pr_mat','pr_weight'],
+      transport:  ['tr_inq','tr_rate','tr_appr','tr_order','tr_track'],
+      erp:        ['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'],
       accounts:   ['ac_inv','ac_recv','ac_pay','ac_gst'],
+      stock:      ['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],
+      maintenance:['mt_wo','mt_board','mt_area','mt_timeline','mt_export'],
       electricity:['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills'],
+      dwpas:      ['dw_dash','dw_plan','dw_register','dw_achieve','dw_variance','dw_hr','dw_dept','dw_emp'],
     }
   },
 
@@ -526,7 +683,7 @@ const AVATAR_COLORS = [
    ════════════════════════════════════════════════════════════════ */
 
 const BUILTIN_ROLE_IDS = [
-  'admin','dispatch','marketing','management','vendor','accounts','hr','electricity'
+  'admin','dispatch','marketing','management','vendor','accounts','hr','transport','erp','stock','maintenance','electricity','dwpas'
 ];
 
 /* ROLE_REGISTRY is initialized at runtime by initRoles() */
@@ -594,9 +751,14 @@ let ROLE_REGISTRY = {};
    ├── vendor      → Vendor Portal
    ├── reports     → Reports Hub
    ├── hr          → HR Module
-   ├── production  → Production Tracker
+   ├── production  → Production MIS
+   ├── transport   → Transport Module
+   ├── erp         → Purchase ERP
    ├── accounts    → Accounts Module
-   └── electricity → Electricity & Meter MIS
+   ├── stock       → Stock Management
+   ├── maintenance → Maintenance Tracker
+   ├── electricity → Electricity & Meter MIS
+   └── dwpas       → DWPAS
 
    SUB-MODULE IDs (by module):
 
@@ -631,13 +793,43 @@ let ROLE_REGISTRY = {};
    production:
    ├── pr_batch  → Batch Records
    ├── pr_qual   → Quality Grades
-   └── pr_mat    → Material Log
+   ├── pr_mat    → Material Log
+   └── pr_weight → Weight System
+
+   transport:
+   ├── tr_inq    → Inquiries
+   ├── tr_rate   → Rate Comparison
+   ├── tr_appr   → Approvals
+   ├── tr_order  → Order Forms
+   └── tr_track  → Trip Tracking
+
+   erp:
+   ├── erp_entry  → Purchase Entry
+   ├── erp_po     → Purchase Orders
+   ├── erp_truck  → Truck Register
+   ├── erp_dncn   → Debit/Credit Notes
+   ├── erp_inv    → Inventory
+   └── erp_report → Reports
 
    accounts:
    ├── ac_inv    → Invoices
    ├── ac_recv   → Receivables
    ├── ac_pay    → Payables
    └── ac_gst    → GST Reports
+
+   stock:
+   ├── stk_slip    → Stock Slips
+   ├── stk_ledger  → SKU Ledger
+   ├── stk_stock   → Live Stock
+   ├── stk_reclass → Reclassification
+   └── stk_master  → Master SKU
+
+   maintenance:
+   ├── mt_wo       → Work Orders
+   ├── mt_board    → Kanban Board
+   ├── mt_area     → Area Management
+   ├── mt_timeline → Timeline & Notes
+   └── mt_export   → Export & Share
 
    electricity:
    ├── el_dash    → Dashboard
@@ -646,6 +838,16 @@ let ROLE_REGISTRY = {};
    ├── el_24hr    → 24-Hr View
    ├── el_monthly → Monthly Report
    └── el_bills   → PGVCL Bills
+
+   dwpas:
+   ├── dw_dash     → Dashboard
+   ├── dw_plan     → Daily Plan Entry
+   ├── dw_register → Plan Register
+   ├── dw_achieve  → Achievement Entry
+   ├── dw_variance → Variance Analysis
+   ├── dw_hr       → HR Manpower
+   ├── dw_dept     → Department Master
+   └── dw_emp      → Employee Master
 
    ════════════════════════════════════════════════════════════════
 */

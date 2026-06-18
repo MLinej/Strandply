@@ -212,8 +212,11 @@ tbody tr:hover td{background:var(--g0)}
 .draft-banner{background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;
   padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:13px}
 @media print{
-  #sidebar,#topbar,#toast-container,.page-header-actions,.btn,.toolbar{display:none!important}
-  #content{margin:0!important}.page{padding:0!important}body{background:#fff}
+  #sidebar, #topbar, #toast-container, #sb-toggle-btn { display: none !important; }
+  .page-header-actions, .btn, .toolbar { display: none !important; }
+  #content { margin: 0 !important; }
+  .page { padding: 12px !important; }
+  body { background: #fff; }
 }
 </style>
 </head>
@@ -235,7 +238,9 @@ tbody tr:hover td{background:var(--g0)}
     <div class="sb-link" onclick="showPage('hotpress')"><span class="ic">🔥</span> Hot Press Report</div>
     <div class="sb-link" onclick="showPage('matt')"><span class="ic">⚖️</span> Matt Weight</div>
     <div class="sb-link" onclick="showPage('resin')"><span class="ic">🧪</span> Resin Consumption</div>
+    <div class="sb-link" onclick="showPage('wip')"><span class="ic">🌳</span> WIP Nilgiri Stock</div>
     <div class="sb-link" onclick="showPage('bc')"><span class="ic">✂️</span> Board Cutting</div>
+    <div class="sb-link" onclick="showPage('pp')"><span class="ic">📋</span> Production Planning</div>
     <div class="sb-link" onclick="showPage('prodsummary')"><span class="ic">📑</span> Production Summary</div>
     <div class="sb-link" onclick="showPage('reports')"><span class="ic">📊</span> Reports</div>
     <div class="sb-link" onclick="showPage('mdo')"><span class="ic">🏗️</span> MDO Press</div>
@@ -473,6 +478,18 @@ tbody tr:hover td{background:var(--g0)}
       <th class="num">Opening</th><th class="num">Consumed</th><th class="num">Available</th><th class="num">Rate/Kg</th>
     </tr></thead><tbody id="resin-stock-tbody"></tbody></table></div>
   </div>
+
+  <!-- WIP Nilgiri Stock (shown alongside resin stock) -->
+  <div class="card" style="padding:16px;margin-top:0">
+    <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g4);font-family:var(--fm);margin-bottom:12px">🌳 WIP NILGIRI STOCK — Chipped Wood Available</div>
+    <div class="table-wrap"><table><thead><tr>
+      <th>WIP Batch</th><th>Chip Report</th><th>Date</th>
+      <th class="num">Total Kg</th><th class="num">Available Kg</th>
+      <th class="num">Avg Rate/Kg</th><th class="num">Amount</th><th>Status</th>
+    </tr></thead><tbody id="wip-resin-tbody"></tbody></table></div>
+    <div class="kpi-grid" id="wip-resin-kpis" style="margin-top:14px"></div>
+  </div>
+
 </div>
 
 <!-- ══════════════ BOARD CUTTING ══════════════ -->
@@ -665,7 +682,10 @@ tbody tr:hover td{background:var(--g0)}
         <div class="fld"><label>Amount (Auto)</label><input class="finput auto" type="text" id="rc-amount" readonly></div>
         <div class="fld"><label>Product</label><select class="fsel" id="rc-product"><option value="">— Select —</option><option>OSB</option><option>S-OSB</option><option>Semi OSB</option></select></div>
         <div class="fld"><label>Operator</label><input class="finput" type="text" id="rc-operator" placeholder="Name"></div>
-        <div class="fld" style="grid-column:1/-1"><label>Linked PS</label><select class="fsel" id="rc-linked-ps"><option value="">— None —</option></select></div>
+        <div class="fld"><label>Linked PS</label><select class="fsel" id="rc-linked-ps"><option value="">— None —</option></select></div>
+        <div class="fld"><label>Linked Production Plan</label>
+          <select class="fsel" id="rc-linked-pp"><option value="">— None —</option></select>
+          <div class="lot-info" style="color:var(--red)">For resin plan vs actual</div></div>
         <div class="fld" style="grid-column:1/-1"><label>Remarks</label><input class="finput" type="text" id="rc-remarks" placeholder="Optional"></div>
       </div>
       <div class="form-error" id="rc-error"></div>
@@ -730,6 +750,42 @@ tbody tr:hover td{background:var(--g0)}
             <select class="fsel" id="ps-linked-rc" onchange="psOnRCChange()"><option value="">— None —</option></select></div>
           <div class="fld"><label>Linked Board Cutting</label>
             <select class="fsel" id="ps-linked-bc" onchange="psOnBCChange()"><option value="">— None —</option></select></div>
+          <div class="fld"><label>Linked Production Plan</label>
+            <select class="fsel" id="ps-linked-pp"><option value="">— None —</option></select>
+            <div class="lot-info" style="color:var(--red)">Links plan estimates for Plan vs Actual PDF</div></div>
+          <div class="fld" style="grid-column:1/-1;background:var(--redlt);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <label style="color:var(--red);font-weight:700;font-size:12px">🌳 WIP Nilgiri Batches — Wet Wood Source</label>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <select class="fsel" id="ps-wip-sel" style="flex:1"><option value="">— Select WIP Batch to Add —</option></select>
+              <button type="button" class="btn btn-green" onclick="psAddWIPBatch()" style="white-space:nowrap;padding:8px 16px">＋ Add Batch</button>
+            </div>
+            <!-- Batch table -->
+            <div style="margin-top:10px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+              <table style="width:100%;border-collapse:collapse">
+                <thead><tr style="background:var(--g6)">
+                  <th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;text-align:left">WIP BATCH</th>
+                  <th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;text-align:left">CHIP REPORT</th>
+                  <th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;text-align:left">DATE</th>
+                  <th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;text-align:left">RATE/Kg</th>
+                  <th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;text-align:left">QTY USED (Kg)</th>
+                  <th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;text-align:right">AMOUNT</th>
+                </tr></thead>
+                <tbody id="ps-wip-batch-tbody"></tbody>
+                <tfoot>
+                  <tr style="background:var(--g6)">
+                    <td colspan="4" style="padding:8px 10px;color:#fff;font-size:11px;font-weight:700">TOTAL WET WOOD</td>
+                    <td style="padding:8px 10px;color:#ffd700;font-size:12px;font-weight:800;font-family:var(--fm)" id="ps-wip-total-kg">0 Kg</td>
+                    <td style="padding:8px 10px;color:#86efac;font-size:11px;font-weight:700;text-align:right;font-family:var(--fm)" id="ps-wip-total-amt">Rs. 0</td>
+                  </tr>
+                  <tr style="background:var(--g5)">
+                    <td colspan="5" style="padding:6px 10px;color:#fff;font-size:10px">Weighted Avg Rate</td>
+                    <td style="padding:6px 10px;color:#ffd700;font-size:11px;font-weight:700;text-align:right;font-family:var(--fm)" id="ps-wip-avg-rate">Rs. —/Kg</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <input type="hidden" id="ps-linked-wip" value="">
+          </div>
         </div>
       </div>
       <div class="form-section">
@@ -765,7 +821,9 @@ tbody tr:hover td{background:var(--g0)}
           <div class="fld"><label>Resin (Kg) (Auto)</label><input class="finput auto" type="text" id="ps-resin-kg" readonly></div>
           <div class="fld"><label>Resin Amount ₹ (Auto)</label><input class="finput auto" type="text" id="ps-resin-amt" readonly></div>
           <div class="fld"><label>Dry Wood (Kg)</label><input class="finput" type="number" id="ps-drywood-kg" placeholder="0"></div>
-          <div class="fld"><label>Wet Wood Amount ₹</label><input class="finput" type="number" id="ps-wetwood-amt" placeholder="0"></div>
+          <div class="fld"><label>Wet Wood Qty Used (Kg) <span style="color:var(--amber);font-size:9px">Enter actual qty</span></label><input class="finput" type="number" id="ps-wetwood-kg" step="0.001" placeholder="Enter qty used from WIP batch" oninput="psRecalcWetWoodAmt()"></div>
+          <div class="fld"><label>Wet Wood Rate (Rs/Kg) <span style="color:var(--green);font-size:9px">Auto from WIP</span></label><input class="finput auto" type="text" id="ps-wetwood-rate" readonly placeholder="Auto from WIP batch"></div>
+          <div class="fld"><label>Wet Wood Amount ₹ <span style="color:var(--green);font-size:9px">Auto</span></label><input class="finput auto" type="number" id="ps-wetwood-amt" readonly placeholder="Auto from WIP batch"></div>
         </div>
       </div>
       <div class="fld"><label>Remarks</label><input class="finput" type="text" id="ps-remarks" placeholder="Optional"></div>
@@ -878,10 +936,187 @@ tbody tr:hover td{background:var(--g0)}
   </div>
 </div>
 
+
+<!-- ══ MODAL: PRODUCTION PLANNING FORM ══ -->
+<div class="overlay" id="modal-pp">
+  <div class="modal" style="max-width:900px">
+    <div class="modal-hdr">
+      <h2 id="pp-modal-title">📋 New Production Plan</h2>
+      <button class="xcl" onclick="closeModal('modal-pp')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- ░ PLAN HEADER ░ -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:var(--g6);color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">📋 PLAN HEADER</div>
+        <div class="fgrid fgrid-3">
+          <div class="fld"><label>Plan Date <span class="req">*</span></label><input class="finput" type="date" id="pp-date"></div>
+          <div class="fld"><label>Shift <span class="req">*</span></label><select class="fsel" id="pp-shift"><option>Day</option><option>Afternoon</option><option>Night</option></select></div>
+          <div class="fld"><label>Plan Operator</label><input class="finput" type="text" id="pp-plan-op" placeholder="Name"></div>
+        </div>
+      </div>
+
+      <!-- ░ PRODUCT PLANNING TABLE ░ -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:var(--red);color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+          <span>🏭 PRODUCT PLANNING TABLE</span>
+          <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4)" onclick="addPPProduct()">＋ Add Product Line</button>
+        </div>
+        <div id="pp-items-container"></div>
+        <div style="background:var(--g6);color:#fff;border-radius:6px;padding:10px 16px;font-size:12px;font-family:var(--fm);font-weight:700;display:flex;gap:28px;margin-top:8px">
+          <span>🎯 Boards: <span id="pp-totals-boards" style="color:#ffd700">0</span></span>
+          <span>📐 Sqft: <span id="pp-totals-sqft" style="color:#7ec8f7">0</span></span>
+          <span>🔥 Press Charges: <span id="pp-totals-charges" style="color:#86efac">0</span></span>
+        </div>
+      </div>
+
+      <!-- ░ BOILER DEPARTMENT ░ -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:var(--amber);color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">🔥 BOILER DEPARTMENT</div>
+        <div class="fgrid fgrid-3">
+          <div class="fld"><label>HAG-A Start Time</label><input class="finput" type="time" id="pp-hag-a-start"></div>
+          <div class="fld"><label>HAG-B Start Time</label><input class="finput" type="time" id="pp-hag-b-start"></div>
+          <div class="fld"><label>Thermic Boiler Start Time</label><input class="finput" type="time" id="pp-therm-start"></div>
+          <div class="fld"><label>HAG Temperature (°C)</label><input class="finput" type="number" id="pp-hag-temp" placeholder="°C"></div>
+          <div class="fld"><label>Thermic Boiler Temp (°C)</label><input class="finput" type="number" id="pp-therm-temp" placeholder="°C"></div>
+          <div class="fld"><label>HAG Operator</label><input class="finput" type="text" id="pp-hag-op" placeholder="Name"></div>
+          <div class="fld"><label>Thermic Boiler Operator</label><input class="finput" type="text" id="pp-therm-op" placeholder="Name"></div>
+        </div>
+      </div>
+
+      <!-- ░ DRYER INFORMATION ░ -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:var(--blue);color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">💨 DRYER INFORMATION</div>
+        <div class="fgrid fgrid-3">
+          <div class="fld"><label>Dryer A – Input Temp (°C)</label><input class="finput" type="number" id="pp-dryer-a-in" placeholder="°C"></div>
+          <div class="fld"><label>Dryer A – Output Temp (°C)</label><input class="finput" type="number" id="pp-dryer-a-out" placeholder="°C"></div>
+          <div class="fld"><label>Dryer A Operator</label><input class="finput" type="text" id="pp-dryer-a-op" placeholder="Name"></div>
+          <div class="fld"><label>Dryer B – Input Temp (°C)</label><input class="finput" type="number" id="pp-dryer-b-in" placeholder="°C"></div>
+          <div class="fld"><label>Dryer B – Output Temp (°C)</label><input class="finput" type="number" id="pp-dryer-b-out" placeholder="°C"></div>
+          <div class="fld"><label>Dryer B Operator</label><input class="finput" type="text" id="pp-dryer-b-op" placeholder="Name"></div>
+        </div>
+      </div>
+
+      <!-- ░ BLENDER DEPARTMENT ░ -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:var(--green);color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">⚙️ BLENDER DEPARTMENT</div>
+        <div class="fgrid fgrid-3">
+          <div class="fld"><label>Chips Blender Start Time</label><input class="finput" type="time" id="pp-chips-blend-start"></div>
+          <div class="fld"><label>Dust Blender Start Time</label><input class="finput" type="time" id="pp-dust-blend-start"></div>
+          <div class="fld"><label>Chips Blender Operator</label><input class="finput" type="text" id="pp-chips-blend-op" placeholder="Name"></div>
+          <div class="fld"><label>Dust Blender Operator</label><input class="finput" type="text" id="pp-dust-blend-op" placeholder="Name"></div>
+          <div class="fld"><label>Trillium Speed</label><input class="finput" type="text" id="pp-trill-speed" placeholder="RPM / Setting"></div>
+        </div>
+      </div>
+
+      <!-- ░ FORMING LINE ░ -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:#6366f1;color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">🏗️ FORMING LINE</div>
+        <div class="fgrid fgrid-3">
+          <div class="fld"><label>Forming Line Operator</label><input class="finput" type="text" id="pp-forming-op" placeholder="Name"></div>
+          <div class="fld"><label>Forming Line Start Time</label><input class="finput" type="time" id="pp-forming-start"></div>
+          <div class="fld"><label>Chipping Start Time</label><input class="finput" type="time" id="pp-chip-start"></div>
+        </div>
+      </div>
+
+      <!-- ░ PRE-PRESS DEPARTMENT ░ -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:#0891b2;color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">🗜️ PRE-PRESS DEPARTMENT</div>
+        <div class="fgrid fgrid-3">
+          <div class="fld"><label>Pre-Press Operator</label><input class="finput" type="text" id="pp-prepress-op" placeholder="Name"></div>
+          <div class="fld"><label>Pre-Press Start Time</label><input class="finput" type="time" id="pp-prepress-start"></div>
+          <div class="fld"><label>Target Matt Weight (Kg)</label><input class="finput" type="number" id="pp-input-matt-wt" step="0.001" placeholder="Kg" oninput="ppCalcAuto()"></div>
+          <div class="fld"><label>No. of Matts</label><input class="finput" type="number" id="pp-total-matts" placeholder="count"></div>
+        </div>
+      </div>
+
+      <!-- ░ HOT PRESS ░ -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:var(--red);color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">🔥 HOT PRESS</div>
+        <div class="fgrid fgrid-3">
+          <div class="fld"><label>Hot Press Operator</label><input class="finput" type="text" id="pp-press-op" placeholder="Name"></div>
+          <div class="fld"><label>Hot Press Start Time</label><input class="finput" type="time" id="pp-pressline-start"></div>
+          <div class="fld"><label>Cycle Time</label><input class="finput" type="text" id="pp-cycle-time" placeholder="e.g. 8m 30s"></div>
+          <div class="fld"><label>Target Charges (Auto)</label><input class="finput auto" type="text" id="pp-target-charges" readonly></div>
+          <div class="fld"><label>Hot Press Temperature (°C)</label><input class="finput" type="number" id="pp-press-temp" placeholder="°C"></div>
+          <div class="fld"><label>Thickness Bar (mm)</label><input class="finput" type="text" id="pp-thick-bar" placeholder="mm setting"></div>
+        </div>
+      </div>
+
+      <!-- ░ CUTTING DEPARTMENT ░ -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:var(--g5);color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">✂️ CUTTING DEPARTMENT</div>
+        <div class="fgrid fgrid-3">
+          <div class="fld"><label>Total Boards Cutting (Plan)</label><input class="finput" type="number" id="pp-total-bc" placeholder="pcs" oninput="ppCalcAuto()"></div>
+          <div class="fld"><label>Cutting Size</label><input class="finput" type="text" id="pp-cut-size" placeholder="e.g. 8x4, 4x4"></div>
+                    <div class="fld"><label>Total Boards Cutting (Plan)</label><input class="finput" type="number" id="pp-total-bc" placeholder="pcs" oninput="ppCalcAuto()"></div>
+          <div class="fld"><label>Cutting Size</label><input class="finput" type="text" id="pp-cut-size" placeholder="e.g. 8x4, 4x4"></div>
+          <div class="fld"><label>Cutting Operator</label><input class="finput" type="text" id="pp-cut-op" placeholder="Name"></div>
+        </div>
+      </div>
+
+
+      <!-- Linked Reports Section -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:var(--g6);color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">🔗 LINK TO ACTUAL REPORTS (for Plan vs Actual comparison)</div>
+        <div class="fgrid">
+          <div class="fld"><label>Link Hot Press Report</label>
+            <select class="fsel" id="pp-linked-hp"><option value="">&#8212; None &#8212;</option></select>
+            <div class="lot-info" style="font-size:10px;color:var(--blue)">Links planned boards vs actual HP boards</div>
+          </div>
+          <div class="fld"><label>Link Matt Batch</label>
+            <select class="fsel" id="pp-linked-mw"><option value="">&#8212; None &#8212;</option></select>
+            <div class="lot-info" style="font-size:10px;color:var(--amber)">Links target matt weight vs actual</div>
+          </div>
+          <div class="fld"><label>Link Board Cutting Report</label>
+            <select class="fsel" id="pp-linked-bc"><option value="">&#8212; None &#8212;</option></select>
+            <div class="lot-info" style="font-size:10px;color:var(--green)">Links planned cut boards vs actual</div>
+          </div>
+          <div class="fld"><label>Link Production Summary</label>
+            <select class="fsel" id="pp-linked-ps"><option value="">&#8212; None &#8212;</option></select>
+            <div class="lot-info" style="font-size:10px;color:var(--red)">Links plan to production summary</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Raw Material Requirement -->
+      <div class="form-section">
+        <div class="fsec-title" style="background:var(--g6);color:#fff;border-radius:5px;padding:6px 12px;margin-bottom:10px">&#128230; RAW MATERIAL REQUIREMENT</div>
+        <div class="fgrid fgrid-3" style="margin-bottom:10px">
+          <div class="fld"><label>Resin Qty per Matt (Kg)</label><input class="finput" type="number" id="pp-resin-qty-matt" step="0.001" placeholder="Kg per matt" oninput="ppCalcAuto()"></div>
+          <div class="fld"><label>Wet Wood Required (Auto)</label><input class="finput auto" type="text" id="pp-wet-wood-calc" readonly></div>
+          <div class="fld"><label>Resin Required (Auto)</label><input class="finput auto" type="text" id="pp-resin-required-calc" readonly></div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+          <table style="width:100%;border-collapse:collapse">
+            <thead><tr style="background:var(--g6)">
+              <th style="padding:8px 12px;color:#fff;font-size:10px;font-weight:700;text-align:left">MATERIAL</th>
+              <th style="padding:8px 12px;color:#fff;font-size:10px;font-weight:700;text-align:right">REQUIRED QTY</th>
+              <th style="padding:8px 12px;color:#fff;font-size:10px;font-weight:700;text-align:right">STOCK AVAILABLE</th>
+              <th style="padding:8px 12px;color:#fff;font-size:10px;font-weight:700;text-align:center">STATUS</th>
+            </tr></thead>
+            <tbody id="pp-rm-table"><tr><td colspan="4" style="padding:16px;text-align:center;color:var(--g4);font-size:12px">Fill Target Boards + Resin Qty to see requirements</td></tr></tbody>
+          </table>
+        </div>
+        <div class="fgrid" style="margin-top:10px">
+          <div class="fld"><label>Wet Wood on Floor (Kg)</label><input class="finput" type="number" id="pp-wet-wood-avail" step="0.001" placeholder="Kg on floor" oninput="ppCalcAuto()"></div>
+          <div class="fld"><label>Resin Stock (Auto Fetch)</label><input class="finput auto" type="text" id="pp-resin-stock" readonly></div>
+        </div>
+      </div>
+
+      <div class="fld"><label>Remarks</label><input class="finput" type="text" id="pp-remarks" placeholder="Optional"></div>
+      <div class="form-error" id="pp-error"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-gray" onclick="closeModal('modal-pp')">Cancel</button>
+      <button class="btn btn-red" id="pp-save-btn" onclick="savePPReport()">&#128190; Save Plan</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast-container"></div>
 
-
-<!-- ══════════════ MDO PRESS ══════════════ -->
+<!-- ══════════════ MDO PRESS PAGE ══════════════ -->
 <div class="page" id="page-mdo">
   <div class="page-header">
     <div class="page-header-left"><h1>🏗️ MDO Press Report</h1><p>Press start/end · Multi-item entry · Paper tracking</p></div>
@@ -896,26 +1131,65 @@ tbody tr:hover td{background:var(--g0)}
       <input class="srchbox" id="mdo-srch" placeholder="Search MDO reports…" oninput="renderMDOList()">
       <span class="cnt" id="mdo-cnt"></span>
     </div></div>
-    <div class="table-wrap">
-      <table><thead><tr>
-        <th>#</th><th>ID</th><th>Date</th><th>Shift</th><th>Press Window</th><th>Working Time</th>
-        <th class="num">Items</th><th class="num">Total Pcs</th><th>Status</th><th>Actions</th>
-      </tr></thead><tbody id="mdo-tbody"></tbody></table>
-    </div>
+    <div class="table-wrap"><table><thead><tr>
+      <th>#</th><th>ID</th><th>Date</th><th>Shift</th><th>Press Window</th>
+      <th>Working Time</th><th class="num">Items</th><th class="num">Total Pcs</th>
+      <th>Status</th><th>Actions</th>
+    </tr></thead><tbody id="mdo-tbody"></tbody></table></div>
   </div>
 </div>
 
+<div class="page" id="page-pp">
+  <div class="page-header">
+    <div class="page-header-left"><h1>&#128203; Production Planning</h1><p>Daily &#183; Shift &#183; Machine &#183; Resin &#183; Wood</p></div>
+    <div class="page-header-actions">
+      <button class="btn btn-gray btn-sm" onclick="exportPP()">&#128229; Excel</button>
+      <button class="btn btn-red" onclick="openPPForm()">&#65291; New Plan</button>
+    </div>
+  </div>
+  <div class="card" style="overflow:hidden" id="pp-card-placeholder"></div>
+</div>
+
+<!-- ══════════════ PRODUCTION PLAN DETAIL VIEW ══════════════ -->
+<div class="page" id="page-pp-view">
+  <div class="page-header">
+    <div class="page-header-left"><h1 id="ppv-title">Production Plan</h1><p id="ppv-sub"></p></div>
+    <div class="page-header-actions">
+      <button class="btn btn-gray btn-sm" onclick="showPage('pp')">&#8592; Back</button>
+      <button class="btn btn-amber btn-sm" id="btn-pp-send-review" style="display:none" onclick="openSendReview('pp')">&#128228; Review</button>
+      <button class="btn btn-blue btn-sm"  id="btn-pp-reviewer-act" style="display:none" onclick="openReviewerAction('pp')">&#128269; Review</button>
+      <button class="btn btn-green btn-sm" id="btn-pp-approver-act" style="display:none" onclick="openApproverAction('pp')">&#9989; Approve</button>
+      <button class="btn btn-red btn-sm" onclick="ppDlPDF(currentPPId)">&#8595; PDF</button>
+    </div>
+  </div>
+  <div class="card" id="ppv-card" style="overflow:hidden"></div>
+</div>
+
+<!-- ══════════════ WIP NILGIRI STOCK ══════════════ -->
+<div class="page" id="page-wip">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>&#127807; WIP Nilgiri Stock</h1>
+      <p>Chipped Wood Inventory &#183; Batch-wise cost &#183; Avg rate/Kg</p>
+    </div>
+  </div>
+  <div class="kpi-grid" id="wip-kpis"></div>
+  <div class="card">
+    <div style="padding:10px 16px;border-bottom:1px solid var(--border);background:var(--g0)">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--g4);font-family:var(--fm)">WIP NILGIRI BATCHES &#8212; created from Chipping Reports</div>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>WIP Batch ID</th><th>Chip Report</th><th>Date</th>
+        <th class="num">Total Kg</th><th class="num">Available Kg</th>
+        <th class="num">Avg Rate/Kg</th><th class="num">Total Amount</th><th>Status</th>
+      </tr></thead><tbody id="wip-stock-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+<!-- ══════════════ WIP NILGIRI STOCK ══════════════ -->
 </main>
 <script>
-
-var LOGO_DATA='data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAEABYEDASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAYHAwUIBAIB/8QAUxAAAQMCAgQGDAsGBQQCAgMBAQACAwQFBhEHEiExExRBYXGBFyI2UVRVkZKUsbLSFSMyQmJydJOhwdEWMzVSc8I0goOis0Ph8PE3U0RWJCVjZP/EABwBAQACAgMBAAAAAAAAAAAAAAAFBgQHAQIDCP/EAEERAAIBAgIGBgYKAQMFAQEAAAABAgMEBREGITFRcYESE0FhkbEiNKHB0fAUFRYyMzVCUnLhIweCslNiktLxJML/2gAMAwEAAhEDEQA/AOMkREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREBMcG4ns9ntLqSvtRqpTKXh4Yw7CBs29CsChrLPV4Xdf2WqJsLYpJeDMTNbJhcCO981Ucraw7/8PS/Y6r2pEBH8TYusdysdTRUlndTzyhurJwbBq5OB5Nu4Kb4RorecLWt8tJTFz6dmbnRNJJI7+So5W/JWG36NbZWgn4gUrzzgPbmPIgK9xvbjQ4uraSGPJskuvE1o2ZP2gDrOXUrhttottJQ01EaSle+KFrSTE0k5AAk7OUrQ4osorscWGua3WjOfCEbvi+3bn055La22t4zjK7U7Tm2lp4I+s67j6x5EB4uI0XgdP92P0RehEBR6IiAIiIAiIgCIiAIiIAiIgCIpnhHR9drzqVNYDb6I7dZ7e3ePot/M/ivKrWhRj0pvJGXZWFxfVOqt4OT+dr7OZDEXRFlwpYLTSiCnt0Ehy7aWZge93SSPwGxabFeju0XZrpqBrbbVZbDG34t3S0bukfio6GMUXPJppby2VtBL6FHpwkpS/b8G/wCikEW2xHh27WCo4K40rmMJyZM3bG/oP5HatSpSE4zXSi80U2tQqUJunVi4yXYwiIux5BERAEREAREQBERAEREAREQBERAEREAREQBERAERSLDODb5fw2WmpxDTH/8AIm7Vh6OV3UulSpCmulN5I97a1rXVRU6MXKW5EdRXHZ9Flnp2tdcqqorZOVrTwbPw2/ipLR4Sw1SgCKyURy3GSPhD5XZqNqYvQjqimy3W2guIVVnVlGHPN+zV7TndF0u202poybbKJo5oG/osU1iskwyls9vf9amYfyXj9dQ/Z7TNf+n9bLVWXg/ic2or7uOAMLVgP/8AXcXefnQSFuXVu/BQ2/6K6uFrpbLWipA2iGfJr+p249eSyaWK29R5N5cSJvdDMStk5RSmv+16/B5PwzK2Reivoqugqn0t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Ah6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXvJ2NMZ+KW+kxe8gIeimHY0xn4pb6TF7ydjTGfilvpMXvICHoph2NMZ+KW+kxe8nY0xn4pb6TF7yAh6KYdjTGfilvpMXv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';
-
-/* ══════════════════════════════════════════════════════════
-   STRANDPLY PRODUCTION MIS — Core JS
-   Clean rebuild — no external dependencies except jsPDF
-══════════════════════════════════════════════════════════ */
-
-/* ── USERS ── */
 var ROLES = {
   admin:    {name:'Admin',    role:'admin',    color:'var(--red)'},
   operator: {name:'Operator', role:'operator', color:'var(--blue)'},
@@ -936,6 +1210,9 @@ var PS_REPORTS     = [];
 var RESIN_CONSUMED = {};
 var STOCK_CONSUMED = {};
 var hpSeq=1, chipSeq=1, mattSeq=1, rcSeq=1, bcSeq=1, psSeq=1;
+var wipSeq=1, ppSeq=1, mdoSeq=1;
+var WIP_BATCHES=[], PP_REPORTS=[], MDO_REPORTS=[];
+var currentMDOId=null, currentPPId=null, mdoItemIdx=0, ppItemIdx=0;
 var currentHPId=null, currentBCId=null, currentPSId=null;
 var _wfMod='', _wfId='';
 
@@ -1043,7 +1320,7 @@ function showPage(id){
     var oc=l.getAttribute('onclick')||'';
     if(oc.indexOf("'"+id+"'")>=0) l.classList.add('active');
   });
-  var titles={'dashboard':'Dashboard','mdo':'MDO Press Report','matt-punch':'Matt Weight — Punch View','hotpress':'Hot Press Report','hotpress-view':'Hot Press Detail',
+  var titles={'dashboard':'Dashboard','wip':'WIP Nilgiri Stock','mdo':'MDO Press Report','matt-punch':'Matt Weight — Punch View','pp':'Production Planning','pp-view':'Production Plan Detail','hotpress':'Hot Press Report','hotpress-view':'Hot Press Detail',
     'chipping':'Chipping Report','matt':'Matt Weight','resin':'Resin Consumption',
     'bc':'Board Cutting','bc-view':'Board Cutting Detail','prodsummary':'Production Summary',
     'prodsummary-view':'Production Summary Detail','reports':'Reports'};
@@ -1058,6 +1335,8 @@ function showPage(id){
   if(id==='bc')        { renderBCList(); renderBCKPIs(); }
   if(id==='prodsummary'){ renderPSList(); renderPSKPIs(); }
   if(id==='mdo')       { renderMDOList(); renderMDOKPIs(); }
+  if(id==='pp')        { renderPPList();  renderPPKPIs();  }
+  if(id==='wip')       { renderWIPStock(); renderWIPKPIs(); }
 }
 
 function toggleSidebar(){
@@ -1260,8 +1539,8 @@ function saveHPReport(){
     totalPcs+=pcs; totalMins+=mins; spareMins+=Math.max(0,mins-90);
   }
   if(!charges.length||!totalPcs){errEl.textContent='Add at least one charge with pcs';errEl.style.display='block';return;}
-  var id = newId('HP', hpSeq++);
-  var report = {
+  var id=newId('HP',hpSeq++);
+  HP_REPORTS.unshift({
     id:id, date:dateEl.value,
     product:prodEl.value, size:(document.getElementById('hp-size')||{}).value||'8x4',
     thickness:(document.getElementById('hp-thickness')||{}).value||'',
@@ -1273,34 +1552,10 @@ function saveHPReport(){
     pressLoad:minsToStr(totalMins), pressSpare:minsToStr(spareMins),
     wfState:'draft', wfTrail:[], status:'saved',
     createdAt:new Date().toLocaleString('en-IN')
-  };
-  fetchAPI('/api/production/hotpress', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(report)
-  }).then(res => {
-    if(res) {
-      
-    fetchAPI('/api/production/hotpress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(report)
-    }).then(res => {
-        if(res) {
-            HP_REPORTS.unshift(report);
-            closeModal('modal-hp');
-            renderHPKPIs();renderHPList();
-            toast('Report '+report.id+' saved', 'success');
-            setTimeout(function(){viewHPReport(report.id);},400);
-        }
-    });
-    return;
-
-      closeModal('modal-hp');
-      renderHPList(); renderHPKPIs();
-      toast(id+' saved · '+totalPcs+' boards','success');
-    }
   });
+  closeModal('modal-hp');
+  renderHPList(); renderHPKPIs();
+  toast(id+' saved · '+totalPcs+' boards','success');
 }
 function minsToStr(m){ return Math.floor(m/60)+'h '+(m%60)+'m'; }
 
@@ -1381,14 +1636,8 @@ function refreshHPButtons(r){
 }
 function deleteHP(id){
   confirmDelete('Delete HP report '+id+'?',function(){
-    fetchAPI('/api/production/hotpress?id=' + id, {
-      method: 'DELETE'
-    }).then(res => {
-      if(res) {
-        HP_REPORTS=HP_REPORTS.filter(function(x){return x.id!==id;});
-        renderHPList();renderHPKPIs();toast(id+' deleted','warning');
-      }
-    });
+    HP_REPORTS=HP_REPORTS.filter(function(x){return x.id!==id;});
+    renderHPList();renderHPKPIs();toast(id+' deleted','warning');
   });
 }
 function show(id,val){ var e=document.getElementById(id); if(e)e.style.display=val?'':'none'; }
@@ -1486,8 +1735,11 @@ function saveChipReport(){
   var totalAmt=lots.reduce(function(s,l){return s+l.amt;},0);
   // Deduct stock
   lots.forEach(function(l){STOCK_CONSUMED[l.lotId]=(STOCK_CONSUMED[l.lotId]||0)+l.qty;});
-  var id=newId('CHR',chipSeq++);
-  var report = {
+  var id = document._chipEditId ? document._chipEditId : newId('CHR',chipSeq++);
+  var _preservedWip = document._chipWipBatchId || null;
+  document._chipEditId = null; document._chipWipBatchId = null;
+  try {
+  CHIP_REPORTS.unshift({
     id:id, date:dateEl.value,
     shift:(document.getElementById('chip-shift')||{}).value||'Day',
     operator:(document.getElementById('chip-operator')||{}).value||'',
@@ -1495,35 +1747,19 @@ function saveChipReport(){
     remarks:(document.getElementById('chip-remarks')||{}).value||'',
     lots:lots, totalKg:totalKg, totalAmt:totalAmt,
     avgRate:totalKg>0?totalAmt/totalKg:0,
+    wipBatchId:_preservedWip||null,
     wfState:'draft', wfTrail:[], status:'saved',
     createdAt:new Date().toLocaleString('en-IN')
-  };
-  fetchAPI('/api/production/chipping', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(report)
-  }).then(res => {
-    if(res) {
-      
-    fetchAPI('/api/production/chipping', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(report)
-    }).then(res => {
-        if(res) {
-            CHIP_REPORTS.unshift(report);
-            closeModal('modal-chip');
-            renderDashboard();
-            toast('Report '+report.id+' saved', 'success');
-        }
-    });
-    return; // Stop sync execution
-
-      closeModal('modal-chip');
-      renderChipList(); renderChipKPIs();
-      toast(id+' saved · '+totalKg.toLocaleString('en-IN')+' Kg','success');
-    }
   });
+  if(_preservedWip){
+    var wbatch=WIP_BATCHES.find(function(x){return x.id===_preservedWip;});
+    if(wbatch){wbatch.chipId=id;wbatch.totalKg=totalKg;wbatch.totalAmt=totalAmt;
+      wbatch.avgRateKg=totalKg>0?parseFloat((totalAmt/totalKg).toFixed(4)):0;}
+  }
+  closeModal('modal-chip');
+  renderChipList();renderChipKPIs();renderWIPStock();renderWIPKPIs();
+  toast(id+' saved · '+totalKg.toLocaleString('en-IN')+' Kg','success');
+  } catch(e){ toast('Save error: '+e.message,'error'); }
 }
 function renderChipKPIs(){
   var el=document.getElementById('chip-kpis'); if(!el)return;
@@ -1557,20 +1793,17 @@ function renderChipList(){
       btn('Edit','btn-amber',r.id,'editChip')+
       btn('PDF','btn-red',r.id,'chipDlPDF')+
       btn('📤','btn-blue',r.id,'wfOpen,chip')+
+      (r.wipBatchId?
+        '<span class="tag tag-green" style="font-size:9px;padding:3px 8px">WIP: '+r.wipBatchId+'</span>':
+        btn('+ WIP Batch','btn-green',r.id,'chipCreateWIP'))+
       (canDelete()?btnDel(r.id,'deleteChip'):'')+
       '</td></tr>';
   }).join('');
 }
 function deleteChip(id){
   confirmDelete('Delete Chipping report '+id+'?',function(){
-    fetchAPI('/api/production/chipping?id=' + id, {
-      method: 'DELETE'
-    }).then(res => {
-      if(res) {
-        CHIP_REPORTS=CHIP_REPORTS.filter(function(x){return x.id!==id;});
-        renderChipList();renderChipKPIs();toast(id+' deleted','warning');
-      }
-    });
+    CHIP_REPORTS=CHIP_REPORTS.filter(function(x){return x.id!==id;});
+    renderChipList();renderChipKPIs();toast(id+' deleted','warning');
   });
 }
 
@@ -1600,6 +1833,14 @@ function openResinForm(){
       return '<option value="'+r.id+'">'+r.id+' · '+r.date+' · '+r.product+'</option>';
     }).join('');
     psel.value='';
+  }
+  // Populate linked PP
+  var ppsel=document.getElementById('rc-linked-pp'); if(ppsel){
+    ppsel.innerHTML='<option value="">— None —</option>'+PP_REPORTS.map(function(r){
+      var prod=r.products&&r.products[0]?r.products[0].product:'';
+      return '<option value="'+r.id+'">'+r.id+' · '+r.date+' · '+r.shift+' · '+prod+'</option>';
+    }).join('');
+    ppsel.value='';
   }
   openModal('modal-resin');
 }
@@ -1644,6 +1885,7 @@ function saveResinEntry(){
   var id=newId('RC',rcSeq++);
   var psId=(document.getElementById('rc-linked-ps')||{}).value||'';
   RESIN_CONSUMED[lot.lot]=(RESIN_CONSUMED[lot.lot]||0)+qty;
+  var ppId=(document.getElementById('rc-linked-pp')||{}).value||'';
   var entry={
     id:id, date:(document.getElementById('rc-date')||{}).value||'',
     shift:(document.getElementById('rc-shift')||{}).value||'',
@@ -1652,7 +1894,7 @@ function saveResinEntry(){
     product:(document.getElementById('rc-product')||{}).value||'',
     operator:(document.getElementById('rc-operator')||{}).value||'',
     remarks:(document.getElementById('rc-remarks')||{}).value||'',
-    linkedPS:psId, status:'saved',
+    linkedPS:psId, linkedPP:ppId, status:'saved',
     createdAt:new Date().toLocaleString('en-IN')
   };
   RESIN_ENTRIES.unshift(entry);
@@ -1907,7 +2149,7 @@ function openPSForm(editId){
   var ps=isEdit?PS_REPORTS.find(function(x){return x.id===editId;}):null;
   ['ps-date','ps-product','ps-size','ps-thickness','ps-batch','ps-press-pcs',
    'ps-boards','ps-board-rej','ps-board-rej-pct','ps-matt-pcs','ps-matt-wt',
-   'ps-matt-rej','ps-resin-kg','ps-resin-amt','ps-drywood-kg','ps-wetwood-amt','ps-remarks']
+   'ps-matt-rej','ps-resin-kg','ps-resin-amt','ps-drywood-kg','ps-wetwood-amt','ps-wetwood-kg','ps-wetwood-rate','ps-remarks']
     .forEach(function(id){var e=document.getElementById(id);if(e)e.value=ps?(ps[id.replace('ps-','').replace(/-/g,'')]||''):'';});
   var d=document.getElementById('ps-date');
   if(d&&!isEdit) d.value=new Date().toISOString().split('T')[0];
@@ -1921,8 +2163,28 @@ function openPSForm(editId){
   populateSel('ps-linked-mw',MATT_BATCHES.filter(function(b){return b.status==='closed';}).map(function(b){return '<option value="'+b.id+'">'+b.id+' · '+b.date+'</option>';}).join(''),ps?ps.linkedMW:'');
   populateSel('ps-linked-rc',RESIN_ENTRIES.map(function(e){return '<option value="'+e.id+'">'+e.id+' · '+e.date+' · '+e.lot+' · '+e.qty+' Kg</option>';}).join(''),ps?ps.linkedRC:'');
   populateSel('ps-linked-bc',BC_REPORTS.map(function(r){return '<option value="'+r.id+'">'+r.id+' · '+r.date+' · Cut:'+r.cutPcs+'</option>';}).join(''),ps?ps.linkedBC:'');
+  populateSel('ps-linked-pp',PP_REPORTS.map(function(r){return '<option value="'+r.id+'">'+r.id+' · '+r.date+' · '+r.shift+' · '+(r.products&&r.products[0]?r.products[0].product:'')+'</option>';}).join(''),ps?ps.linkedPP:'');
+  /* Populate WIP batch selector */
+  var wipSel = document.getElementById('ps-wip-sel');
+  if(wipSel){
+    wipSel.innerHTML = '<option value="">— Select WIP Batch —</option>'+
+      WIP_BATCHES.map(function(b){
+        var avail=getWIPAvail(b.id);
+        return '<option value="'+b.id+'">'+b.id+' ('+b.chipId+') · '+b.date+' · Avail: '+avail.toLocaleString('en-IN')+' Kg @ Rs.'+b.avgRateKg.toFixed(3)+'/Kg</option>';
+      }).join('');
+  }
+  /* Restore multi-batch entries on edit, clear for new */
+  window._psWIPEntries = (ps && ps.wipBatches && ps.wipBatches.length) ?
+    ps.wipBatches.map(function(e){ return {wipId:e.wipId,chipId:e.chipId,date:e.date,rate:e.rate,qty:e.qty||0,avail:e.qty||0}; }) : [];
+  /* Clear wetwood fields for new, restore for edit */
+  if(!ps){
+    var wkg=document.getElementById('ps-wetwood-kg'); if(wkg) wkg.value='';
+    var wamt=document.getElementById('ps-wetwood-amt'); if(wamt) wamt.value='';
+    var wrt=document.getElementById('ps-wetwood-rate'); if(wrt) wrt.value='';
+  }
+  setTimeout(function(){ psRenderWIPTable(); }, 50);
   var mt=document.getElementById('ps-modal-title'); if(mt)mt.textContent=isEdit?'Edit '+editId:'📑 New Production Summary';
-  var sb=document.getElementById('ps-save-btn'); if(sb)sb.onclick=isEdit?function(){updatePS(editId);}:savePSReport;
+  var sb=document.getElementById('ps-save-btn'); if(sb){ sb.onclick=isEdit?function(){updatePS(editId);}:savePSReport; }
   var err=document.getElementById('ps-error'); if(err)err.style.display='none';
   openModal('modal-ps');
 }
@@ -1962,23 +2224,6 @@ function psOnBCChange(){
   var hsel=document.getElementById('ps-linked-hp');
   if(hsel&&!hsel.value&&r.linkedHP){hsel.value=r.linkedHP;psOnHPChange();}
 }
-function buildPSEntry(){
-  function g(id){var e=document.getElementById(id);return e?parseFloat(e.value)||0:0;}
-  function gs(id){var e=document.getElementById(id);return e?e.value||''  :'  ';}
-  function gsel(id){var e=document.getElementById(id);return e?e.value||''  :'';}
-  return {
-    date:gs('ps-date'),product:gs('ps-product'),size:gs('ps-size'),
-    thickness:gs('ps-thickness'),batch:gs('ps-batch'),
-    pressPcs:g('ps-press-pcs'),boards:g('ps-boards'),
-    boardRej:g('ps-board-rej'),boardRejPct:g('ps-board-rej-pct'),
-    mattPcs:g('ps-matt-pcs'),mattWt:g('ps-matt-wt'),mattRej:g('ps-matt-rej'),
-    resinKg:g('ps-resin-kg'),resinAmt:g('ps-resin-amt'),
-    dryWoodKg:g('ps-drywood-kg'),wetWoodAmt:g('ps-wetwood-amt'),
-    remarks:gs('ps-remarks'),
-    linkedHP:gsel('ps-linked-hp'),linkedMW:gsel('ps-linked-mw'),
-    linkedRC:gsel('ps-linked-rc'),linkedBC:gsel('ps-linked-bc')
-  };
-}
 function savePSReport(){
   var errEl=document.getElementById('ps-error');
   var d=document.getElementById('ps-date');
@@ -1987,17 +2232,10 @@ function savePSReport(){
   if(!p||!p.value){errEl.textContent='Product required';errEl.style.display='block';return;}
   errEl.style.display='none';
   var id=newId('PS',psSeq++);
-  var entry=buildPSEntry();
+  var entry=buildPSEntryFull();
   entry.id=id; entry.wfState='draft'; entry.wfTrail=[]; entry.status='saved';
   entry.createdAt=new Date().toLocaleString('en-IN');
   
-  fetchAPI('/api/production/summaries', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entry)
-  }).then(res => {
-    if(res) {
-      
     fetchAPI('/api/production/summaries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2012,33 +2250,21 @@ function savePSReport(){
     });
     return;
 
-      closeModal('modal-ps');
-      renderPSList();renderPSKPIs();
-      toast(id+' saved','success');
-    }
-  });
+  closeModal('modal-ps');
+  wipDeductFromPS(entry, null);
+  renderPSList();renderPSKPIs();renderWIPStock();renderWIPKPIs();
+  toast(id+' saved','success');
 }
 function updatePS(id){
   var idx=PS_REPORTS.findIndex(function(x){return x.id===id;}); if(idx<0)return;
-  var entry=buildPSEntry();
-  entry.id=id;
-  entry.wfState = PS_REPORTS[idx].wfState;
-  entry.wfTrail = PS_REPORTS[idx].wfTrail;
-  entry.status = PS_REPORTS[idx].status;
-  entry.createdAt = PS_REPORTS[idx].createdAt;
-
-  fetchAPI('/api/production/summaries', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(entry)
-  }).then(res => {
-    if(res) {
-      Object.assign(PS_REPORTS[idx],entry);
-      closeModal('modal-ps');
-      renderPSList();renderPSKPIs();
-      toast(id+' updated','success');
-    }
-  });
+  var entry=buildPSEntryFull();
+  Object.assign(PS_REPORTS[idx],entry);
+  var prevEntry = PS_REPORTS.find(function(x){return x.id===id;});
+  var prevWIP = prevEntry ? {linkedWIP:prevEntry.linkedWIP, wetWoodKg:prevEntry.wetWoodKg} : null;
+  closeModal('modal-ps');
+  wipDeductFromPS(entry, prevWIP);
+  renderPSList();renderPSKPIs();renderWIPStock();renderWIPKPIs();
+  toast(id+' updated','success');
 }
 function renderPSKPIs(){
   var el=document.getElementById('ps-kpis'); if(!el)return;
@@ -2117,14 +2343,8 @@ function refreshPSButtons(r){
 }
 function deletePS(id){
   confirmDelete('Delete PS '+id+'?',function(){
-    fetchAPI('/api/production/summaries?id=' + id, {
-      method: 'DELETE'
-    }).then(res => {
-      if(res) {
-        PS_REPORTS=PS_REPORTS.filter(function(x){return x.id!==id;});
-        renderPSList();renderPSKPIs();toast(id+' deleted','warning');
-      }
-    });
+    PS_REPORTS=PS_REPORTS.filter(function(x){return x.id!==id;});
+    renderPSList();renderPSKPIs();toast(id+' deleted','warning');
   });
 }
 
@@ -2132,7 +2352,7 @@ function deletePS(id){
    WORKFLOW
 ══════════════════════════════════════════════════════════ */
 function getRepo(mod){
-  return mod==='hp'?HP_REPORTS:mod==='chip'?CHIP_REPORTS:mod==='bc'?BC_REPORTS:mod==='resin'?RESIN_ENTRIES:mod==='mdo'?MDO_REPORTS:PS_REPORTS;
+  return mod==='hp'?HP_REPORTS:mod==='chip'?CHIP_REPORTS:mod==='bc'?BC_REPORTS:mod==='resin'?RESIN_ENTRIES:mod==='mdo'?MDO_REPORTS:mod==='pp'?PP_REPORTS:PS_REPORTS;
 }
 function getWfId(mod){
   return mod==='hp'?currentHPId:mod==='bc'?currentBCId:currentPSId;
@@ -2144,21 +2364,6 @@ function wfOpen(mod,id){
   var nt=document.getElementById('wf-send-note'); if(nt)nt.value='';
   openModal('modal-send-review');
 }
-function saveWorkflowStateBackend(mod, r) {
-  var endpoint = mod === 'hp' ? '/api/production/hotpress' :
-                 mod === 'chip' ? '/api/production/chipping' :
-                 mod === 'ps' ? '/api/production/summaries' : '';
-  if (!endpoint) return;
-  fetchAPI(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(r)
-  }).then(res => {
-    if (!res) {
-      toast('Failed to save workflow state to database', 'error');
-    }
-  });
-}
 function confirmSendReview(){
   var r=getRepo(_wfMod).find(function(x){return x.id===_wfId;});if(!r)return;
   r.wfState='review';
@@ -2167,7 +2372,6 @@ function confirmSendReview(){
   closeModal('modal-send-review');
   refreshWfButtons(_wfMod,r);
   toast(_wfId+' sent for review','success');
-  saveWorkflowStateBackend(_wfMod, r);
 }
 function openReviewerAction(mod,id){
   _wfMod=mod; _wfId=id||getWfId(mod);
@@ -2184,7 +2388,6 @@ function reviewerAction(action){
   closeModal('modal-reviewer');
   refreshWfButtons(_wfMod,r);
   toast(_wfId+(action==='approve'?' marked reviewed':' returned'),'success');
-  saveWorkflowStateBackend(_wfMod, r);
 }
 function openApproverAction(mod,id){
   _wfMod=mod; _wfId=id||getWfId(mod);
@@ -2201,7 +2404,6 @@ function approverAction(action){
   closeModal('modal-approver');
   refreshWfButtons(_wfMod,r);
   toast(_wfId+(action==='approve'?' APPROVED ✓':' rejected'),'success');
-  saveWorkflowStateBackend(_wfMod, r);
 }
 function refreshWfButtons(mod,r){
   if(mod==='hp') refreshHPButtons(r);
@@ -2276,15 +2478,16 @@ function editHP(id){
 
 function editChip(id){
   var r=CHIP_REPORTS.find(function(x){return x.id===id;}); if(!r)return;
-  // Restore stock first
   r.lots.forEach(function(l){STOCK_CONSUMED[l.lotId]=(STOCK_CONSUMED[l.lotId]||0)-l.qty;});
-  // Remove from array temporarily
+  var _editId=r.id, _wipBatchId=r.wipBatchId||null;
   CHIP_REPORTS=CHIP_REPORTS.filter(function(x){return x.id!==id;});
+  /* Store edit context NOW before setTimeout clears closure */
+  document._chipEditId      = _editId;
+  document._chipWipBatchId  = _wipBatchId;
   openChipForm();
   setTimeout(function(){
     var fields={'chip-date':r.date,'chip-shift':r.shift,'chip-operator':r.operator,'chip-machine':r.machine||'','chip-remarks':r.remarks};
     Object.keys(fields).forEach(function(fid){var e=document.getElementById(fid);if(e)e.value=fields[fid];});
-    // Pre-fill lot rows
     var ctr=document.getElementById('chip-lot-rows'); if(ctr)ctr.innerHTML='';
     chipLotIdx=0;
     r.lots.forEach(function(l){
@@ -2295,7 +2498,10 @@ function editChip(id){
       if(qe)qe.value=l.qty;
       chipLotChange(chipLotIdx);
     });
-    toast('Editing '+id+' — save to update','info');
+    /* Show edit badge in modal */
+    var mt=document.getElementById('chip-modal-title');
+    if(mt) mt.textContent='Edit Chipping Report: '+_editId;
+    toast('Editing '+_editId+' — WIP: '+(_wipBatchId||'none'),'info');
   },80);
 }
 
@@ -2336,15 +2542,22 @@ function exportToExcel(data, filename, headers) {
   if(!data||!data.length){toast('No data to export','warning');return;}
   var rows = [headers.join('\t')];
   data.forEach(function(r){
-    rows.push(headers.map(function(h){ return r[h.toLowerCase().replace(/ /g,'')]||''; }).join('\t'));
+    rows.push(headers.map(function(h){
+      var key=h.toLowerCase().replace(/ /g,'');
+      return (r[key]!==undefined&&r[key]!==null)?String(r[key]):'';
+    }).join('\t'));
   });
-  var blob = new Blob([rows.join('\n')], {type:'text/tab-separated-values'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename+'.xls';
-  document.body.appendChild(a); a.click();
-  setTimeout(function(){document.body.removeChild(a); URL.revokeObjectURL(a.href);},200);
-  toast(filename+' exported','success');
+  var csv = rows.join('\n');
+  try {
+    var a = document.createElement('a');
+    a.href = 'data:text/tab-separated-values;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = filename+'.xls';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){if(a.parentNode)a.parentNode.removeChild(a);},200);
+    toast(filename+' exported','success');
+  } catch(e) {
+    toast('Export failed: '+e.message,'error');
+  }
 }
 function exportHP(){
   var rows=HP_REPORTS.map(function(r){return{id:r.id,date:r.date,product:r.product,size:r.size,thickness:r.thickness,shift:r.shift,operator:r.operator,boards:r.totalBoards,charges:r.charges.length,pressload:r.pressLoad,pressspare:r.pressSpare,status:r.wfState};});
@@ -2371,6 +2584,32 @@ function exportChip(){
 /* ══════════════════════════════════════════════════════════
    SEED DATA + STARTUP
 ══════════════════════════════════════════════════════════ */
+
+/* ── Topbar / User / Sidebar ── */
+function initTopbar(){
+  var u=ROLES[CURRENT_USER]||{name:'Admin',role:'admin',color:'var(--red)'};
+  var av=document.getElementById('tb-avatar');
+  var nm=document.getElementById('tb-name');
+  var rl=document.getElementById('tb-role');
+  if(av){av.textContent=u.name[0];av.style.background=u.color;}
+  if(nm) nm.textContent=u.name;
+  if(rl) rl.textContent=u.role.toUpperCase();
+}
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='b'){e.preventDefault();toggleSidebar();}
+});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.user-pill')&&!e.target.closest('#user-menu')){
+    var m=document.getElementById('user-menu'); if(m) m.style.display='none';
+  }
+});
+
+}
+  tick(); setInterval(tick,30000);
+
+  initTopbar();
+  showPage('dashboard');
+});
 
 
 
@@ -2658,7 +2897,7 @@ function renderMattList(){
   }).join('');
 }
 
-function mattDlPDF(id){
+  y=function mattDlPDF(id){
   var b=MATT_BATCHES.find(function(x){return x.id===id;});
   if(!b){toast('Batch not found','error');return;}
   if(!window.jspdf){toast('PDF library loading…','error');return;}
@@ -3093,38 +3332,6 @@ function bcDlPDF(id){
 /* ═══════════════════════════════════════════════════════════════
    PRODUCTION SUMMARY PDF
 ═══════════════════════════════════════════════════════════════ */
-function psDlPDF(id){
-  var r=PS_REPORTS.find(function(x){return x.id===id;});
-  if(!r){toast('Not found','error');return;}
-  if(!window.jspdf){toast('PDF loading…','error');return;}
-  var doc=pdfNewDoc(true);
-  var W=297, M=14;
-  var y=pdfHeader(doc,'PRODUCTION SUMMARY','Production Planning & Control',r.id,r.date,true);
-
-  var month=r.date?new Date(r.date).toLocaleString('en-IN',{month:'long',year:'numeric'}):'—';
-  y=pdfInfoGrid(doc,[
-    ['DATE',r.date],['MONTH',month],['PRODUCT',r.product],
-    ['SIZE',r.size],['THICKNESS',(r.thickness||'—')+' mm'],['BATCH',r.batch||'—'],
-    ['LINKED HP',r.linkedHP||'—'],['LINKED BC',r.linkedBC||'—'],['LINKED RC',r.linkedRC||'—'],
-    ['PRESS PCS',r.pressPcs||0],['STATUS',r.wfState.toUpperCase()],['REMARKS',r.remarks||'—']
-  ],y,true);
-
-  y=pdfSectionHeader(doc,'PRODUCTION DETAILS',y+2,true);
-  y=pdfTableHeader(doc,['METRIC','DRY WOOD CONSUMPTION','RESIN CONSUMPTION','TOTAL'],
-    [50,70,70,79],y,true);
-  [
-    ['In Kg',fmt2(r.dryWoodKg||0)+' Kg',fmt2(r.resinKg||0)+' Kg',fmt2((r.dryWoodKg||0)+(r.resinKg||0))+' Kg'],
-    ['Amount (Rs.)','Rs.'+fmt2(r.wetWoodAmt||0),'Rs.'+fmt2(r.resinAmt||0),'Rs.'+fmt2((r.wetWoodAmt||0)+(r.resinAmt||0))],
-    ['Boards / Reject',String(r.boards||0)+' boards',String(r.boardRej||0)+' pcs rejected',String(r.boardRejPct||0)+'% reject'],
-    ['Matt Details',String(r.mattPcs||0)+' matts','Avg Wt: '+(r.mattWt||0)+' Kg','Matt Rej: '+(r.mattRej||0)+' pcs']
-  ].forEach(function(row,i){
-    y=pdfTableRow(doc,row,[50,70,70,79],y,i);
-  });
-  y+=12; pdfSignOff(doc,y,true);
-  pdfFooter(doc,r.id,'Production Summary',r.date,true);
-  doc.save('PS_'+r.id+'.pdf');
-  toast('PDF downloaded','success');
-}
 
 /* ═══════════════════════════════════════════════════════════════
    MDO PRESS PDF
@@ -3168,10 +3375,6 @@ function mdoDlPDF(id){
 /* ═══════════════════════════════════════════════════════════════
    MDO PRESS MODULE
 ═══════════════════════════════════════════════════════════════ */
-var MDO_REPORTS = [];
-var mdoSeq = 1;
-var mdoItemIdx = 0;
-var currentMDOId = null;
 
 function openMDOForm(editId){
   var isEdit=!!editId;
@@ -3212,6 +3415,544 @@ function openMDOForm(editId){
   mdoCalcWorking();
   openModal('modal-mdo');
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PRODUCTION PLANNING REPORT — Full Module
+   Cloned exactly from Chipping Report pattern
+═══════════════════════════════════════════════════════════════ */
+
+
+/* ── KPI TILES ── */
+function renderPPKPIs(){
+  var el = document.getElementById('pp-kpis'); if(!el) return;
+  var total = PP_REPORTS.length;
+  var approved = PP_REPORTS.filter(function(r){ return r.wfState==='approved'; }).length;
+  var totalBoards = PP_REPORTS.reduce(function(s,r){ return s + (r.products||[]).reduce(function(ss,p){ return ss+(parseInt(p.targetBoards)||0); },0); }, 0);
+  var totalSqft   = PP_REPORTS.reduce(function(s,r){ return s + (r.products||[]).reduce(function(ss,p){ return ss+(parseFloat(p.targetSqft)||0);  },0); }, 0);
+  el.innerHTML =
+    kpiCard(total,          'Total Plans',      '📋', '') +
+    kpiCard(approved,       'Approved',         '✅', 'grn') +
+    kpiCard(totalBoards.toLocaleString('en-IN'), 'Target Boards',  '📦', 'amb') +
+    kpiCard((totalSqft/1000).toFixed(1)+' K',   'Target Sqft',    '📐', 'blu');
+}
+
+/* ── LIST RENDER ── */
+function renderPPList(){
+  var q  = (document.getElementById('pp-srch')||{value:''}).value.toLowerCase();
+  var ds = (document.getElementById('pp-date-filter')||{value:''}).value;
+  var st = (document.getElementById('pp-status-filter')||{value:''}).value;
+  var rows = PP_REPORTS.filter(function(r){
+    if(st && r.wfState !== st) return false;
+    if(ds  && r.date  !== ds)  return false;
+    if(q   && !JSON.stringify(r).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  var cnt = document.getElementById('pp-cnt'); if(cnt) cnt.textContent = rows.length+' plans';
+  var tb  = document.getElementById('pp-tbody'); if(!tb) return;
+  if(!rows.length){
+    tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--g4)">No production plans. <button class="btn btn-red btn-sm" onclick="openPPForm()">＋ New Plan</button></td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(function(r,i){
+    var prods = (r.products||[]);
+    var prodTags = prods.slice(0,2).map(function(p){
+      return '<span class="tag tag-red" style="font-size:9px">'+p.size+'·'+p.thickness+'mm</span>';
+    }).join(' ') + (prods.length>2?'<span class="tag" style="font-size:9px;background:var(--g1);color:var(--g4)">+'+( prods.length-2)+'</span>':'');
+    var tBoards = prods.reduce(function(s,p){ return s+(parseInt(p.targetBoards)||0); }, 0);
+    var tSqft   = prods.reduce(function(s,p){ return s+(parseFloat(p.targetSqft)||0);  }, 0);
+    var priCol  = {High:'var(--red)',Medium:'var(--amber)',Low:'var(--green)'};
+    var topPri  = prods.length ? prods[0].priority : '—';
+    return '<tr style="border-bottom:1px solid var(--g1)'+(i%2?';background:var(--g0)':'')+'">'+
+      '<td style="padding:8px 10px;font-size:11px;color:var(--g4)">'+(i+1)+'</td>'+
+      '<td style="padding:8px 10px;font-family:var(--fm);font-weight:700;color:var(--red)">'+r.id+'</td>'+
+      '<td style="padding:8px 10px;font-size:12px">'+r.date+'</td>'+
+      '<td style="padding:8px 10px"><span class="tag tag-blue" style="font-size:9px">'+r.shift+'</span></td>'+
+      '<td style="padding:8px 10px">'+prodTags+'</td>'+
+      '<td class="num" style="font-weight:700">'+tBoards.toLocaleString('en-IN')+'</td>'+
+      '<td class="num">'+Math.round(tSqft).toLocaleString('en-IN')+'</td>'+
+      '<td style="padding:8px 10px;font-size:10px;font-weight:700;color:'+(priCol[topPri]||'var(--g4)')+'">'+topPri+'</td>'+
+      '<td style="padding:8px 10px"><span class="wf-badge wf-'+r.wfState+'" style="font-size:9px">'+r.wfState.toUpperCase()+'</span></td>'+
+      '<td style="padding:8px 10px;display:flex;gap:4px;flex-wrap:wrap">'+
+        btn('View','btn-outline',r.id,'viewPP')+
+        btn('Edit','btn-amber',r.id,'openPPForm')+
+        btn('PDF','btn-red',r.id,'ppDlPDF')+
+        btn('XLS','btn-gray',r.id,'exportPPSingle')+
+        btn('📤','btn-blue',r.id,'wfOpen,pp')+
+        (canDelete()?btnDel(r.id,'deletePP'):'')+
+      '</td></tr>';
+  }).join('');
+}
+
+/* ── OPEN FORM ── */
+function openPPForm(editId){
+  var isEdit = !!editId;
+  var r = isEdit ? PP_REPORTS.find(function(x){ return x.id===editId; }) : null;
+
+  /* Reset header fields */
+  var d = document.getElementById('pp-date'); if(d) d.value = r ? r.date : new Date().toISOString().split('T')[0];
+  ['pp-shift','pp-dryer-a-in','pp-dryer-a-out','pp-dryer-b-in','pp-dryer-b-out','pp-dryer-op',
+   'pp-input-matt-wt','pp-chip-start','pp-hag-a-start','pp-hag-b-start',
+   'pp-therm-start','pp-therm-temp','pp-therm-op',
+   'pp-trill-speed','pp-blend-start','pp-blend-op','pp-prepress-op',
+   'pp-pressline-start','pp-cycle-time','pp-press-op','pp-thick-bar',
+   'pp-raw-board-wt','pp-total-matts','pp-total-bc','pp-wet-wood-avail',
+   'pp-resin-qty-matt','pp-remarks']
+    .forEach(function(fid){ var e=document.getElementById(fid); if(e) e.value=r?(r[fid.replace('pp-','').replace(/-([a-z])/g,function(_,c){return c.toUpperCase;})]||''):''; });
+
+  /* Set from record if editing */
+  if(r){
+    var map={
+      'pp-shift':r.shift,'pp-dryer-a-in':r.dryerAIn,'pp-dryer-a-out':r.dryerAOut,
+      'pp-dryer-b-in':r.dryerBIn,'pp-dryer-b-out':r.dryerBOut,'pp-dryer-op':r.dryerOp,
+      'pp-input-matt-wt':r.inputMattWt,'pp-chip-start':r.chipStart,'pp-hag-a-start':r.hagAStart,
+      'pp-hag-b-start':r.hagBStart,'pp-therm-start':r.thermStart,'pp-therm-temp':r.thermTemp,
+      'pp-therm-op':r.thermOp,'pp-trill-speed':r.trillSpeed,'pp-blend-start':r.blendStart,
+      'pp-blend-op':r.blendOp,'pp-prepress-op':r.prepressOp,'pp-pressline-start':r.pressLineStart,
+      'pp-cycle-time':r.cycleTime,'pp-press-op':r.pressOp,'pp-thick-bar':r.thickBar,
+      'pp-raw-board-wt':r.rawBoardWt,'pp-total-matts':r.totalMatts,'pp-total-bc':r.totalBoardCut,
+      'pp-wet-wood-avail':r.wetWoodAvail,'pp-resin-qty-matt':r.resinQtyPerMatt,'pp-remarks':r.remarks
+    };
+    Object.keys(map).forEach(function(id){ var e=document.getElementById(id); if(e&&map[id]!==undefined) e.value=map[id]; });
+  }
+
+  /* Auto-fill resin stock */
+  ppFetchResinStock();
+
+  /* Populate linked report dropdowns */
+  function populateSel2(selId, opts, val){
+    var s=document.getElementById(selId); if(!s) return;
+    s.innerHTML='<option value="">&#8212; None &#8212;</option>'+opts;
+    if(val) s.value=val;
+  }
+  populateSel2('pp-linked-hp',
+    HP_REPORTS.map(function(x){return '<option value="'+x.id+'">'+x.id+' · '+x.date+' · '+x.product+' · '+x.totalBoards+' boards</option>';}).join(''),
+    r?r.linkedHP:'');
+  populateSel2('pp-linked-mw',
+    MATT_BATCHES.map(function(x){return '<option value="'+x.id+'">'+x.id+' · '+x.date+' · '+x.product+'</option>';}).join(''),
+    r?r.linkedMW:'');
+  populateSel2('pp-linked-bc',
+    BC_REPORTS.map(function(x){return '<option value="'+x.id+'">'+x.id+' · '+x.date+' · Cut:'+x.cutPcs+'</option>';}).join(''),
+    r?r.linkedBC:'');
+  populateSel2('pp-linked-ps',
+    PS_REPORTS.map(function(x){return '<option value="'+x.id+'">'+x.id+' · '+x.date+' · '+x.product+'</option>';}).join(''),
+    r?r.linkedPS:'');
+
+  /* Product rows */
+  ppItemIdx = 0;
+  var ctr = document.getElementById('pp-items-container'); if(ctr) ctr.innerHTML='';
+  if(r && r.products && r.products.length){
+    r.products.forEach(function(p){ addPPProduct(p); });
+  } else {
+    addPPProduct();
+  }
+
+  /* Estimated press charges */
+  ppCalcAuto();
+
+  /* Title & save button */
+  var mt = document.getElementById('pp-modal-title'); if(mt) mt.textContent = isEdit?'📋 Edit '+editId:'📋 New Production Plan';
+  var sb = document.getElementById('pp-save-btn'); if(sb) sb.onclick = isEdit ? function(){ savePPReport(editId); } : function(){ savePPReport(); };
+  var err = document.getElementById('pp-error'); if(err) err.style.display='none';
+  openModal('modal-pp');
+}
+
+/* ── ADD PRODUCT ROW ── */
+function addPPProduct(data){
+  ppItemIdx++;
+  var idx = ppItemIdx;
+  var d = data || {};
+  var ctr = document.getElementById('pp-items-container'); if(!ctr) return;
+  var row = document.createElement('div');
+  row.id = 'pp-prod-'+idx;
+  row.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:#fff;position:relative';
+  row.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'+
+    '<span style="font-size:11px;font-weight:700;font-family:var(--fm);color:var(--red)">PRODUCT LINE '+idx+'</span>'+
+    '<button class="btn-del" onclick="removePPProduct('+idx+')" style="font-size:11px">✕</button></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px">'+
+    '<div class="fld"><label>Product <span class="req">*</span></label>'+
+      '<select class="fsel" id="pp-prod-'+idx+'-product" onchange="ppCalcAuto()">'+
+        '<option value="">— Select —</option><option'+(d.product==='OSB'?' selected':'')+'>OSB</option>'+
+        '<option'+(d.product==='S-OSB'?' selected':'')+'>S-OSB</option>'+
+        '<option'+(d.product==='Semi OSB'?' selected':'')+'>Semi OSB</option></select></div>'+
+    '<div class="fld"><label>Size <span class="req">*</span></label>'+
+      '<select class="fsel" id="pp-prod-'+idx+'-size" onchange="ppCalcAuto()">'+
+        '<option'+(d.size==='8x4'?' selected':'')+'>8x4</option>'+
+        '<option'+(d.size==='4x4'?' selected':'')+'>4x4</option>'+
+        '<option'+(d.size==='6x4'?' selected':'')+'>6x4</option></select></div>'+
+    '<div class="fld"><label>Thickness (mm) <span class="req">*</span></label>'+
+      '<input class="finput" type="number" id="pp-prod-'+idx+'-thickness" placeholder="e.g. 12" value="'+(d.thickness||'')+'" oninput="ppCalcAuto()"></div>'+
+    '<div class="fld"><label>Priority</label>'+
+      '<select class="fsel" id="pp-prod-'+idx+'-priority">'+
+        '<option'+(d.priority==='High'?' selected':'')+'>High</option>'+
+        '<option'+(d.priority==='Medium'||!d.priority?' selected':'')+'>Medium</option>'+
+        '<option'+(d.priority==='Low'?' selected':'')+'>Low</option></select></div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">'+
+    '<div class="fld"><label>Target Boards <span class="req">*</span></label>'+
+      '<input class="finput" type="number" id="pp-prod-'+idx+'-boards" placeholder="e.g. 1200" value="'+(d.targetBoards||'')+'" oninput="ppCalcRow('+idx+')"></div>'+
+    '<div class="fld"><label>Target Sqft (Auto)</label>'+
+      '<input class="finput auto" type="text" id="pp-prod-'+idx+'-sqft" readonly value="'+(d.targetSqft||'')+'"></div>'+
+    '<div class="fld"><label>Est. Press Charges (Auto)</label>'+
+      '<input class="finput auto" type="text" id="pp-prod-'+idx+'-charges" readonly value="'+(d.estCharges||'')+'"></div>'+
+    '<div class="fld"><label>Est. Production Pcs</label>'+
+      '<input class="finput auto" type="text" id="pp-prod-'+idx+'-estpcs" readonly value="'+(d.estPcs||'')+'"></div>'+
+    '</div>';
+  ctr.appendChild(row);
+  ppCalcRow(idx);
+}
+
+function removePPProduct(idx){
+  var r = document.getElementById('pp-prod-'+idx); if(r) r.parentNode.removeChild(r);
+  ppCalcAuto();
+}
+
+/* ── AUTO CALCULATE ── */
+function ppCalcRow(idx){
+  var boards = parseInt((document.getElementById('pp-prod-'+idx+'-boards')||{value:0}).value)||0;
+  var size   = (document.getElementById('pp-prod-'+idx+'-size')||{value:'8x4'}).value;
+  var thick  = parseFloat((document.getElementById('pp-prod-'+idx+'-thickness')||{value:12}).value)||12;
+
+  var sizeMap = {'8x4':32,'4x4':16,'6x4':24};
+  var sqftPerBoard = sizeMap[size]||32;
+  var sqft = boards * sqftPerBoard;
+  var charges = Math.ceil(boards / 30);
+  var estPcs  = boards;
+
+  var sqftEl = document.getElementById('pp-prod-'+idx+'-sqft');    if(sqftEl)    sqftEl.value = sqft.toLocaleString('en-IN');
+  var chgEl  = document.getElementById('pp-prod-'+idx+'-charges'); if(chgEl)     chgEl.value  = charges;
+  var pcsEl  = document.getElementById('pp-prod-'+idx+'-estpcs');  if(pcsEl)     pcsEl.value  = estPcs.toLocaleString('en-IN');
+
+  ppCalcAuto();
+}
+
+function ppCalcAuto(){
+  /* Total boards across all products */
+  var totalBoards=0, totalSqft=0, totalCharges=0;
+  for(var i=1;i<=ppItemIdx;i++){
+    var be = document.getElementById('pp-prod-'+i+'-boards');
+    var se = document.getElementById('pp-prod-'+i+'-size');
+    if(!be) continue;
+    var b   = parseInt(be.value)||0;
+    var sz  = se?se.value:'8x4';
+    var spm = {'8x4':32,'4x4':16,'6x4':24}[sz]||32;
+    totalBoards  += b;
+    totalSqft    += b*spm;
+    totalCharges += Math.ceil(b/30);
+  }
+
+  /* Auto-calc material requirements */
+  var inputMatt = parseFloat((document.getElementById('pp-input-matt-wt')||{value:0}).value)||0;
+  var resinQPM  = parseFloat((document.getElementById('pp-resin-qty-matt')||{value:0}).value)||0;
+  var dryWood   = inputMatt * totalBoards - (resinQPM * totalBoards);
+  var wetWood   = dryWood * 2.5;
+
+  /* Display auto-calculated fields */
+  /* Resin required = matts × resin per matt */
+  var matts    = parseFloat((document.getElementById('pp-total-matts')||{value:0}).value)||0;
+  var resinReq = resinQPM * matts;
+
+  /* Auto-fill display fields */
+  var ww = document.getElementById('pp-wet-wood-calc');      if(ww)  ww.value  = wetWood>0?fmt2(wetWood)+' Kg':'—';
+  var rr = document.getElementById('pp-resin-required-calc');if(rr)  rr.value  = resinReq>0?fmt2(resinReq)+' Kg':'—';
+  var tc = document.getElementById('pp-target-charges');     if(tc)  tc.value  = totalCharges ? totalCharges+' charges' : '—';
+
+  /* Summary totals */
+  var tbo = document.getElementById('pp-totals-boards'); if(tbo) tbo.textContent = totalBoards.toLocaleString('en-IN')+' boards';
+  var tsq = document.getElementById('pp-totals-sqft');   if(tsq) tsq.textContent = Math.round(totalSqft).toLocaleString('en-IN')+' sqft';
+  var tch = document.getElementById('pp-totals-charges');if(tch) tch.textContent = totalCharges+' charges';
+
+  /* Raw Material Requirement table */
+  ppRenderRMTable(wetWood, resinReq);
+}
+
+function ppRenderRMTable(wetWoodReq, resinReq){
+  var tb = document.getElementById('pp-rm-table'); if(!tb) return;
+  /* Stock available */
+  var wetWoodAvail = parseFloat((document.getElementById('pp-wet-wood-avail')||{value:0}).value)||0;
+  var resinAvail = 0;
+  PURCHASE_RESIN.forEach(function(l){ resinAvail += getResinAvail(l.lot); });
+  var nilgiriAvail = 0;
+  PURCHASE_NILGIRI.forEach(function(l){ nilgiriAvail += getAvail(l.lot); });
+
+  function statusBadge(req, avail){
+    if(!req) return '<span style="color:var(--g4);font-size:10px">N/A</span>';
+    var ok = avail >= req;
+    var pct = avail ? Math.round(avail/req*100) : 0;
+    var col = ok ? 'var(--green)' : 'var(--red)';
+    var label = ok ? '✓ OK' : '✗ SHORT';
+    return '<span style="color:'+col+';font-weight:700;font-size:11px">'+label+'</span>'+
+      '<span style="color:var(--g4);font-size:10px;margin-left:6px">('+pct+'% of requirement)</span>';
+  }
+
+  var rows = [
+    {mat:'Wet Wood',   req:wetWoodReq,  avail:wetWoodAvail, unit:'Kg', note:'Floor availability entered above'},
+    {mat:'Resin',      req:resinReq,    avail:resinAvail,   unit:'Kg', note:'From Purchase ERP (all lots)'},
+    {mat:'Nilgiri (Dry Wood)', req:wetWoodReq/2.5, avail:nilgiriAvail, unit:'Kg', note:'Dry Wood = Wet ÷ 2.5'}
+  ];
+
+  tb.innerHTML = rows.map(function(r, i){
+    var bg = i%2===0?'#fff':'var(--g0)';
+    var reqStr = r.req>0 ? fmt2(r.req)+' '+r.unit : '—';
+    var availStr = fmt2(r.avail)+' '+r.unit;
+    return '<tr style="border-bottom:1px solid var(--g1);background:'+bg+'">'+
+      '<td style="padding:9px 12px;font-size:12px;font-weight:600">'+r.mat+'<div style="font-size:10px;color:var(--g4);font-weight:400">'+r.note+'</div></td>'+
+      '<td style="padding:9px 12px;text-align:right;font-family:var(--fm);font-weight:700;font-size:13px">'+reqStr+'</td>'+
+      '<td style="padding:9px 12px;text-align:right;font-family:var(--fm);font-size:13px;color:'+(r.avail<r.req&&r.req>0?'var(--red)':'var(--green)')+'">'+availStr+'</td>'+
+      '<td style="padding:9px 12px;text-align:center">'+statusBadge(r.req, r.avail)+'</td>'+
+      '</tr>';
+  }).join('');
+}
+
+function ppFetchResinStock(){
+  /* Auto-fetch resin available from RESIN_CONSUMED vs PURCHASE_RESIN */
+  var totalAvail = 0;
+  PURCHASE_RESIN.forEach(function(l){ totalAvail += getResinAvail(l.lot); });
+  var rs = document.getElementById('pp-resin-stock'); if(rs) rs.value = totalAvail.toLocaleString('en-IN')+' Kg';
+}
+
+/* ── SAVE ── */
+function savePPReport(editId){
+  var dateEl = document.getElementById('pp-date');
+  var errEl  = document.getElementById('pp-error');
+  if(!dateEl||!dateEl.value){ if(errEl){errEl.textContent='Plan Date required';errEl.style.display='block';} return; }
+  if(errEl) errEl.style.display='none';
+
+  var products = [];
+  for(var i=1;i<=ppItemIdx;i++){
+    var pe = document.getElementById('pp-prod-'+i+'-product');
+    var be = document.getElementById('pp-prod-'+i+'-boards');
+    if(!pe||!pe.value) continue;
+    var boards = parseInt((be||{value:0}).value)||0;
+    var size   = (document.getElementById('pp-prod-'+i+'-size')||{value:'8x4'}).value;
+    var spm    = {'8x4':32,'4x4':16,'6x4':24}[size]||32;
+    products.push({
+      product:  pe.value,
+      size:     size,
+      thickness:(document.getElementById('pp-prod-'+i+'-thickness')||{value:''}).value,
+      priority: (document.getElementById('pp-prod-'+i+'-priority')||{value:'Medium'}).value,
+      targetBoards: boards,
+      targetSqft:   boards*spm,
+      estCharges:   Math.ceil(boards/450),
+      estPcs:       boards
+    });
+  }
+  if(!products.length){ if(errEl){errEl.textContent='Add at least one product line';errEl.style.display='block';} return; }
+
+  function gv(id){ var e=document.getElementById(id); return e?e.value||'':''; }
+
+  var entry = {
+    id: editId || newId('PPR',ppSeq++),
+    date: dateEl.value,
+    shift: gv('pp-shift')||'Day',
+    planOp: gv('pp-plan-op'),
+    products: products,
+    /* Boiler Department */
+    hagAStart:  gv('pp-hag-a-start'),  hagBStart: gv('pp-hag-b-start'),
+    thermStart: gv('pp-therm-start'),  hagTemp:   gv('pp-hag-temp'),
+    thermTemp:  gv('pp-therm-temp'),   hagOp:     gv('pp-hag-op'),
+    thermOp:    gv('pp-therm-op'),
+    /* Dryer */
+    dryerAIn: gv('pp-dryer-a-in'), dryerAOut: gv('pp-dryer-a-out'), dryerAOp: gv('pp-dryer-a-op'),
+    dryerBIn: gv('pp-dryer-b-in'), dryerBOut: gv('pp-dryer-b-out'), dryerBOp: gv('pp-dryer-b-op'),
+    /* Blender */
+    chipsBlendStart: gv('pp-chips-blend-start'), dustBlendStart: gv('pp-dust-blend-start'),
+    chipsBlendOp:    gv('pp-chips-blend-op'),    dustBlendOp:    gv('pp-dust-blend-op'),
+    trillSpeed:      gv('pp-trill-speed'),
+    /* Forming Line */
+    formingOp: gv('pp-forming-op'), formingStart: gv('pp-forming-start'),
+    chipStart: gv('pp-chip-start'),
+    /* Pre-Press */
+    prepressOp: gv('pp-prepress-op'), prepressStart: gv('pp-prepress-start'),
+    inputMattWt: gv('pp-input-matt-wt'),  totalMatts: gv('pp-total-matts'),
+    /* Hot Press */
+    pressOp:        gv('pp-press-op'),       pressLineStart: gv('pp-pressline-start'),
+    cycleTime:      gv('pp-cycle-time'),      pressTemp:      gv('pp-press-temp'),
+    thickBar:       gv('pp-thick-bar'),
+    /* Cutting */
+    totalBoardCut: gv('pp-total-bc'), cutSize: gv('pp-cut-size'), cutOp: gv('pp-cut-op'),
+    /* Raw Material */
+    resinQtyPerMatt: gv('pp-resin-qty-matt'),
+    wetWoodAvail:    gv('pp-wet-wood-avail'),
+    resinStock:      gv('pp-resin-stock'),
+    remarks:         gv('pp-remarks'),
+    /* Linked Reports */
+    linkedHP: gv('pp-linked-hp'),
+    linkedMW: gv('pp-linked-mw'),
+    linkedBC: gv('pp-linked-bc'),
+    linkedPS: gv('pp-linked-ps'),
+    wfState: editId ? (PP_REPORTS.find(function(x){return x.id===editId;})||{wfState:'draft'}).wfState : 'draft',
+    wfTrail: editId ? (PP_REPORTS.find(function(x){return x.id===editId;})||{wfTrail:[]}).wfTrail : [],
+    status: 'saved',
+    createdAt: new Date().toLocaleString('en-IN')
+  };
+
+  if(editId){
+    var idx = PP_REPORTS.findIndex(function(x){ return x.id===editId; });
+    if(idx>=0) PP_REPORTS[idx] = entry; else PP_REPORTS.unshift(entry);
+  } else {
+    PP_REPORTS.unshift(entry);
+  }
+
+  closeModal('modal-pp');
+  renderPPList(); renderPPKPIs();
+  toast(entry.id+' saved · '+products.length+' product lines · '+products.reduce(function(s,p){return s+p.targetBoards;},0)+' boards planned','success');
+}
+
+/* ── VIEW ── */
+function viewPP(id){
+  var r = PP_REPORTS.find(function(x){ return x.id===id; }); if(!r) return;
+  currentPPId = id;
+
+  var t = document.getElementById('ppv-title'); if(t) t.textContent='📋 '+r.id;
+  var s = document.getElementById('ppv-sub');   if(s) s.textContent=r.date+' · '+r.shift+' Shift · '+(r.products||[]).length+' product lines';
+
+  var card = document.getElementById('ppv-card'); if(!card) return;
+
+  function row(l,v,b,c){
+    return '<tr><td style="padding:7px 12px;font-size:12px;color:var(--g4);width:210px">'+l+'</td>'+
+      '<td style="padding:7px 12px;font-size:12px;font-weight:'+(b?700:400)+';color:'+(c||'var(--g6)')+'">'+v+'</td></tr>';
+  }
+  function secHdr(title){
+    return '<tr><td colspan="2" style="background:var(--g6);color:#fff;padding:7px 12px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-family:var(--fm)">'+title+'</td></tr>';
+  }
+
+  var prodTable = '<table style="width:100%;border-collapse:collapse;margin:10px 0">'+
+    '<thead><tr style="background:var(--red)">'+
+    '<th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase">PRODUCT</th>'+
+    '<th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700">SIZE</th>'+
+    '<th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700">THICK</th>'+
+    '<th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;text-align:right">BOARDS</th>'+
+    '<th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;text-align:right">SQFT</th>'+
+    '<th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700;text-align:right">CHARGES</th>'+
+    '<th style="padding:7px 10px;color:#fff;font-size:9px;font-weight:700">PRIORITY</th>'+
+    '</tr></thead><tbody>'+
+    (r.products||[]).map(function(p,i){
+      var priCol={High:'var(--red)',Medium:'var(--amber)',Low:'var(--green)'};
+      return '<tr style="border-bottom:1px solid var(--g1)'+(i%2?';background:var(--g0)':'')+'">'+
+        '<td style="padding:7px 10px;font-weight:700">'+p.product+'</td>'+
+        '<td style="padding:7px 10px">'+p.size+'</td>'+
+        '<td style="padding:7px 10px">'+p.thickness+'mm</td>'+
+        '<td style="padding:7px 10px;text-align:right;font-weight:700;font-family:var(--fm)">'+p.targetBoards.toLocaleString('en-IN')+'</td>'+
+        '<td style="padding:7px 10px;text-align:right;font-family:var(--fm)">'+Math.round(p.targetSqft).toLocaleString('en-IN')+'</td>'+
+        '<td style="padding:7px 10px;text-align:right;font-family:var(--fm)">'+p.estCharges+'</td>'+
+        '<td style="padding:7px 10px"><span style="color:'+(priCol[p.priority]||'var(--g4)')+';font-weight:700;font-size:11px">'+p.priority+'</span></td>'+
+        '</tr>';
+    }).join('')+
+    '</tbody></table>';
+
+  card.innerHTML =
+    '<div style="background:var(--redlt);border-bottom:2px solid var(--red);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">'+
+    '<div><div style="font-size:20px;font-weight:800;color:var(--red);font-family:var(--fm)">'+r.id+'</div>'+
+    '<div style="font-size:12px;color:var(--g4);margin-top:3px">'+r.date+' · '+r.shift+' Shift</div></div>'+
+    '<span class="wf-badge wf-'+r.wfState+'">'+r.wfState.toUpperCase()+'</span></div>'+
+    '<div style="padding:14px 18px">'+ prodTable +'</div>'+
+    '<table style="width:100%;border-collapse:collapse">'+
+    secHdr('🔥 BOILER DEPARTMENT')+
+    row('HAG-A Start Time',     r.hagAStart||'—')+row('HAG-B Start Time',r.hagBStart||'—')+
+    row('Thermic Boiler Start', r.thermStart||'—')+
+    row('HAG Temperature',      r.hagTemp?r.hagTemp+' °C':'—')+
+    row('Thermic Boiler Temp',  r.thermTemp?r.thermTemp+' °C':'—')+
+    row('HAG Operator',         r.hagOp||'—')+
+    row('Thermic Boiler Op.',   r.thermOp||'—')+
+    secHdr('💨 DRYER INFORMATION')+
+    row('Dryer A Input Temp',   r.dryerAIn?r.dryerAIn+' °C':'—')+
+    row('Dryer A Output Temp',  r.dryerAOut?r.dryerAOut+' °C':'—')+
+    row('Dryer A Operator',     r.dryerAOp||'—')+
+    row('Dryer B Input Temp',   r.dryerBIn?r.dryerBIn+' °C':'—')+
+    row('Dryer B Output Temp',  r.dryerBOut?r.dryerBOut+' °C':'—')+
+    row('Dryer B Operator',     r.dryerBOp||'—')+
+    secHdr('⚙️ BLENDER DEPARTMENT')+
+    row('Chips Blender Start',  r.chipsBlendStart||'—')+
+    row('Dust Blender Start',   r.dustBlendStart||'—')+
+    row('Chips Blender Op.',    r.chipsBlendOp||'—')+
+    row('Dust Blender Op.',     r.dustBlendOp||'—')+
+    row('Trillium Speed',       r.trillSpeed||'—')+
+    secHdr('🏗️ FORMING LINE')+
+    row('Forming Line Operator',r.formingOp||'—')+
+    row('Forming Line Start',   r.formingStart||'—')+
+    row('Chipping Start',       r.chipStart||'—')+
+    secHdr('🗜️ PRE-PRESS DEPARTMENT')+
+    row('Pre-Press Operator',   r.prepressOp||'—')+
+    row('Pre-Press Start Time', r.prepressStart||'—')+
+    row('Target Matt Weight',   r.inputMattWt?r.inputMattWt+' Kg':'—')+
+    row('No. of Matts',         r.totalMatts||'—')+
+    secHdr('🔥 HOT PRESS')+
+    row('Hot Press Operator',   r.pressOp||'—')+
+    row('Hot Press Start Time', r.pressLineStart||'—')+
+    row('Cycle Time',           r.cycleTime||'—')+
+    row('Hot Press Temperature',r.pressTemp?r.pressTemp+' °C':'—')+
+    row('Thickness Bar',        r.thickBar||'—')+
+    secHdr('✂️ CUTTING DEPARTMENT')+
+    row('Total Boards Cutting', r.totalBoardCut||'—')+
+    row('Cutting Size',         r.cutSize||'—')+
+    row('Cutting Operator',     r.cutOp||'—')+
+    secHdr('📦 RAW MATERIAL')+
+    row('Resin Qty per Matt',   r.resinQtyPerMatt||'—')+
+    row('Resin Stock (Auto)',   r.resinStock||'—')+
+    row('Wet Wood Availability',r.wetWoodAvail||'—')+
+    row('Remarks',              r.remarks||'—')+
+    secHdr('📊 LINKED REPORTS')+
+    row('Linked HP Report',  r.linkedHP||'—',false,'var(--blue)')+
+    row('Linked Matt Batch', r.linkedMW||'—',false,'var(--amber)')+
+    row('Linked BC Report',  r.linkedBC||'—',false,'var(--green)')+
+    row('Linked PS Report',  r.linkedPS||'—',false,'var(--red)')+
+    '</table>';
+
+  showPage('pp-view');
+  refreshPPButtons(r);
+}
+
+function refreshPPButtons(r){
+  if(!r) r = PP_REPORTS.find(function(x){ return x.id===currentPPId; }); if(!r) return;
+  var st   = r.wfState;
+  var role = ROLES[CURRENT_USER].role;
+  show('btn-pp-send-review',  st==='draft'    && (role==='admin'||role==='operator'));
+  show('btn-pp-reviewer-act', st==='review'   && (role==='admin'||role==='reviewer'));
+  show('btn-pp-approver-act', st==='reviewed' && (role==='admin'||role==='approver'));
+}
+
+/* ── DELETE ── */
+function deletePP(id){
+  confirmDelete('Delete Production Plan '+id+'?', function(){
+    PP_REPORTS = PP_REPORTS.filter(function(x){ return x.id!==id; });
+    renderPPList(); renderPPKPIs();
+    toast(id+' deleted','warning');
+  });
+}
+
+/* ── EXPORT ── */
+function exportPP(){
+  var rows = PP_REPORTS.map(function(r){
+    var p = (r.products||[])[0]||{};
+    var tb = (r.products||[]).reduce(function(s,x){ return s+(x.targetBoards||0); },0);
+    var ts = (r.products||[]).reduce(function(s,x){ return s+(x.targetSqft||0);   },0);
+    return {id:r.id,date:r.date,shift:r.shift,product:p.product||'',size:p.size||'',
+      targetboards:tb,targetsqft:Math.round(ts),status:r.wfState,remarks:r.remarks||''};
+  });
+  exportToExcel(rows,'ProductionPlan',['ID','Date','Shift','Product','Size','TargetBoards','TargetSqft','Status','Remarks']);
+}
+function exportPPSingle(id){
+  var r = PP_REPORTS.find(function(x){ return x.id===id; }); if(!r) return;
+  var rows = (r.products||[]).map(function(p){
+    return {product:p.product,size:p.size,thickness:p.thickness,targetboards:p.targetBoards,
+      targetsqft:Math.round(p.targetSqft),estcharges:p.estCharges,priority:p.priority};
+  });
+  exportToExcel(rows,'PP_'+id,['Product','Size','Thickness','TargetBoards','TargetSqft','EstCharges','Priority']);
+}
+
+/* ── PDF ── */
 
 function addMDOItem(){
   mdoItemIdx++;
@@ -3265,6 +4006,11 @@ function mdoCalcTotals(){
   var tot=document.getElementById('mdo-totals');
   if(tot) tot.textContent='Total Pcs: '+totalPcs;
 }
+
+
+
+
+
 
 function saveMDOReport(editId){
   var dateEl=document.getElementById('mdo-date');
@@ -3323,21 +4069,6 @@ function saveMDOReport(editId){
   toast(entry.id+' saved · '+totalPcs+' pcs · '+items.length+' items','success');
 }
 
-function viewMDO(id){
-  var r=MDO_REPORTS.find(function(x){return x.id===id;}); if(!r)return;
-  currentMDOId=id;
-  toast(r.id+' · '+r.date+' · '+r.items.length+' items · '+r.totalPcs+' pcs','info');
-}
-function editMDO(id){
-  openMDOForm(id);
-}
-function deleteMDO(id){
-  confirmDelete('Delete MDO report '+id+'?',function(){
-    MDO_REPORTS=MDO_REPORTS.filter(function(x){return x.id!==id;});
-    renderMDOList();renderMDOKPIs();toast(id+' deleted','warning');
-  });
-}
-
 function renderMDOKPIs(){
   var el=document.getElementById('mdo-kpis'); if(!el) return;
   var totalPcs=MDO_REPORTS.reduce(function(s,r){return s+(r.totalPcs||0);},0);
@@ -3363,11 +4094,10 @@ function renderMDOList(){
       '<td style="padding:8px 10px;font-size:11px;font-family:var(--fm)">'+r.pressStart+'→'+r.pressEnd+'</td>'+
       '<td style="padding:8px 10px;font-size:11px;font-family:var(--fm)">'+r.workingTime+'</td>'+
       '<td class="num" style="font-weight:700">'+r.items.length+'</td>'+
-      '<td class="num">'+totalPcs+'</td>'+
+      '<td class="num" style="font-weight:700">'+totalPcs.toLocaleString('en-IN')+'</td>'+
       '<td style="padding:8px 10px"><span class="wf-badge wf-'+r.wfState+'" style="font-size:9px">'+r.wfState.toUpperCase()+'</span></td>'+
-      '<td style="padding:8px 10px;display:flex;gap:4px">'+
-        btn('View','btn-outline',r.id,'viewMDO')+
-        btn('Edit','btn-amber',r.id,'editMDO')+
+      '<td style="padding:8px 10px;display:flex;gap:4px;flex-wrap:wrap">'+
+        btn('Edit','btn-amber',r.id,'openMDOForm')+
         btn('PDF','btn-red',r.id,'mdoDlPDF')+
         btn('📤','btn-blue',r.id,'wfOpen,mdo')+
         (canDelete()?btnDel(r.id,'deleteMDO'):'')+
@@ -3375,9 +4105,854 @@ function renderMDOList(){
   }).join('');
 }
 
+function deleteMDO(id){
+  confirmDelete('Delete MDO report '+id+'?',function(){
+    MDO_REPORTS=MDO_REPORTS.filter(function(x){return x.id!==id;});
+    renderMDOList(); renderMDOKPIs();
+    toast(id+' deleted','warning');
+  });
+}
+
+function exportMDO(){
+  var rows=MDO_REPORTS.map(function(r){return{id:r.id,date:r.date,shift:r.shift,pressstart:r.pressStart,pressend:r.pressEnd,workingtime:r.workingTime,items:r.items.length,totalpcs:r.totalPcs,totalpaperused:r.totalPaperUsed,paperwastage:r.totalPaperWastage,status:r.wfState};});
+  exportToExcel(rows,"MDO_Report",["ID","Date","Shift","PressStart","PressEnd","WorkingTime","Items","TotalPcs","TotalPaperUsed","PaperWastage","Status"]);
+}
+
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   PRODUCTION PLANNING — Enhanced PDF (WO theme) + Linked Reports
+═══════════════════════════════════════════════════════════════ */
+
+function ppDlPDF(id){
+  var r = PP_REPORTS.find(function(x){ return x.id===id; });
+  if(!r){ toast('Plan not found','error'); return; }
+  if(!window.jspdf){ toast('PDF library loading…','error'); return; }
+
+  var doc = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+  var W=210, M=14, y=0;
+
+  /* ── COLOUR PALETTE (matches WO PDF) ── */
+  var C = {
+    navy:   [18, 24, 40],
+    navyMd: [30, 38, 64],
+    white:  [255,255,255],
+    red:    [213, 17, 10],
+    green:  [5, 150, 105],
+    amber:  [217,119,6],
+    blue:   [14,165,233],
+    indigo: [99,102,241],
+    teal:   [8,145,178],
+    grey:   [74,85,104],
+    lgrey:  [241,243,247],
+    border: [220,222,230],
+    text:   [18,24,40],
+    muted:  [100,110,130]
+  };
+
+  function setFont(bold){ doc.setFont('helvetica', bold?'bold':'normal'); }
+  function setColor(c){   doc.setTextColor(c[0],c[1],c[2]); }
+  function setFill(c){    doc.setFillColor(c[0],c[1],c[2]); }
+  function setDraw(c){    doc.setDrawColor(c[0],c[1],c[2]); }
+
+  /* ── HEADER BLOCK ── */
+  setFill(C.navy); doc.rect(0,0,W,44,'F');
+  // Logo area
+  try{ doc.addImage(LOGO_DATA,'PNG',M,7,28,14); }catch(e){
+    setFill([213,17,10]); doc.roundedRect(M,7,16,16,2,2,'F');
+    setFont(true); setColor(C.white); doc.setFontSize(10);
+    doc.text('S',M+8,17,{align:'center'});
+  }
+  // Company + title
+  setFont(true); setColor(C.white); doc.setFontSize(8);
+  doc.text('STRANDPLY LLP',M+32,13);
+  setFont(false); setColor([160,170,200]); doc.setFontSize(7);
+  doc.text('Production Dept — Production Planning Division',M+32,18);
+  // Plan title
+  setFont(true); setColor(C.white); doc.setFontSize(16);
+  doc.text('PRODUCTION PLANNING REPORT',W-M,13,{align:'right'});
+  // Plan ID badge
+  setFill([213,17,10]); doc.roundedRect(W-M-38,17,38,7,1.5,1.5,'F');
+  setFont(true); setColor(C.white); doc.setFontSize(8);
+  doc.text(r.id, W-M-3, 22.5, {align:'right'});
+  // Status / shift / date row
+  setFont(false); setColor([180,190,220]); doc.setFontSize(7);
+  doc.text('Date: '+r.date+'   Shift: '+r.shift+'   Status: '+r.wfState.toUpperCase()+'   Plan Operator: '+(r.planOp||'—'),M+32,27);
+  // Red accent stripe
+  setFill(C.red); doc.rect(0,44,W,2,'F');
+  y = 52;
+
+  /* ── HELPER: SECTION HEADER ── */
+  function secHdr(icon, title, color){
+    if(y > 265){ doc.addPage(); y=14; }
+    setFill(color||C.navyMd); doc.rect(M,y,W-2*M,9,'F');
+    setFont(true); setColor(C.white); doc.setFontSize(8.5);
+    doc.text(icon+'  '+title, M+4, y+6.5);
+    y += 9;
+  }
+
+  /* ── HELPER: INFO GRID (2-col key:value) ── */
+  function infoGrid(pairs){
+    var perRow=2, cw=(W-2*M)/2, rh=10;
+    var n = pairs.length;
+    for(var i=0;i<n;i++){
+      if(y > 265){ doc.addPage(); y=14; }
+      var col=i%perRow, rowIdx=Math.floor(i/perRow);
+      if(col===0){ // new row — draw both cell backgrounds
+        var bg = (rowIdx%2===0) ? C.white : C.lgrey;
+        setFill(bg); doc.rect(M, y, W-2*M, rh, 'F');
+        setDraw(C.border); doc.setLineWidth(0.1);
+        doc.rect(M, y, W-2*M, rh);
+      }
+      var x = M + col*cw;
+      // vertical divider
+      if(col===1){ setDraw(C.border); doc.setLineWidth(0.1); doc.line(M+cw,y,M+cw,y+rh); }
+      setFont(false); setColor(C.muted); doc.setFontSize(6.5);
+      doc.text(pairs[i][0], x+3, y+4);
+      setFont(true); setColor(C.text); doc.setFontSize(8.5);
+      doc.text(String(pairs[i][1]||'—'), x+3, y+8.5, {maxWidth:cw-6});
+      if(col===perRow-1 || i===n-1) y+=rh;
+    }
+    y+=2;
+  }
+
+  /* ── HELPER: TABLE ── */
+  function table(headers, rows, colWidths){
+    if(y > 260){ doc.addPage(); y=14; }
+    var tw = colWidths.reduce(function(s,c){return s+c;},0);
+    setFill(C.navyMd); doc.rect(M,y,tw,8,'F');
+    setFont(true); setColor(C.white); doc.setFontSize(7.5);
+    var x=M;
+    headers.forEach(function(h,i){
+      doc.text(h,x+2,y+5.5);
+      x+=colWidths[i];
+      if(i<headers.length-1){ setDraw([80,90,120]); doc.setLineWidth(0.2); doc.line(x,y,x,y+8); }
+    });
+    y+=8;
+    rows.forEach(function(row,ri){
+      if(y>262){ doc.addPage(); y=14; }
+      var bg=ri%2===0?C.white:C.lgrey;
+      setFill(bg); doc.rect(M,y,tw,7,'FD');
+      setDraw(C.border); doc.setLineWidth(0.1);
+      setFont(false); setColor(C.text); doc.setFontSize(8);
+      var cx=M;
+      row.forEach(function(cell,ci){
+        doc.text(String(cell||'—'),cx+2,y+4.8,{maxWidth:colWidths[ci]-4});
+        cx+=colWidths[ci];
+        if(ci<row.length-1){ setDraw(C.border); doc.line(cx,y,cx,y+7); }
+      });
+      y+=7;
+    });
+    y+=3;
+  }
+
+  /* ── HELPER: COMPARISON TABLE (Plan vs Actual) ── */
+  function comparisonTable(headers, rows){
+    if(y > 255){ doc.addPage(); y=14; }
+    var cws=[50,35,35,35,35]; // label, plan, actual, diff, status
+    var tw=cws.reduce(function(s,c){return s+c;},0);
+    setFill(C.navy); doc.rect(M,y,tw,8,'F');
+    setFont(true); setColor(C.white); doc.setFontSize(7.5);
+    var hx=M;
+    headers.forEach(function(h,i){
+      doc.text(h,hx+2,y+5.5); hx+=cws[i];
+      if(i<headers.length-1){ setDraw([80,90,120]); doc.setLineWidth(0.2); doc.line(hx,y,hx,y+8); }
+    });
+    y+=8;
+    rows.forEach(function(row,ri){
+      if(y>262){ doc.addPage(); y=14; }
+      var bg=ri%2===0?C.white:C.lgrey;
+      setFill(bg); doc.rect(M,y,tw,8,'FD');
+      setDraw(C.border); doc.setLineWidth(0.1);
+      var cx=M;
+      row.forEach(function(cell,ci){
+        var txt=String(cell==null||cell===undefined?'—':cell);
+        if(ci===4){ // status column - colour
+          var isOk=txt==='ON PLAN'||txt==='OK';
+          var isOver=txt.indexOf('+')===0;
+          setColor(isOk?C.green:isOver?C.amber:C.red);
+          setFont(true); doc.setFontSize(7.5);
+        } else {
+          setColor(ci===0?C.text:C.muted);
+          setFont(ci===0);
+          doc.setFontSize(ci===0?8.5:8);
+        }
+        doc.text(txt,cx+2,y+5.5,{maxWidth:cws[ci]-4});
+        cx+=cws[ci];
+        if(ci<row.length-1){ setDraw(C.border); doc.setLineWidth(0.1); doc.line(cx,y,cx,y+8); }
+      });
+      y+=8;
+    });
+    y+=3;
+  }
+
+  /* ════════════════════ PAGE CONTENT ════════════════════ */
+
+  /* 1. PLAN HEADER INFO */
+  var totalBoards=(r.products||[]).reduce(function(s,p){return s+(parseInt(p.targetBoards)||0);},0);
+  var totalSqft  =(r.products||[]).reduce(function(s,p){return s+(parseFloat(p.targetSqft)||0);},0);
+  var totalChg   =(r.products||[]).reduce(function(s,p){return s+(parseInt(p.estCharges)||0);},0);
+  secHdr('📋','PLAN HEADER',C.navyMd);
+  infoGrid([
+    ['PLAN ID',r.id],['DATE',r.date],['SHIFT',r.shift],['PLAN OPERATOR',r.planOp||'—'],
+    ['TARGET BOARDS',totalBoards.toLocaleString('en-IN')],['TARGET SQFT',Math.round(totalSqft).toLocaleString('en-IN')],
+    ['EST. PRESS CHARGES',totalChg],['REMARKS',r.remarks||'—']
+  ]);
+
+  /* 2. PRODUCT PLANNING TABLE */
+  secHdr('🏭','PRODUCT PLANNING TABLE',C.red);
+  table(
+    ['PRODUCT','SIZE','THICK','TARGET BOARDS','TARGET SQFT','CHARGES','PRIORITY'],
+    (r.products||[]).map(function(p){
+      return [p.product,p.size,p.thickness+'mm',
+        (p.targetBoards||0).toLocaleString('en-IN'),
+        Math.round(p.targetSqft||0).toLocaleString('en-IN'),
+        p.estCharges||0, p.priority];
+    }),
+    [28,18,16,30,30,22,38]
+  );
+
+  /* 3. BOILER DEPARTMENT */
+  if(r.hagAStart||r.hagBStart||r.thermStart||r.hagTemp||r.thermTemp||r.hagOp||r.thermOp){
+    secHdr('🔥','BOILER DEPARTMENT',[180,100,10]);
+    infoGrid([
+      ['HAG-A START TIME',r.hagAStart||'—'],['HAG-B START TIME',r.hagBStart||'—'],
+      ['THERMIC BOILER START',r.thermStart||'—'],['HAG TEMPERATURE',r.hagTemp?(r.hagTemp+' °C'):'—'],
+      ['THERMIC BOILER TEMP',r.thermTemp?(r.thermTemp+' °C'):'—'],['HAG OPERATOR',r.hagOp||'—'],
+      ['THERMIC BOILER OPERATOR',r.thermOp||'—'],['','']
+    ]);
+  }
+
+  /* 4. DRYER INFORMATION */
+  if(r.dryerAIn||r.dryerBIn||r.dryerAOp||r.dryerBOp){
+    secHdr('💨','DRYER INFORMATION',C.blue);
+    infoGrid([
+      ['DRYER A – INPUT TEMP',r.dryerAIn?(r.dryerAIn+' °C'):'—'],
+      ['DRYER A – OUTPUT TEMP',r.dryerAOut?(r.dryerAOut+' °C'):'—'],
+      ['DRYER A OPERATOR',r.dryerAOp||'—'],
+      ['DRYER B – INPUT TEMP',r.dryerBIn?(r.dryerBIn+' °C'):'—'],
+      ['DRYER B – OUTPUT TEMP',r.dryerBOut?(r.dryerBOut+' °C'):'—'],
+      ['DRYER B OPERATOR',r.dryerBOp||'—']
+    ]);
+  }
+
+  /* 5. BLENDER DEPARTMENT */
+  if(r.chipsBlendStart||r.dustBlendStart||r.chipsBlendOp||r.dustBlendOp){
+    secHdr('⚙️','BLENDER DEPARTMENT',C.green);
+    infoGrid([
+      ['CHIPS BLENDER START',r.chipsBlendStart||'—'],['DUST BLENDER START',r.dustBlendStart||'—'],
+      ['CHIPS BLENDER OPERATOR',r.chipsBlendOp||'—'],['DUST BLENDER OPERATOR',r.dustBlendOp||'—'],
+      ['TRILLIUM SPEED',r.trillSpeed||'—'],['','']
+    ]);
+  }
+
+  /* 6. FORMING LINE */
+  secHdr('🏗️','FORMING LINE',C.indigo);
+  infoGrid([
+    ['FORMING LINE OPERATOR',r.formingOp||'—'],['FORMING LINE START',r.formingStart||'—'],
+    ['CHIPPING START TIME',r.chipStart||'—'],['','']
+  ]);
+
+  /* 7. PRE-PRESS DEPARTMENT */
+  secHdr('🗜️','PRE-PRESS DEPARTMENT',C.teal);
+  infoGrid([
+    ['PRE-PRESS OPERATOR',r.prepressOp||'—'],['PRE-PRESS START TIME',r.prepressStart||'—'],
+    ['TARGET MATT WEIGHT',r.inputMattWt?(r.inputMattWt+' Kg'):'—'],['NO. OF MATTS',r.totalMatts||'—']
+  ]);
+
+  /* 8. HOT PRESS */
+  secHdr('🔥','HOT PRESS',C.red);
+  infoGrid([
+    ['HOT PRESS OPERATOR',r.pressOp||'—'],['HOT PRESS START TIME',r.pressLineStart||'—'],
+    ['CYCLE TIME',r.cycleTime||'—'],['TARGET CHARGES',totalChg+' charges'],
+    ['HOT PRESS TEMPERATURE',r.pressTemp?(r.pressTemp+' °C'):'—'],['THICKNESS BAR',r.thickBar||'—']
+  ]);
+
+  /* 9. CUTTING DEPARTMENT */
+  secHdr('✂️','CUTTING DEPARTMENT',C.grey);
+  infoGrid([
+    ['TOTAL BOARDS (PLANNED)',r.totalBoardCut||totalBoards],
+    ['CUTTING SIZE',r.cutSize||'—'],['CUTTING OPERATOR',r.cutOp||'—'],['','']
+  ]);
+
+  /* 10. RAW MATERIAL REQUIREMENT */
+  if(y > 220){ doc.addPage(); y=14; }
+  secHdr('📦','RAW MATERIAL REQUIREMENT',C.navyMd);
+  var matts = parseFloat(r.totalMatts)||0;
+  var resinPM = parseFloat(r.resinQtyPerMatt)||0;
+  var resinReq = resinPM * matts;
+  var wetWoodReq = parseFloat(r.inputMattWt||0)*totalBoards - resinReq;
+  var resinAvail=0; PURCHASE_RESIN.forEach(function(l){resinAvail+=getResinAvail(l.lot);});
+  var wwFloor = parseFloat(r.wetWoodAvail)||0;
+  table(
+    ['MATERIAL','REQUIRED QTY','STOCK / FLOOR','VARIANCE','STATUS'],
+    [
+      ['Wet Wood (Kg)', fmt2(wetWoodReq)+' Kg', fmt2(wwFloor)+' Kg',
+        fmt2(wwFloor-wetWoodReq)+' Kg', wwFloor>=wetWoodReq?'OK':'SHORTFALL'],
+      ['Resin (Kg)', fmt2(resinReq)+' Kg', fmt2(resinAvail)+' Kg',
+        fmt2(resinAvail-resinReq)+' Kg', resinAvail>=resinReq?'OK':'SHORTFALL']
+    ],
+    [50,35,35,35,27]
+  );
+
+  /* 11. PRODUCTION vs PLAN COMPARISON */
+  if(y > 210){ doc.addPage(); y=14; }
+  secHdr('📊','PRODUCTION vs PLAN COMPARISON',C.navyMd);
+
+  var hpLinked = r.linkedHP ? HP_REPORTS.find(function(x){return x.id===r.linkedHP;}) : null;
+  var bcLinked = r.linkedBC ? BC_REPORTS.find(function(x){return x.id===r.linkedBC;}) : null;
+  var mwLinked = r.linkedMW ? MATT_BATCHES.find(function(x){return x.id===r.linkedMW;}) : null;
+  var psLinked = r.linkedPS ? PS_REPORTS.find(function(x){return x.id===r.linkedPS;}) : null;
+
+  function diff(plan,actual){
+    if(!actual&&actual!==0) return '—';
+    var d=actual-plan;
+    return (d>=0?'+':'')+d;
+  }
+  function status(plan,actual){
+    if(!actual&&actual!==0) return 'NOT LINKED';
+    var pct=plan>0?Math.round((actual/plan)*100):0;
+    if(pct>=98) return 'ON PLAN';
+    if(pct>=90) return '-'+Math.round(100-pct)+'%';
+    return '-'+Math.round(100-pct)+'% LOW';
+  }
+
+  var hpBoards = hpLinked ? hpLinked.totalBoards : null;
+  var bcCut    = bcLinked ? bcLinked.cutPcs      : null;
+  var bcRej    = bcLinked ? bcLinked.rejectPcs   : null;
+  var mwMatts  = mwLinked ? mwLinked.totalMatts  : null;
+  var mwAvgWt  = mwLinked ? mwLinked.avgWeight   : null;
+
+  comparisonTable(
+    ['METRIC','PLAN TARGET','ACTUAL','VARIANCE','STATUS'],
+    [
+      ['Target Boards', totalBoards, hpBoards, diff(totalBoards,hpBoards), status(totalBoards,hpBoards)],
+      ['Press Charges',  totalChg,   hpLinked?hpLinked.charges.length:null,
+        diff(totalChg,hpLinked?hpLinked.charges.length:null), status(totalChg,hpLinked?hpLinked.charges.length:null)],
+      ['Boards Cut',     totalBoards, bcCut,   diff(totalBoards,bcCut),    status(totalBoards,bcCut)],
+      ['Board Rejects',  '0',         bcRej,   bcRej!=null?String(bcRej):'—', bcRej!=null&&bcRej>50?'HIGH REJ':'OK'],
+      ['No. of Matts',   r.totalMatts||'—', mwMatts, diff(parseFloat(r.totalMatts)||0,mwMatts), status(parseFloat(r.totalMatts)||0,mwMatts)],
+      ['Avg Matt Wt(Kg)',r.inputMattWt||'—',mwAvgWt?mwAvgWt.toFixed(3):null,
+        mwAvgWt?diff(parseFloat(r.inputMattWt)||0,mwAvgWt):'—',
+        mwAvgWt&&r.inputMattWt&&Math.abs(mwAvgWt-parseFloat(r.inputMattWt))<0.5?'ON PLAN':'VARIANCE']
+    ]
+  );
+
+  /* ── LINKED REPORTS ── */
+  y+=2;
+  setFont(false); setColor(C.muted); doc.setFontSize(7.5);
+  var links='Linked Reports:  HP: '+(r.linkedHP||'None')+'  |  Matt: '+(r.linkedMW||'None')+'  |  BC: '+(r.linkedBC||'None')+'  |  PS: '+(r.linkedPS||'None');
+  doc.text(links, M, y); y+=10;
+
+  /* ── SIGN-OFF ── */
+  if(y > 250){ doc.addPage(); y=14; }
+  setDraw(C.border); doc.setLineWidth(0.5); doc.line(M,y,W-M,y); y+=8;
+  var sigs=[['Raised By / Plan Operator',M+5],['Reviewed By (P K Sinha)',W/2-25],['Approved By (Jimit Mehta)',W-M-55]];
+  sigs.forEach(function(s){
+    setFont(false); setColor(C.muted); doc.setFontSize(7.5);
+    doc.text('Signature: ________________________',s[1],y);
+    setFont(true); setColor(C.text); doc.setFontSize(8.5);
+    doc.text(s[0],s[1],y+6);
+  });
+
+  /* ── FOOTER STRIP ── */
+  var H=doc.internal.pageSize.getHeight();
+  setFill(C.navy); doc.rect(0,H-8,W,8,'F');
+  setFont(false); setColor([170,180,210]); doc.setFontSize(7);
+  doc.text('Strandply LLP  ·  Production Planning Report  ·  '+r.id+'  ·  Generated: '+
+    new Date().toLocaleString('en-IN'), W/2, H-3, {align:'center'});
+
+  doc.save('ProductionPlan_'+r.id+'.pdf');
+  toast('PDF downloaded','success');
+}
+
+function psDlPDF(id){
+  var r=PS_REPORTS.find(function(x){return x.id===id;});
+  if(!r){toast('Not found','error');return;}
+  if(!window.jspdf){toast('PDF loading…','error');return;}
+
+  var doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  var W=297,M=14,H=210;
+
+  /* Colours matching WO theme */
+  var NAV=[18,24,40],RED=[213,17,10],WHT=[255,255,255],
+      GRN=[5,150,105],AMB=[217,119,6],BLU=[14,165,233],
+      LGR=[241,243,247],BDR=[220,222,230],TXT=[18,24,40],MUT=[100,110,130];
+
+  function sf(b){doc.setFont('helvetica',b?'bold':'normal');}
+  function sc(c){doc.setTextColor(c[0],c[1],c[2]);}
+  function sfl(c){doc.setFillColor(c[0],c[1],c[2]);}
+  function sdw(c){doc.setDrawColor(c[0],c[1],c[2]);}
+
+  /* ── HEADER ── */
+  sfl(NAV);doc.rect(0,0,W,22,'F');
+  try{doc.addImage(LOGO_DATA,'PNG',M,3,22,14);}catch(e){}
+  sf(true);sc(WHT);doc.setFontSize(7);doc.text('STRANDPLY LLP',M+26,9);
+  sc([160,170,200]);sf(false);doc.setFontSize(6.5);doc.text('Production Planning & Control',M+26,14);
+  sf(true);sc(WHT);doc.setFontSize(14);doc.text('PRODUCTION SUMMARY REPORT',W/2,13,{align:'center'});
+  sfl(RED);doc.roundedRect(W-M-34,5,34,7,1.5,1.5,'F');
+  sf(true);sc(WHT);doc.setFontSize(8);doc.text(r.id,W-M-2,9.5,{align:'right'});
+  sfl(RED);doc.rect(0,22,W,2,'F');
+
+  var y=28;
+
+  /* ── INFO GRID ── */
+  var month=r.date?new Date(r.date).toLocaleString('en-IN',{month:'long',year:'numeric'}):'—';
+  var gridFields=[
+    ['DATE',r.date],['MONTH',month],['PRODUCT',r.product],['SIZE',r.size],
+    ['THICKNESS',(r.thickness||'—')+' mm'],['BATCH',r.batch||'—'],
+    ['STATUS',r.wfState.toUpperCase()],['LINKED PP',r.linkedPP||'—'],
+    ['LINKED HP',r.linkedHP||'—'],['LINKED BC',r.linkedBC||'—'],
+    ['LINKED RC',r.linkedRC||'—'],['REMARKS',r.remarks||'—']
+  ];
+  var perRow=6, cw=(W-2*M)/perRow, rh=12;
+  gridFields.forEach(function(f,i){
+    var col=i%perRow,row2=Math.floor(i/perRow);
+    var x=M+col*cw,gy=y+row2*(rh+1);
+    sfl(col%2===0?LGR:WHT);doc.rect(x,gy,cw-1,rh,'F');
+    sdw(BDR);doc.setLineWidth(0.1);doc.rect(x,gy,cw-1,rh);
+    sf(false);sc(MUT);doc.setFontSize(6);doc.text(f[0],x+2,gy+4);
+    sf(true);sc(TXT);doc.setFontSize(8);doc.text(String(f[1]||'—'),x+2,gy+9.5,{maxWidth:cw-4});
+  });
+  y+=Math.ceil(gridFields.length/perRow)*(rh+1)+4;
+
+  /* ── PRODUCTION DETAILS TABLE ── */
+  sfl(NAV);doc.rect(M,y,W-2*M,8,'F');
+  sf(true);sc(WHT);doc.setFontSize(8);doc.text('PRODUCTION DETAILS',M+4,y+5.5);y+=8;
+  var prodCols=[50,58,58,58,45];
+  var prodHdrs=['METRIC','WET WOOD','RESIN','TOTAL','BOARDS'];
+  sfl(NAV);
+  var hx=M;
+  prodHdrs.forEach(function(h,i){
+    sfl([30,38,64]);doc.rect(hx,y,prodCols[i]-1,7,'F');
+    sf(true);sc(WHT);doc.setFontSize(7.5);doc.text(h,hx+2,y+5);
+    hx+=prodCols[i];
+  });y+=7;
+  [
+    ['In Kg',fmt2(r.wetWoodKg||r.dryWoodKg||0)+' Kg',fmt2(r.resinKg||0)+' Kg',fmt2((r.wetWoodKg||r.dryWoodKg||0)+(r.resinKg||0))+' Kg',(r.boards||0)+' boards'],
+    ['Amount (Rs.)','Rs.'+fmt2(r.wetWoodAmt||0),'Rs.'+fmt2(r.resinAmt||0),'Rs.'+fmt2((r.wetWoodAmt||0)+(r.resinAmt||0)),(r.boardRej||0)+' rej ('+r.boardRejPct+'%)'],
+    ['Matt Details',(r.mattPcs||0)+' matts','Avg: '+(r.mattWt||0)+' Kg','Rej: '+(r.mattRej||0)+' pcs','—']
+  ].forEach(function(row3,ri){
+    var bg=ri%2===0?WHT:LGR;
+    sfl(bg);var rx=M;
+    prodCols.forEach(function(cw2){doc.rect(rx,y,cw2-1,7,'F');rx+=cw2;});
+    sdw(BDR);doc.setLineWidth(0.1);rx=M;
+    prodCols.forEach(function(cw2,ci){
+      doc.rect(rx,y,cw2-1,7);
+      sf(ci===0);sc(ci===0?TXT:MUT);doc.setFontSize(8);
+      doc.text(String(row3[ci]||'—'),rx+2,y+4.8,{maxWidth:cw2-4});
+      rx+=cw2;
+    });y+=7;
+  });y+=4;
+
+  /* ── PLAN vs ACTUAL COMPARISON ── */
+  var pp=r.linkedPP?PP_REPORTS.find(function(x){return x.id===r.linkedPP;}):null;
+  var rc=r.linkedRC?RESIN_ENTRIES.find(function(x){return x.id===r.linkedRC;}):null;
+
+  if(pp){
+    sfl(NAV);doc.rect(M,y,W-2*M,8,'F');
+    sf(true);sc(WHT);doc.setFontSize(8);
+    doc.text('PLAN vs ACTUAL COMPARISON  (Production Plan: '+pp.id+'  ·  Date: '+pp.date+'  ·  Shift: '+pp.shift+')',M+4,y+5.5);y+=8;
+
+    var ppTotalBoards=(pp.products||[]).reduce(function(s,p2){return s+(parseInt(p2.targetBoards)||0);},0);
+    var ppTotalChg=(pp.products||[]).reduce(function(s,p2){return s+(parseInt(p2.estCharges)||0);},0);
+    var ppMatts=parseFloat(pp.totalMatts)||0;
+    var ppMattWt=parseFloat(pp.inputMattWt)||0;
+    var ppResinPM=parseFloat(pp.resinQtyPerMatt)||0;
+    var ppResinReq=ppResinPM*ppMatts;
+
+    /* Comparison rows */
+    var cmpCols=[60,40,40,36,38,51];
+    var cmpHdrs=['METRIC','PLANNED','ACTUAL','VARIANCE','ACHIEV %','STATUS'];
+    var hx2=M;
+    cmpHdrs.forEach(function(h,i){
+      sfl([35,45,75]);doc.rect(hx2,y,cmpCols[i]-1,7,'F');
+      sf(true);sc(WHT);doc.setFontSize(7.5);doc.text(h,hx2+2,y+5);hx2+=cmpCols[i];
+    });y+=7;
+
+    function cmpRow(label,plan,actual,unit,rowIdx){
+      if(y>175){doc.addPage();y=15;}
+      var pv=parseFloat(plan)||0,av=parseFloat(actual)||0;
+      var diff2=pv>0?(av-pv):0;
+      var pct2=pv>0?Math.round(av/pv*100):0;
+      var isOk=pct2>=95,isWarn=pct2>=80&&pct2<95;
+      var stCol=isOk?GRN:isWarn?AMB:RED;
+      var stLbl=isOk?'ON PLAN':(pct2+'%');
+      var bg=rowIdx%2===0?WHT:LGR;
+      sfl(bg);var rx2=M;
+      cmpCols.forEach(function(cw3){doc.rect(rx2,y,cw3-1,8,'F');rx2+=cw3;});
+      sdw(BDR);doc.setLineWidth(0.1);rx2=M;
+      var vals=[label,
+        pv>0?fmt2(pv)+(unit?' '+unit:''):'—',
+        av>0?fmt2(av)+(unit?' '+unit:''):'—',
+        pv>0?(diff2>=0?'+':'')+fmt2(diff2)+(unit?' '+unit:''):'—',
+        pv>0?pct2+'%':'—',
+        actual!=null&&actual!==''?stLbl:'N/A'];
+      vals.forEach(function(v,vi){
+        doc.rect(rx2,y,cmpCols[vi]-1,8);
+        if(vi===5){sfl(isOk?GRN:isWarn?AMB:RED);doc.rect(rx2+1,y+1,cmpCols[vi]-3,6,'F');sc(WHT);sf(true);doc.setFontSize(7);}
+        else{sc(vi===0?TXT:MUT);sf(vi===0);doc.setFontSize(8);}
+        doc.text(String(v||'—'),rx2+2,y+5.2,{maxWidth:cmpCols[vi]-4});rx2+=cmpCols[vi];
+      });y+=8;
+    }
+
+    cmpRow('Target Boards (Production)',ppTotalBoards,r.boards,'pcs',0);
+    cmpRow('Press Charges',ppTotalChg,(r.pressPcs&&ppTotalBoards>0)?Math.ceil(r.pressPcs/30):null,'charges',1);
+    cmpRow('Board Rejects',0,r.boardRej,'pcs',2);
+    cmpRow('No. of Matts',ppMatts,r.mattPcs,'matts',3);
+    cmpRow('Target Matt Weight (Kg)',ppMattWt,r.mattWt,'Kg',4);
+    cmpRow('Resin Consumption',ppResinReq,r.resinKg,'Kg',5);
+    cmpRow('Wet Wood Consumption',ppTotalBoards*ppMattWt,r.wetWoodKg||r.dryWoodKg,'Kg',6);
+
+    y+=3;
+
+    /* ── BAR CHART: Planned vs Actual ── */
+    if(y<155){
+      sfl(NAV);doc.rect(M,y,W-2*M,8,'F');
+      sf(true);sc(WHT);doc.setFontSize(8);doc.text('PRODUCTION vs PLAN — VISUAL COMPARISON',M+4,y+5.5);y+=10;
+
+      var chartMetrics=[
+        {label:'Boards',plan:ppTotalBoards,actual:r.boards||0,unit:'pcs'},
+        {label:'Matts',plan:ppMatts,actual:r.mattPcs||0,unit:'pcs'},
+        {label:'Resin (Kg)',plan:ppResinReq,actual:r.resinKg||0,unit:'Kg'},
+        {label:'Wet Wood (Kg)',plan:ppTotalBoards*ppMattWt,actual:r.wetWoodKg||r.dryWoodKg||0,unit:'Kg'}
+      ];
+      var chartW=(W-2*M)/chartMetrics.length;
+      var chartH=28;
+      var chartBase=y+chartH;
+
+      chartMetrics.forEach(function(m2,ci){
+        var x2=M+ci*chartW+4;
+        var bw=(chartW-16)/2;
+        var maxVal=Math.max(m2.plan,m2.actual,1);
+        var planH=(m2.plan/maxVal)*chartH;
+        var actH=(m2.actual/maxVal)*chartH;
+
+        /* Plan bar (blue) */
+        sfl(BLU);doc.rect(x2,chartBase-planH,bw,planH,'F');
+        /* Actual bar (green/red) */
+        var actColor=m2.actual>=m2.plan*0.9?GRN:m2.actual>=m2.plan*0.7?AMB:RED;
+        sfl(actColor);doc.rect(x2+bw+2,chartBase-actH,bw,actH,'F');
+
+        /* Baseline */
+        sdw([180,185,200]);doc.setLineWidth(0.3);doc.line(x2-2,chartBase,x2+chartW-8,chartBase);
+
+        /* Values */
+        sf(true);sc(BLU);doc.setFontSize(6.5);
+        doc.text(m2.plan>0?m2.plan.toLocaleString('en-IN'):'0',x2+bw/2,chartBase-planH-1.5,{align:'center'});
+        sfl(actColor);sc(actColor);
+        doc.text(m2.actual>0?m2.actual.toLocaleString('en-IN'):'0',x2+bw+2+bw/2,chartBase-actH-1.5,{align:'center'});
+
+        /* Label */
+        sf(true);sc(TXT);doc.setFontSize(7);
+        doc.text(m2.label,M+ci*chartW+chartW/2,chartBase+5,{align:'center'});
+      });
+
+      /* Legend */
+      y=chartBase+10;
+      sfl(BLU);doc.rect(M,y,8,4,'F');sf(false);sc(TXT);doc.setFontSize(7);doc.text('Planned',M+10,y+3);
+      sfl(GRN);doc.rect(M+40,y,8,4,'F');doc.text('Actual (On Plan)',M+50,y+3);
+      sfl(RED);doc.rect(M+95,y,8,4,'F');doc.text('Actual (Below Plan)',M+105,y+3);
+      y+=10;
+    }
+  } else {
+    /* No PP linked */
+    sfl(LGR);doc.rect(M,y,W-2*M,10,'F');
+    sf(false);sc(MUT);doc.setFontSize(8);
+    doc.text('No Production Plan linked. Link a Production Plan to see Plan vs Actual comparison.',M+4,y+6.5);
+    y+=14;
+  }
+
+  /* ── RESIN DETAIL ── */
+  if(rc){
+    if(y>165){doc.addPage();y=15;}
+    sfl(NAV);doc.rect(M,y,W-2*M,8,'F');
+    sf(true);sc(WHT);doc.setFontSize(8);doc.text('RESIN CONSUMPTION DETAIL  ('+rc.id+')',M+4,y+5.5);y+=8;
+    var rcCols=[50,40,40,35,35,69];
+    var rcHdrs=['LOT','VENDOR','INVOICE','QTY (Kg)','RATE/Kg','AMOUNT'];
+    var rhx=M;
+    rcHdrs.forEach(function(h,i){
+      sfl([35,45,75]);doc.rect(rhx,y,rcCols[i]-1,7,'F');
+      sf(true);sc(WHT);doc.setFontSize(7.5);doc.text(h,rhx+2,y+5);rhx+=rcCols[i];
+    });y+=7;
+    sfl(WHT);var rrx=M;
+    rcCols.forEach(function(cw4){doc.rect(rrx,y,cw4-1,8,'F');rrx+=cw4;});
+    sdw(BDR);doc.setLineWidth(0.1);rrx=M;
+    [rc.lot,rc.vendor,rc.inv_no,fmt2(rc.qty)+' Kg','Rs.'+fmt2(rc.rateKg),'Rs.'+fmt2(rc.amount)]
+      .forEach(function(v,vi){
+        doc.rect(rrx,y,rcCols[vi]-1,8);
+        sc(vi===0?TXT:MUT);sf(vi===0);doc.setFontSize(8);
+        doc.text(String(v||'—'),rrx+2,y+5.5,{maxWidth:rcCols[vi]-4});rrx+=rcCols[vi];
+      });y+=12;
+  }
+
+  /* ── SIGN-OFF ── */
+  if(y>175){doc.addPage();y=15;}
+  sdw(BDR);doc.setLineWidth(0.4);doc.line(M,y,W-M,y);y+=7;
+  [['Raised By / Operator',M+5],['Reviewed By (P K Sinha)',W/2-30],['Approved By (Jimit Mehta)',W-M-65]].forEach(function(s){
+    sf(false);sc(MUT);doc.setFontSize(7.5);doc.text('Signature: ________________________',s[1],y);
+    sf(true);sc(TXT);doc.setFontSize(8.5);doc.text(s[0],s[1],y+6);
+  });
+
+  /* ── FOOTER ── */
+  sfl(NAV);doc.rect(0,H-8,W,8,'F');
+  sf(false);sc([160,170,210]);doc.setFontSize(7);
+  doc.text('Strandply LLP  ·  Production Summary  ·  '+r.id+'  ·  Generated: '+new Date().toLocaleString('en-IN'),W/2,H-3,{align:'center'});
+
+  doc.save('PS_'+r.id+'.pdf');
+  toast('PDF downloaded','success');
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   WIP NILGIRI — Work In Progress Chipped Wood Inventory
+   
+   Flow:
+   Purchase Nilgiri Lots → Chipping Report → WIP Nilgiri Batch
+                                                    ↓
+                                       Production Summary (wet wood rate)
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Create WIP batch from chipping report ── */
+function chipCreateWIP(chipId) {
+  var r = CHIP_REPORTS.find(function(x){ return x.id===chipId; });
+  if(!r){ toast('Chipping report not found','error'); return; }
+  if(r.wipBatchId){ toast('WIP batch '+r.wipBatchId+' already created for this report','warning'); return; }
+
+  var id = newId('WIP', wipSeq++);
+  var batch = {
+    id:        id,
+    chipId:    chipId,
+    date:      r.date,
+    shift:     r.shift,
+    totalKg:   r.totalKg,
+    totalAmt:  r.totalAmt,
+    avgRateKg: r.totalKg > 0 ? parseFloat((r.totalAmt / r.totalKg).toFixed(4)) : 0,
+    lots:      r.lots,           /* carry lot details for traceability */
+    usedKg:    0,                /* consumed in production */
+    status:    'available',      /* available | partially used | consumed */
+    remarks:   r.remarks || '',
+    createdAt: new Date().toLocaleString('en-IN')
+  };
+  WIP_BATCHES.unshift(batch);
+
+  /* back-link chipping report */
+  r.wipBatchId = id;
+
+  renderChipList();
+  renderChipKPIs();
+  renderWIPStock();
+  toast(id+' created — '+r.totalKg.toLocaleString('en-IN')+' Kg @ Rs.'+batch.avgRateKg.toFixed(3)+'/Kg','success');
+}
+
+function getWIPAvail(wipId){
+  var b = WIP_BATCHES.find(function(x){ return x.id===wipId; });
+  if(!b) return 0;
+  return parseFloat((b.totalKg - b.usedKg).toFixed(3));
+}
+
+/* ── Render WIP stock summary (shown on Resin page or its own section) ── */
+function renderWIPStock(){
+  var tb = document.getElementById('wip-stock-tbody'); if(!tb) return;
+  if(!WIP_BATCHES.length){
+    tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--g4)">No WIP batches yet. Create one from a Chipping Report.</td></tr>';
+    return;
+  }
+  var rows = WIP_BATCHES.map(function(b,i){
+    var avail = getWIPAvail(b.id);
+    var pct   = b.totalKg > 0 ? Math.round((1 - b.usedKg/b.totalKg)*100) : 100;
+    var col   = pct>50?'var(--green)':pct>20?'var(--amber)':'var(--red)';
+    var stBg  = pct>50?'#dcfce7':pct>20?'#fef3c7':'#fff0f2';
+    var stCl  = pct>50?'#15803d':pct>20?'#92400e':'#be123c';
+    var stLbl = b.status.toUpperCase();
+    return '<tr style="border-bottom:1px solid var(--g1)'+(i%2?';background:var(--g0)':'')+'">' +
+      '<td style="padding:7px 10px;font-family:var(--fm);font-weight:700;color:var(--red);font-size:11px">'+b.id+'</td>'+
+      '<td style="padding:7px 10px;font-size:11px;color:var(--blue)">'+b.chipId+'</td>'+
+      '<td style="padding:7px 10px;font-size:11px">'+b.date+'</td>'+
+      '<td class="num" style="font-weight:700">'+b.totalKg.toLocaleString('en-IN')+' Kg</td>'+
+      '<td class="num" style="color:'+col+';font-weight:700">'+avail.toLocaleString('en-IN')+' Kg</td>'+
+      '<td class="num">Rs.'+b.avgRateKg.toFixed(3)+'/Kg</td>'+
+      '<td class="num">'+fmtINR(b.totalAmt)+'</td>'+
+      '<td style="padding:7px 10px"><span style="background:'+stBg+';color:'+stCl+';padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;font-family:var(--fm)">'+stLbl+'</span></td>'+
+      '</tr>';
+  }).join('');
+  tb.innerHTML = rows;
+  /* Also update inline resin-page section if visible */
+  var tb2 = document.getElementById('wip-resin-tbody');
+  if(tb2) tb2.innerHTML = rows;
+}
+
+/* ── PS: when WIP batch selected → auto-fill wet wood fields ── */
+
+
+/* Update buildPSEntry to include WIP fields */
+function buildPSEntryFull(){
+  function g(id){var e=document.getElementById(id);return e?parseFloat(e.value)||0:0;}
+  function gs(id){var e=document.getElementById(id);return e?e.value||'':'';}
+  function gsel(id){var e=document.getElementById(id);return e?e.value||'':'';}
+  return {
+    date:gs('ps-date'),product:gs('ps-product'),size:gs('ps-size'),
+    thickness:gs('ps-thickness'),batch:gs('ps-batch'),
+    pressPcs:g('ps-press-pcs'),boards:g('ps-boards'),
+    boardRej:g('ps-board-rej'),boardRejPct:g('ps-board-rej-pct'),
+    mattPcs:g('ps-matt-pcs'),mattWt:g('ps-matt-wt'),mattRej:g('ps-matt-rej'),
+    resinKg:g('ps-resin-kg'),resinAmt:g('ps-resin-amt'),
+    /* Enhanced wet wood fields */
+    dryWoodKg:   g('ps-drywood-kg'),
+    wetWoodKg:   g('ps-wetwood-kg'),
+    wetWoodAmt:  g('ps-wetwood-amt'),
+    wetWoodRate: g('ps-wetwood-rate'),
+    remarks:gs('ps-remarks'),
+    linkedHP:gsel('ps-linked-hp'),linkedMW:gsel('ps-linked-mw'),
+    linkedRC:gsel('ps-linked-rc'),linkedBC:gsel('ps-linked-bc'),
+    linkedPP:gsel('ps-linked-pp'),linkedWIP:gsel('ps-linked-wip'),
+    wipBatches:(window._psWIPEntries||[]).map(function(e){
+      return {wipId:e.wipId,chipId:e.chipId,date:e.date,rate:e.rate,qty:parseFloat(e.qty)||0};
+    })
+  };
+}
+
+/* ── When PS saved with WIP batch → deduct from WIP ── */
+function wipDeductFromPS(entry, prevEntry){
+  /* Restore previous deductions */
+  var prevBatches = (prevEntry && prevEntry.wipBatches) ? prevEntry.wipBatches :
+    (prevEntry && prevEntry.linkedWIP && prevEntry.wetWoodKg ?
+      [{wipId:prevEntry.linkedWIP, qty:prevEntry.wetWoodKg}] : []);
+  prevBatches.forEach(function(pb){
+    var b=WIP_BATCHES.find(function(x){return x.id===pb.wipId;});
+    if(b){b.usedKg=Math.max(0,b.usedKg-(parseFloat(pb.qty)||0)); wipUpdateStatus(b);}
+  });
+  /* Apply new deductions */
+  var newBatches = (entry.wipBatches && entry.wipBatches.length) ? entry.wipBatches :
+    (entry.linkedWIP && entry.wetWoodKg ? [{wipId:entry.linkedWIP, qty:entry.wetWoodKg}] : []);
+  newBatches.forEach(function(nb){
+    var b=WIP_BATCHES.find(function(x){return x.id===nb.wipId;});
+    if(b){b.usedKg=parseFloat((b.usedKg+(parseFloat(nb.qty)||0)).toFixed(3)); wipUpdateStatus(b);}
+  });
+  renderWIPStock();
+}
+
+function wipUpdateStatus(b){
+  if(b.usedKg <= 0)             b.status = 'available';
+  else if(b.usedKg >= b.totalKg) b.status = 'consumed';
+  else                            b.status = 'partially used';
+}
+
+/* ── KPI for WIP ── */
+function renderWIPKPIs(){
+  var el = document.getElementById('wip-kpis'); if(!el) return;
+  var total = WIP_BATCHES.length;
+  var totalKg  = WIP_BATCHES.reduce(function(s,b){return s+b.totalKg;},0);
+  var availKg  = WIP_BATCHES.reduce(function(s,b){return s+getWIPAvail(b.id);},0);
+  var totalAmt = WIP_BATCHES.reduce(function(s,b){return s+b.totalAmt;},0);
+  var avgRate  = totalKg>0?(totalAmt/totalKg).toFixed(3):'—';
+  var kpis =
+    kpiCard(total,          'WIP Batches',       '📦', '') +
+    kpiCard((totalKg/1000).toFixed(2)+' T',      'Total Chipped',  '🪚', 'amb') +
+    kpiCard((availKg/1000).toFixed(2)+' T',      'Available Stock','🌳', 'grn') +
+    kpiCard('Rs.'+avgRate+'/Kg', 'Avg Cost/Kg',  '💰', 'blu');
+  el.innerHTML = kpis;
+  var el2 = document.getElementById('wip-resin-kpis');
+  if(el2) el2.innerHTML = kpis;
+}
+
+  /* ── RESIN DETAIL ── */
+  
+
+  /* ── SIGN-OFF ── */
+/* ── WIP MULTI-BATCH UI for Production Summary ── */
+function psRenderWIPTable(){
+  var tb = document.getElementById('ps-wip-batch-tbody'); if(!tb) return;
+  var entries = window._psWIPEntries || [];
+  if(!entries.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--g4);font-size:12px">No WIP batches added yet. Select a batch above and click Add.</td></tr>';
+    psCalcWIPTotals(); return;
+  }
+  tb.innerHTML = entries.map(function(e,i){
+    var b = WIP_BATCHES.find(function(x){return x.id===e.wipId;});
+    var avail = b ? getWIPAvail(b.id) + (e.qty||0) : 0; // add back what this entry uses for display
+    return '<tr style="border-bottom:1px solid var(--g1);'+(i%2?'background:var(--g0)':'')+'">'+
+      '<td style="padding:6px 10px;font-family:var(--fm);font-weight:700;color:var(--red);font-size:11px">'+e.wipId+'</td>'+
+      '<td style="padding:6px 10px;font-size:11px;color:var(--g4)">'+e.chipId+'</td>'+
+      '<td style="padding:6px 10px;font-size:11px">'+e.date+'</td>'+
+      '<td style="padding:6px 10px;font-size:11px;color:var(--green);font-family:var(--fm)">Rs.'+parseFloat(e.rate||0).toFixed(3)+'/Kg</td>'+
+      '<td style="padding:6px 10px"><input type="number" step="0.001" min="0" max="'+avail+'" '+
+        'value="'+(e.qty||0)+'" style="width:100px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;font-family:var(--fm)" '+
+        'onchange="psWIPQtyChange('+i+',this.value)" '+
+        'oninput="psWIPQtyChange('+i+',this.value)"></td>'+
+      '<td style="padding:6px 10px;font-family:var(--fm);font-size:12px;text-align:right">'+
+        fmtINR(parseFloat(e.rate||0)*parseFloat(e.qty||0))+
+        ' <button class="btn-del" onclick="psRemoveWIPEntry('+i+')" style="font-size:10px;margin-left:6px">✕</button></td>'+
+      '</tr>';
+  }).join('');
+  psCalcWIPTotals();
+}
+
+function psAddWIPBatch(){
+  var sel = document.getElementById('ps-wip-sel');
+  if(!sel || !sel.value){ toast('Select a WIP batch first','warning'); return; }
+  var wipId = sel.value;
+  var b = WIP_BATCHES.find(function(x){return x.id===wipId;});
+  if(!b){ toast('WIP batch not found','error'); return; }
+  window._psWIPEntries = window._psWIPEntries || [];
+  if(window._psWIPEntries.some(function(e){return e.wipId===wipId;})){
+    toast(wipId+' already added','warning'); return;
+  }
+  var avail = getWIPAvail(b.id);
+  if(avail <= 0){ toast(wipId+' has no available stock','warning'); return; }
+  window._psWIPEntries.push({
+    wipId: wipId, chipId: b.chipId, date: b.date,
+    rate: b.avgRateKg, qty: avail, avail: avail
+  });
+  sel.value = '';
+  psRenderWIPTable();
+  toast(wipId+' added — '+avail.toLocaleString('en-IN')+' Kg available','success');
+}
+
+function psWIPQtyChange(idx, val){
+  window._psWIPEntries = window._psWIPEntries || [];
+  var e = window._psWIPEntries[idx]; if(!e) return;
+  var qty = parseFloat(val)||0;
+  e.qty = qty;
+  psCalcWIPTotals();
+}
+
+function psRemoveWIPEntry(idx){
+  window._psWIPEntries = window._psWIPEntries || [];
+  window._psWIPEntries.splice(idx,1);
+  psRenderWIPTable();
+}
+
+function psCalcWIPTotals(){
+  var entries = window._psWIPEntries || [];
+  var totalKg  = entries.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+  var totalAmt = entries.reduce(function(s,e){return s+(parseFloat(e.rate||0)*parseFloat(e.qty||0));},0);
+  var avgRate  = totalKg>0 ? totalAmt/totalKg : 0;
+  var totKgEl  = document.getElementById('ps-wip-total-kg');
+  var totAmtEl = document.getElementById('ps-wip-total-amt');
+  var totRtEl  = document.getElementById('ps-wip-avg-rate');
+  var wwKgEl   = document.getElementById('ps-wetwood-kg');
+  var wwAmtEl  = document.getElementById('ps-wetwood-amt');
+  var wwRtEl   = document.getElementById('ps-wetwood-rate');
+  if(totKgEl)  totKgEl.textContent  = totalKg.toLocaleString('en-IN')+' Kg';
+  if(totAmtEl) totAmtEl.textContent = fmtINR(totalAmt);
+  if(totRtEl)  totRtEl.textContent  = 'Rs.'+avgRate.toFixed(3)+'/Kg';
+  if(wwKgEl)   wwKgEl.value  = totalKg.toFixed(3);
+  if(wwAmtEl)  wwAmtEl.value = totalAmt.toFixed(2);
+  if(wwRtEl)   wwRtEl.value  = avgRate.toFixed(4);
+}
+
+function psGetWIPEntriesJSON(){
+  return JSON.stringify(window._psWIPEntries || []);
+}</script>
+</body>
+</html>
+
+
 /* ================================================================
    STOCK MANAGEMENT JS
-=============================================================== */
+================================================================ */
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  SKU GROUPS  (from strandply_product_item_codes.pdf  SKU Master v8)
