@@ -2595,6 +2595,7 @@ function initTopbar(){
   if(nm) nm.textContent=u.name;
   if(rl) rl.textContent=u.role.toUpperCase();
 }
+function _updateUserPill(){ initTopbar(); }
 document.addEventListener('keydown',function(e){
   if((e.ctrlKey||e.metaKey)&&e.key==='b'){e.preventDefault();toggleSidebar();}
 });
@@ -2604,9 +2605,9 @@ document.addEventListener('click',function(e){
   }
 });
 
-}
+function tick(){ document.getElementById('tb-clock').textContent = new Date().toLocaleTimeString('en-GB',{hour12:false}); }
+document.addEventListener('DOMContentLoaded',function(){
   tick(); setInterval(tick,30000);
-
   initTopbar();
   showPage('dashboard');
 });
@@ -4945,10 +4946,7 @@ function psCalcWIPTotals(){
 
 function psGetWIPEntriesJSON(){
   return JSON.stringify(window._psWIPEntries || []);
-}</script>
-</body>
-</html>
-
+}
 
 /* ================================================================
    STOCK MANAGEMENT JS
