@@ -146,23 +146,8 @@ tr.total td{background:var(--k);color:#fff;font-weight:600}
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bs);padding:24px">
-  <div style="background:#fff;border-radius:12px;padding:36px;max-width:340px;width:100%;box-shadow:var(--shl);border:1px solid var(--br)">
-    <div style="width:40px;height:40px;border-radius:9px;background:var(--r);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:900;font-size:18px;margin-bottom:18px">SPL</div>
-    <h2 style="font-family:var(--fh);font-size:20px;font-weight:800;margin-bottom:4px">Electricity MIS</h2>
-    <p style="font-size:12px;color:var(--k4);margin-bottom:20px">Sign in to continue</p>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <input id="el-user" placeholder="Username" style="padding:10px 12px;border:1.5px solid var(--br);border-radius:6px;font-size:13px;outline:none;transition:.13s" onfocus="this.style.borderColor='var(--r)'" onblur="this.style.borderColor=''">
-      <input id="el-pass" type="password" placeholder="Password" style="padding:10px 12px;border:1.5px solid var(--br);border-radius:6px;font-size:13px;outline:none;transition:.13s" onfocus="this.style.borderColor='var(--r)'" onblur="this.style.borderColor=''">
-      <button id="el-login-btn" onclick="doLogin()" style="padding:10px;border:none;border-radius:6px;background:var(--r);color:#fff;font-family:var(--fh);font-weight:700;font-size:13px;cursor:pointer;transition:.13s">Sign In →</button>
-      <div id="el-login-err" style="color:var(--r);font-size:11px;display:none"></div>
-    </div>
-  </div>
-</div>
-
 <!-- MAIN APP -->
-<div id="app" style="display:none">
+<div id="app">
   <div class="tb">
     <div style="display:flex;align-items:center;gap:10px">
       <button class="home-btn" onclick="toggleSb()">☰</button>
@@ -173,8 +158,8 @@ tr.total td{background:var(--k);color:#fff;font-weight:600}
       <span style="font-family:var(--fm);font-size:11px;color:var(--k4)" id="live-clock"></span>
       <div class="tb-divider"></div>
       <div class="uchip">
-        <div class="uav" id="el-av">A</div>
-        <span id="el-unm" style="font-size:12px;font-weight:600">User</span>
+        <div class="uav">SPL</div>
+        <span style="font-size:12px;font-weight:600">Meter Exec</span>
       </div>
       <button class="home-btn" onclick="goHome()">🏠</button>
     </div>
@@ -520,41 +505,8 @@ var MF_HISTORY = [];
 var FC_HISTORY = [];
 var ER_HISTORY = [];
 var FR_HISTORY = [];
-var currentUser = null;
 var editBillId = null;
 var loading = false;
-
-// ══ AUTH ══
-async function doLogin() {
-  var u = document.getElementById('el-user').value.trim().toLowerCase();
-  var p = document.getElementById('el-pass').value;
-  var btn = document.getElementById('el-login-btn');
-  var err = document.getElementById('el-login-err');
-  err.style.display = 'none';
-  if (!u || !p) { err.textContent = 'Enter username and password.'; err.style.display = 'block'; return; }
-  btn.disabled = true; btn.textContent = 'Signing in…';
-  try {
-    var res = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:u, password:p}) });
-    var data = await res.json();
-    if (data.error || !data.success) {
-      btn.disabled = false; btn.textContent = 'Sign In →';
-      err.textContent = data.error || 'Incorrect credentials'; err.style.display = 'block'; return;
-    }
-    currentUser = data.user;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = '';
-    document.getElementById('el-av').textContent = currentUser.avatar || currentUser.name.slice(0,2).toUpperCase();
-    document.getElementById('el-unm').textContent = currentUser.name;
-    btn.disabled = false; btn.textContent = 'Sign In →';
-    init();
-  } catch(e) {
-    btn.disabled = false; btn.textContent = 'Sign In →';
-    err.textContent = 'Network error'; err.style.display = 'block';
-  }
-}
-
-document.getElementById('el-pass').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
-document.getElementById('el-user').addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
 
 function goHome() { window.location.href = '../index.html'; }
 
@@ -745,7 +697,7 @@ async function saveReading() {
     pf: isNaN(pf) ? null : pf,
     night_kwh: isNaN(night) ? null : night,
     mf: getMF(date), energy_rate: getER(date), fuel_rate: getFR(date),
-    fixed_charge: getShiftFixed(date), created_by: currentUser ? currentUser.username : ''
+    fixed_charge: getShiftFixed(date), created_by: 'meter'
   };
   try {
     var res = await apiPost('/api/electricity/readings', body);
@@ -1109,7 +1061,7 @@ async function saveBill() {
     demand_chg: gfv('b-demand'), energy_chg: gfv('b-energy'), fuel_sur: gfv('b-fuel'),
     pf_rebate: gfv('b-pf-reb'), ehv_rebate: gfv('b-ehv'), elec_duty: gfv('b-duty'),
     net_payable: gfv('b-net'), total_payable: total,
-    remarks: gsv('b-remarks') || '', created_by: currentUser ? currentUser.username : ''
+    remarks: gsv('b-remarks') || '', created_by: 'meter'
   };
   try {
     var url = '/api/electricity/bills' + (editBillId ? '' : '');
@@ -1336,6 +1288,8 @@ function toast(msg, type) {
 // Modal backdrop close
 document.getElementById('meter-modal').addEventListener('click', function(e) { if (e.target === this) closeMeterConfig(); });
 document.getElementById('bill-modal').addEventListener('click', function(e) { if (e.target === this) closeBillModal(); });
+
+init();
 </script>
 </body>
 </html>

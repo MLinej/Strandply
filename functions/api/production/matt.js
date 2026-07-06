@@ -4,7 +4,7 @@ export async function onRequestGet(context) {
     if (!db) return jsonResponse({ error: 'D1 not configured' }, 500);
 
     const { results } = await db.prepare(
-      'SELECT remarks FROM production_chipping_reports ORDER BY created_at DESC'
+      'SELECT remarks FROM production_matt_batches ORDER BY created_at DESC'
     ).all();
 
     const reports = (results || []).map(row => {
@@ -27,28 +27,30 @@ export async function onRequestPost(context) {
     if (!db) return jsonResponse({ error: 'D1 not configured' }, 500);
 
     const report = await context.request.json();
-    if (!report.id) return jsonResponse({ error: 'Report ID is required' }, 400);
+    if (!report.id) return jsonResponse({ error: 'Batch ID is required' }, 400);
 
     await db.prepare(
-      `INSERT OR REPLACE INTO production_chipping_reports (
-        id, report_date, shift, machine_no, operator_name, input_qty,
-        total_kg, total_amt, avg_rate, lots_json, wip_batch_id,
-        wf_state, status, remarks
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT OR REPLACE INTO production_matt_batches (
+        id, batch_date, shift, product, size, thickness, operator_name, setpoint, warn_band, target_qty, total_matts, avg_weight, pass_count, warn_count, fail_count, pass_rate, status, remarks
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       report.id,
       report.date || '',
       report.shift || 'Day',
-      report.machine || '',
+      report.product || '',
+      report.size || '',
+      report.thickness || '',
       report.operator || '',
-      report.totalKg || 0,
-      report.totalKg || 0,
-      report.totalAmt || 0,
-      report.avgRate || 0,
-      JSON.stringify(report.lots || []),
-      report.wipBatchId || '',
-      report.wfState || 'draft',
-      report.status || 'saved',
+      report.setpoint || 0,
+      report.warnBand || 0.5,
+      report.targetQty || 0,
+      report.totalMatts || 0,
+      report.avgWeight || 0,
+      report.passCount || 0,
+      report.warnCount || 0,
+      report.failCount || 0,
+      report.passRate || 0,
+      report.status || 'open',
       JSON.stringify(report)
     ).run();
 
@@ -67,7 +69,7 @@ export async function onRequestDelete(context) {
     const id = url.searchParams.get('id');
     if (!id) return jsonResponse({ error: 'ID is required' }, 400);
 
-    await db.prepare('DELETE FROM production_chipping_reports WHERE id = ?').bind(id).run();
+    await db.prepare('DELETE FROM production_matt_batches WHERE id = ?').bind(id).run();
     return jsonResponse({ success: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);

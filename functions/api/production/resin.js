@@ -4,7 +4,7 @@ export async function onRequestGet(context) {
     if (!db) return jsonResponse({ error: 'D1 not configured' }, 500);
 
     const { results } = await db.prepare(
-      'SELECT remarks FROM production_chipping_reports ORDER BY created_at DESC'
+      'SELECT remarks FROM production_resin_entries ORDER BY created_at DESC'
     ).all();
 
     const reports = (results || []).map(row => {
@@ -30,24 +30,25 @@ export async function onRequestPost(context) {
     if (!report.id) return jsonResponse({ error: 'Report ID is required' }, 400);
 
     await db.prepare(
-      `INSERT OR REPLACE INTO production_chipping_reports (
-        id, report_date, shift, machine_no, operator_name, input_qty,
-        total_kg, total_amt, avg_rate, lots_json, wip_batch_id,
-        wf_state, status, remarks
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT OR REPLACE INTO production_resin_entries (
+        id, report_date, shift, lot_no, vendor_name, invoice_no,
+        qty, rate_kg, amount, product, operator_name,
+        linked_ps, linked_pp, status, remarks
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       report.id,
       report.date || '',
       report.shift || 'Day',
-      report.machine || '',
+      report.lot || '',
+      report.vendor || '',
+      report.inv_no || '',
+      report.qty || 0,
+      report.rateKg || 0,
+      report.amount || 0,
+      report.product || '',
       report.operator || '',
-      report.totalKg || 0,
-      report.totalKg || 0,
-      report.totalAmt || 0,
-      report.avgRate || 0,
-      JSON.stringify(report.lots || []),
-      report.wipBatchId || '',
-      report.wfState || 'draft',
+      report.linkedPS || '',
+      report.linkedPP || '',
       report.status || 'saved',
       JSON.stringify(report)
     ).run();
@@ -67,7 +68,7 @@ export async function onRequestDelete(context) {
     const id = url.searchParams.get('id');
     if (!id) return jsonResponse({ error: 'ID is required' }, 400);
 
-    await db.prepare('DELETE FROM production_chipping_reports WHERE id = ?').bind(id).run();
+    await db.prepare('DELETE FROM production_resin_entries WHERE id = ?').bind(id).run();
     return jsonResponse({ success: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);

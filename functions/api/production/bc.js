@@ -4,7 +4,7 @@ export async function onRequestGet(context) {
     if (!db) return jsonResponse({ error: 'D1 not configured' }, 500);
 
     const { results } = await db.prepare(
-      'SELECT remarks FROM production_chipping_reports ORDER BY created_at DESC'
+      'SELECT remarks FROM production_bc_reports ORDER BY created_at DESC'
     ).all();
 
     const reports = (results || []).map(row => {
@@ -30,23 +30,23 @@ export async function onRequestPost(context) {
     if (!report.id) return jsonResponse({ error: 'Report ID is required' }, 400);
 
     await db.prepare(
-      `INSERT OR REPLACE INTO production_chipping_reports (
-        id, report_date, shift, machine_no, operator_name, input_qty,
-        total_kg, total_amt, avg_rate, lots_json, wip_batch_id,
+      `INSERT OR REPLACE INTO production_bc_reports (
+        id, report_date, shift, operator_name, product, size,
+        linked_hp, hp_pcs, cut_pcs, reject_pcs, reject_pct,
         wf_state, status, remarks
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       report.id,
       report.date || '',
       report.shift || 'Day',
-      report.machine || '',
       report.operator || '',
-      report.totalKg || 0,
-      report.totalKg || 0,
-      report.totalAmt || 0,
-      report.avgRate || 0,
-      JSON.stringify(report.lots || []),
-      report.wipBatchId || '',
+      report.product || '',
+      report.size || '',
+      report.linkedHP || '',
+      report.hpPcs || 0,
+      report.cutPcs || 0,
+      report.rejectPcs || 0,
+      report.rejectPct || 0,
       report.wfState || 'draft',
       report.status || 'saved',
       JSON.stringify(report)
@@ -67,7 +67,7 @@ export async function onRequestDelete(context) {
     const id = url.searchParams.get('id');
     if (!id) return jsonResponse({ error: 'ID is required' }, 400);
 
-    await db.prepare('DELETE FROM production_chipping_reports WHERE id = ?').bind(id).run();
+    await db.prepare('DELETE FROM production_bc_reports WHERE id = ?').bind(id).run();
     return jsonResponse({ success: true });
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);

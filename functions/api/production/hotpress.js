@@ -31,14 +31,24 @@ export async function onRequestPost(context) {
 
     await db.prepare(
       `INSERT OR REPLACE INTO production_hotpress_reports (
-        id, report_date, shift, operator_name, output_sheets, remarks
-      ) VALUES (?, ?, ?, ?, ?, ?)`
+        id, report_date, shift, operator_name, output_sheets,
+        product, size, charges_json, total_time_mins, spare_time_mins,
+        avg_press_mins, wf_state, status, remarks
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       report.id,
       report.date || '',
       report.shift || 'Day',
       report.operator || '',
       report.totalBoards || 0,
+      report.product || '',
+      report.size || '8x4',
+      JSON.stringify(report.charges || []),
+      report.totalTimeMins || 0,
+      report.spareTimeMins || 0,
+      report.avgPressMins || 0,
+      report.wfState || 'draft',
+      report.status || 'saved',
       JSON.stringify(report)
     ).run();
 

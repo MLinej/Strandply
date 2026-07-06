@@ -807,14 +807,12 @@ function savePunch(){
   if(shift==='PM'&&h<12){showToast('PM shift: 12:00–23:59 only','err');return;}
   punches.push({id:ig(),date:date,shift:shift,time:time,kwh:kwh,
     pf:gfv2('f-pf'),night:gfv2('f-night'),
-    energyRate: gfv2('f-erate') || meterConfig.rate,
-    fuelRate:   gfv2('f-frate') || meterConfig.fuelRate,
     remarks:document.getElementById('f-remarks').value});
   punches.sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time);});
   showToast('Saved — '+shift+' '+date,'ok');
   clearPunchForm();renderPunchTable();updateStatusBar();
 }
-function gfv2(id){var v=parseFloat(document.getElementById(id).value);return isNaN(v)?null:v;}
+function gfv2(id){var el=document.getElementById(id);if(!el)return null;var v=parseFloat(el.value);return isNaN(v)?null:v;}
 function clearPunchForm(){
   ['f-kwh','f-pf','f-night','f-remarks'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('punch-preview').className='preview idle';
