@@ -267,6 +267,51 @@ var _curRole='dispatch';
 var _roleMap={dispatch:'Jimit Mehta',logistics:'Ramesh Shah',accounts:'Priya Agarwal'};
 var _roleLabel={dispatch:'Dispatch Executive',logistics:'Logistics Manager',accounts:'Accounts'};
 
+// ═══ LOCALSTORAGE PERSISTENCE ══════════════════════════════════════════════
+var LS_KEY='stp_transport_v1';
+function saveState(){
+  try{
+    localStorage.setItem(LS_KEY,JSON.stringify({
+      INQUIRIES:INQUIRIES,
+      RATE_CMPS:RATE_CMPS,
+      APPROVALS:APPROVALS,
+      ORDERS:ORDERS,
+      RC_DRAFTS:RC_DRAFTS,
+      TRANSPORTERS:TRANSPORTERS,
+      VEHICLES:VEHICLES,
+      _seqInq:_seqInq,
+      _seqRc:_seqRc,
+      _seqAp:_seqAp,
+      _seqOr:_seqOr
+    }));
+  }catch(e){console.error('saveState failed',e);}
+}
+function loadState(){
+  try{
+    var raw=localStorage.getItem(LS_KEY);
+    if(!raw)return;
+    var d=JSON.parse(raw);
+    if(d.INQUIRIES)INQUIRIES=d.INQUIRIES;
+    if(d.RATE_CMPS)RATE_CMPS=d.RATE_CMPS;
+    if(d.APPROVALS)APPROVALS=d.APPROVALS;
+    if(d.ORDERS)ORDERS=d.ORDERS;
+    if(d.RC_DRAFTS)RC_DRAFTS=d.RC_DRAFTS;
+    if(d.TRANSPORTERS)TRANSPORTERS=d.TRANSPORTERS;
+    if(d.VEHICLES)VEHICLES=d.VEHICLES;
+    // Restore or reconstruct sequence counters from max existing ID
+    _seqInq=d._seqInq||1;
+    _seqRc=d._seqRc||1;
+    _seqAp=d._seqAp||1;
+    _seqOr=d._seqOr||1;
+    var m;
+    INQUIRIES.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqInq)_seqInq=n;}});
+    RATE_CMPS.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqRc)_seqRc=n;}});
+    RC_DRAFTS&&Object.keys(RC_DRAFTS).forEach(function(k){m=k.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqRc)_seqRc=n;}});
+    APPROVALS.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqAp)_seqAp=n;}});
+    ORDERS.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqOr)_seqOr=n;}});
+  }catch(e){console.error('loadState failed',e);}
+}
+
 // ═══ UTILS ═══════════════════════════════════════════════════════════════
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function toast(msg,type){var tc=document.getElementById('tc');var el=document.createElement('div');el.className='ts'+(type?' '+type:'');el.textContent=msg;tc.appendChild(el);setTimeout(function(){el.classList.add('sh');},10);setTimeout(function(){el.classList.remove('sh');setTimeout(function(){el.remove();},300);},2800);}
@@ -439,6 +484,7 @@ function saveInquiry(andWA){
   if(!gv('iMat')){toast('Enter material','er2');return;}
   var inq={id:'INQ-26-'+(String(_seqInq++).padStart(3,'0')),from:_inqF.from.city,fromState:_inqF.from.state,fromPin:_inqF.from.pincode,to:_inqF.to.city,toState:_inqF.to.state,toPin:_inqF.to.pincode,material:gv('iMat'),weight:gv('iWt'),vehicle:gv('iVeh'),pickupDate:gv('iDate'),dtype:gv('iDtype'),freightPaidBy:gv('iPaidBy')||'Strandply',budget:parseFloat(gv('iBudget'))||0,remarks:gv('iRem'),status:'open',rcId:null,createdBy:_roleMap[_curRole],created_at:new Date().toISOString()};
   INQUIRIES.push(inq);
+  saveState();
   document.getElementById('newInqMod').remove();
   updateBadges();
   toast(inq.id+' saved'+(andWA?' & WhatsApp sent':'')+' ✓','ok');
@@ -619,6 +665,7 @@ window.saveRcDraft=function(rcId,inqId){
   RC_DRAFTS[rcId]={rcId:rcId,inqId:inqId,from:inq.from,to:inq.to,vehicle:inq.vehicle,quotes:quotes,savedAt:new Date().toISOString()};
   // Update seq if this is a new draft
   if(rcId==='RC-26-'+(String(_seqRc).padStart(3,'0')))_seqRc++;
+  saveState();
   document.getElementById('rcMod').remove();
   updateBadges();
   toast(rcId+' draft saved ✓ — '+quotes.filter(function(q){return q.rate>0;}).length+' rates entered','ok');
@@ -656,6 +703,7 @@ window.selectRcRow=function(i,rcId,inqId){
     _seqRc++;
     inq.status='rate_compared';inq.rcId=rcId;
     delete RC_DRAFTS[rcId];
+    saveState();
   }
   document.getElementById('rcMod').remove();
   updateBadges();
@@ -719,6 +767,7 @@ function createApproval(rc,justification){
   var apId='FRA-26-'+(String(_seqAp++).padStart(3,'0'));
   var ap={id:apId,rcId:rc.id,inqId:rc.inqId,transporter:rc.selectedTransporter,selectedRate:rc.selectedRate,selectedTransit:rc.selectedTransit||'',from:rc.from,fromPin:rc.fromPin,to:rc.to,toPin:rc.toPin,vehicle:rc.vehicle,material:rc.material||'',weight:rc.weight||'',pickupDate:inq.pickupDate||'',dtype:inq.dtype||'Normal',budget:rc.budget||0,isLowest:rc.isLowest,exceedsBudget:rc.exceedsBudget||false,justification:justification,status:'pending',nextApprover:'accounts',history:[{role:'dispatch',user:_roleMap.dispatch,action:'Submitted',note:'Rate comparison '+rc.id+' submitted for Accounts approval'+(justification?' · Justification: '+justification:''),ts:new Date().toISOString()}],created_at:new Date().toISOString()};
   APPROVALS.push(ap);rc.status='submitted_approval';
+  saveState();
   updateBadges();toast(apId+' submitted to Accounts for approval ✓','ok');showSec('approval');
 }
 
@@ -770,9 +819,9 @@ function apCard(a){
     +'</div>';
 }
 
-function doApprove(id){var a=APPROVALS.find(function(x){return x.id===id;});if(!a)return;var rem=(document.getElementById('apRem_'+id)||{value:''}).value.trim();a.history.push({role:_curRole,user:_roleMap[_curRole],action:'Approved',note:rem||'Approved',ts:new Date().toISOString()});a.status='approved';a.nextApprover=null;toast(id+' APPROVED ✓','ok');updateBadges();renderApproval();}
-function doReject(id){var a=APPROVALS.find(function(x){return x.id===id;});if(!a)return;var rem=(document.getElementById('apRem_'+id)||{value:''}).value.trim();if(!rem){toast('Enter rejection reason','er2');return;}a.status='rejected';a.nextApprover=null;a.history.push({role:_curRole,user:_roleMap[_curRole],action:'Rejected',note:rem,ts:new Date().toISOString()});updateBadges();toast(id+' rejected','wn');renderApproval();}
-function doApproveExc(id){var a=APPROVALS.find(function(x){return x.id===id;});if(!a)return;var rem=(document.getElementById('apRem_'+id)||{value:''}).value.trim();a.history.push({role:_curRole,user:_roleMap[_curRole],action:'Exception Approved',note:rem||'Exception approved',ts:new Date().toISOString()});a.status='approved';a.nextApprover=null;toast(id+' exception APPROVED ✓','ok');updateBadges();renderApproval();}
+function doApprove(id){var a=APPROVALS.find(function(x){return x.id===id;});if(!a)return;var rem=(document.getElementById('apRem_'+id)||{value:''}).value.trim();a.history.push({role:_curRole,user:_roleMap[_curRole],action:'Approved',note:rem||'Approved',ts:new Date().toISOString()});a.status='approved';a.nextApprover=null;saveState();toast(id+' APPROVED ✓','ok');updateBadges();renderApproval();}
+function doReject(id){var a=APPROVALS.find(function(x){return x.id===id;});if(!a)return;var rem=(document.getElementById('apRem_'+id)||{value:''}).value.trim();if(!rem){toast('Enter rejection reason','er2');return;}a.status='rejected';a.nextApprover=null;a.history.push({role:_curRole,user:_roleMap[_curRole],action:'Rejected',note:rem,ts:new Date().toISOString()});saveState();updateBadges();toast(id+' rejected','wn');renderApproval();}
+function doApproveExc(id){var a=APPROVALS.find(function(x){return x.id===id;});if(!a)return;var rem=(document.getElementById('apRem_'+id)||{value:''}).value.trim();a.history.push({role:_curRole,user:_roleMap[_curRole],action:'Exception Approved',note:rem||'Exception approved',ts:new Date().toISOString()});a.status='approved';a.nextApprover=null;saveState();toast(id+' exception APPROVED ✓','ok');updateBadges();renderApproval();}
 
 // ═══ ORDER FORM ════════════════════════════════════════════════════════════
 function generateOrder(apId){
@@ -783,6 +832,7 @@ function generateOrder(apId){
   var rc=RATE_CMPS.find(function(x){return x.id===a.rcId;})||{quotes:[]};
   var or={id:orId,apId:apId,rcId:a.rcId,inqId:a.inqId,transporter:a.transporter,tpPhone:tp.phone,tpContact:tp.contact,tpGst:tp.gst||'—',tpAddress:tp.address,tpCity:tp.city,tpState:tp.state,tpCredit:tp.credit,from:a.from,fromPin:a.fromPin,to:a.to,toPin:a.toPin,vehicle:a.vehicle,material:a.material||'—',weight:a.weight||'—',pickupDate:a.pickupDate||'TBD',dtype:a.dtype||'Normal',rate:a.selectedRate,transit:a.selectedTransit||'—',status:'issued',created_at:new Date().toISOString()};
   ORDERS.push(or);a.history.push({role:'system',user:'System',action:'Order Form Generated',note:'Order '+orId+' issued',ts:new Date().toISOString()});
+  saveState();
   updateBadges();toast(orId+' Order Form generated ✓','ok');renderApproval();setTimeout(function(){printOrder(orId);},600);
 }
 
@@ -923,7 +973,7 @@ window.togTmV=function(el,v){el.classList.toggle('on');var i=_tmS.vehicles.index
 function renderOpTags(){var b=document.getElementById('tmOpB');if(!b)return;var inp=document.getElementById('tmOpI');b.querySelectorAll('.mst').forEach(function(t){t.remove();});_tmS.cities.forEach(function(c,i){var tag=document.createElement('div');tag.className='mst';tag.innerHTML=esc(c.city)+' <span class="pin-badge" style="font-size:9px;padding:1px 5px">'+esc(c.pincode)+'</span>';var rm=document.createElement('button');rm.textContent='×';rm.onclick=function(){_tmS.cities.splice(i,1);renderOpTags();};tag.appendChild(rm);b.insertBefore(tag,inp);});}
 window.lookupIFSC=function(val){val=(val||'').trim().toUpperCase();if(val.length!==11)return;var d=document.getElementById('tmIFSCInfo');if(d)d.innerHTML='<span style="color:var(--am)">⏳ Fetching...</span>';fetch('https://ifsc.razorpay.com/'+val).then(function(r){return r.ok?r.json():Promise.reject('Not found');}).then(function(data){var bn=document.getElementById('tmBkName');var bb=document.getElementById('tmBkBranch');if(bn)bn.value=data.BANK||'';if(bb)bb.value=data.BRANCH||'';if(d)d.innerHTML='<span style="color:var(--g)">✓ '+esc(data.BANK)+' — '+esc(data.BRANCH)+'</span>';}).catch(function(){if(d)d.innerHTML='<span style="color:var(--r)">IFSC not found — enter manually</span>';var bn=document.getElementById('tmBkName');var bb=document.getElementById('tmBkBranch');if(bn){bn.readOnly=false;bn.style.background='';}if(bb){bb.readOnly=false;bb.style.background='';}});};
 window.handleVCUpload=function(input){var file=input.files[0];if(!file)return;var prev=document.getElementById('tmVCPrev');if(!prev)return;var reader=new FileReader();reader.onload=function(e){_tmS.vcFile=e.target.result;if(file.type.startsWith('image/')){prev.innerHTML='<img src="'+e.target.result+'" style="max-height:80px;max-width:160px;border-radius:4px;border:1px solid var(--br)"><div style="font-size:10px;color:var(--g);margin-top:2px">✓ '+esc(file.name)+'</div>';}else{prev.innerHTML='<div style="font-size:11px;color:var(--g)">✓ PDF: '+esc(file.name)+'</div>';}};reader.readAsDataURL(file);};
-function saveTp(){var gv=function(id){var el=document.getElementById(id);return el?(el.value||'').trim():'';};if(!gv('tmN')||!gv('tmCiV')){toast('Name and city required','er2');return;}if(!gv('tmPi')||gv('tmPi').length!==6){toast('6-digit pincode required','er2');return;}if(!_tmS.vehicles.length){toast('Select at least one vehicle','er2');return;}var t={_id:'t'+(TRANSPORTERS.length+1),name:gv('tmN'),code:'TRP-'+yr()+'-'+(String(TRANSPORTERS.length+1).padStart(3,'0')),contact:gv('tmC'),phone:gv('tmPh'),phone2:gv('tmPh2'),email:gv('tmE'),tds:gv('tmTds')||'No',address:gv('tmA'),city:gv('tmCiV'),state:gv('tmStV'),pincode:gv('tmPi'),gst:gv('tmG').toUpperCase(),pan:gv('tmPa').toUpperCase(),credit:gv('tmCr'),ifsc:gv('tmIFSC').toUpperCase(),bankName:gv('tmBkName'),bankBranch:gv('tmBkBranch'),accName:gv('tmAccName'),accNo:gv('tmAccNo'),visitingCard:_tmS.vcFile||'',vehicles:_tmS.vehicles.slice(),op_cities:_tmS.cities.slice(),rating:4,status:'active'};TRANSPORTERS.push(t);document.getElementById('addTpMod').remove();toast(t.code+' saved ✓','ok');renderTransporters();}
+function saveTp(){var gv=function(id){var el=document.getElementById(id);return el?(el.value||'').trim():'';};if(!gv('tmN')||!gv('tmCiV')){toast('Name and city required','er2');return;}if(!gv('tmPi')||gv('tmPi').length!==6){toast('6-digit pincode required','er2');return;}if(!_tmS.vehicles.length){toast('Select at least one vehicle','er2');return;}var t={_id:'t'+(TRANSPORTERS.length+1),name:gv('tmN'),code:'TRP-'+yr()+'-'+(String(TRANSPORTERS.length+1).padStart(3,'0')),contact:gv('tmC'),phone:gv('tmPh'),phone2:gv('tmPh2'),email:gv('tmE'),tds:gv('tmTds')||'No',address:gv('tmA'),city:gv('tmCiV'),state:gv('tmStV'),pincode:gv('tmPi'),gst:gv('tmG').toUpperCase(),pan:gv('tmPa').toUpperCase(),credit:gv('tmCr'),ifsc:gv('tmIFSC').toUpperCase(),bankName:gv('tmBkName'),bankBranch:gv('tmBkBranch'),accName:gv('tmAccName'),accNo:gv('tmAccNo'),visitingCard:_tmS.vcFile||'',vehicles:_tmS.vehicles.slice(),op_cities:_tmS.cities.slice(),rating:4,status:'active'};TRANSPORTERS.push(t);saveState();document.getElementById('addTpMod').remove();toast(t.code+' saved ✓','ok');renderTransporters();}
 
 function pdfTp(id){
   var t=TRANSPORTERS.find(function(x){return x._id===id;});if(!t)return;
@@ -948,8 +998,8 @@ function pdfTp(id){
 function renderVehicles(){var mn=document.getElementById('main');mn.innerHTML='<div class="ph"><div><h1>Vehicle Type <em>Master</em></h1></div><button class="btn bp" onclick="openAddVeh()">+ Add Vehicle</button></div><div class="tw"><table class="vt"><thead><tr><th>Name</th><th>Description</th><th>Capacity</th><th>Status</th><th>Actions</th></tr></thead><tbody id="vTb"></tbody></table></div>';renderVehRows();}
 function renderVehRows(){var tb=document.getElementById('vTb');if(!tb)return;tb.innerHTML=VEHICLES.map(function(v){return '<tr><td style="font-weight:700">'+esc(v.name)+'</td><td style="color:var(--k4)">'+esc(v.desc)+'</td><td><span style="background:#dbeafe;color:#1e3a8a;padding:1px 7px;border-radius:99px;font-size:10px;font-weight:700">'+esc(v.capacity)+'</span></td><td><span class="bd '+(v.active?'bl2':'bi')+'">'+(v.active?'Active':'Inactive')+'</span></td><td><div class="ac"><button class="btn bo bxs" onclick="openAddVeh(\''+v.id+'\')">Edit</button><button class="btn bxs" style="background:'+(v.active?'#fef2f2':'var(--gs)')+';color:'+(v.active?'var(--r)':'var(--g)')+';border-color:'+(v.active?'#fecaca':'#bbf7d0')+'" onclick="togVeh(\''+v.id+'\')">'+(v.active?'Deactivate':'Activate')+'</button></div></td></tr>';}).join('');}
 function openAddVeh(id){var v=id?VEHICLES.find(function(x){return x.id===id;}):null;var ov=document.createElement('div');ov.className='ov';ov.id='addVehMod';ov.innerHTML='<div class="md mds"><div class="mh"><div><h2>'+(v?'Edit':'Add')+' Vehicle Type</h2></div><button class="mcl" onclick="document.getElementById(\'addVehMod\').remove()">✕</button></div><div class="mb"><div class="fg"><div class="fd ff"><label>Name <span class="rq">*</span></label><input id="vN" value="'+esc(v?v.name:'')+'"></div><div class="fd ff"><label>Description</label><input id="vD" value="'+esc(v?v.desc:'')+'"></div><div class="fd"><label>Capacity</label><input id="vC" value="'+esc(v?v.capacity:'')+'"></div><div class="fd"><label>Status</label><select id="vS"><option value="1"'+(v&&v.active?' selected':'')+'>Active</option><option value="0"'+(v&&!v.active?' selected':'')+'>Inactive</option></select></div></div></div><div class="mf"><button class="btn bo" onclick="document.getElementById(\'addVehMod\').remove()">Cancel</button><button class="btn bp" onclick="saveVeh(\''+esc(id||'')+'\')">Save</button></div></div>';document.getElementById('overlays').appendChild(ov);ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});}
-function saveVeh(id){var n=(document.getElementById('vN')||{value:''}).value.trim();if(!n){toast('Name required','er2');return;}var p={id:id||'v'+Date.now(),name:n,desc:(document.getElementById('vD')||{value:''}).value.trim(),capacity:(document.getElementById('vC')||{value:''}).value.trim()||'Variable',active:document.getElementById('vS').value==='1'};if(id){var i=VEHICLES.findIndex(function(v){return v.id===id;});if(i>=0)VEHICLES[i]=p;}else VEHICLES.push(p);document.getElementById('addVehMod').remove();toast((id?'Updated':'Added')+': '+p.name,'ok');renderVehicles();}
-function togVeh(id){var v=VEHICLES.find(function(x){return x.id===id;});if(v){v.active=!v.active;renderVehRows();toast((v.active?'Activated':'Deactivated')+': '+v.name,'ok');}}
+function saveVeh(id){var n=(document.getElementById('vN')||{value:''}).value.trim();if(!n){toast('Name required','er2');return;}var p={id:id||'v'+Date.now(),name:n,desc:(document.getElementById('vD')||{value:''}).value.trim(),capacity:(document.getElementById('vC')||{value:''}).value.trim()||'Variable',active:document.getElementById('vS').value==='1'};if(id){var i=VEHICLES.findIndex(function(v){return v.id===id;});if(i>=0)VEHICLES[i]=p;}else VEHICLES.push(p);saveState();document.getElementById('addVehMod').remove();toast((id?'Updated':'Added')+': '+p.name,'ok');renderVehicles();}
+function togVeh(id){var v=VEHICLES.find(function(x){return x.id===id;});if(v){v.active=!v.active;saveState();renderVehRows();toast((v.active?'Activated':'Deactivated')+': '+v.name,'ok');}}
 
 // ═══ IMPORT/EXPORT ════════════════════════════════════════════════════════
 function renderImport(){
@@ -999,7 +1049,7 @@ window.confirmImport=function(){
     var t={_id:'t'+(TRANSPORTERS.length+1),name:r.name,code:'TRP-'+yr()+'-'+(String(TRANSPORTERS.length+1).padStart(3,'0')),contact:r.contact||'',phone:r.mobile||'',phone2:r.mobile2||'',email:r.email||'',address:r.address||'',city:r.city||'',state:r.state||'',pincode:r.pincode||'',gst:(r.gst||'').toUpperCase(),pan:(r.pan||'').toUpperCase(),tds:r.tds||'No',credit:r.credit||'Against Delivery',ifsc:'',bankName:'',bankBranch:'',accName:'',accNo:'',visitingCard:'',vehicles:r.vehicles?r.vehicles.split(',').map(function(v){return v.trim();}).filter(Boolean):['32FT (10T)'],op_cities:r.opCities?r.opCities.split(',').map(function(v){return{city:v.trim(),state:'',pincode:''};}).filter(function(x){return x.city;}):[], rating:3,status:'active'};
     TRANSPORTERS.push(t);added++;
   });
-  _importRows=[];toast(added+' transporters imported ✓','ok');showSec('transporters');
+  _importRows=[];saveState();toast(added+' transporters imported ✓','ok');showSec('transporters');
 };
 
 // ═══ MISC ═════════════════════════════════════════════════════════════════
@@ -1007,6 +1057,7 @@ function renderTrips(){document.getElementById('main').innerHTML='<div class="ph
 function renderReports(){document.getElementById('main').innerHTML='<div class="ph"><div><h1>Freight <em>Reports</em></h1></div></div><div class="sr"><div class="sc scr" onclick="showSec(\'reports\')"><div class="sl">💰 Monthly Freight</div><div class="sv">₹4.2L</div><div class="ss">This month</div></div><div class="sc scl" onclick="showSec(\'trips\')"><div class="sl">📦 Trips Done</div><div class="sv">89</div><div class="ss">Completed</div></div><div class="sc sca" onclick="showSec(\'reports\')"><div class="sl">⏱️ On-Time</div><div class="sv">94%</div><div class="ss">Delivery rate</div></div></div><div class="er" style="margin-top:12px"><div class="ei">📈</div><h3>Analytics Dashboard</h3><p>Integrate Power BI / Metabase for full reports</p></div>';}
 
 // ═══ BOOT ═════════════════════════════════════════════════════════════════
+loadState();
 updateBadges();
 renderDashboard();
 </script>

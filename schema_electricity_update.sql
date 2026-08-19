@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS electricity_readings (
   energy_rate REAL DEFAULT 4.20,
   fuel_rate REAL DEFAULT 2.30,
   fixed_charge REAL,
+  remarks TEXT DEFAULT '',
   created_by TEXT,
   created_at TEXT DEFAULT (datetime('now'))
 );

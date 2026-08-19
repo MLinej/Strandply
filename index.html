@@ -604,6 +604,8 @@ a{color:inherit;text-decoration:none}
                       <option value="stock">Stock Manager</option>
                        <option value="maintenance">Maintenance Manager</option>
                        <option value="electricity">Electricity Manager</option>
+                       <option value="dwpas">DWPAS Manager</option>
+                       <option value="sales">Sales Executive</option>
                      </select>
                    </div>
                    <div class="f-grp-sm">
@@ -666,8 +668,10 @@ a{color:inherit;text-decoration:none}
                       <option value="erp">Purchase Manager — Purchase ERP only</option>
                       <option value="stock">Stock Manager — Stock Management only</option>
                       <option value="maintenance">Maintenance Manager — Maintenance Tracker only</option>
-                      <option value="electricity">Electricity Manager — Electricity & Meter MIS only</option>
-                    </select>
+                       <option value="electricity">Electricity Manager — Electricity & Meter MIS only</option>
+                       <option value="dwpas">DWPAS Manager — DWPAS Tracker only</option>
+                       <option value="sales">Sales Executive — Sales ERP only</option>
+                     </select>
                   </div>
 
                   <!-- Role preview card -->
@@ -861,6 +865,7 @@ a{color:inherit;text-decoration:none}
             <option value="maintenance">Maintenance Manager</option>
             <option value="electricity">Electricity Manager</option>
             <option value="dwpas">DWPAS Manager</option>
+            <option value="sales">Sales Executive</option>
             <option value="admin">Administrator</option>
           </select>
         </div>
@@ -1032,6 +1037,18 @@ const MODULES = [
       {id:'dw_emp',      name:'Employee Master',     desc:'Manage employee records'},
     ]
   },
+  { id:'sales_erp', name:'Sales ERP', desc:'Sales Orders, Invoices & Customer Management', icon:'🧾', color:'ct-purple',
+    status:'live', url:'sales/index.html', urlDisplay:'strandply.in/sales',
+    features:['Customer database management','Sales order creation & tracking','Invoice generation with GST','Product & item catalogue','Intercompany billing'],
+    subModules:[
+      {id:'se_dash',   name:'Dashboard',           desc:'Sales KPI summary & trends'},
+      {id:'se_cust',   name:'Customers',           desc:'Customer database & contacts'},
+      {id:'se_so',     name:'Sales Orders',        desc:'Create & track sales orders'},
+      {id:'se_inv',    name:'Invoices',            desc:'Generate & manage invoices'},
+      {id:'se_items',  name:'Item Catalogue',      desc:'Product master & pricing'},
+      {id:'se_ledger', name:'Sales Ledger',        desc:'Monthly sales register & reports'},
+    ]
+  },
 ];
 
 const ROLE_LABELS = {
@@ -1040,7 +1057,7 @@ const ROLE_LABELS = {
   vendor:'Vendor Relations', accounts:'Accounts Executive', hr:'HR Executive',
   transport:'Transport Executive', erp:'Purchase Manager', stock:'Stock Manager',
   maintenance:'Maintenance Manager', electricity:'Meter Executive',
-  dwpas:'DWPAS Manager',
+  dwpas:'DWPAS Manager', sales:'Sales Executive',
 };
 
 const AVATAR_COLORS = [
@@ -1052,7 +1069,7 @@ const SEED_USERS = [
   { id:'u001', name:'Admin', username:'admin', password:'admin@strandply', role:'admin',
     dept:'Administration', avatar:'AD', color:'#B91C1C',
     modules:['dispatch','vendor','reports','hr','production','transport','erp','sales_erp','accounts','stock','maintenance','electricity','dwpas'],
-    subRights:{'dispatch':['req','disp','track','party','courier','product','report','settings'],'vendor':['vend_list','vend_po','vend_inv','vend_pay'],'reports':['rpt_dash','rpt_disp','rpt_sales','rpt_exp'],'hr':['hr_emp','hr_att','hr_leave','hr_sal'],'production':['pr_batch','pr_qual','pr_mat','pr_weight'],'transport':['tr_inq','tr_rate','tr_appr','tr_order','tr_track'],'erp':['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'],'accounts':['ac_inv','ac_recv','ac_pay','ac_gst'],'stock':['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],'maintenance':['mt_wo','mt_board','mt_area','mt_timeline','mt_export'],'electricity':['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills'],'dwpas':['dw_dash','dw_plan','dw_register','dw_achieve','dw_variance','dw_hr','dw_dept','dw_emp']}
+    subRights:{'dispatch':['req','disp','track','party','courier','product','report','settings'],'vendor':['vend_list','vend_po','vend_inv','vend_pay'],'reports':['rpt_dash','rpt_disp','rpt_sales','rpt_exp'],'hr':['hr_emp','hr_att','hr_leave','hr_sal'],'production':['pr_batch','pr_qual','pr_mat','pr_weight'],'transport':['tr_inq','tr_rate','tr_appr','tr_order','tr_track'],'erp':['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'],'sales_erp':['se_dash','se_cust','se_so','se_inv','se_items','se_ledger'],'accounts':['ac_inv','ac_recv','ac_pay','ac_gst'],'stock':['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],'maintenance':['mt_wo','mt_board','mt_area','mt_timeline','mt_export'],'electricity':['el_dash','el_punch','el_12hr','el_24hr','el_monthly','el_bills'],'dwpas':['dw_dash','dw_plan','dw_register','dw_achieve','dw_variance','dw_hr','dw_dept','dw_emp']}
   },
   { id:'u002', name:'Ankit Parmar', username:'ankit', password:'ankit@123', role:'dispatch',
     dept:'Dispatch Department', avatar:'AP', color:'#0F766E',
@@ -1090,7 +1107,7 @@ const SEED_USERS = [
 ══════════════════════════════════════════ */
 const ROLE_DEFAULTS = {
   admin: {
-    modules: ['dispatch','vendor','reports','hr','production','transport','erp','accounts','stock','maintenance','electricity','dwpas'],
+    modules: ['dispatch','vendor','reports','hr','production','transport','erp','sales_erp','accounts','stock','maintenance','electricity','dwpas'],
     subRights: {
       dispatch:   ['req','disp','track','party','courier','product','report','settings'],
       vendor:     ['vend_list','vend_po','vend_inv','vend_pay'],
@@ -1099,6 +1116,7 @@ const ROLE_DEFAULTS = {
       production: ['pr_batch','pr_qual','pr_mat','pr_weight'],
       transport:  ['tr_inq','tr_rate','tr_appr','tr_order','tr_track'],
       erp:        ['erp_entry','erp_po','erp_truck','erp_dncn','erp_inv','erp_report'],
+      sales_erp:  ['se_dash','se_cust','se_so','se_inv','se_items','se_ledger'],
       accounts:   ['ac_inv','ac_recv','ac_pay','ac_gst'],
       stock:      ['stk_slip','stk_ledger','stk_stock','stk_reclass','stk_master'],
       maintenance:['mt_wo','mt_board','mt_area','mt_timeline','mt_export'],
@@ -1153,6 +1171,10 @@ const ROLE_DEFAULTS = {
   dwpas: {
     modules: ['dwpas'],
     subRights: { dwpas: ['dw_dash','dw_plan','dw_register','dw_achieve','dw_variance','dw_hr','dw_dept','dw_emp'] }
+  },
+  sales: {
+    modules: ['sales_erp'],
+    subRights: { sales_erp: ['se_dash','se_cust','se_so','se_inv','se_items','se_ledger'] }
   },
 };
 
@@ -1744,6 +1766,7 @@ const MODULE_COLORS = {
   electricity:'#B45309,#FFFBEB', transport:'#BE185D,#FDF2F8',
   erp:'#B45309,#FFFBEB', stock:'#0F766E,#F0FDFA',
   maintenance:'#15803D,#F0FDF4', dwpas:'#B91C1C,#FEF2F2',
+  sales_erp:'#7C3AED,#F5F3FF',
 };
 
 function previewRoleDefaults(){
@@ -1856,7 +1879,7 @@ function doLogout(){
 ══════════════════════════════════════════ */
 
 // Built-in system roles — always present, cannot be deleted
-const BUILTIN_ROLE_IDS = ['admin','dispatch','marketing','management','vendor','accounts','hr','transport','erp','stock','maintenance','electricity','dwpas'];
+const BUILTIN_ROLE_IDS = ['admin','dispatch','marketing','management','vendor','accounts','hr','transport','erp','stock','maintenance','electricity','dwpas','sales'];
 
 // Dynamic role registry — starts from hardcoded + loads custom from D1
 let ROLE_REGISTRY = {}; // { roleId: { id, name, desc, color, modules, subRights, isBuiltin } }

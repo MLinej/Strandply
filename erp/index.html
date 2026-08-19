@@ -19,7 +19,9 @@
   var _queue = [];
   var _names = [
     'openModal','closeModal','showPage','toggleSidebar',
-    'openAddForm','openSlip','openSlipDirect','editEntry',
+    'openAddForm','openSlip','openSlipDirect','editEntry','requestDeleteEntry','submitDeletePin',
+    'addSpeciesType','removeSpeciesType','renderSpeciesMaster','populateSpeciesDropdown',
+    'addFaceVeneerType','removeFaceVeneerType','renderFaceVeneerMaster','populateFaceVeneerDropdown',
     'exportCSV','exportMaterialCSV',
     'filterMat','filterTruck','filterDNCN','filterDocs','filterVendorPick',
     'sortMat','innerTab','renderDashboard',
@@ -27,6 +29,7 @@
     'liveVendorSearch','pickVendor','selectVendorMain',
     'renderVendorPickList','autoFillMonths','downloadSlipPDF','exportExcel','exportDaywise','showPOPage','openLabelPrint',
     'handleDocUpload','docDragOver','docDragLeave','docDrop',
+    'onGlobalFYChange','onInventoryFYChange','onOSFYChange','setConsumption',
     'toast'
   ];
   _names.forEach(function(name){
@@ -205,6 +208,9 @@ td:last-child{border-right:none}
 .edit-btn{background:none;border:1px solid var(--blue);color:var(--blue);font-family:var(--fh);font-size:10px;
   font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:3px;cursor:pointer;transition:all .15s}
 .edit-btn:hover{background:var(--blue);color:#fff}
+.delete-btn{background:none;border:1px solid #dc2626;color:#dc2626;font-family:var(--fh);font-size:10px;
+  font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:3px;cursor:pointer;transition:all .15s}
+.delete-btn:hover{background:#dc2626;color:#fff}
 
 /* ── FORM ── */
 .form-section{margin-bottom:20px}
@@ -451,6 +457,11 @@ td:last-child{border-right:none}
     <button class="btn btn-gray btn-sm" onclick="exportExcel('all')">⬇ Excel</button>
     <button class="btn btn-gray btn-sm" onclick="window.print()">🖨 Print</button>
     <div style="width:1px;height:24px;background:var(--border)"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-family:var(--fm);font-size:9px;color:var(--g4);text-transform:uppercase;letter-spacing:1px">FY</span>
+      <select class="sel" id="global-fy-select" onchange="onGlobalFYChange(this.value)" style="font-family:var(--fh);font-weight:700;font-size:12px;color:var(--red);border:1px solid var(--redmid);background:var(--redlt);padding:5px 10px;border-radius:5px"></select>
+    </div>
+    <div style="width:1px;height:24px;background:var(--border)"></div>
     <div style="font-family:var(--fm);font-size:11px;color:var(--g4)">Admin <span style="color:var(--red)">▾</span></div>
   </div>
 </header>
@@ -460,7 +471,7 @@ td:last-child{border-right:none}
   <div class="page-header">
     <div class="page-header-left">
       <h1>Management Dashboard</h1>
-      <p>FY 2026-27 · Real-time purchase analytics</p>
+      <p id="dash-fy-subtitle">FY 2026-27 · Real-time purchase analytics</p>
     </div>
     <div class="page-header-actions">
       <select class="sel" id="dash-period" onchange="renderDashboard()">
@@ -889,15 +900,17 @@ td:last-child{border-right:none}
           <th onclick="sortMat('face',9)">PO No <span class="si">↕</span></th>
           <th onclick="sortMat('face',10)">MRN <span class="si">↕</span></th>
           <th onclick="sortMat('face',11)">Tax <span class="si">↕</span></th>
-          <th onclick="sortMat('face',12)">Inv Qty (Pcs) <span class="si">↕</span></th>
-          <th onclick="sortMat('face',13)">SPL Qty (Pcs) <span class="si">↕</span></th>
-          <th onclick="sortMat('face',14)">Diff <span class="si">↕</span></th>
-          <th onclick="sortMat('face',15)">Rate <span class="si">↕</span></th>
-          <th onclick="sortMat('face',16)">Basic (Inv) <span class="si">↕</span></th>
-          <th onclick="sortMat('face',17)">Total (Inv) <span class="si">↕</span></th>
-          <th onclick="sortMat('face',18)">Basic (SPL) <span class="si">↕</span></th>
-          <th onclick="sortMat('face',19)">Total (SPL) <span class="si">↕</span></th>
-          <th onclick="sortMat('face',20)">DN/CN <span class="si">↕</span></th>
+          <th onclick="sortMat('face',12)">Veneer Type <span class="si">↕</span></th>
+          <th onclick="sortMat('face',13)">Inv Qty (Sq Mtr) <span class="si">↕</span></th>
+          <th onclick="sortMat('face',14)">SPL Qty (Sq Mtr) <span class="si">↕</span></th>
+          <th onclick="sortMat('face',15)">Alt Qty (Pcs) <span class="si">↕</span></th>
+          <th onclick="sortMat('face',16)">Diff <span class="si">↕</span></th>
+          <th onclick="sortMat('face',17)">Rate <span class="si">↕</span></th>
+          <th onclick="sortMat('face',18)">Basic (Inv) <span class="si">↕</span></th>
+          <th onclick="sortMat('face',19)">Total (Inv) <span class="si">↕</span></th>
+          <th onclick="sortMat('face',20)">Basic (SPL) <span class="si">↕</span></th>
+          <th onclick="sortMat('face',21)">Total (SPL) <span class="si">↕</span></th>
+          <th onclick="sortMat('face',22)">DN/CN <span class="si">↕</span></th>
           <th>Actions</th>
         </tr></thead>
         <tbody id="tbody-face"></tbody>
@@ -1484,8 +1497,12 @@ td:last-child{border-right:none}
             <input class="finput" id="f-lot" placeholder="A1">
           </div>
           <div class="fld" id="f-species-wrap" style="display:none">
-            <label>Species</label>
-            <input class="finput" id="f-species" placeholder="Eucalyptus">
+            <label>Nilgiri Type / Species &nbsp;<a href="javascript:void(0)" onclick="openModal('speciesMasterModal')" style="font-size:10px;font-weight:600;color:var(--red);text-decoration:underline">+ Manage Types</a></label>
+            <select class="fsel" id="f-species"></select>
+          </div>
+          <div class="fld" id="f-veneer-type-wrap" style="display:none">
+            <label>Face Veneer Type &nbsp;<a href="javascript:void(0)" onclick="openModal('veneerMasterModal')" style="font-size:10px;font-weight:600;color:var(--red);text-decoration:underline">+ Manage Types</a></label>
+            <select class="fsel" id="f-veneer-type"></select>
           </div>
 
         </div>
@@ -1641,7 +1658,7 @@ td:last-child{border-right:none}
           <div class="fld">
             <label>Basic Amt (Inv Wt)</label>
             <input class="finput calc" id="f-basic-inv" readonly>
-            <span class="fcalc-note">= Inv Qty × Rate ÷ 1000</span>
+            <span class="fcalc-note" id="f-basic-inv-note">= Inv Qty × Rate ÷ 1000</span>
           </div>
           <div class="fld">
             <label>GST Amt (Inv Wt)</label>
@@ -1660,7 +1677,7 @@ td:last-child{border-right:none}
           <div class="fld">
             <label>Basic Amt (SPL Wt)</label>
             <input class="finput calc" id="f-basic-spl" readonly>
-            <span class="fcalc-note">= SPL Qty × Rate ÷ 1000</span>
+            <span class="fcalc-note" id="f-basic-spl-note">= SPL Qty × Rate ÷ 1000</span>
           </div>
           <div class="fld">
             <label>GST Amt (SPL Wt)</label>
@@ -1683,6 +1700,13 @@ td:last-child{border-right:none}
           <div class="fld">
             <label>Auto DN/CN (Rate Diff)</label>
             <input class="finput calc" id="f-dncn-rate" readonly>
+          </div>
+        </div>
+        <div class="fgrid fgrid-2" id="f-altqty-wrap" style="display:none;margin-top:10px">
+          <div class="fld">
+            <label>Alternate Qty (Pcs)</label>
+            <input class="finput" type="number" id="f-alt-qty-pcs" placeholder="0" oninput="calcEntry()">
+            <span class="fcalc-note">Piece count equivalent of the Sq Mtr quantity above — for reference/counting only, not used in amount calc</span>
           </div>
         </div>
       </div>
@@ -1748,10 +1772,11 @@ td:last-child{border-right:none}
     </div>
     <div style="padding:20px">
 
-      <div style="background:var(--redlt);border:1px solid var(--redmid);border-radius:6px;padding:12px 16px;margin-bottom:18px;font-size:12px;color:var(--red)">
-        <strong>ℹ Opening Stock</strong> — Enter the stock on hand <em>before</em> this system began recording purchases.
-        This is a one-time entry per material. Once approved it cannot be edited without re-approval.
+      <div style="background:var(--redlt);border:1px solid var(--redmid);border-radius:6px;padding:12px 16px;margin-bottom:12px;font-size:12px;color:var(--red)">
+        <strong>ℹ Opening Stock</strong> — Enter the stock on hand <em>before</em> this system began recording purchases, per Financial Year.
+        Once approved it cannot be edited without re-approval. Closing stock of a FY automatically becomes the Opening Stock of the next FY.
       </div>
+      <div id="os-fy-banner" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 16px;margin-bottom:18px;font-size:11.5px;color:#92400e"></div>
 
       <!-- As-on date -->
       <div class="fgrid fgrid-3" style="margin-bottom:18px">
@@ -1761,7 +1786,7 @@ td:last-child{border-right:none}
         </div>
         <div class="fld">
           <label>Financial Year</label>
-          <input class="finput" id="os-fy" value="2025-26" readonly style="background:var(--g1)">
+          <select class="finput" id="os-fy" onchange="onOSFYChange(this.value)" style="font-family:var(--fm);font-weight:600"></select>
         </div>
         <div class="fld">
           <label>Entry By</label>
@@ -1839,6 +1864,78 @@ td:last-child{border-right:none}
     <div class="form-actions">
       <button class="btn btn-gray" onclick="closeModal('approvalModal')">Cancel</button>
       <button class="btn btn-red" onclick="submitApproval()">🔐 Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL (Jimit Mehta PIN only) -->
+<div class="overlay" id="deleteConfirmModal" onclick="if(event.target===this)closeModal('deleteConfirmModal')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-hdr"><h2>🗑️ Delete Requires Approval</h2><button class="xcl" onclick="closeModal('deleteConfirmModal')">✕</button></div>
+    <div style="padding:24px">
+      <div style="background:var(--redlt);border:1px solid var(--redmid);border-radius:6px;padding:12px 16px;margin-bottom:18px">
+        <div style="font-size:11px;color:var(--g4);margin-bottom:4px">Deleting:</div>
+        <div id="delete-context" style="font-weight:600;color:var(--red);font-size:14px">—</div>
+        <div style="font-size:11px;color:#dc2626;margin-top:6px">⚠️ This action is permanent and cannot be undone.</div>
+      </div>
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:48px;margin-bottom:8px">👤</div>
+        <div style="font-weight:700;font-size:16px">Jimit Mehta</div>
+        <div style="font-size:12px;color:var(--g4)">Purchase Manager — only this user can delete entries</div>
+      </div>
+      <div class="fld">
+        <label>Enter Delete PIN</label>
+        <input class="finput" type="password" id="delete-pin" placeholder="Enter PIN"
+          onkeydown="if(event.key==='Enter')submitDeletePin()" maxlength="6"
+          style="text-align:center;font-size:20px;letter-spacing:6px;font-family:var(--fm)">
+      </div>
+      <div id="delete-result" style="margin-top:10px;text-align:center;font-size:12px;min-height:20px"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-gray" onclick="closeModal('deleteConfirmModal')">Cancel</button>
+      <button class="btn btn-red" onclick="submitDeletePin()">🗑️ Confirm Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- NILGIRI SPECIES/TYPE MASTER MODAL -->
+<div class="overlay" id="speciesMasterModal" onclick="if(event.target===this)closeModal('speciesMasterModal')">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-hdr"><h2>🌳 Nilgiri Type / Species Master</h2><button class="xcl" onclick="closeModal('speciesMasterModal')">✕</button></div>
+    <div style="padding:24px">
+      <p style="font-size:12px;color:var(--g4);margin-bottom:14px">Add or remove Nilgiri Wood types/species anytime. New types appear instantly in the Add Purchase Entry form and in the Stock Ledger's product-wise breakdown.</p>
+      <div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:16px" id="species-master-list"></div>
+      <div class="fld">
+        <label>New Type / Species Name</label>
+        <div style="display:flex;gap:8px">
+          <input class="finput" id="new-species-name" placeholder="e.g. Casuarina" onkeydown="if(event.key==='Enter')addSpeciesType()">
+          <button class="btn btn-red btn-sm" style="white-space:nowrap" onclick="addSpeciesType()">＋ Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-gray" onclick="closeModal('speciesMasterModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- FACE VENEER TYPE MASTER MODAL -->
+<div class="overlay" id="veneerMasterModal" onclick="if(event.target===this)closeModal('veneerMasterModal')">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-hdr"><h2>🪵 Face Veneer Type Master</h2><button class="xcl" onclick="closeModal('veneerMasterModal')">✕</button></div>
+    <div style="padding:24px">
+      <p style="font-size:12px;color:var(--g4);margin-bottom:14px">Add or remove Face Veneer types anytime (e.g. Teak, Walnut, Oak). New types appear instantly in the Add Purchase Entry form.</p>
+      <div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:16px" id="veneer-master-list"></div>
+      <div class="fld">
+        <label>New Veneer Type Name</label>
+        <div style="display:flex;gap:8px">
+          <input class="finput" id="new-veneer-type-name" placeholder="e.g. Mahogany" onkeydown="if(event.key==='Enter')addFaceVeneerType()">
+          <button class="btn btn-red btn-sm" style="white-space:nowrap" onclick="addFaceVeneerType()">＋ Add</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-gray" onclick="closeModal('veneerMasterModal')">Close</button>
     </div>
   </div>
 </div>
@@ -1993,12 +2090,12 @@ if(!RAW.firewood) RAW.firewood = [];
 if(!RAW.face) RAW.face = [];
 
 var MATS = [
-  {id:'nilgiri', label:'Nilgiri Wood',  icon:'🌳', unit:'Kg',  isPerTon:true,  color:'#16a34a', dataKey:'nilgiri'},
-  {id:'resin',   label:'Resin',         icon:'🧪', unit:'Kg',  isPerTon:true,  color:'#d97706', dataKey:'resin'},
-  {id:'kraft',   label:'Kraft Paper',   icon:'📦', unit:'Pcs', isPerTon:false, color:'#7c3aed', dataKey:'kraft'},
-  {id:'firewood',label:'Fire Wood',     icon:'🪵', unit:'Kg',  isPerTon:true,  color:'#b45309', dataKey:'firewood'},
-  {id:'core',    label:'Core Veneer',   icon:'🗂️', unit:'Pcs', isPerTon:false, color:'#0369a1', dataKey:'core'},
-  {id:'face',    label:'Face Veneer',   icon:'🪵', unit:'Pcs', isPerTon:false, color:'#6d28d9', dataKey:'face'},
+  {id:'nilgiri', label:'Nilgiri Wood',  icon:'🌳', unit:'Kg',  isPerTon:false, rateUnit:'Kg',  color:'#16a34a', dataKey:'nilgiri'},
+  {id:'resin',   label:'Resin',         icon:'🧪', unit:'Kg',  isPerTon:true,  rateUnit:'Ton', color:'#d97706', dataKey:'resin'},
+  {id:'kraft',   label:'Kraft Paper',   icon:'📦', unit:'Pcs', isPerTon:false, rateUnit:'Pcs', color:'#7c3aed', dataKey:'kraft'},
+  {id:'firewood',label:'Fire Wood',     icon:'🪵', unit:'Kg',  isPerTon:true,  rateUnit:'Ton', color:'#b45309', dataKey:'firewood'},
+  {id:'core',    label:'Core Veneer',   icon:'🗂️', unit:'Pcs', isPerTon:false, rateUnit:'Pcs', color:'#be185d', dataKey:'core'},
+  {id:'face',    label:'Face Veneer',   icon:'🪵', unit:'Sq Mtr', isPerTon:false, rateUnit:'Sq Mtr', color:'#6d28d9', dataKey:'face'},
 ];
 
 let auditLog = [];
@@ -2021,11 +2118,14 @@ function toast(msg, type=''){
   setTimeout(()=>d.remove(),3500);
 }
 
+var _auditPersistTimer=null;
 function addAudit(action, detail, user='Admin'){
   auditLog.unshift({
     time: new Date().toLocaleString('en-IN'),
     action, detail, user
   });
+  if(_auditPersistTimer) clearTimeout(_auditPersistTimer);
+  _auditPersistTimer=setTimeout(persistPurchase,600);
 }
 
 /* ═══ NAVIGATION ═══ */
@@ -2262,7 +2362,7 @@ function updateMatStats(mid){
   statEl.innerHTML=[
     {l:'Total Value ('+periodLabel+')',v:fS(tot),s:rows.length+' entries'},
     {l:'Total SPL Qty ('+periodLabel+')',v:mat.isPerTon?(qty/1000).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+' MT':qty.toLocaleString('en-IN',{maximumFractionDigits:0})+' '+mat.unit,s:mat.isPerTon?'Metric Tonnes':'Count'},
-    {l:'Avg Rate',v:rows.length?'₹'+f(rows.reduce((s,r)=>s+n(r.rate),0)/rows.length,0):'-',s:'per '+(mat.isPerTon?'Ton':'Pcs')},
+    {l:'Avg Rate',v:rows.length?'₹'+f(rows.reduce((s,r)=>s+n(r.rate),0)/rows.length,0):'-',s:'per '+(mat.rateUnit||(mat.isPerTon?'Ton':'Pcs'))},
     {l:'DN/CN Value',v:fS(dnAmt),s:rows.filter(r=>n(r.dn_total_stock)!==0||n(r.dn_total)!==0).length+' notes'},
   ].map(s=>`<div class="stat-item" style="cursor:default"><div class="sl">${s.l}</div><div class="sv">${s.v}</div><div class="ss">${s.s}</div></div>`).join('');
 }
@@ -2290,8 +2390,10 @@ function renderMatTable(mid, rows){
       <td class="td-mono">${r.po||'—'}</td>
       <td class="td-mono">${r.mrn||'—'}</td>
       <td><span class="tag ${tagCls}">${r.tax_type||'—'}</span></td>
+      ${mid==='face'?`<td class="td-mono">${esc(r.veneer_type||'—')}</td>`:''}
       <td class="td-num">${f(r.inv_qty,0)}</td>
       <td class="td-num">${f(r.spl_qty,0)}</td>
+      ${mid==='face'?`<td class="td-num">${r.alt_qty_pcs?f(r.alt_qty_pcs,0):'—'}</td>`:''}
       <td class="${diffCls}">${diff>0?'+':''}${f(diff,0)}</td>
       <td class="td-num">${f(r.rate,2)}</td>
       <td class="td-amt">${fA(r.basic_inv)}</td>
@@ -2302,6 +2404,7 @@ function renderMatTable(mid, rows){
       <td style="display:flex;gap:4px;padding:8px 6px">
         <button class="slip-btn" onclick="openSlip('${mid}',${ri})">SLIP</button>
         <button class="edit-btn" onclick="editEntry('${mid}',${ri})">EDIT</button>
+        <button class="delete-btn" onclick="requestDeleteEntry('${mid}',${ri})">DEL</button>
       </td>
     </tr>`;
   }).join('');
@@ -2710,7 +2813,7 @@ function renderSlip(mat,r,ri){
     const cls=isRateDN?'r-rdn':'r-rcn';
     const badge=isRateDN?'<span style="background:var(--amber);color:#fff;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">Rate DN</span>':
                          '<span style="background:var(--green);color:#fff;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;margin-right:4px">Rate CN</span>';
-    rdRow=`<tr class="${cls}"><td>D</td><td>${badge}Rate Diff ₹${f(Math.abs(rd),2)} per ${mat.isPerTon?'Ton':'Pcs'}</td>
+    rdRow=`<tr class="${cls}"><td>D</td><td>${badge}Rate Diff ₹${f(Math.abs(rd),2)} per ${mat.rateUnit||(mat.isPerTon?'Ton':'Pcs')}</td>
       <td>${f(splQty,0)}</td><td>${f(rd,2)}</td>
       <td>${isRateDN?'-':'+'}${fA(rdBasic)}</td>
       <td>${igst?'—':(isRateDN?'-':'+')+fA(rdCgst)}</td>
@@ -2760,7 +2863,7 @@ function renderSlip(mat,r,ri){
       <div class="sa5-kv">
         <span class="k">Vehicle No.</span><span class="v">${r.truck||'—'}</span>
         <span class="k">MRN / GRN</span><span class="v">${r.mrn||'—'} / ${r.grn||'—'}</span>
-        <span class="k">Rate/${mat.isPerTon?'Ton':'Pcs'}</span><span class="v" style="color:var(--red)">₹${f(rate,2)}</span>
+        <span class="k">Rate/${mat.rateUnit||(mat.isPerTon?'Ton':'Pcs')}</span><span class="v" style="color:var(--red)">₹${f(rate,2)}</span>
         <span class="k">Material</span><span class="v">${mat.icon||''} ${mat.label}</span>
       </div>
     </div>
@@ -2829,9 +2932,15 @@ function updateMaterialForm(){
   document.getElementById('addModalTitle').textContent='Add '+mat.label+' Purchase Entry';
   document.getElementById('f-qty-lbl').textContent='Invoice Qty ('+mat.unit+') *';
   document.getElementById('f-spl-lbl').textContent='Strandply Qty ('+mat.unit+')';
-  document.getElementById('f-rate-lbl').textContent='Rate / '+(mat.isPerTon?'Ton':'Pcs')+' *';
+  document.getElementById('f-rate-lbl').textContent='Rate / '+(mat.rateUnit||(mat.isPerTon?'Ton':'Pcs'))+' *';
   const sp=document.getElementById('f-species-wrap');
   if(sp)sp.style.display=mid==='nilgiri'?'':'none';
+  if(mid==='nilgiri') populateSpeciesDropdown();
+  const vt=document.getElementById('f-veneer-type-wrap');
+  if(vt)vt.style.display=mid==='face'?'':'none';
+  if(mid==='face') populateFaceVeneerDropdown();
+  const aq=document.getElementById('f-altqty-wrap');
+  if(aq)aq.style.display=mid==='face'?'':'none';
   calcEntry();
 }
 function calcEntry(){
@@ -2844,7 +2953,11 @@ function calcEntry(){
   const rd=parseFloat(document.getElementById('f-ratediff').value)||0;
   const taxType=document.getElementById('f-tax').value;
   const igst=taxType==='IGST';
-  const cpct=0.09, spct=0.09;
+  const isURD=taxType==='URD';
+  const cpct=isURD?0:0.09, spct=isURD?0:0.09;
+  const biNote=document.getElementById('f-basic-inv-note'), bsNote=document.getElementById('f-basic-spl-note');
+  if(biNote) biNote.textContent = mat.isPerTon ? '= Inv Qty × Rate ÷ 1000' : '= Inv Qty × Rate';
+  if(bsNote) bsNote.textContent = mat.isPerTon ? '= SPL Qty × Rate ÷ 1000' : '= SPL Qty × Rate';
   const diff=spl-inv;
   document.getElementById('f-diff').value=diff>0?'+'+diff.toLocaleString('en-IN'):diff.toLocaleString('en-IN');
   const basicInv=mat.isPerTon?inv*rate/1000:inv*rate;
@@ -2877,14 +2990,16 @@ function _origSaveEntry(){
   const spl=parseFloat((document.getElementById('f-spl')||{}).value)||0;
   const inv=parseFloat((document.getElementById('f-qty')||{}).value)||0;
   const rate=parseFloat((document.getElementById('f-rate')||{}).value)||0;
+  const saveTaxType=document.getElementById('f-tax')?.value||'SG+CG';
+  const saveIsURD=saveTaxType==='URD';
   const basicSpl=mat.isPerTon?spl*rate/1000:spl*rate;
-  const gstSpl=basicSpl*(document.getElementById('f-tax')?.value==='IGST'?0.18:0.18);
+  const gstSpl=saveIsURD?0:basicSpl*0.18;
   const basicInv=mat.isPerTon?inv*rate/1000:inv*rate;
-  const gstInv=basicInv*(document.getElementById('f-tax')?.value==='IGST'?0.18:0.18);
+  const gstInv=saveIsURD?0:basicInv*0.18;
 
   const rowData={
     sr:String((RAW[mid]||[]).length+1),
-    date:(document.getElementById('f-date')||{}).value||'',
+    date:fromInputDate((document.getElementById('f-date')||{}).value)||'',
     month:(document.getElementById('f-month')||{}).value||'',
     lot:(document.getElementById('f-lot')||{}).value||'',
     so:(document.getElementById('f-lot')||{}).value||'',
@@ -2897,7 +3012,7 @@ function _origSaveEntry(){
     city:(document.getElementById('f-city')||{}).value||'',
     state:(document.getElementById('f-state')||{}).value||'',
     inv_no:invno,
-    inv_date:(document.getElementById('f-invdate')||{}).value||'',
+    inv_date:fromInputDate((document.getElementById('f-invdate')||{}).value)||'',
     inv_month:(document.getElementById('f-inv-month')||{}).value||'',
     truck:(document.getElementById('f-truck')||{}).value||'',
     driver:(document.getElementById('f-driver')||{}).value||'',
@@ -2907,7 +3022,7 @@ function _origSaveEntry(){
     mrn:(document.getElementById('f-mrn')||{}).value||'',
     grn:(document.getElementById('f-grn')||{}).value||'',
     tax_type:(document.getElementById('f-tax')||{}).value||'SG+CG',
-    cgst_pct:'0.09', sgst_pct:'0.09',
+    cgst_pct:saveIsURD?'0':'0.09', sgst_pct:saveIsURD?'0':'0.09',
     inv_qty:String(inv),
     spl_qty:String(spl),
     diff_qty:String(spl-inv),
@@ -2919,6 +3034,8 @@ function _origSaveEntry(){
     total_inv:String((basicInv+gstInv).toFixed(2)),
     total_spl:String((basicSpl+gstSpl).toFixed(2)),
     species:(document.getElementById('f-species')||{}).value||'',
+    veneer_type:(document.getElementById('f-veneer-type')||{}).value||'',
+    alt_qty_pcs:(document.getElementById('f-alt-qty-pcs')||{}).value||'',
     moisture:(document.getElementById('f-moisture')||{}).value||'',
     remarks:(document.getElementById('f-remarks')||{}).value||'',
     dn_total_stock:'0', dn_total:'0',
@@ -3001,6 +3118,8 @@ function editEntry(mid, ri) {
   set('f-other',      r.other_charges||'0');
   set('f-ratediff',   r.dn_rate_diff||'0');
   set('f-species',    r.species||'');
+  set('f-veneer-type', r.veneer_type||'');
+  set('f-alt-qty-pcs', r.alt_qty_pcs||'');
   set('f-moisture',   r.moisture||'');
 
   // Vendor fields (may be readonly — temporarily unlock)
@@ -3035,6 +3154,46 @@ function editEntry(mid, ri) {
   setTimeout(()=>fillVendorFromPortal(r.vendor||''), 100);
   openModal('addEntryModal');
   toast('Loaded: ' + (r.inv_no||'entry') + ' for editing');
+}
+
+// ═══ DELETE ENTRY — restricted to Jimit Mehta via PIN ═══
+var _pendingDelete = null; // {mid, ri, label}
+
+function requestDeleteEntry(mid, ri) {
+  const r = (RAW[mid]||[])[ri];
+  if (!r) { toast('Entry not found','warning'); return; }
+  const mat = MATS.find(m=>m.id===mid);
+  _pendingDelete = {mid, ri, label: (mat?.label||mid)+' — '+(r.inv_no||r.sr)+' ('+(r.vendor||'')+')'};
+  const ctxEl = document.getElementById('delete-context');
+  if (ctxEl) ctxEl.textContent = _pendingDelete.label;
+  const pinEl = document.getElementById('delete-pin');
+  if (pinEl) pinEl.value = '';
+  const resEl = document.getElementById('delete-result');
+  if (resEl) resEl.textContent = '';
+  openModal('deleteConfirmModal');
+}
+
+function submitDeletePin() {
+  const pin = (document.getElementById('delete-pin')||{}).value||'';
+  const resultEl = document.getElementById('delete-result');
+  // Only Jimit Mehta (Purchase Manager, PIN 1234) may delete entries.
+  const user = USERS_DB.find(u=>u.name==='Jimit Mehta'&&u.pin===pin);
+  if (!user) {
+    if (resultEl) { resultEl.textContent='❌ Incorrect PIN. Only Jimit Mehta can delete entries.'; resultEl.style.color='#dc2626'; }
+    return;
+  }
+  if (!_pendingDelete) { closeModal('deleteConfirmModal'); return; }
+  const {mid, ri, label} = _pendingDelete;
+  if (RAW[mid] && RAW[mid][ri]) {
+    RAW[mid].splice(ri, 1);
+    // Renumber SR sequentially so the register stays clean
+    RAW[mid].forEach((row, idx) => { row.sr = String(idx+1); });
+  }
+  addAudit('Entry Deleted', label+' deleted by Jimit Mehta');
+  if (resultEl) { resultEl.textContent='✅ Deleted by Jimit Mehta'; resultEl.style.color='var(--green)'; }
+  toast(label+' deleted','success');
+  _pendingDelete = null;
+  setTimeout(()=>{ closeModal('deleteConfirmModal'); refreshCurrentPage(); persistPurchase(); }, 800);
 }
 
 /* ═══ VENDOR PICK ═══ */
@@ -3191,7 +3350,7 @@ function savePO() {
   const rate = parseFloat((document.getElementById('po-rate')||{}).value)||0;
   if (!no || !qty) { toast('PO No. and Qty required','warning'); return; }
   const editIdx=parseInt((document.getElementById('po-edit-idx')||{}).value||'-1');
-  const poObj={no,date:dt,mat,vendor:vn,qty,rate,remarks:(document.getElementById('po-remarks')||{}).value||'',tcs:[...selectedTCs]};
+  const poObj={no,date:fromInputDate(dt)||dt,mat,vendor:vn,qty,rate,remarks:(document.getElementById('po-remarks')||{}).value||'',tcs:[...selectedTCs]};
   if(editIdx>=0&&editIdx<PO_LIST.length){PO_LIST[editIdx]=poObj;toast('PO '+no+' updated','success');}
   else{PO_LIST.push(poObj);toast('PO '+no+' created ✓','success');}
   document.getElementById('po-edit-idx').value='-1';
@@ -3199,6 +3358,7 @@ function savePO() {
   closeModal('addPOModal');
   toast('PO '+no+' created ✓','success');
   addAudit('PO Created', no+' for '+mat);
+  persistPurchase();
   renderPOPage();
 }
 
@@ -3442,7 +3602,7 @@ function downloadSlipPDF() {
     ['Vehicle', r.truck||'—'],
     ['Lot No',  r.lot||r.so||'—'],
     ['PO No',   r.po||'—'],
-    ['Rate',    '₹'+f(r.rate,2)+'/'+(mat.isPerTon?'Ton':'Pcs')],
+    ['Rate',    '₹'+f(r.rate,2)+'/'+(mat.rateUnit||(mat.isPerTon?'Ton':'Pcs'))],
   ].forEach(([k,v],i) => {
     const ry = y+7+i*5;
     doc.setFont('helvetica','bold'); doc.text(k, col2+2, ry);
@@ -3766,6 +3926,7 @@ function saveEntry() {
     lotEl.value = getNextLotNo(mid);
   }
   _baseSaveEntry();
+  persistPurchase();
 }
 
 // Override openAddForm to auto-fill lot and PO list
@@ -4077,6 +4238,7 @@ function _origSubmitApproval() {
   resultEl.textContent='✅ Approved by '+stamp.approvedBy+' at '+stamp.approvedAt;
   resultEl.style.color='var(--green)';
   addAudit('Approved', (currentApprovalEntry?.inv_no||currentApprovalEntry?.no||'')+ ' approved by '+stamp.approvedBy);
+  persistPurchase();
   toast(currentApprovalType+' approved by '+APPROVER.name,'success');
   setTimeout(()=>{ closeModal('approvalModal'); refreshCurrentPage(); }, 1200);
 }
@@ -4137,6 +4299,7 @@ function cycleDNStatus(matId, rowIdx) {
   const nextIdx=(DN_STATUS_FLOW.indexOf(cur)+1)%DN_STATUS_FLOW.length;
   r._dnStatus=DN_STATUS_FLOW[nextIdx];
   addAudit('DN Status Changed', r.inv_no+' → '+r._dnStatus);
+  persistPurchase();
   toast('DN/CN status: '+r._dnStatus,'');
   renderDNCNPage();
 }
@@ -4170,7 +4333,7 @@ function saveReturn() {
   if(!mid||!qty){toast('Material and Qty required','warning');return;}
   const retNo='RET-'+String(RETURN_LIST.length+1).padStart(3,'0');
   const r={
-    return_no:retNo, date:(document.getElementById('ret-date')||{}).value||new Date().toLocaleDateString('en-IN'),
+    return_no:retNo, date:fromInputDate((document.getElementById('ret-date')||{}).value)||new Date().toLocaleDateString('en-GB').replace(/\//g,'-'),
     mat:mid, matLabel:mat.label, vendor:(document.getElementById('ret-vendor')||{}).value,
     orig_inv_no:(document.getElementById('ret-orig-inv')||{}).value,
     return_qty:qty, rate:rate, return_amt:mat.isPerTon?qty*rate/1000:qty*rate,
@@ -4191,6 +4354,7 @@ function saveReturn() {
   closeModal('returnModal');
   toast(retNo+' — Purchase Return saved. Stock reduced.','success');
   addAudit('Purchase Return',retNo+' for '+mat.label+' qty '+qty);
+  persistPurchase();
   renderPurchaseReturn();
 }
 
@@ -4348,26 +4512,32 @@ function downloadPOPdf(idx) {
    OPENING STOCK MODULE
 ════════════════════════════════════════════════════════════ */
 
-// Opening stock store: one entry per material
-let OPENING_STOCK = {
-  asOnDate: '31-03-2026',
-  financialYear: '2025-26',
-  lockedByApproval: false,
-  _approval: null,
-  items: {
-    nilgiri:  { qty: 0, rate: 0, value: 0, unit:'Kg',  remarks:'', saved:false },
-    resin:    { qty: 0, rate: 0, value: 0, unit:'Kg',  remarks:'', saved:false },
-    kraft:    { qty: 0, rate: 0, value: 0, unit:'Pcs', remarks:'', saved:false },
-    firewood: { qty: 0, rate: 0, value: 0, unit:'Kg',  remarks:'', saved:false },
-    core:     { qty: 0, rate: 0, value: 0, unit:'Pcs', remarks:'', saved:false },
-    face:     { qty: 0, rate: 0, value: 0, unit:'Pcs', remarks:'', saved:false },
-  }
-};
+// OPENING_STOCK initialized below via FY-wise storage (ensureOSRecord)
 
 // ── Render the opening stock form table ──
 function renderOpeningStockForm() {
+  syncOpeningStockRef();
+  populateFYSelectors();
   const tbody = document.getElementById('os-tbody');
   if (!tbody) return;
+
+  const banner = document.getElementById('os-fy-banner');
+  const dateEl = document.getElementById('os-date');
+  if (dateEl && OPENING_STOCK.asOnDate && OPENING_STOCK.asOnDate.includes('-')) {
+    const p = OPENING_STOCK.asOnDate.split('-');
+    if (p.length===3) dateEl.value = p[2]+'-'+p[1]+'-'+p[0];
+  }
+  if (banner) {
+    if (OPENING_STOCK.autoCarried) {
+      banner.style.display = '';
+      banner.innerHTML = '📌 <strong>Auto-carried forward</strong> — Closing stock of <strong>'+prevFY(ACTIVE_FY)+'</strong> has been brought forward as the opening balance for <strong>FY '+ACTIVE_FY+'</strong>. Review and adjust quantities, then save.';
+    } else if (OPENING_STOCK.lockedByApproval) {
+      banner.style.display = '';
+      banner.innerHTML = '🔒 <strong>Approved & Locked</strong> — Opening stock for FY '+ACTIVE_FY+' has been approved. Contact admin to unlock.';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
 
   tbody.innerHTML = MATS.map(m => {
     const item = OPENING_STOCK.items[m.id] || {qty:0,rate:0,value:0,remarks:''};
@@ -4387,7 +4557,7 @@ function renderOpeningStockForm() {
       <td style="padding:10px 12px;font-family:var(--fm);color:var(--g5);font-size:12px">${m.unit}</td>
       <td style="padding:10px 12px">
         <input type="number" id="os-rate-${m.id}" value="${item.rate||''}"
-          class="finput" style="width:130px" placeholder="Rate/${m.isPerTon?'Ton':'Pcs'}" step="0.01" min="0" ${rAttr}
+          class="finput" style="width:130px" placeholder="Rate/${m.rateUnit||(m.isPerTon?'Ton':'Pcs')}" step="0.01" min="0" ${rAttr}
           oninput="calcOSValue('${m.id}')">
       </td>
       <td style="padding:10px 12px">
@@ -4426,23 +4596,27 @@ function calcOSTotalValue() {
   if (totEl) totEl.textContent = fA(total);
 }
 
-// ── Collect form values into OPENING_STOCK ──
+// ── Collect form values into OPENING_STOCK (FY-aware) ──
 function collectOpeningStockForm() {
-  OPENING_STOCK.asOnDate   = document.getElementById('os-date')?.value || '2026-03-31';
-  OPENING_STOCK.financialYear = document.getElementById('os-fy')?.value || '2025-26';
+  syncOpeningStockRef();
+  OPENING_STOCK.asOnDate   = fromInputDate(document.getElementById('os-date')?.value) || fyEndDateStr(ACTIVE_FY);
+  OPENING_STOCK.financialYear = ACTIVE_FY;
+  delete OPENING_STOCK.autoCarried;
   MATS.forEach(m => {
     const qty  = parseFloat(document.getElementById('os-qty-'+m.id)?.value)||0;
     const rate = parseFloat(document.getElementById('os-rate-'+m.id)?.value)||0;
     const val  = m.isPerTon ? qty*rate/1000 : qty*rate;
     OPENING_STOCK.items[m.id] = { qty, rate, value:val, unit:m.unit, remarks:document.getElementById('os-rem-'+m.id)?.value||'' };
   });
+  OPENING_STOCK_BY_FY[ACTIVE_FY] = OPENING_STOCK;
 }
 
 function saveOpeningStockDraft() {
   collectOpeningStockForm();
   MATS.forEach(m => { OPENING_STOCK.items[m.id].saved = true; });
-  toast('Opening stock draft saved ✓','success');
-  addAudit('Opening Stock Draft','Saved draft opening stock');
+  toast('Opening stock draft saved for FY '+ACTIVE_FY+' ✓','success');
+  addAudit('Opening Stock Draft','Saved draft opening stock for FY '+ACTIVE_FY);
+  persistPurchase();
   renderOpeningStockForm();
 }
 
@@ -4450,23 +4624,25 @@ function saveOpeningStock() {
   if (OPENING_STOCK.lockedByApproval) { toast('Opening stock is locked. Re-approval needed to edit.','warning'); return; }
   collectOpeningStockForm();
   MATS.forEach(m => { OPENING_STOCK.items[m.id].saved = true; });
-  addAudit('Opening Stock Saved','Opening stock saved, awaiting approval');
-  toast('Saved! Requesting approval from Jimit Mehta…','');
+  addAudit('Opening Stock Saved','Opening stock saved for FY '+ACTIVE_FY+', awaiting approval');
+  persistPurchase();
+  toast('Opening stock for FY '+ACTIVE_FY+' saved! Requesting approval from Jimit Mehta…','');
   setTimeout(()=>{
     requestApproval('opening_stock', OPENING_STOCK);
   }, 400);
   closeModal('openingStockModal');
 }
 
-// ── Approval hook: when OS is approved, lock it ──
+// ── Approval hook: when OS is approved, lock it + persist to FY store ──
 var _baseSubmitApproval = _origSubmitApproval;
 function submitApproval() {
   _baseSubmitApproval();
-  // Check if the approval was for opening stock
   setTimeout(()=>{
     if (currentApprovalType === 'opening_stock' && OPENING_STOCK._approved) {
       OPENING_STOCK.lockedByApproval = true;
-      toast('Opening stock locked & approved ✅','success');
+      OPENING_STOCK_BY_FY[ACTIVE_FY] = OPENING_STOCK;
+      persistPurchase();
+      toast('Opening stock for FY '+ACTIVE_FY+' locked & approved ✅','success');
       renderInventory();
       updateOpeningStockStrip();
     }
@@ -4475,17 +4651,19 @@ function submitApproval() {
 
 // ── Opening stock summary strip on inventory page ──
 function updateOpeningStockStrip() {
+  syncOpeningStockRef();
   const strip = document.getElementById('opening-stock-strip'); if(!strip) return;
   const hasAny = MATS.some(m => (OPENING_STOCK.items[m.id]?.qty||0) > 0);
   if (!hasAny) { strip.style.display='none'; return; }
   strip.style.display = '';
-  // Format date
   const d = OPENING_STOCK.asOnDate;
   let label = d;
   if (d && d.includes('-')) {
     const p=d.split('-'); if(p.length===3) label=p[2]+'-'+p[1]+'-'+p[0];
   }
   const lbl=document.getElementById('os-as-on-label'); if(lbl) lbl.textContent=label;
+  const stripTitle=document.getElementById('os-strip-title');
+  if (stripTitle) stripTitle.innerHTML = '📦 Opening Stock <span style="background:var(--blue);color:#fff;padding:2px 8px;border-radius:3px;font-size:9px;margin-left:4px">FY '+ACTIVE_FY+'</span>'+(OPENING_STOCK.autoCarried?' <span style="background:#fffbeb;color:#92400e;padding:2px 8px;border-radius:3px;font-size:9px;margin-left:4px">auto-carried</span>':'');
   const row=document.getElementById('os-summary-row'); if(!row) return;
   row.innerHTML = MATS.map(m => {
     const item = OPENING_STOCK.items[m.id]||{};
@@ -4502,50 +4680,71 @@ function updateOpeningStockStrip() {
   }).join('');
 }
 
-// ── Patch renderInventory to include opening stock ──
+// ── renderInventory: FY-scoped, Nilgiri species split, Consumption column ──
 function renderInventory() {
+  syncOpeningStockRef();
+  populateFYSelectors();
   const period = (document.getElementById('inv-period')||{}).value||'all';
+  const fy = ACTIVE_FY;
 
-  const invData = MATS.map(m => {
-    const os    = OPENING_STOCK.items[m.id] || {qty:0,rate:0,value:0};
-    const openQty = os.qty||0;
-    const openVal = os.value||0;
+  // Build ledger rows: Nilgiri split by species, others as-is
+  const ledgerDefs = [];
+  MATS.forEach(m=>{
+    if (m.id === 'nilgiri') {
+      NILGIRI_TYPES.forEach((type,ti)=>{
+        ledgerDefs.push({ ...m, rowKey:'nilgiri::'+type, subLabel:type, isFirstOfGroup: ti===0, groupId:'nilgiri' });
+      });
+    } else {
+      ledgerDefs.push({ ...m, rowKey:m.id, subLabel:null, isFirstOfGroup:true, groupId:m.id });
+    }
+  });
 
-    // Purchased (period-filtered)
-    let allRows = (RAW[m.id]||[]).filter(r=>r.vendor&&r.vendor.trim()&&!r._isReturn);
+  const invData = ledgerDefs.map(m => {
+    const os = OPENING_STOCK.items[m.id] || {qty:0,rate:0,value:0};
+    const openQty = m.isFirstOfGroup ? (os.qty||0) : 0;
+    const openVal = m.isFirstOfGroup ? (os.value||0) : 0;
+
+    let allRows = (RAW[m.id]||[]).filter(r=>r.vendor&&r.vendor.trim()&&!r._isReturn && fyOfDate(r.date)===fy);
+    if (m.subLabel) allRows = allRows.filter(r=>nilgiriTypeOf(r)===m.subLabel);
     if (period!=='all') allRows = allRows.filter(r=>(r.date||'').split('-')[1]===period);
     const purchQty = allRows.reduce((s,r)=>s+Math.max(0,n(r.spl_qty)),0);
     const purchVal = getTotal(allRows);
 
-    // Returns
-    let retRows = (RAW[m.id]||[]).filter(r=>r._isReturn);
+    let retRows = (RAW[m.id]||[]).filter(r=>r._isReturn && fyOfDate(r.date)===fy);
+    if (m.subLabel) retRows = retRows.filter(r=>nilgiriTypeOf(r)===m.subLabel);
     if (period!=='all') retRows = retRows.filter(r=>(r.date||'').split('-')[1]===period);
     const retQty = Math.abs(retRows.reduce((s,r)=>s+n(r.spl_qty),0));
     const retVal = Math.abs(retRows.reduce((s,r)=>s+n(r.total_spl),0));
 
-    // Average cost (weighted)
-    const avgRate = (openQty+purchQty) > 0
-      ? (openVal + purchVal) / ((m.isPerTon ? (openQty+purchQty)/1000 : (openQty+purchQty)) || 1)
+    const consumeQty = getConsumption(fy, m.rowKey);
+    const preCloseQty = openQty + purchQty - retQty;
+    const preCloseVal = openVal + purchVal - retVal;
+    const avgRate = preCloseQty > 0
+      ? preCloseVal / ((m.isPerTon ? preCloseQty/1000 : preCloseQty) || 1)
       : 0;
-
-    // Closing = Opening + Purchased - Returns (no consumption data yet → show as "In Stock")
-    const closingQty = openQty + purchQty - retQty;
-    const closingVal = openVal + purchVal - retVal;
+    const consumeVal = m.isPerTon ? (consumeQty/1000)*avgRate : consumeQty*avgRate;
+    const closingQty = preCloseQty - consumeQty;
+    const closingVal = preCloseVal - consumeVal;
 
     return {
       ...m,
       openQty, openVal,
       purchQty, purchVal,
       retQty, retVal,
+      consumeQty, consumeVal,
       closingQty, closingVal,
       avgRate,
       entries: allRows.length,
     };
   });
 
-  // ── KPI cards ──
+  // ── KPI cards (Nilgiri species combined) ──
   const kpiEl = document.getElementById('inv-kpi'); if(!kpiEl) return;
-  kpiEl.innerHTML = invData.map(d => {
+  const kpiGroups = MATS.map(m=>{
+    const rows = invData.filter(d=>d.groupId===m.id);
+    return { ...m, closingQty: rows.reduce((s,d)=>s+d.closingQty,0), closingVal: rows.reduce((s,d)=>s+d.closingVal,0) };
+  });
+  kpiEl.innerHTML = kpiGroups.map(d => {
     const dispClose = d.isPerTon
       ? (d.closingQty/1000).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})+' MT'
       : d.closingQty.toLocaleString('en-IN',{maximumFractionDigits:0})+' '+d.unit;
@@ -4557,10 +4756,14 @@ function renderInventory() {
     </div>`;
   }).join('');
 
-  // ── Stock Ledger table ──
+  // ── Stock Ledger table (product-wise, incl. Consumption column) ──
   const tableEl = document.getElementById('inv-table-body'); if(!tableEl) return;
-  const cols = ['Material','Opening Qty','Opening Value','Purchased Qty','Purchase Value','Returns','Closing Qty','Closing Value','Avg Rate'];
+  const cols = ['Material','Opening Qty','Opening Value','Purchased Qty','Purchase Value','Returns','Consumption','Closing Qty','Closing Value','Avg Rate'];
   tableEl.innerHTML = `
+  <div style="padding:10px 18px;background:var(--g6);color:#fff;font-family:var(--fh);font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center">
+    <span>📊 Stock Ledger — Product-wise · FY ${fy}${fy===CURRENT_FY?' (Current)':''}</span>
+    <span style="font-family:var(--fm);font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;opacity:.7">${fyStartDateStr(fy)} → ${fyEndDateStr(fy)}</span>
+  </div>
   <div style="overflow-x:auto">
   <table style="width:100%;border-collapse:collapse;font-size:12.5px">
     <thead>
@@ -4575,17 +4778,24 @@ function renderInventory() {
         const dispRet   = d.retQty > 0 ? (d.isPerTon ? (d.retQty/1000).toFixed(3)+' MT' : d.retQty.toLocaleString('en-IN')+' '+d.unit) : '—';
         const dispClose = d.isPerTon ? (d.closingQty/1000).toFixed(3)+' MT' : d.closingQty.toLocaleString('en-IN')+' '+d.unit;
         const dispRate  = d.avgRate ? '₹'+f(d.avgRate,2)+'/'+(d.isPerTon?'T':d.unit) : '—';
-        const osBadge   = d.openQty>0 ? '' : '<span style="font-size:9px;color:var(--red);font-family:var(--fm);margin-left:4px">No OS</span>';
-        return `<tr style="border-bottom:1px solid var(--g1);transition:background .1s" onmouseenter="this.style.background='var(--redlt)'" onmouseleave="this.style.background=''">
+        const osBadge   = d.openQty>0 ? '' : (d.isFirstOfGroup ? '<span style="font-size:9px;color:var(--red);font-family:var(--fm);margin-left:4px">No OS</span>' : '');
+        const rowLabel  = d.subLabel ? `<div style="font-weight:700;color:${d.color};font-size:13px">${d.isFirstOfGroup?d.icon+' ':''}${d.subLabel}</div><div style="font-size:9px;color:var(--g4);font-family:var(--fm);text-transform:uppercase;letter-spacing:.5px">${d.label}</div>` : `<div style="font-weight:700;color:${d.color};font-size:13px">${d.icon} ${d.label}</div>`;
+        const topBorder = (d.subLabel && d.isFirstOfGroup) ? 'border-top:2px solid var(--g2)' : '';
+        return `<tr style="border-bottom:1px solid var(--g1);${topBorder};transition:background .1s" onmouseenter="this.style.background='var(--redlt)'" onmouseleave="this.style.background=''">
           <td style="padding:10px 12px">
-            <div style="font-weight:700;color:${d.color};font-size:13px">${d.icon} ${d.label}</div>
+            ${rowLabel}
             <div style="font-size:10px;color:var(--g4);margin-top:1px;font-family:var(--fm)">${d.entries} purchase entries${osBadge}</div>
           </td>
-          <td style="padding:10px 12px;text-align:right;font-family:var(--fm);font-weight:600;color:${d.openQty>0?'var(--blue)':'var(--g4)'}">${dispOpen}</td>
+          <td style="padding:10px 12px;text-align:right;font-family:var(--fm);font-weight:600;color:${d.openQty>0?'var(--purple)':'var(--g4)'}">${dispOpen}</td>
           <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:var(--g5)">${d.openVal>0?fA(d.openVal):'—'}</td>
           <td style="padding:10px 12px;text-align:right;font-family:var(--fm);font-weight:600;color:var(--green)">${dispPurch}</td>
           <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:var(--g5)">${fA(d.purchVal)}</td>
           <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:${d.retQty>0?'#dc2626':'var(--g4)'}">-${dispRet}</td>
+          <td style="padding:6px 10px;text-align:right">
+            <input type="number" min="0" value="${d.consumeQty||''}" placeholder="0" title="Chipping report qty consumed this FY"
+              style="width:90px;text-align:right;font-family:var(--fm);font-size:12px;padding:5px 7px;border:1px solid var(--border);border-radius:4px;background:#fffbeb;color:#92400e"
+              onchange="setConsumption('${fy}','${d.rowKey}',this.value)">
+          </td>
           <td style="padding:10px 12px;text-align:right;font-family:var(--fm);font-size:14px;font-weight:800;color:var(--red)">${dispClose}</td>
           <td style="padding:10px 12px;text-align:right;font-family:var(--fm);font-weight:700;color:var(--g6)">${fA(d.closingVal)}</td>
           <td style="padding:10px 12px;text-align:right;font-family:var(--fm);font-size:11px;color:var(--g5)">${dispRate}</td>
@@ -4595,11 +4805,12 @@ function renderInventory() {
     <tfoot>
       <tr style="background:var(--redlt);font-weight:700">
         <td style="padding:10px 12px;font-family:var(--fh);font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--red)">TOTAL</td>
-        <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:var(--blue);font-weight:700">${fS(invData.reduce((s,d)=>s+d.openVal,0))}</td>
+        <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:var(--purple);font-weight:700">${fS(invData.reduce((s,d)=>s+d.openVal,0))}</td>
         <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:var(--g5)">${fA(invData.reduce((s,d)=>s+d.openVal,0))}</td>
         <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:var(--green);font-weight:700">${fS(invData.reduce((s,d)=>s+d.purchVal,0))}</td>
         <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:var(--g5)">${fA(invData.reduce((s,d)=>s+d.purchVal,0))}</td>
         <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:#dc2626">-${fA(invData.reduce((s,d)=>s+d.retVal,0))}</td>
+        <td style="padding:10px 12px;text-align:right;font-family:var(--fm);color:#92400e">${fA(invData.reduce((s,d)=>s+d.consumeVal,0))}</td>
         <td style="padding:10px 12px;text-align:right;font-family:var(--fm);font-weight:800;color:var(--red)">${fS(invData.reduce((s,d)=>s+d.closingVal,0))}</td>
         <td style="padding:10px 12px;text-align:right;font-family:var(--fm);font-weight:700;color:var(--g6)">${fA(invData.reduce((s,d)=>s+d.closingVal,0))}</td>
         <td></td>
@@ -4613,7 +4824,7 @@ function renderInventory() {
   if (valChartEl) valChartEl.innerHTML = '<div class="chart-bar-wrap">' +
     invData.filter(d=>d.closingVal>0)
       .sort((a,b)=>b.closingVal-a.closingVal)
-      .map(d=>barRow(d.icon+' '+d.label, d.closingVal, Math.max(...invData.map(x=>x.closingVal),1), 'red')).join('') +
+      .map(d=>barRow((d.subLabel?d.icon+' '+d.label+' — '+d.subLabel:d.icon+' '+d.label), d.closingVal, Math.max(...invData.map(x=>x.closingVal),1), 'red')).join('') +
     '</div>';
 
   const ageEl = document.getElementById('inv-age-chart');
@@ -4632,12 +4843,12 @@ function renderInventory() {
   updateOpeningStockStrip();
 }
 
-// ── Excel export for inventory ──
+// ── Excel export for inventory (FY-scoped, with Consumption & species split) ──
 function exportInventoryExcel() {
   if (typeof XLSX==='undefined'){toast('SheetJS loading…','warning');return;}
+  const fy = ACTIVE_FY;
   const wb = XLSX.utils.book_new();
 
-  // Opening stock sheet
   const osHdr = ['Material','Unit','Opening Qty','Avg Rate','Opening Value','Remarks','As-on Date','Status'];
   const osData = [osHdr, ...MATS.map(m=>{
     const item=OPENING_STOCK.items[m.id]||{};
@@ -4646,29 +4857,355 @@ function exportInventoryExcel() {
   })];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(osData), 'Opening Stock');
 
-  // Stock ledger sheet
-  const slHdr=['Material','Unit','Opening Qty','Opening Value','Purchased Qty','Purchase Value','Returns Qty','Returns Value','Closing Qty','Closing Value','Avg Rate'];
-  const slData = [slHdr, ...MATS.map(m=>{
+  const ledgerDefs = [];
+  MATS.forEach(m=>{
+    if (m.id === 'nilgiri') {
+      NILGIRI_TYPES.forEach((type,ti)=> ledgerDefs.push({ ...m, rowKey:'nilgiri::'+type, subLabel:type, isFirstOfGroup: ti===0 }));
+    } else {
+      ledgerDefs.push({ ...m, rowKey:m.id, subLabel:null, isFirstOfGroup:true });
+    }
+  });
+  const slHdr=['Material','Type/Species','Unit','Opening Qty','Opening Value','Purchased Qty','Purchase Value','Returns Qty','Returns Value','Consumption Qty','Consumption Value','Closing Qty','Closing Value','Avg Rate'];
+  const slData = [slHdr, ...ledgerDefs.map(m=>{
     const os=OPENING_STOCK.items[m.id]||{};
-    const allRows=(RAW[m.id]||[]).filter(r=>r.vendor&&r.vendor.trim()&&!r._isReturn);
+    const openQty = m.isFirstOfGroup ? (os.qty||0) : 0;
+    const openVal = m.isFirstOfGroup ? (os.value||0) : 0;
+    let allRows=(RAW[m.id]||[]).filter(r=>r.vendor&&r.vendor.trim()&&!r._isReturn&&fyOfDate(r.date)===fy);
+    if (m.subLabel) allRows = allRows.filter(r=>nilgiriTypeOf(r)===m.subLabel);
     const purchQty=allRows.reduce((s,r)=>s+Math.max(0,n(r.spl_qty)),0);
     const purchVal=getTotal(allRows);
-    const retRows=(RAW[m.id]||[]).filter(r=>r._isReturn);
+    let retRows=(RAW[m.id]||[]).filter(r=>r._isReturn&&fyOfDate(r.date)===fy);
+    if (m.subLabel) retRows = retRows.filter(r=>nilgiriTypeOf(r)===m.subLabel);
     const retQty=Math.abs(retRows.reduce((s,r)=>s+n(r.spl_qty),0));
     const retVal=Math.abs(retRows.reduce((s,r)=>s+n(r.total_spl),0));
-    const closeQty=(os.qty||0)+purchQty-retQty;
-    const closeVal=(os.value||0)+purchVal-retVal;
-    const avgRate=(os.qty||0+purchQty)>0?(os.value||0+purchVal)/((m.isPerTon?(os.qty||0+purchQty)/1000:(os.qty||0+purchQty))||1):0;
-    return [m.label,m.unit,+(os.qty||0).toFixed(3),+(os.value||0).toFixed(2),
+    const consumeQty = getConsumption(fy, m.rowKey);
+    const preCloseQty = openQty+purchQty-retQty;
+    const preCloseVal = openVal+purchVal-retVal;
+    const avgRate = preCloseQty>0 ? preCloseVal/((m.isPerTon?preCloseQty/1000:preCloseQty)||1) : 0;
+    const consumeVal = m.isPerTon ? (consumeQty/1000)*avgRate : consumeQty*avgRate;
+    const closeQty = preCloseQty-consumeQty;
+    const closeVal = preCloseVal-consumeVal;
+    return [m.label, m.subLabel||'', m.unit, +openQty.toFixed(3), +openVal.toFixed(2),
       +purchQty.toFixed(3),+purchVal.toFixed(2),+retQty.toFixed(3),+retVal.toFixed(2),
-      +closeQty.toFixed(3),+closeVal.toFixed(2),+avgRate.toFixed(2)];
+      +consumeQty.toFixed(3),+consumeVal.toFixed(2),+closeQty.toFixed(3),+closeVal.toFixed(2),+avgRate.toFixed(2)];
   })];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(slData), 'Stock Ledger');
-
-  XLSX.writeFile(wb, 'Strandply_Inventory_'+new Date().toLocaleDateString('en-IN').replace(/\//g,'-')+'.xlsx');
+  XLSX.writeFile(wb, 'Strandply_Inventory_FY'+fy+'_'+new Date().toLocaleDateString('en-IN').replace(/\//g,'-')+'.xlsx');
   toast('Inventory Excel downloaded ✓','success');
 }
 
+/* ════════════════════════════════════════════════════════════
+   FINANCIAL YEAR MODULE
+   Indian FY: 01-Apr to 31-Mar. Data dates are stored DD-MM-YYYY.
+════════════════════════════════════════════════════════════ */
+
+var FY_START_YEAR = 2023;
+var FY_END_YEAR   = 2030;
+
+function fyLabel(startYear){
+  return startYear + '-' + String(startYear+1).slice(-2);
+}
+function buildFYList(){
+  const list = [];
+  for (let y = FY_END_YEAR; y >= FY_START_YEAR; y--) list.push(fyLabel(y));
+  return list;
+}
+var FY_LIST = buildFYList();
+
+function fyOfDate(dateStr){
+  if (!dateStr || !dateStr.includes('-')) return null;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return null;
+  const d = parseInt(parts[0],10), m = parseInt(parts[1],10), y = parseInt(parts[2],10);
+  if (!y || !m) return null;
+  const startYear = (m >= 4) ? y : y - 1;
+  return fyLabel(startYear);
+}
+
+function detectCurrentFY(){
+  let latest = null;
+  Object.keys(RAW||{}).forEach(mid=>{
+    (RAW[mid]||[]).forEach(r=>{
+      if (!r.date) return;
+      const p = r.date.split('-');
+      if (p.length!==3) return;
+      const y=parseInt(p[2],10), m=parseInt(p[1],10), d=parseInt(p[0],10);
+      if (!y) return;
+      const ts = new Date(y,m-1,d).getTime();
+      if (latest===null || ts>latest) latest = ts;
+    });
+  });
+  if (latest!==null){
+    const dt = new Date(latest);
+    const y = dt.getFullYear(), m = dt.getMonth()+1;
+    return fyLabel(m>=4 ? y : y-1);
+  }
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth()+1;
+  return fyLabel(m>=4 ? y : y-1);
+}
+
+var CURRENT_FY = detectCurrentFY();
+var ACTIVE_FY  = CURRENT_FY;
+
+function prevFY(fy){
+  const y = parseInt(String(fy).split('-')[0],10);
+  return fyLabel(y-1);
+}
+function nextFY(fy){
+  const y = parseInt(String(fy).split('-')[0],10);
+  return fyLabel(y+1);
+}
+function fyEndDateStr(fy){
+  const y = parseInt(String(fy).split('-')[0],10);
+  return '31-03-' + (y+1);
+}
+function fyStartDateStr(fy){
+  const y = parseInt(String(fy).split('-')[0],10);
+  return '01-04-' + y;
+}
+
+function populateFYSelectors(){
+  const html = FY_LIST.map(fy=>`<option value="${fy}"${fy===ACTIVE_FY?' selected':''}>${fy===CURRENT_FY?'📅 ':''}FY ${fy}</option>`).join('');
+  ['global-fy-select','inv-fy-select'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+  const osFy = document.getElementById('os-fy');
+  if (osFy) osFy.innerHTML = FY_LIST.map(fy=>`<option value="${fy}"${fy===ACTIVE_FY?' selected':''}>${fy}</option>`).join('');
+}
+
+function onGlobalFYChange(fy){
+  ACTIVE_FY = fy;
+  populateFYSelectors();
+  toast('Viewing FY ' + fy, '');
+  const activePage = document.querySelector('.page.active');
+  if (activePage && activePage.id === 'page-inventory') renderInventory();
+  else if (activePage && activePage.id === 'page-dashboard') renderDashboard();
+  else if (activePage && activePage.id.startsWith('page-p-')) renderMaterialPage(activePage.id.replace('page-p-',''));
+  else if (activePage && activePage.id === 'page-reports') renderReports();
+}
+
+function onInventoryFYChange(fy){
+  ACTIVE_FY = fy;
+  populateFYSelectors();
+  renderInventory();
+}
+
+function onOSFYChange(fy){
+  ACTIVE_FY = fy;
+  populateFYSelectors();
+  const dateEl = document.getElementById('os-date');
+  if (dateEl){
+    const y = parseInt(fy.split('-')[0],10);
+    dateEl.value = y + '-03-31';
+  }
+  renderOpeningStockForm();
+}
+
+// ── FY-wise Opening Stock storage ──
+function blankOSRecord(fy){
+  return {
+    asOnDate: fyEndDateStr(prevFY(fy)),
+    financialYear: fy,
+    lockedByApproval: false,
+    autoCarried: false,
+    _approval: null,
+    items: {
+      nilgiri:  { qty: 0, rate: 0, value: 0, unit:'Kg',  remarks:'', saved:false },
+      resin:    { qty: 0, rate: 0, value: 0, unit:'Kg',  remarks:'', saved:false },
+      kraft:    { qty: 0, rate: 0, value: 0, unit:'Pcs', remarks:'', saved:false },
+      firewood: { qty: 0, rate: 0, value: 0, unit:'Kg',  remarks:'', saved:false },
+      core:     { qty: 0, rate: 0, value: 0, unit:'Pcs', remarks:'', saved:false },
+      face:     { qty: 0, rate: 0, value: 0, unit:'Pcs', remarks:'', saved:false },
+    }
+  };
+}
+
+let OPENING_STOCK_BY_FY = {};
+
+function computeClosingForFY(fy){
+  const os = OPENING_STOCK_BY_FY[fy] || blankOSRecord(fy);
+  const closing = {};
+  MATS.forEach(m=>{
+    const item = os.items[m.id] || {qty:0,value:0};
+    const openQty = item.qty||0, openVal = item.value||0;
+    let rows = (RAW[m.id]||[]).filter(r=>r.vendor && r.vendor.trim() && fyOfDate(r.date)===fy);
+    const purchRows = rows.filter(r=>!r._isReturn);
+    const retRows   = rows.filter(r=>r._isReturn);
+    const purchQty = purchRows.reduce((s,r)=>s+Math.max(0,n(r.spl_qty)),0);
+    const purchVal = getTotal(purchRows);
+    const retQty = Math.abs(retRows.reduce((s,r)=>s+n(r.spl_qty),0));
+    const retVal = Math.abs(retRows.reduce((s,r)=>s+n(r.total_spl),0));
+    closing[m.id] = {
+      qty: openQty + purchQty - retQty,
+      value: openVal + purchVal - retVal
+    };
+  });
+  return closing;
+}
+
+function ensureOSRecord(fy){
+  if (OPENING_STOCK_BY_FY[fy]) return OPENING_STOCK_BY_FY[fy];
+  const py = prevFY(fy);
+  const rec = blankOSRecord(fy);
+  if (OPENING_STOCK_BY_FY[py]) {
+    const closing = computeClosingForFY(py);
+    MATS.forEach(m=>{
+      const c = closing[m.id] || {qty:0,value:0};
+      const prevItem = OPENING_STOCK_BY_FY[py].items[m.id] || {};
+      rec.items[m.id] = {
+        qty: c.qty,
+        rate: prevItem.rate || 0,
+        value: c.value,
+        unit: m.unit,
+        remarks: 'Auto-carried from FY ' + py + ' closing stock',
+        saved: true
+      };
+    });
+    rec.autoCarried = true;
+    rec.lockedByApproval = false;
+  }
+  OPENING_STOCK_BY_FY[fy] = rec;
+  return rec;
+}
+
+// Backward-compatible accessor
+var OPENING_STOCK = ensureOSRecord(ACTIVE_FY);
+function syncOpeningStockRef(){
+  OPENING_STOCK = ensureOSRecord(ACTIVE_FY);
+}
+
+// Nilgiri Wood is purchased as distinct species/types. The Stock Ledger
+// breaks Nilgiri out product-wise using this list instead of one combined row.
+// This is a proper master — manage it via the "Manage Types" link next to
+// the Nilgiri Type / Species field in the Add Purchase Entry form (persists
+// to localStorage under spl_nilgiri_species so new types can be added anytime).
+function loadNilgiriTypes(){
+  try {
+    var stored = JSON.parse(localStorage.getItem('spl_nilgiri_species'));
+    if (Array.isArray(stored) && stored.length) return stored;
+  } catch(e) {}
+  return ['Eucalyptus', 'Subabul', 'Other'];
+}
+function saveNilgiriTypes(){
+  try { localStorage.setItem('spl_nilgiri_species', JSON.stringify(NILGIRI_TYPES)); } catch(e) {}
+}
+var NILGIRI_TYPES = loadNilgiriTypes();
+function nilgiriTypeOf(row){ return (row && row.species && NILGIRI_TYPES.includes(row.species)) ? row.species : NILGIRI_TYPES[0]; }
+
+// ── Populate the species <select> in the entry form from the master list ──
+function populateSpeciesDropdown(){
+  const sel = document.getElementById('f-species');
+  if (!sel) return;
+  const oldVal = sel.value;
+  sel.innerHTML = NILGIRI_TYPES.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  if (oldVal && NILGIRI_TYPES.includes(oldVal)) sel.value = oldVal;
+}
+
+// ── Nilgiri Species Master modal: add / remove types ──
+function renderSpeciesMaster(){
+  const el = document.getElementById('species-master-list');
+  if (!el) return;
+  el.innerHTML = NILGIRI_TYPES.map(t=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--g1)">
+      <span style="font-family:var(--fb);font-size:13px;color:var(--g6)">🌳 ${esc(t)}</span>
+      <button class="delete-btn" onclick="removeSpeciesType('${esc(t).replace(/'/g,"\\'")}')" ${NILGIRI_TYPES.length<=1?'disabled title="At least one type is required"':''}>Remove</button>
+    </div>`).join('') || '<div style="padding:12px;color:var(--g4);font-size:12px">No types yet — add one below.</div>';
+}
+function addSpeciesType(){
+  const inputEl = document.getElementById('new-species-name');
+  const name = (inputEl?.value||'').trim();
+  if (!name) { toast('Enter a species/type name','warning'); return; }
+  if (NILGIRI_TYPES.some(t=>t.toLowerCase()===name.toLowerCase())) { toast('That type already exists','warning'); return; }
+  NILGIRI_TYPES.push(name);
+  saveNilgiriTypes();
+  if (inputEl) inputEl.value='';
+  renderSpeciesMaster();
+  populateSpeciesDropdown();
+  toast(name+' added to Nilgiri Type master ✓','success');
+}
+function removeSpeciesType(name){
+  if (NILGIRI_TYPES.length <= 1) { toast('At least one type must remain','warning'); return; }
+  const idx = NILGIRI_TYPES.indexOf(name);
+  if (idx === -1) return;
+  NILGIRI_TYPES.splice(idx,1);
+  saveNilgiriTypes();
+  renderSpeciesMaster();
+  populateSpeciesDropdown();
+  toast(name+' removed from Nilgiri Type master','');
+}
+
+// ═══ FACE VENEER TYPE MASTER (mirrors Nilgiri species master) ═══
+function loadFaceVeneerTypes(){
+  try {
+    var stored = JSON.parse(localStorage.getItem('spl_face_veneer_types'));
+    if (Array.isArray(stored) && stored.length) return stored;
+  } catch(e) {}
+  return ['Teak', 'Walnut', 'Oak', 'Other'];
+}
+function saveFaceVeneerTypes(){
+  try { localStorage.setItem('spl_face_veneer_types', JSON.stringify(FACE_VENEER_TYPES)); } catch(e) {}
+}
+var FACE_VENEER_TYPES = loadFaceVeneerTypes();
+
+function populateFaceVeneerDropdown(){
+  const sel = document.getElementById('f-veneer-type');
+  if (!sel) return;
+  const oldVal = sel.value;
+  sel.innerHTML = FACE_VENEER_TYPES.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  if (oldVal && FACE_VENEER_TYPES.includes(oldVal)) sel.value = oldVal;
+}
+function renderFaceVeneerMaster(){
+  const el = document.getElementById('veneer-master-list');
+  if (!el) return;
+  el.innerHTML = FACE_VENEER_TYPES.map(t=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--g1)">
+      <span style="font-family:var(--fb);font-size:13px;color:var(--g6)">🪵 ${esc(t)}</span>
+      <button class="delete-btn" onclick="removeFaceVeneerType('${esc(t).replace(/'/g,"\\'")}')" ${FACE_VENEER_TYPES.length<=1?'disabled title="At least one type is required"':''}>Remove</button>
+    </div>`).join('') || '<div style="padding:12px;color:var(--g4);font-size:12px">No types yet — add one below.</div>';
+}
+function addFaceVeneerType(){
+  const inputEl = document.getElementById('new-veneer-type-name');
+  const name = (inputEl?.value||'').trim();
+  if (!name) { toast('Enter a veneer type name','warning'); return; }
+  if (FACE_VENEER_TYPES.some(t=>t.toLowerCase()===name.toLowerCase())) { toast('That type already exists','warning'); return; }
+  FACE_VENEER_TYPES.push(name);
+  saveFaceVeneerTypes();
+  if (inputEl) inputEl.value='';
+  renderFaceVeneerMaster();
+  populateFaceVeneerDropdown();
+  toast(name+' added to Face Veneer Type master ✓','success');
+}
+function removeFaceVeneerType(name){
+  if (FACE_VENEER_TYPES.length <= 1) { toast('At least one type must remain','warning'); return; }
+  const idx = FACE_VENEER_TYPES.indexOf(name);
+  if (idx === -1) return;
+  FACE_VENEER_TYPES.splice(idx,1);
+  saveFaceVeneerTypes();
+  renderFaceVeneerMaster();
+  populateFaceVeneerDropdown();
+  toast(name+' removed from Face Veneer Type master','');
+}
+
+// ── Consumption tracking ──
+let CONSUMPTION_BY_FY = {};
+function getConsumption(fy, rowKey){
+  return (CONSUMPTION_BY_FY[fy] && CONSUMPTION_BY_FY[fy][rowKey]) || 0;
+}
+function setConsumption(fy, rowKey, qty){
+  if (!CONSUMPTION_BY_FY[fy]) CONSUMPTION_BY_FY[fy] = {};
+  CONSUMPTION_BY_FY[fy][rowKey] = Math.max(0, parseFloat(qty)||0);
+  persistPurchase();
+  renderInventory();
+}
+
+function fromInputDate(yyyyMmDd){
+  if (!yyyyMmDd) return null;
+  const p = yyyyMmDd.split('-');
+  if (p.length!==3) return yyyyMmDd;
+  return p[2]+'-'+p[1]+'-'+p[0];
+}
 
 /* ════════════════════════════════════════════════════════════
    VENDOR PORTAL INTEGRATION (localStorage bridge + defaults)
@@ -4933,6 +5470,41 @@ function pickVendor(v) {
   toast(v.name + ' selected — GST type auto-set to ' + (v.tax_type||'SG+CG') + ' ✓', 'success');
 }
 
+// ── Backend persistence (D1 via Pages Functions) ──
+function persistPurchase(){
+  var payload = {
+    entries: RAW,
+    pos: PO_LIST,
+    returns: RETURN_LIST,
+    opening_stock: OPENING_STOCK_BY_FY,
+    audit: auditLog,
+    consumption: CONSUMPTION_BY_FY
+  };
+  try{
+    fetch('/api/purchase/state',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}).catch(function(){});
+  }catch(e){}
+}
+function loadPurchaseState(){
+  return fetch('/api/purchase/state',{credentials:'include'})
+    .then(function(r){return r.ok?r.json():null;})
+    .catch(function(){return null;})
+    .then(function(st){
+      if(!st) return;
+      // Only apply persisted values that are non-empty. This module has no delete
+      // feature, so an empty persisted value simply means "nothing saved yet" —
+      // keep the hardcoded seed data as the baseline instead of wiping it.
+      if(st.entries && typeof st.entries==='object' && Object.keys(st.entries).some(function(k){return (st.entries[k]||[]).length>0;})) RAW = st.entries;
+      if(Array.isArray(st.pos) && st.pos.length>0) PO_LIST = st.pos;
+      if(Array.isArray(st.returns) && st.returns.length>0) RETURN_LIST = st.returns;
+      if(st.opening_stock && typeof st.opening_stock==='object' && Object.keys(st.opening_stock).length>0) OPENING_STOCK_BY_FY = st.opening_stock;
+      if(Array.isArray(st.audit) && st.audit.length>0) auditLog = st.audit;
+      if(st.consumption && typeof st.consumption==='object' && Object.keys(st.consumption).length>0) CONSUMPTION_BY_FY = st.consumption;
+      MATS.forEach(m=>{ if(!RAW[m.id]) RAW[m.id]=[]; });
+      CURRENT_FY = detectCurrentFY();
+      ACTIVE_FY = CURRENT_FY;
+    });
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   // ── Core modal / nav helpers ──
   window.openModal          = id=>{
@@ -4940,6 +5512,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(el){el.classList.add('open');document.body.style.overflow='hidden';}
     if(id==='openingStockModal') setTimeout(renderOpeningStockForm,50);
     if(id==='tcModal') setTimeout(renderTCMaster,50);
+    if(id==='speciesMasterModal') setTimeout(renderSpeciesMaster,50);
+    if(id==='veneerMasterModal') setTimeout(renderFaceVeneerMaster,50);
   };
   window.closeModal         = id=>{const el=document.getElementById(id);if(el){el.classList.remove('open');document.body.style.overflow='';}};
   window.showPage           = showPage;
@@ -4997,6 +5571,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.addTC               = addTC;
   window.cycleDNStatus       = cycleDNStatus;
   window.advanceDNStatus     = advanceDNStatus;
+  window.requestDeleteEntry  = requestDeleteEntry;
+  window.submitDeletePin     = submitDeletePin;
+  window.addSpeciesType      = addSpeciesType;
+  window.removeSpeciesType   = removeSpeciesType;
+  window.renderSpeciesMaster = renderSpeciesMaster;
+  window.populateSpeciesDropdown = populateSpeciesDropdown;
+  window.addFaceVeneerType   = addFaceVeneerType;
+  window.removeFaceVeneerType= removeFaceVeneerType;
+  window.renderFaceVeneerMaster = renderFaceVeneerMaster;
+  window.populateFaceVeneerDropdown = populateFaceVeneerDropdown;
   window.saveReturn          = saveReturn;
   window.renderPurchaseReturn= renderPurchaseReturn;
   window.renderInventory      = renderInventory;
@@ -5008,6 +5592,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.updateOpeningStockStrip=updateOpeningStockStrip;
   window.exportInventoryExcel = exportInventoryExcel;
   window.submitApproval       = submitApproval;
+  window.setConsumption       = setConsumption;
+  window.onGlobalFYChange     = onGlobalFYChange;
+  window.onInventoryFYChange  = onInventoryFYChange;
+  window.onOSFYChange         = onOSFYChange;
+  window.populateFYSelectors  = populateFYSelectors;
+  window.syncOpeningStockRef  = syncOpeningStockRef;
   window.fillVendorFromPortal  = fillVendorFromPortal;
   window.populateItemDropdown  = populateItemDropdown;
   window.onItemSelect          = onItemSelect;
@@ -5059,13 +5649,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   // ── Init ──
   MATS.forEach(m=>{if(!RAW[m.id])RAW[m.id]=[];});
   window._editMid=null; window._editRi=null;
-  syncVendorsFromPortal();
-  renderDashboard();
-  renderVendorPickList(null);
-  updateOpeningStockStrip();
-  addAudit('Login','System initialized','Admin');
+  loadPurchaseState().then(()=>{
+    syncVendorsFromPortal();
+    syncOpeningStockRef();
+    populateFYSelectors();
+    renderDashboard();
+    renderVendorPickList(null);
+    updateOpeningStockStrip();
+    addAudit('Login','System initialized','Admin');
 
-  if(typeof window.__replayQueue==='function') window.__replayQueue();
+    if(typeof window.__replayQueue==='function') window.__replayQueue();
+  });
 });
 
 

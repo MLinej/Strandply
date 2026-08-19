@@ -18,8 +18,6 @@ export async function onRequestGet(context) {
 
     const date = url.searchParams.get('date');
     const shift = url.searchParams.get('shift');
-    const limit = parseInt(url.searchParams.get('limit')) || 50;
-
     let query = 'SELECT * FROM electricity_readings';
     const conditions = [];
     const params = [];
@@ -28,8 +26,10 @@ export async function onRequestGet(context) {
     if (shift) { conditions.push('shift = ?'); params.push(shift); }
 
     if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
-    query += ' ORDER BY date DESC, time DESC LIMIT ?';
-    params.push(limit);
+    query += ' ORDER BY date DESC, time DESC';
+
+    const limit = parseInt(url.searchParams.get('limit'));
+    if (limit > 0) { query += ' LIMIT ?'; params.push(limit); }
 
     const { results } = await db.prepare(query).bind(...params).all();
 
@@ -55,8 +55,8 @@ export async function onRequestPost(context) {
     await db.prepare(
       `INSERT INTO electricity_readings (
         id, date, shift, time, kwh, pf, night_kwh,
-        mf, energy_rate, fuel_rate, fixed_charge, created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        mf, energy_rate, fuel_rate, fixed_charge, remarks, created_by, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).bind(
       id,
       body.date,
@@ -69,6 +69,7 @@ export async function onRequestPost(context) {
       body.energy_rate || null,
       body.fuel_rate || null,
       body.fixed_charge || null,
+      body.remarks || '',
       body.created_by || '',
       now
     ).run();
