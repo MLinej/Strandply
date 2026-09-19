@@ -228,8 +228,8 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_entity ON activity_log(entity_type, 
 INSERT OR IGNORE INTO users (id, name, username, password, role, dept, avatar, color, modules, sub_rights)
 VALUES
   ('u001', 'Admin', 'admin', 'admin@strandply', 'admin', 'Administration', 'AD', '#B91C1C',
-   '["dispatch","vendor","reports","hr","production","transport","erp","accounts","stock","maintenance","electricity","dwpas"]',
-   '{"dispatch":["req","disp","track","party","courier","product","report","settings"],"vendor":["vend_list","vend_po","vend_inv","vend_pay"],"reports":["rpt_dash","rpt_disp","rpt_sales","rpt_exp"],"hr":["hr_emp","hr_att","hr_leave","hr_sal"],"production":["pr_batch","pr_qual","pr_mat","pr_weight"],"transport":["tr_inq","tr_rate","tr_appr","tr_order","tr_track"],"erp":["erp_entry","erp_po","erp_truck","erp_dncn","erp_inv","erp_report"],"accounts":["ac_inv","ac_recv","ac_pay","ac_gst"],"stock":["stk_slip","stk_ledger","stk_stock","stk_reclass","stk_master"],"maintenance":["mt_wo","mt_board","mt_area","mt_timeline","mt_export"],"electricity":["el_dash","el_punch","el_12hr","el_24hr","el_monthly","el_bills"],"dwpas":["dw_dash","dw_plan","dw_register","dw_achieve","dw_variance","dw_hr","dw_dept","dw_emp"]}'),
+   '["dispatch","vendor","reports","hr","production","transport","erp","accounts","stock","maintenance"]',
+   '{"dispatch":["req","disp","track","party","courier","product","report","settings"],"vendor":["vend_list","vend_po","vend_inv","vend_pay"],"reports":["rpt_dash","rpt_disp","rpt_sales","rpt_exp"],"hr":["hr_emp","hr_att","hr_leave","hr_sal"],"production":["pr_chip","pr_hp","pr_weight","pr_resin","pr_bc","pr_plan","pr_sum","pr_mdo","pr_rep"],"transport":["tr_inq","tr_rate","tr_appr","tr_order","tr_track"],"erp":["erp_entry","erp_po","erp_truck","erp_dncn","erp_inv","erp_report"],"accounts":["ac_inv","ac_recv","ac_pay","ac_gst"],"stock":["stk_slip","stk_ledger","stk_stock","stk_reclass","stk_master"],"maintenance":["mt_wo","mt_board","mt_area","mt_timeline","mt_export"]}'),
 
   ('u002', 'Ankit Parmar', 'ankit', 'ankit@123', 'dispatch', 'Dispatch Department', 'AP', '#0F766E',
    '["dispatch"]',
@@ -657,6 +657,130 @@ CREATE TABLE IF NOT EXISTS production_weight_records (
 );
 
 
+-- ── Board Cutting Reports ─────────────────────────────────
+CREATE TABLE IF NOT EXISTS production_bc_reports (
+  id TEXT PRIMARY KEY,
+  report_date TEXT NOT NULL,
+  shift TEXT DEFAULT 'Day',
+  operator_name TEXT DEFAULT '',
+  product TEXT DEFAULT '',
+  size TEXT DEFAULT '',
+  linked_hp TEXT DEFAULT '',
+  hp_pcs INTEGER DEFAULT 0,
+  cut_pcs INTEGER DEFAULT 0,
+  reject_pcs INTEGER DEFAULT 0,
+  reject_pct REAL DEFAULT 0,
+  wf_state TEXT DEFAULT 'draft',
+  remarks TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- ── Matt Weight Batches ───────────────────────────────────
+CREATE TABLE IF NOT EXISTS production_matt_batches (
+  id TEXT PRIMARY KEY,
+  batch_date TEXT NOT NULL,
+  shift TEXT DEFAULT 'Day',
+  product TEXT DEFAULT '',
+  size TEXT DEFAULT '',
+  thickness TEXT DEFAULT '',
+  operator_name TEXT DEFAULT '',
+  setpoint REAL DEFAULT 0,
+  warn_band REAL DEFAULT 0.5,
+  target_qty INTEGER DEFAULT 0,
+  total_matts INTEGER DEFAULT 0,
+  avg_weight REAL DEFAULT 0,
+  pass_count INTEGER DEFAULT 0,
+  warn_count INTEGER DEFAULT 0,
+  fail_count INTEGER DEFAULT 0,
+  pass_rate REAL DEFAULT 0,
+  status TEXT CHECK(status IN ('open','closed')) DEFAULT 'open',
+  remarks TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- ── Matt Weight Records (individual punches) ──────────────
+CREATE TABLE IF NOT EXISTS production_matt_records (
+  id TEXT PRIMARY KEY,
+  batch_id TEXT NOT NULL REFERENCES production_matt_batches(id),
+  matt_num INTEGER NOT NULL,
+  weight REAL NOT NULL,
+  status TEXT CHECK(status IN ('pass','warn','fail')) DEFAULT 'pass',
+  deviation REAL DEFAULT 0,
+  punched_at TEXT DEFAULT (datetime('now'))
+);
+
+-- ── WIP Nilgiri Stock Batches ─────────────────────────────
+CREATE TABLE IF NOT EXISTS production_wip_batches (
+  id TEXT PRIMARY KEY,
+  batch_date TEXT NOT NULL,
+  chip_id TEXT DEFAULT '',
+  lots_json TEXT DEFAULT '[]',
+  total_kg REAL DEFAULT 0,
+  total_amt REAL DEFAULT 0,
+  avg_rate_kg REAL DEFAULT 0,
+  consumed_kg REAL DEFAULT 0,
+  remarks TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- ── MDO Press Reports ─────────────────────────────────────
+CREATE TABLE IF NOT EXISTS production_mdo_reports (
+  id TEXT PRIMARY KEY,
+  report_date TEXT NOT NULL,
+  shift TEXT DEFAULT 'Day',
+  operator_name TEXT DEFAULT '',
+  press_start TEXT DEFAULT '',
+  press_end TEXT DEFAULT '',
+  working_time TEXT DEFAULT '',
+  total_pcs INTEGER DEFAULT 0,
+  total_paper_used REAL DEFAULT 0,
+  total_paper_wastage REAL DEFAULT 0,
+  items_json TEXT DEFAULT '[]',
+  wf_state TEXT DEFAULT 'draft',
+  remarks TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- ── Production Planning Reports ───────────────────────────
+CREATE TABLE IF NOT EXISTS production_pp_reports (
+  id TEXT PRIMARY KEY,
+  plan_date TEXT NOT NULL,
+  shift TEXT DEFAULT 'Day',
+  plan_operator TEXT DEFAULT '',
+  products_json TEXT DEFAULT '[]',
+  linked_hp TEXT DEFAULT '',
+  linked_mw TEXT DEFAULT '',
+  linked_bc TEXT DEFAULT '',
+  linked_ps TEXT DEFAULT '',
+  wf_state TEXT DEFAULT 'draft',
+  remarks TEXT DEFAULT '',
+  full_data TEXT DEFAULT '',   -- Full JSON of entire PP entry for lossless round-trip
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- ── Resin Consumption Entries ──────────────────────────────
+CREATE TABLE IF NOT EXISTS production_resin_entries (
+  id TEXT PRIMARY KEY,
+  report_date TEXT NOT NULL,
+  shift TEXT DEFAULT 'Day',
+  lot_no TEXT NOT NULL,
+  vendor_name TEXT DEFAULT '',
+  invoice_no TEXT DEFAULT '',
+  qty REAL DEFAULT 0,
+  rate_kg REAL DEFAULT 0,
+  amount REAL DEFAULT 0,
+  product TEXT DEFAULT '',
+  operator_name TEXT DEFAULT '',
+  remarks TEXT DEFAULT '',
+  linked_ps TEXT DEFAULT '',
+  linked_pp TEXT DEFAULT '',
+  status TEXT DEFAULT 'saved',
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+
+
+
 /* ══════════════════════════════════════════
    TRANSPORT MODULE TABLES
 ══════════════════════════════════════════ */
@@ -979,186 +1103,3 @@ INSERT OR IGNORE INTO maintenance_areas (id, name) VALUES
 ('ma6', 'Quality Lab'),
 ('ma7', 'Utility Block'),
 ('ma8', 'Press Shop');
-
--- ══════════════════════════════════════════════════════════
--- ELECTRICITY & METER MIS MODULE
--- ══════════════════════════════════════════════════════════
-
-CREATE TABLE IF NOT EXISTS electricity_readings (
-  id TEXT PRIMARY KEY,
-  date TEXT NOT NULL,
-  shift TEXT NOT NULL CHECK (shift IN ('AM','PM')),
-  time TEXT NOT NULL,
-  kwh REAL NOT NULL,
-  pf REAL,
-  night_kwh REAL,
-  mf REAL DEFAULT 1,
-  energy_rate REAL DEFAULT 4.20,
-  fuel_rate REAL DEFAULT 2.30,
-  fixed_charge REAL,
-  created_by TEXT,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS electricity_bills (
-  id TEXT PRIMARY KEY,
-  bill_date TEXT NOT NULL,
-  due_date TEXT,
-  paid_date TEXT,
-  adv_payment REAL,
-  kwh_curr REAL,
-  kwh_diff REAL,
-  kwh_mf REAL,
-  kvarh_curr REAL,
-  kvarh_diff REAL,
-  kvarh_mf REAL,
-  pf REAL,
-  night_units REAL,
-  demand_chg REAL,
-  energy_chg REAL,
-  fuel_sur REAL,
-  pf_rebate REAL,
-  night_rebate REAL,
-  ehv_rebate REAL,
-  tou_chg REAL,
-  gt_chg REAL,
-  total_consp REAL,
-  elec_duty REAL,
-  meter_chg REAL,
-  tcs REAL,
-  net_payable REAL,
-  total_payable REAL,
-  remarks TEXT DEFAULT '',
-  pdf_data TEXT,
-  created_by TEXT,
-  created_at TEXT DEFAULT (datetime('now')),
-  updated_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS electricity_meter_config (
-  id TEXT PRIMARY KEY DEFAULT 'default',
-  meter_no TEXT DEFAULT 'GJ-123456-HT',
-  consumer_no TEXT DEFAULT '',
-  category TEXT DEFAULT 'HT Industrial',
-  sanc_load TEXT DEFAULT '500',
-  ct TEXT DEFAULT '200/5 A',
-  pt TEXT DEFAULT '11000/110 V',
-  tariff TEXT DEFAULT 'HT-2(a)',
-  cycle TEXT DEFAULT 'Monthly',
-  updated_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS electricity_mf_history (
-  id TEXT PRIMARY KEY,
-  mf REAL NOT NULL,
-  effective_date TEXT NOT NULL,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS electricity_fc_history (
-  id TEXT PRIMARY KEY,
-  fc REAL NOT NULL,
-  effective_date TEXT NOT NULL,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS electricity_er_history (
-  id TEXT PRIMARY KEY,
-  rate REAL NOT NULL,
-  effective_date TEXT NOT NULL,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS electricity_fr_history (
-  id TEXT PRIMARY KEY,
-  rate REAL NOT NULL,
-  effective_date TEXT NOT NULL,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE INDEX IF NOT EXISTS idx_el_readings_date ON electricity_readings(date);
-CREATE INDEX IF NOT EXISTS idx_el_readings_shift ON electricity_readings(shift);
-CREATE INDEX IF NOT EXISTS idx_el_readings_date_shift ON electricity_readings(date, shift);
-CREATE INDEX IF NOT EXISTS idx_el_bills_date ON electricity_bills(bill_date);
-CREATE INDEX IF NOT EXISTS idx_el_mf_eff ON electricity_mf_history(effective_date);
-CREATE INDEX IF NOT EXISTS idx_el_fc_eff ON electricity_fc_history(effective_date);
-CREATE INDEX IF NOT EXISTS idx_el_er_eff ON electricity_er_history(effective_date);
-CREATE INDEX IF NOT EXISTS idx_el_fr_eff ON electricity_fr_history(effective_date);
-
-INSERT OR IGNORE INTO electricity_meter_config (id, meter_no, consumer_no, category, sanc_load, ct, pt, tariff, cycle)
-VALUES ('default', 'GJ-123456-HT', '1234567890', 'HT Industrial', '500', '200/5 A', '11000/110 V', 'HT-2(a)', 'Monthly');
-
-INSERT OR IGNORE INTO electricity_mf_history (id, mf, effective_date) VALUES ('mf-default', 30, '2022-10-01');
-INSERT OR IGNORE INTO electricity_fc_history (id, fc, effective_date) VALUES ('fc-default', 638675, '2022-10-01');
-INSERT OR IGNORE INTO electricity_er_history (id, rate, effective_date) VALUES ('er-default', 4.20, '2018-04-01');
-INSERT OR IGNORE INTO electricity_fr_history (id, rate, effective_date) VALUES ('fr-default', 2.30, '2018-04-01');
-
-
--- ══════════════════════════════════════════════════════════
--- DWPAS — Daily Work Planning & Achievement System
--- ══════════════════════════════════════════════════════════
-
-CREATE TABLE IF NOT EXISTS dwpas_departments (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT UNIQUE NOT NULL,
-  head TEXT NOT NULL DEFAULT '',
-  code TEXT DEFAULT '',
-  description TEXT DEFAULT '',
-  is_active INTEGER DEFAULT 1,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS dwpas_employees (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  dept TEXT DEFAULT '',
-  desg TEXT DEFAULT '',
-  type TEXT CHECK(type IN ('Skilled','Unskilled','Supervisor','Manager')) DEFAULT 'Skilled',
-  code TEXT DEFAULT '',
-  is_active INTEGER DEFAULT 1,
-  created_at TEXT DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS dwpas_plans (
-  id TEXT PRIMARY KEY,
-  plan_date TEXT NOT NULL,
-  plan_type TEXT DEFAULT 'Regular Day',
-  status TEXT CHECK(status IN ('Draft','Submitted','Approved')) DEFAULT 'Draft',
-  prepared_by TEXT DEFAULT '',
-  remarks TEXT DEFAULT '',
-  lines TEXT DEFAULT '[]',
-  saved_at TEXT DEFAULT (datetime('now')),
-  created_at TEXT DEFAULT (datetime('now')),
-  updated_at TEXT DEFAULT (datetime('now'))
-);
-
--- DWPAS indexes
-CREATE INDEX IF NOT EXISTS idx_dwpas_plans_date ON dwpas_plans(plan_date);
-CREATE INDEX IF NOT EXISTS idx_dwpas_plans_status ON dwpas_plans(status);
-CREATE INDEX IF NOT EXISTS idx_dwpas_dept_name ON dwpas_departments(name);
-CREATE INDEX IF NOT EXISTS idx_dwpas_emp_dept ON dwpas_employees(dept);
-
--- Seed default DWPAS departments
-INSERT OR IGNORE INTO dwpas_departments (id, name, head, code, description) VALUES
-(1, 'Log Yard', 'Yard Manager', 'LY', 'Incoming log sorting & storage'),
-(2, 'Peeling', 'Rajesh Patel', 'PL', 'Log peeling & core veneer production'),
-(3, 'Dryer', 'Mahesh Joshi', 'DR', 'Veneer drying operations'),
-(4, 'Core Composer', 'Supervisor', 'CC', 'Core layer composition'),
-(5, 'Glue Kitchen', 'Resin Manager', 'GK', 'Glue/resin preparation'),
-(6, 'Hot Press', 'Vikram Sharma', 'HP', 'Board pressing operations'),
-(7, 'Trimming & Sanding', 'Finishing Head', 'TS', 'Panel finishing'),
-(8, 'Lamination', 'Lamination Head', 'LM', 'Surface lamination'),
-(9, 'Dispatch', 'Dispatch Manager', 'DS', 'Outward logistics'),
-(10, 'Maintenance', 'Maintenance Head', 'MT', 'Equipment maintenance'),
-(11, 'Store', 'Sanjay Rao', 'ST', 'Inventory & stores'),
-(12, 'Quality', 'QC Head', 'QC', 'Quality control & inspection');
-
--- Seed default DWPAS employees
-INSERT OR IGNORE INTO dwpas_employees (id, name, dept, desg, type, code) VALUES
-(1, 'Jimit Mehta', 'Management', 'Plant Manager', 'Manager', 'MGR001'),
-(2, 'P K Sinha', 'Production', 'Production Head', 'Manager', 'MGR002'),
-(3, 'Sanjay Rao', 'Store', 'Store Manager', 'Manager', 'MGR003'),
-(4, 'Rahul', 'Log Yard', 'Unloading Supervisor', 'Supervisor', 'SUP001'),
-(5, 'Rajesh Patel', 'Peeling', 'Peeling Supervisor', 'Supervisor', 'SUP002'),
-(6, 'Mahesh Joshi', 'Dryer', 'Dryer Incharge', 'Supervisor', 'SUP003'),
-(7, 'Vikram Sharma', 'Hot Press', 'Press Supervisor', 'Supervisor', 'SUP004');
