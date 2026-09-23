@@ -228,8 +228,8 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_entity ON activity_log(entity_type, 
 INSERT OR IGNORE INTO users (id, name, username, password, role, dept, avatar, color, modules, sub_rights)
 VALUES
   ('u001', 'Admin', 'admin', 'admin@strandply', 'admin', 'Administration', 'AD', '#B91C1C',
-   '["dispatch","vendor","reports","hr","production","transport","erp","sales_erp","accounts","stock","maintenance","electricity","dwpas"]',
-   '{"dispatch":["req","disp","track","party","courier","product","report","settings"],"vendor":["vend_list","vend_po","vend_inv","vend_pay"],"reports":["rpt_dash","rpt_disp","rpt_sales","rpt_exp"],"hr":["hr_emp","hr_att","hr_leave","hr_sal"],"production":["pr_batch","pr_qual","pr_mat","pr_weight"],"transport":["tr_inq","tr_rate","tr_appr","tr_order","tr_track"],"erp":["erp_entry","erp_po","erp_truck","erp_dncn","erp_inv","erp_report"],"sales_erp":["se_dash","se_cust","se_so","se_inv","se_items","se_ledger"],"accounts":["ac_inv","ac_recv","ac_pay","ac_gst"],"stock":["stk_slip","stk_ledger","stk_stock","stk_reclass","stk_master"],"maintenance":["mt_wo","mt_board","mt_area","mt_timeline","mt_export"],"electricity":["el_dash","el_punch","el_12hr","el_24hr","el_monthly","el_bills"],"dwpas":["dw_dash","dw_plan","dw_register","dw_achieve","dw_variance","dw_hr","dw_dept","dw_emp"]}'),
+   '["dispatch","vendor","reports","hr","production","transport","erp","sales_erp","accounts","stock","maintenance","electricity","dwpas","stores","complaint","reports_hub"]',
+   '{"dispatch":["req","disp","track","party","courier","product","report","settings"],"vendor":["vend_list","vend_po","vend_inv","vend_pay"],"reports":["rpt_dash","rpt_disp","rpt_sales","rpt_exp"],"hr":["hr_emp","hr_att","hr_leave","hr_sal"],"production":["pr_batch","pr_qual","pr_mat","pr_weight"],"transport":["tr_inq","tr_rate","tr_appr","tr_order","tr_track"],"erp":["erp_entry","erp_po","erp_truck","erp_dncn","erp_inv","erp_report"],"sales_erp":["se_dash","se_cust","se_so","se_inv","se_items","se_ledger"],"accounts":["ac_inv","ac_recv","ac_pay","ac_gst"],"stock":["stk_slip","stk_ledger","stk_stock","stk_reclass","stk_master"],"maintenance":["mt_wo","mt_board","mt_area","mt_timeline","mt_export"],"electricity":["el_dash","el_punch","el_12hr","el_24hr","el_monthly","el_bills"],"dwpas":["dw_dash","dw_plan","dw_register","dw_achieve","dw_variance","dw_hr","dw_dept","dw_emp"],"stores":["st_dash","st_mrn_new","st_mrn_reg","st_grn_new","st_grn_reg","st_acct","st_rpt","st_cfg"],"complaint":["cm_dash","cm_new","cm_reg","cm_rpt","cm_setup"],"reports_hub":["rh_dash","rh_purchase","rh_production","rh_stock","rh_electricity","rh_sales","rh_maintenance","rh_analytics","rh_daily","rh_monthly","rh_fy","rh_sources"]}'),
 
   ('u002', 'Ankit Parmar', 'ankit', 'ankit@123', 'dispatch', 'Dispatch Department', 'AP', '#0F766E',
    '["dispatch"]',
@@ -1286,3 +1286,14 @@ INSERT OR IGNORE INTO dwpas_employees (id, name, dept, desg, type, code) VALUES
 (5, 'Rajesh Patel', 'Peeling', 'Peeling Supervisor', 'Supervisor', 'SUP002'),
 (6, 'Mahesh Joshi', 'Dryer', 'Dryer Incharge', 'Supervisor', 'SUP003'),
 (7, 'Vikram Sharma', 'Hot Press', 'Press Supervisor', 'Supervisor', 'SUP004');
+
+-- ═══════════════════════════════════════════════════════════════
+-- PRODUCTION MIS TABLES
+-- ═══════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS production_resin_entries (id TEXT PRIMARY KEY, report_date TEXT, shift TEXT, lot_no TEXT, vendor_name TEXT, invoice_no TEXT, qty REAL, rate_kg REAL, amount REAL, product TEXT, operator_name TEXT, linked_ps TEXT, linked_pp TEXT, status TEXT, remarks TEXT, created_at TEXT DEFAULT (datetime('now')));
+CREATE TABLE IF NOT EXISTS production_bc_reports (id TEXT PRIMARY KEY, report_date TEXT, shift TEXT, operator_name TEXT, product TEXT, size TEXT, linked_hp TEXT, hp_pcs INTEGER, cut_pcs INTEGER, reject_pcs INTEGER, reject_pct REAL, wf_state TEXT, status TEXT, remarks TEXT, created_at TEXT DEFAULT (datetime('now')));
+CREATE TABLE IF NOT EXISTS production_pp_reports (id TEXT PRIMARY KEY, report_date TEXT, shift TEXT, operator_name TEXT, press_no TEXT, total_boards INTEGER, status TEXT, full_data TEXT, created_at TEXT DEFAULT (datetime('now')));
+CREATE TABLE IF NOT EXISTS production_mdo_reports (id TEXT PRIMARY KEY, report_date TEXT, shift TEXT, operator_name TEXT, status TEXT, remarks TEXT, created_at TEXT DEFAULT (datetime('now')));
+CREATE TABLE IF NOT EXISTS production_matt_batches (id TEXT PRIMARY KEY, report_date TEXT, shift TEXT, operator_name TEXT, status TEXT, remarks TEXT, created_at TEXT DEFAULT (datetime('now')));
+CREATE TABLE IF NOT EXISTS production_wip_batches (id TEXT PRIMARY KEY, stage TEXT, qty INTEGER, status TEXT, remarks TEXT, created_at TEXT DEFAULT (datetime('now')));
+

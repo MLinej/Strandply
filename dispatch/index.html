@@ -313,6 +313,10 @@ textarea{min-height:72px;resize:vertical}
   .login-wrap{flex-direction:column}
 }
 </style>
+  <!-- shell_patched_v2 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shell-override.css">
 </head>
 <body>
 
@@ -367,7 +371,7 @@ textarea{min-height:72px;resize:vertical}
   <div class="login-wrap">
     <div class="login-left">
       <div>
-        <div class="login-logo-big">ST<span style="color:rgba(255,255,255,.5)">Pro</span></div>
+        <div class="login-logo-big"><img src="strandply-logo.png" alt="Strandply" style="height:42px;background:#fff;padding:6px 12px;border-radius:8px;object-fit:contain;"></div>
         <div class="login-tagline">SampleTrack Pro<br>Dispatch & Tracking Management<br>Manufacturing Suite</div>
       </div>
       <div class="login-features">
@@ -403,7 +407,7 @@ textarea{min-height:72px;resize:vertical}
   <nav id="sidebar">
     <div class="sidebar-top">
       <div class="sidebar-brand">
-        <div class="brand-icon">ST</div>
+        <img src="strandply-icon.png" alt="Strandply" style="width:28px;height:28px;object-fit:contain;">
         <div><div class="brand-name">SampleTrack</div><div class="brand-sub">Manufacturing Suite</div></div>
       </div>
     </div>
@@ -3837,7 +3841,47 @@ document.addEventListener('keydown',e=>{
 (async function(){
   await loadState();
   seedData();
+  // Auto-login so TrackPro / Dispatch module opens seamlessly from portal
+  let activeUser = SEED_USERS[0];
+  try {
+    const sessionStr = localStorage.getItem('strandply_session') || localStorage.getItem('currentUser') || localStorage.getItem('stp_user');
+    if (sessionStr) {
+      const parsed = JSON.parse(sessionStr);
+      const found = [...SEED_USERS, ...S.users].find(x => x.username === parsed.username || x.role === 'admin');
+      if (found) activeUser = found;
+    }
+  } catch(e){}
+  S.user = { ...activeUser };
+  const loginEl = document.getElementById('login-screen');
+  const appEl = document.getElementById('app');
+  if (loginEl) loginEl.style.display = 'none';
+  if (appEl) appEl.style.display = 'flex';
+  initApp();
 })();
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // Inject "Back to Portal" at the TOP of the sidebar nav
+  var targets = ['#sidebar .menu','#sidebar nav','#sidebar ul','nav.sb','aside#sidebar','#sidebar'];
+  var injected = false;
+  for(var i=0;i<targets.length;i++){
+    var el = document.querySelector(targets[i]);
+    if(el){
+      var btn = document.createElement('a');
+      btn.className='shell-back-btn';
+      btn.href='../index.html';
+      btn.title='Back to Portal';
+      btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/></svg> Portal';
+      btn.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#667085;background:#F8F9FA;border:1px solid #E6E8EC;border-radius:7px;padding:6px 12px;cursor:pointer;transition:all .12s;text-decoration:none;margin:8px 10px 4px;';
+      btn.onmouseover=function(){this.style.background='#FFF1F2';this.style.color='#D71920';this.style.borderColor='#fecaca'};
+      btn.onmouseout=function(){this.style.background='#F8F9FA';this.style.color='#667085';this.style.borderColor='#E6E8EC'};
+      el.insertBefore(btn, el.firstChild);
+      injected = true;
+      break;
+    }
+  }
+});
+</script>
+<script src="../shell.js"></script>
 </body>
 </html>

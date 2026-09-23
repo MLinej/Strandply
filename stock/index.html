@@ -161,13 +161,17 @@ select.inp{appearance:none;padding-right:38px;background-color:#FFFFFF;
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:2px}
 </style>
+  <!-- shell_patched_v2 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shell-override.css">
 </head>
 <body>
 <div class="app">
 
 <div class="header">
   <div class="logo">
-    <div class="logo-icon">SP</div>
+    <div class="logo-icon" style="background:transparent;"><img src="strandply-icon.png" alt="Strandply" style="width:30px;height:30px;object-fit:contain;"></div>
     <div>
       <div class="logo-name">Strandply LLP</div>
       <div class="logo-sub">STOCK MANAGEMENT · SKU v8</div>
@@ -2347,7 +2351,7 @@ function buildReportHtml(containerId){
 </head><body>
 <div class="rpt-header">
   <div class="rpt-logo">
-    <div class="rpt-logo-box">SP</div>
+    <div class="rpt-logo-box" style="background:transparent;"><img src="strandply-icon.png" alt="Strandply" style="width:30px;height:30px;object-fit:contain;"></div>
     <div>
       <div class="rpt-co">Strandply LLP</div>
       <div class="rpt-addr">Manufacturers of Engineered Wood Boards — OSB | S-OSB | MDO | Hybrid | RCOSB</div>
@@ -2404,5 +2408,29 @@ function waReport(containerId){
   render();
 })();
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // Inject "Back to Portal" at the TOP of the sidebar nav
+  var targets = ['#sidebar .menu','#sidebar nav','#sidebar ul','nav.sb','aside#sidebar','#sidebar'];
+  var injected = false;
+  for(var i=0;i<targets.length;i++){
+    var el = document.querySelector(targets[i]);
+    if(el){
+      var btn = document.createElement('a');
+      btn.className='shell-back-btn';
+      btn.href='../index.html';
+      btn.title='Back to Portal';
+      btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/></svg> Portal';
+      btn.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#667085;background:#F8F9FA;border:1px solid #E6E8EC;border-radius:7px;padding:6px 12px;cursor:pointer;transition:all .12s;text-decoration:none;margin:8px 10px 4px;';
+      btn.onmouseover=function(){this.style.background='#FFF1F2';this.style.color='#D71920';this.style.borderColor='#fecaca'};
+      btn.onmouseout=function(){this.style.background='#F8F9FA';this.style.color='#667085';this.style.borderColor='#E6E8EC'};
+      el.insertBefore(btn, el.firstChild);
+      injected = true;
+      break;
+    }
+  }
+});
+</script>
+<script src="../shell.js"></script>
 </body>
 </html>

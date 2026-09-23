@@ -17,12 +17,23 @@ export async function onRequestGet(ctx) {
   sql += ' ORDER BY plan_date DESC';
 
   try {
-    const { results } = await db.prepare(sql).bind(...params).all();
-    const plans = (results || []).map(r => ({
-      ...r,
-      lines: JSON.parse(r.lines || '[]'),
-    }));
-    return Response.json({ plans });
+    try {
+      const { results } = await db.prepare(sql).bind(...params).all();
+      const plans = (results || []).map(r => ({
+        ...r,
+        lines: JSON.parse(r.lines || '[]'),
+      }));
+      return Response.json({ plans });
+    } catch (e) {
+      if (e.message && e.message.includes('no such table')) {
+        await db.prepare(`CREATE TABLE IF NOT EXISTS dwpas_plans (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, dept_id INTEGER, title TEXT, description TEXT,
+          plan_date TEXT, status TEXT, created_at TEXT DEFAULT (datetime('now'))
+        )`).run();
+        return Response.json({ plans: [] });
+      }
+      throw e;
+    }
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
   }

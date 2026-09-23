@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Strandply LLP — Marketing &amp; Sales CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --red:#C8102E; --red2:#a00d24; --red3:#7d0a1d; --redlt:#fff0f2; --redmid:#ffd7dc;
+  --off:#f4f6fa; --g0:#f8f9fb; --g1:#f1f3f7; --g2:#e4e8ef; --g3:#c5cdd8;
+  --g4:#8a96a8; --g5:#4a5568; --g6:#1a202c; --border:#dde3ec;
+  --green:#16a34a; --greenlt:#f0fdf4; --amber:#d97706; --amberlt:#fffbeb;
+  --purple:#7c3aed; --purplelt:#f5f3ff; --teal:#0891b2; --teallt:#ecfeff;
+  --danger:#dc2626; --dangerlt:#fee2e2;
+  --fh: 'Inter', sans-serif; --fb:'Inter',sans-serif; --fm:'JetBrains Mono',monospace;
+  --shadow:0 1px 3px rgba(0,0,0,.08); --shadow2:0 4px 16px rgba(0,0,0,.12); --shadow3:0 8px 32px rgba(0,0,0,.16);
+  --sidebar-w:250px; --topbar-h:56px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--off);color:var(--g6);font-family:var(--fb);font-size:13.5px;line-height:1.5;overflow-x:hidden}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--g3);border-radius:5px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== APP SHELL ===== */
+#topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar-h);background:var(--red2);color:#fff;
+  display:flex;align-items:center;gap:14px;padding:0 18px;z-index:300;box-shadow:var(--shadow2)}
+#topbar .brand{display:flex;align-items:center;gap:10px;font-family:var(--fh);font-weight:800;letter-spacing:.5px}
+#topbar .brand .mark{background:var(--red);width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900}
+#topbar .brand .sub{font-family:var(--fm);font-size:10px;font-weight:400;color:rgba(255,255,255,.55);letter-spacing:1px}
+#hamburger{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px}
+#gsearch{flex:1;max-width:420px;margin-left:10px;position:relative}
+#gsearch input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;
+  border-radius:7px;padding:8px 12px 8px 34px;font-family:var(--fb);font-size:12.5px}
+#gsearch input::placeholder{color:rgba(255,255,255,.5)}
+#gsearch::before{content:'🔎';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.6}
+#gsearch-results{position:absolute;top:36px;left:0;right:0;background:#fff;border-radius:8px;box-shadow:var(--shadow3);
+  color:var(--g6);max-height:360px;overflow:auto;display:none;z-index:400}
+#gsearch-results .gr-item{padding:9px 14px;border-bottom:1px solid var(--g1);cursor:pointer;font-size:12.5px}
+#gsearch-results .gr-item:hover{background:var(--redlt)}
+#gsearch-results .gr-item .gr-tag{font-family:var(--fm);font-size:9px;color:var(--red);text-transform:uppercase;letter-spacing:1px;margin-right:6px}
+#topbar-right{display:flex;align-items:center;gap:14px;margin-left:auto}
+#role-switch{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:6px;padding:6px 10px;font-family:var(--fm);font-size:11px}
+#role-switch option{color:#000}
+#notif-btn{position:relative;background:none;border:none;color:#fff;font-size:17px;cursor:pointer;padding:4px}
+#notif-dot{position:absolute;top:0;right:0;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--g6)}
+#today-pill{font-family:var(--fm);font-size:11px;background:rgba(255,255,255,.1);padding:6px 10px;border-radius:6px}
+
+#sidebar{position:fixed;top:var(--topbar-h);left:0;bottom:0;width:var(--sidebar-w);background:var(--red);
+  overflow-y:auto;z-index:250;transition:transform .25s ease}
+#sidebar .sb-group{padding:14px 16px 4px;font-family:var(--fm);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 18px;font-family:var(--fb);font-size:13px;font-weight:500;
+  color:rgba(255,255,255,.78);cursor:pointer;border-left:3px solid transparent;user-select:none}
+.sb-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sb-item.active{background:rgba(255,255,255,.16);color:#fff;border-left-color:#fff;font-weight:700}
+.sb-item .ico{width:18px;text-align:center}
+.sb-badge{margin-left:auto;background:#fff;color:var(--red);font-family:var(--fm);font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px}
+
+#content{margin-left:var(--sidebar-w);margin-top:var(--topbar-h);padding:22px;min-height:calc(100vh - var(--topbar-h))}
+.page{display:none;animation:fadeIn .2s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.page-title{font-family:var(--fh);font-size:24px;font-weight:800;color:var(--g6)}
+.page-sub{font-family:var(--fm);font-size:11.5px;color:var(--g4);margin-top:3px}
+.page-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ===== Components ===== */
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px;box-shadow:var(--shadow)}
+.card-title{font-family:var(--fh);font-size:12.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--g4);
+  margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--g1);display:flex;justify-content:space-between;align-items:center}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi{background:#fff;border-radius:8px;padding:16px 18px;border-top:3px solid var(--red);border:1px solid var(--border);box-shadow:var(--shadow);cursor:pointer;transition:transform .15s}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow2)}
+.kpi-lbl{font-family:var(--fm);font-size:9.5px;color:var(--g4);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.kpi-val{font-family:var(--fh);font-size:24px;font-weight:800;color:var(--g6)}
+.kpi-sub{font-size:10.5px;color:var(--g4);margin-top:3px}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:5px;border:none;font-family:var(--fh);
+  font-size:12.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:filter .15s}
+.btn:hover{filter:brightness(1.08)}
+.btn:active{filter:brightness(.94)}
+.btn-red{background:var(--red);color:#fff}
+.btn-outline{background:#fff;color:var(--red);border:1px solid var(--red)}
+.btn-gray{background:var(--g1);color:var(--g5);border:1px solid var(--g2)}
+.btn-green{background:var(--green);color:#fff}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-purple{background:var(--purple);color:#fff}
+.btn-sm{padding:5px 11px;font-size:10.5px}
+.btn-xs{padding:3px 8px;font-size:9.5px;border-radius:4px}
+.btn-icon{padding:6px 9px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+.tag{display:inline-block;font-size:9px;font-family:var(--fm);padding:2px 8px;border-radius:3px;letter-spacing:.6px;text-transform:uppercase;font-weight:600;white-space:nowrap}
+.tag-red{background:var(--redlt);color:var(--red);border:1px solid var(--redmid)}
+.tag-green{background:var(--greenlt);color:var(--green);border:1px solid #bbf7d0}
+.tag-amber{background:var(--amberlt);color:var(--amber);border:1px solid #fde68a}
+.tag-teal{background:var(--teallt);color:var(--teal);border:1px solid #a5f3fc}
+.tag-purple{background:var(--purplelt);color:var(--purple);border:1px solid #ddd6fe}
+.tag-gray{background:var(--g1);color:var(--g5);border:1px solid var(--g2)}
+.tag-danger{background:var(--dangerlt);color:var(--danger);border:1px solid #fecaca}
+
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table.dt{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff}
+table.dt th{background:var(--red);color:#fff;font-family:var(--fh);font-size:10px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;padding:10px 12px;text-align:left;white-space:nowrap;position:sticky;top:0}
+table.dt td{padding:9px 12px;border-bottom:1px solid var(--g1);vertical-align:middle;white-space:nowrap}
+table.dt tr:hover td{background:var(--redlt)}
+table.dt tr:last-child td{border-bottom:none}
+.mono{font-family:var(--fm)}
+.txt-red{color:var(--red)}
+.txt-green{color:var(--green)}
+.txt-amber{color:var(--amber)}
+.txt-muted{color:var(--g4)}
+.txt-b{font-weight:700}
+
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar input[type=text],.toolbar input[type=search],.toolbar select,.toolbar input[type=date]{
+  padding:7px 10px;border:1px solid var(--g3);border-radius:5px;font-size:12px;background:#fff;color:var(--g6)}
+.toolbar input[type=text]{min-width:200px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--g4);font-family:var(--fm);font-size:12px}
+
+/* Forms */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.ffull{grid-column:1/-1}
+.fld label{display:block;font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--g4);margin-bottom:5px}
+.fld label .req{color:var(--red)}
+.finput{width:100%;background:#fff;border:1px solid var(--g3);border-radius:5px;padding:8px 11px;font-family:var(--fb);font-size:13px;color:var(--g6)}
+.finput:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 3px rgba(200,16,46,.08)}
+textarea.finput{resize:vertical;min-height:60px}
+.fsection{grid-column:1/-1;font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--g4);margin:6px 0 -2px;padding-left:10px;border-left:4px solid var(--red)}
+.fld{position:relative}
+.ac-dropdown{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:6px;
+  box-shadow:var(--shadow2);max-height:190px;overflow-y:auto;z-index:950;display:none;margin-top:2px}
+.ac-dropdown.open{display:block}
+.ac-item{padding:7px 11px;font-size:12.5px;cursor:pointer;border-bottom:1px solid var(--g1)}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover, .ac-item.hi{background:var(--redlt);color:var(--red)}
+
+/* Modal */
+#modal-overlay{position:fixed;inset:0;background:rgba(26,32,44,.5);z-index:900;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+#modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:10px;box-shadow:var(--shadow3);width:100%;max-width:720px;animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+.modal-hd{background:var(--red);color:#fff;padding:14px 20px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center}
+.modal-hd h3{font-family:var(--fh);font-size:16px;font-weight:800;letter-spacing:.4px;text-transform:uppercase}
+.modal-hd button{background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px}
+.modal-body{padding:20px;max-height:70vh;overflow-y:auto}
+.modal-ft{padding:14px 20px;border-top:1px solid var(--g1);display:flex;justify-content:flex-end;gap:8px}
+
+/* Timeline */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:'';position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--g2)}
+.tl-item{position:relative;padding-bottom:18px}
+.tl-item::before{content:'';position:absolute;left:-26px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--red);border:2px solid #fff;box-shadow:0 0 0 2px var(--red)}
+.tl-date{font-family:var(--fm);font-size:10.5px;color:var(--g4)}
+.tl-type{display:inline-block;margin:2px 0 4px}
+.tl-text{font-size:12.5px;color:var(--g6)}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;border-bottom:2px solid var(--g1);margin-bottom:16px;flex-wrap:wrap}
+.tab-btn{padding:9px 16px;font-family:var(--fh);font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--g4);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab-btn.active{color:var(--red);border-bottom-color:var(--red)}
+.tabpane{display:none}
+.tabpane.active{display:block}
+
+/* Kanban / pipeline */
+.pipeline{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.pl-col{min-width:220px;background:var(--g0);border-radius:8px;border:1px solid var(--border);flex-shrink:0}
+.pl-col-hd{padding:10px 12px;font-family:var(--fh);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  color:#fff;background:var(--g5);border-radius:8px 8px 0 0;display:flex;justify-content:space-between}
+.pl-card{background:#fff;border:1px solid var(--border);border-radius:7px;padding:10px;margin:8px;box-shadow:var(--shadow);cursor:pointer}
+.pl-card:hover{box-shadow:var(--shadow2)}
+.pl-card .pc-name{font-weight:700;font-size:12.5px;margin-bottom:3px}
+.pl-card .pc-meta{font-family:var(--fm);font-size:10px;color:var(--g4)}
+
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+@media (max-width:1100px){.grid2{grid-template-columns:1fr}.kpi-row{grid-template-columns:repeat(2,1fr)}.fgrid,.fgrid3{grid-template-columns:1fr}}
+@media (max-width:768px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #content{margin-left:0}
+  #hamburger{display:block}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+}
+.priority-hot{color:var(--red);font-weight:700}
+.priority-warm{color:var(--amber);font-weight:700}
+.priority-cold{color:var(--teal);font-weight:700}
+.badge-count{background:var(--red);color:#fff;font-family:var(--fm);font-size:10px;font-weight:700;padding:1px 7px;border-radius:9px;margin-left:6px}
+#toast-wrap{position:fixed;bottom:20px;right:20px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--g6);color:#fff;padding:11px 18px;border-radius:7px;font-size:12.5px;box-shadow:var(--shadow3);animation:toastIn .3s ease}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.chart-box{position:relative;height:260px}
+.chart-box.sm{height:190px}
+a.linklike{color:var(--red);cursor:pointer;font-weight:600;text-decoration:none}
+a.linklike:hover{text-decoration:underline}
+@media print{
+  #topbar,#sidebar,.page-actions,.toolbar,.no-print{display:none!important}
+  #content{margin:0;padding:0}
+  body{background:#fff}
+}
+</style>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shell.css">
+  <!-- shell_patched_v2 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shell-override.css">
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- STRANDPLY SHELL SIDEBAR (auto-patched) -->
+  <div class="sidebar-mob-overlay" id="mob-overlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-logo-full">
+        <div class="sidebar-logo-mark" style="background:transparent;"><img src="strandply-icon.png" alt="Strandply" style="width:26px;height:26px;object-fit:contain;"></div>
+        <div class="logo-text-block">
+          <div class="sidebar-logo-text">Strandply ERP</div>
+          <div class="sidebar-logo-tagline">Marketing CRM</div>
+        </div>
+      </div>
+      <div class="sidebar-logo-icon">S</div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l-8 8 8 8"/></svg>
+      </button>
+    </div>
+    <nav class="sidebar-nav" id="sidebar-nav-shell">
+      <a class="navlink" data-label="← Portal Home" data-portal-back onclick="window.location.href='../index.html'" style="margin-bottom:4px">
+        <svg class="navicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/></svg>
+        <span class="navlabel">← Portal Home</span>
+      </a>
+      <!-- Module sub-nav injected by each module's own JS -->
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="user-av" id="sb-av" style="background:#D71920">AD</div>
+        <div class="user-info-block">
+          <div class="user-av-name" id="sb-name">User</div>
+          <div class="user-av-role" id="sb-role">Strandply ERP</div>
+        </div>
+        <svg class="sb-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+    </div>
+  </aside>
+  <div class="content">
+
+    <!-- STRANDPLY SHELL TOPBAR (auto-patched) -->
+    <div class="topbar" id="shell-topbar">
+      <button class="tb-hamburger" id="tb-hamburger">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="topbar-bc">
+        <div class="topbar-bc-path" id="tb-breadcrumb">
+          <span>Portal</span><span class="topbar-bc-sep">›</span>
+          <span class="topbar-bc-cur" id="tb-cur-page">Module</span>
+        </div>
+      </div>
+      <div class="tb-search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="Search anything..." id="shell-search">
+      </div>
+      <div class="tb-actions">
+        <div class="tb-icon-btn" title="Notifications">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <div class="tb-notif-dot"></div>
+        </div>
+        <div class="tb-divider"></div>
+        <div class="tb-avatar-btn">
+          <div class="tb-av" id="tb-av" style="background:#D71920">AD</div>
+          <div>
+            <div class="tb-user-name" id="tb-nm">User</div>
+            <div class="tb-user-role" id="tb-rl">Strandply ERP</div>
+          </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#98A2B3;margin-left:2px"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="page-area">
+
+
+<div id="topbar">
+  <button id="hamburger">☰</button>
+  <div class="brand"><img src="strandply-icon.png" alt="Strandply" style="width:28px;height:28px;object-fit:contain;"><div><div>STRANDPLY CRM</div><div class="sub">Marketing &amp; Sales · v1.0</div></div></div>
+  <div id="gsearch"><input id="gsearch-input" type="text" placeholder="Search customer, mobile, city, GST, product…">
+    <div id="gsearch-results"></div>
+  </div>
+  <div id="topbar-right">
+    <span id="today-pill"></span>
+    <select id="role-switch">
+      <option value="Admin">Admin</option>
+      <option value="Management">Management</option>
+      <option value="Sales Manager">Sales Manager</option>
+      <option value="Salesperson">Salesperson</option>
+      <option value="Marketing">Marketing</option>
+      <option value="Data Entry">Data Entry</option>
+    </select>
+    <button id="notif-btn">🔔<span id="notif-dot" style="display:none"></span></button>
+  </div>
+</div>
+
+<div id="sidebar"></div>
+<div id="content"></div>
+<div id="modal-overlay"><div class="modal" id="modal-box"></div></div>
+<div id="toast-wrap"></div>
+
+<script>
+/* ============================================================
+   STRANDPLY CRM — core: DOM helper, storage layer, utilities
+============================================================ */
+'use strict';
+
+function h(tag, attrs, ...children){
+  attrs = attrs || {};
+  const e = document.createElement(tag);
+  for(const k in attrs){
+    const v = attrs[k];
+    if(v==null) continue;
+    if(k==='class') e.className = v;
+    else if(k==='style' && typeof v==='object'){ Object.assign(e.style, v); }
+    else if(k.indexOf('on')===0 && typeof v==='function'){ e.addEventListener(k.slice(2).toLowerCase(), v); }
+    else if(k==='checked' || k==='disabled' || k==='selected'){ if(v) e.setAttribute(k,''); e[k]=v; }
+    else e.setAttribute(k, v);
+  }
+  children.flat(Infinity).forEach(c=>{
+    if(c==null || c===false) return;
+    if(typeof c==='string' || typeof c==='number') e.appendChild(document.createTextNode(String(c)));
+    else e.appendChild(c);
+  });
+  return e;
+}
+function clear(el){ while(el.firstChild) el.removeChild(el.firstChild); }
+function $(sel, root){ return (root||document).querySelector(sel); }
+function $all(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
+
+/* ---- storage ---- */
+let _saveTimer = null;
+function saveCRMState(){
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(function(){
+    const payload = {
+      leads: DB.get('leads'),
+      customers: DB.get('customers'),
+      followups: DB.get('followups'),
+      opportunities: DB.get('opportunities'),
+      quotations: DB.get('quotations'),
+      ordersWon: DB.get('ordersWon'),
+      ordersLost: DB.get('ordersLost'),
+      tasks: DB.get('tasks'),
+      campaigns: DB.get('campaigns'),
+      products: DB.get('products'),
+      salespersons: DB.get('salespersons'),
+      sources: DB.get('sources'),
+      lostReasons: DB.get('lostReasons'),
+      audit: DB.get('audit'),
+      _seq: SEQ
+    };
+    fetch('/api/crm/state', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(r => r.json()).catch(err => console.error('CRM save error:', err));
+  }, 300);
+}
+
+function loadCRMState(){
+  return fetch('/api/crm/state', { credentials: 'include' })
+    .then(r => r.ok ? r.json() : null)
+    .then(data => {
+      if(!data || data.error) return;
+      ['leads','customers','followups','opportunities','quotations','ordersWon','ordersLost','tasks','campaigns','products','salespersons','sources','lostReasons','audit'].forEach(k => {
+        if(Array.isArray(data[k])) {
+          localStorage.setItem('spl_crm_' + k, JSON.stringify(data[k]));
+        }
+      });
+      if(data._seq && typeof data._seq === 'object') {
+        SEQ = data._seq;
+        localStorage.setItem('spl_crm_seq', JSON.stringify(SEQ));
+      }
+    })
+    .catch(err => console.error('CRM load error:', err));
+}
+
+const DB = {
+  _k(name){ return 'spl_crm_' + name; },
+  get(name){ try{ const raw = localStorage.getItem(this._k(name)); return raw ? JSON.parse(raw) : []; }catch(e){ return []; } },
+  set(name, arr){ localStorage.setItem(this._k(name), JSON.stringify(arr)); saveCRMState(); },
+  add(name, obj){ const arr = this.get(name); arr.push(obj); this.set(name, arr); return obj; },
+  update(name, id, patch){ const arr = this.get(name); const i = arr.findIndex(x=>x.id===id); if(i>-1){ arr[i] = Object.assign({}, arr[i], patch); this.set(name, arr);} return arr[i]; },
+  remove(name, id){ const arr = this.get(name).filter(x=>x.id!==id); this.set(name, arr); },
+  byId(name, id){ return this.get(name).find(x=>x.id===id); }
+};
+
+let SEQ = (function(){ try{ return JSON.parse(localStorage.getItem('spl_crm_seq')||'{}'); }catch(e){ return {}; } })();
+function saveSeq(){ localStorage.setItem('spl_crm_seq', JSON.stringify(SEQ)); saveCRMState(); }
+function fy(){ // financial year suffix e.g. 26-27
+  const d = new Date(); const y = d.getMonth()>=3 ? d.getFullYear() : d.getFullYear()-1;
+  return String(y).slice(2) + '-' + String(y+1).slice(2);
+}
+function nextId(prefix){
+  const key = prefix + '_' + fy();
+  SEQ[key] = (SEQ[key]||0) + 1; saveSeq();
+  return prefix + '/' + fy() + '/' + String(SEQ[key]).padStart(4,'0');
+}
+function uid(){ return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+/* ---- date helpers ---- */
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function toDisp(iso){ if(!iso) return '—'; const p = iso.split('-'); if(p.length!==3) return iso; return p[2]+'-'+p[1]+'-'+p[0]; }
+function daysBetween(a,b){ const A=new Date(a), B=new Date(b); return Math.round((B-A)/86400000); }
+function fmtMoney(n, forPrint){ n = Number(n)||0; const s = n.toLocaleString('en-IN', {maximumFractionDigits:0}); return (forPrint?'Rs. ':'₹') + s; }
+function esc(s){ return (s==null?'':String(s)); }
+
+function toast(msg){
+  const t = h('div', {class:'toast'}, msg);
+  $('#toast-wrap').appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 2600);
+}
+
+function confirmAction(msg, onYes){
+  openModal('CONFIRM', [], null, {custom: h('div', {}, h('p',{style:{marginBottom:'16px',fontSize:'13px'}}, msg))}, [
+    {label:'Cancel', cls:'btn-gray', action: closeModal},
+    {label:'Confirm', cls:'btn-red', action: ()=>{ closeModal(); onYes(); }}
+  ]);
+}
+
+/* ---- modal engine ---- */
+function closeModal(){ $('#modal-overlay').classList.remove('open'); clear($('#modal-box')); }
+function openModal(title, fields, onSave, opts, footerButtons){
+  opts = opts || {};
+  const box = $('#modal-box'); clear(box);
+  const body = h('div', {class:'modal-body'});
+  const inputs = {};
+  if(opts.custom){ body.appendChild(opts.custom); }
+  else {
+    const grid = h('div', {class: opts.grid3 ? 'fgrid3' : 'fgrid'});
+    fields.forEach(f=>{
+      if(f.type==='section'){ grid.appendChild(h('div',{class:'fsection'}, f.label)); return; }
+      const wrap = h('div', {class:'fld' + (f.full?' ffull':'')});
+      wrap.appendChild(h('label',{}, f.label, f.required?h('span',{class:'req'},' *'):null));
+      let input;
+      if(f.type==='select'){
+        input = h('select', {class:'finput'});
+        (f.options||[]).forEach(o=>{
+          const val = typeof o==='object'?o.value:o, lbl = typeof o==='object'?o.label:o;
+          input.appendChild(h('option',{value:val}, lbl));
+        });
+      } else if(f.type==='textarea'){
+        input = h('textarea', {class:'finput', rows:f.rows||3});
+      } else {
+        input = h('input', {class:'finput', type:f.type||'text', step:f.step||null, placeholder:f.placeholder||''});
+      }
+      if(f.value!=null) input.value = f.value;
+      inputs[f.key] = input;
+      wrap.appendChild(input);
+      if(f.key==='city') attachCityAutocomplete(wrap, input);
+      grid.appendChild(wrap);
+    });
+    body.appendChild(grid);
+    // Auto-fill State from City, wherever a form has both fields
+    if(inputs.city && inputs.state){
+      const fillState = ()=>{
+        const st = lookupState(inputs.city.value);
+        if(st) inputs.state.value = st;
+      };
+      inputs.city.addEventListener('blur', fillState);
+      inputs.city.addEventListener('change', fillState);
+    }
+  }
+  const hd = h('div', {class:'modal-hd'}, h('h3',{}, title), h('button', {onClick:closeModal}, '✕'));
+  const ft = h('div', {class:'modal-ft'});
+  if(footerButtons){
+    footerButtons.forEach(b=> ft.appendChild(h('button', {class:'btn '+b.cls, onClick:b.action}, b.label)));
+  } else {
+    ft.appendChild(h('button',{class:'btn btn-gray', onClick:closeModal},'Cancel'));
+    ft.appendChild(h('button',{class:'btn btn-red', onClick:()=>{
+      const data = {}; for(const k in inputs) data[k] = inputs[k].value;
+      if(onSave(data)!==false) closeModal();
+    }}, 'Save'));
+  }
+  box.appendChild(hd); box.appendChild(body); box.appendChild(ft);
+  $('#modal-overlay').classList.add('open');
+}
+
+/* ---- generic table renderer ---- */
+function renderTable(container, columns, rows, opts){
+  opts = opts || {};
+  clear(container);
+  if(!rows.length){ container.appendChild(h('div',{class:'empty-state'}, opts.emptyText || 'No records found.')); return; }
+  const wrap = h('div',{class:'table-wrap'});
+  const table = h('table',{class:'dt'});
+  const thead = h('thead',{}, h('tr',{}, columns.map(c=>h('th',{}, c.label))));
+  const tbody = h('tbody');
+  rows.forEach(r=>{
+    const tr = h('tr');
+    columns.forEach(c=>{
+      const td = h('td', c.mono?{class:'mono'}:{});
+      const val = c.render ? c.render(r) : (r[c.key]==null?'—':r[c.key]);
+      if(val instanceof Node) td.appendChild(val); else td.appendChild(document.createTextNode(val===''?'—':val));
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(thead); table.appendChild(tbody); wrap.appendChild(table); container.appendChild(wrap);
+}
+
+function exportExcel(filename, rows){
+  if(!rows.length){ toast('Nothing to export'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Data');
+  XLSX.writeFile(wb, filename);
+}
+
+function logAudit(action, entity, entityId, oldVal, newVal){
+  DB.add('audit', {id:uid(), user: CURRENT_USER, date: todayISO(), time: new Date().toTimeString().slice(0,5),
+    action, entity, entityId, oldValue: oldVal||'', newValue: newVal||''});
+}
+
+let CURRENT_USER = 'Admin';
+$('#role-switch').addEventListener('change', e=>{ CURRENT_USER = e.target.value; toast('Viewing as ' + CURRENT_USER); render(); });
+$('#today-pill').textContent = toDisp(todayISO());
+$('#hamburger').addEventListener('click', ()=> $('#sidebar').classList.toggle('open'));
+
+/* ============================================================
+   MASTERS / CONSTANTS
+============================================================ */
+const CITY_STATE_MAP = {
+  // Gujarat (primary territory)
+  'ahmedabad':'Gujarat','surat':'Gujarat','vadodara':'Gujarat','baroda':'Gujarat','rajkot':'Gujarat','bhavnagar':'Gujarat','jamnagar':'Gujarat',
+  'gandhinagar':'Gujarat','junagadh':'Gujarat','anand':'Gujarat','nadiad':'Gujarat','morbi':'Gujarat','wankaner':'Gujarat','mehsana':'Gujarat',
+  'bharuch':'Gujarat','vapi':'Gujarat','navsari':'Gujarat','valsad':'Gujarat','porbandar':'Gujarat','surendranagar':'Gujarat','gondal':'Gujarat',
+  'veraval':'Gujarat','patan':'Gujarat','godhra':'Gujarat','palanpur':'Gujarat','dahod':'Gujarat','botad':'Gujarat','amreli':'Gujarat',
+  'himatnagar':'Gujarat','ankleshwar':'Gujarat','kalol':'Gujarat','jetpur':'Gujarat','wadhwan':'Gujarat','dhoraji':'Gujarat','upleta':'Gujarat',
+  // Maharashtra
+  'mumbai':'Maharashtra','pune':'Maharashtra','nagpur':'Maharashtra','nashik':'Maharashtra','thane':'Maharashtra','aurangabad':'Maharashtra',
+  'solapur':'Maharashtra','kolhapur':'Maharashtra','amravati':'Maharashtra','navi mumbai':'Maharashtra','sangli':'Maharashtra','satara':'Maharashtra',
+  'jalgaon':'Maharashtra','akola':'Maharashtra','latur':'Maharashtra','ichalkaranji':'Maharashtra',
+  // Rajasthan
+  'jaipur':'Rajasthan','jodhpur':'Rajasthan','udaipur':'Rajasthan','kota':'Rajasthan','ajmer':'Rajasthan','bikaner':'Rajasthan',
+  'bhilwara':'Rajasthan','alwar':'Rajasthan','sikar':'Rajasthan','pali':'Rajasthan',
+  // Delhi/NCR
+  'delhi':'Delhi','new delhi':'Delhi','gurgaon':'Haryana','gurugram':'Haryana','noida':'Uttar Pradesh','faridabad':'Haryana','ghaziabad':'Uttar Pradesh',
+  // Punjab / Haryana
+  'ludhiana':'Punjab','amritsar':'Punjab','jalandhar':'Punjab','patiala':'Punjab','mohali':'Punjab','bathinda':'Punjab',
+  'chandigarh':'Chandigarh','panipat':'Haryana','karnal':'Haryana','hisar':'Haryana','rohtak':'Haryana','ambala':'Haryana','yamunanagar':'Haryana',
+  // Madhya Pradesh
+  'indore':'Madhya Pradesh','bhopal':'Madhya Pradesh','jabalpur':'Madhya Pradesh','gwalior':'Madhya Pradesh','ujjain':'Madhya Pradesh','ratlam':'Madhya Pradesh',
+  // Karnataka
+  'bangalore':'Karnataka','bengaluru':'Karnataka','mysore':'Karnataka','mysuru':'Karnataka','hubli':'Karnataka','mangalore':'Karnataka','belgaum':'Karnataka',
+  // Tamil Nadu
+  'chennai':'Tamil Nadu','coimbatore':'Tamil Nadu','madurai':'Tamil Nadu','tiruchirappalli':'Tamil Nadu','salem':'Tamil Nadu','erode':'Tamil Nadu','vellore':'Tamil Nadu',
+  // Telangana / Andhra Pradesh
+  'hyderabad':'Telangana','warangal':'Telangana','vijayawada':'Andhra Pradesh','visakhapatnam':'Andhra Pradesh','guntur':'Andhra Pradesh','nellore':'Andhra Pradesh','tirupati':'Andhra Pradesh',
+  // West Bengal
+  'kolkata':'West Bengal','howrah':'West Bengal','durgapur':'West Bengal','asansol':'West Bengal','siliguri':'West Bengal',
+  // Uttar Pradesh
+  'lucknow':'Uttar Pradesh','kanpur':'Uttar Pradesh','agra':'Uttar Pradesh','varanasi':'Uttar Pradesh','meerut':'Uttar Pradesh','allahabad':'Uttar Pradesh',
+  'prayagraj':'Uttar Pradesh','bareilly':'Uttar Pradesh','aligarh':'Uttar Pradesh','moradabad':'Uttar Pradesh','saharanpur':'Uttar Pradesh','gorakhpur':'Uttar Pradesh',
+  // Bihar / Jharkhand / Odisha
+  'patna':'Bihar','gaya':'Bihar','muzaffarpur':'Bihar','bhagalpur':'Bihar','ranchi':'Jharkhand','jamshedpur':'Jharkhand','dhanbad':'Jharkhand',
+  'bhubaneswar':'Odisha','cuttack':'Odisha','rourkela':'Odisha',
+  // Kerala
+  'kochi':'Kerala','cochin':'Kerala','thiruvananthapuram':'Kerala','trivandrum':'Kerala','kozhikode':'Kerala','calicut':'Kerala','thrissur':'Kerala',
+  // North-East / others
+  'guwahati':'Assam','shillong':'Meghalaya','imphal':'Manipur','agartala':'Tripura','dehradun':'Uttarakhand','haridwar':'Uttarakhand',
+  'shimla':'Himachal Pradesh','jammu':'Jammu and Kashmir','srinagar':'Jammu and Kashmir','raipur':'Chhattisgarh','bilaspur':'Chhattisgarh',
+  'panaji':'Goa','goa':'Goa','puducherry':'Puducherry','pondicherry':'Puducherry'
+};
+function lookupState(city){
+  if(!city) return '';
+  const key = city.trim().toLowerCase();
+  return CITY_STATE_MAP[key] || '';
+}
+function titleCase(s){ return s.replace(/\w\S*/g, t=> t.charAt(0).toUpperCase()+t.substr(1).toLowerCase()); }
+function allKnownCities(){
+  const set = new Set();
+  Object.keys(CITY_STATE_MAP).forEach(k=> set.add(titleCase(k)));
+  ['customers','leads'].forEach(store=>{
+    DB.get(store).forEach(r=>{ if(r.city) set.add(r.city.trim()); });
+  });
+  return Array.from(set).sort();
+}
+function attachCityAutocomplete(wrapEl, inputEl){
+  const dd = h('div',{class:'ac-dropdown'});
+  wrapEl.appendChild(dd);
+  function renderList(){
+    const q = inputEl.value.trim().toLowerCase();
+    clear(dd);
+    if(!q){ dd.classList.remove('open'); return; }
+    const matches = allKnownCities().filter(c=>c.toLowerCase().includes(q)).slice(0,8);
+    if(!matches.length){ dd.classList.remove('open'); return; }
+    matches.forEach(c=>{
+      dd.appendChild(h('div',{class:'ac-item', onMousedown:(e)=>{
+        e.preventDefault();
+        inputEl.value = c;
+        inputEl.dispatchEvent(new Event('change'));
+        dd.classList.remove('open');
+      }}, c));
+    });
+    dd.classList.add('open');
+  }
+  inputEl.addEventListener('input', renderList);
+  inputEl.addEventListener('focus', renderList);
+  inputEl.addEventListener('blur', ()=> setTimeout(()=>dd.classList.remove('open'), 120));
+}
+
+const CUSTOMER_TYPES = ['Dealer','Distributor','Architect','Contractor','Builder','Furniture Manufacturer','Plywood/Hardware Dealer','Project Customer','Other'];
+const LEAD_STAGES = ['New Lead','Contacted','Qualified','Product Discussion','Sample Required','Sample Sent','Follow-Up','Quotation','Negotiation','Order Won','Order Lost'];
+const FOLLOWUP_TYPES = ['Call','WhatsApp','Email','Meeting','Site Visit','Sample Discussion','Quotation Discussion','Payment Discussion','Other'];
+const FOLLOWUP_STATUSES = ['Completed','Pending','Rescheduled','Customer Not Reachable','Customer Requested Later','Converted','Lost'];
+const OPP_STAGES = ['Qualification','Product Discussion','Sample','Quotation','Negotiation','Order Won','Order Lost'];
+const QUOTE_STATUSES = ['Draft','Sent','Under Discussion','Negotiation','Accepted','Rejected','Expired'];
+const TASK_TYPES = ['Call Customer','Send Quotation','Send Sample','Send Catalogue','Site Visit','Meeting','Price Follow-Up','Payment Follow-Up','Dealer Visit','Architect Visit','Contractor Visit','Other'];
+const PRIORITIES = ['Hot','Warm','Cold'];
+const DEFAULT_LOST_REASONS = ['Price Too High','Competitor Lower Price','Customer Selected Competitor','Product Specification Issue','Quality Concern',
+  'Delivery Time','Stock Not Available','Credit Terms','Payment Terms','Customer Project Cancelled','Customer Requirement Changed','Sample Rejected',
+  'No Response','Competitor Relationship','Customer Not Genuine','Internal Delay','Wrong Lead','Product Not Suitable','Quantity Too Small','Other'];
+const DEFAULT_SOURCES = ['Website','Google','Facebook','Instagram','WhatsApp','IndiaMART','TradeIndia','Exhibition','Dealer Reference','Customer Reference',
+  'Architect Reference','Contractor Reference','Existing Customer','Outbound Calling','Salesperson Visit','Email Campaign','Digital Advertisement','Other'];
+const DEFAULT_PRODUCTS = [
+  {name:'OSB', thickness:'9/12/15/18mm', size:'8x4 ft', grade:'Standard', application:'Roofing/Flooring/Packing', rate:'', moq:'', status:'Active'},
+  {name:'S-OSB', thickness:'9/12/15/18mm', size:'8x4 ft', grade:'Structural', application:'Structural panels', rate:'', moq:'', status:'Active'},
+  {name:'MDO Board', thickness:'12/15/18mm', size:'8x4 ft', grade:'Overlay', application:'Shuttering/Signage', rate:'', moq:'', status:'Active'},
+  {name:'Hybrid Board', thickness:'12/15/18mm', size:'8x4 ft', grade:'Hybrid', application:'Furniture/Interior', rate:'', moq:'', status:'Active'},
+  {name:'Firnopan', thickness:'12/15/18mm', size:'8x4 ft', grade:'Premium', application:'Furniture', rate:'', moq:'', status:'Active'},
+  {name:'Other', thickness:'', size:'', grade:'', application:'', rate:'', moq:'', status:'Active'}
+];
+const DEFAULT_SALESPERSONS = [
+  {name:'Suresh Kumar', mobile:'', email:'', territory:'Gujarat', designation:'Marketing Head', active:'Active'},
+  {name:'Kaushik Kothari', mobile:'', email:'', territory:'Rajkot', designation:'Accounts/Sales', active:'Active'}
+];
+
+function seedIfEmpty(){
+  if(!localStorage.getItem('spl_crm_sources')) DB.set('sources', DEFAULT_SOURCES.map(n=>({id:uid(), name:n})));
+  if(!localStorage.getItem('spl_crm_lostReasons')) DB.set('lostReasons', DEFAULT_LOST_REASONS.map(n=>({id:uid(), name:n})));
+  if(!localStorage.getItem('spl_crm_products')) DB.set('products', DEFAULT_PRODUCTS.map(p=>Object.assign({id:uid()}, p)));
+  if(!localStorage.getItem('spl_crm_salespersons')) DB.set('salespersons', DEFAULT_SALESPERSONS.map(p=>Object.assign({id:uid()}, p)));
+  ['leads','customers','followups','opportunities','quotations','ordersWon','ordersLost','tasks','campaigns','audit'].forEach(k=>{
+    if(!localStorage.getItem('spl_crm_'+k)) DB.set(k, []);
+  });
+}
+function salespersonNames(){ return DB.get('salespersons').map(s=>s.name); }
+function sourceNames(){ return DB.get('sources').map(s=>s.name); }
+function productNames(){ return DB.get('products').map(s=>s.name); }
+function lostReasonNames(){ return DB.get('lostReasons').map(s=>s.name); }
+function customerOptions(){ return DB.get('customers').map(c=>({value:c.id, label:c.companyName + ' — ' + (c.city||'')})); }
+function priorityTag(p){
+  if(p==='Hot') return h('span',{class:'tag tag-red'},'HOT');
+  if(p==='Warm') return h('span',{class:'tag tag-amber'},'WARM');
+  return h('span',{class:'tag tag-teal'},'COLD');
+}
+function statusTag(s){
+  const map = {'Order Won':'tag-green','Won':'tag-green','Order Lost':'tag-danger','Lost':'tag-danger','Pending':'tag-amber','Completed':'tag-green',
+    'Overdue':'tag-danger','Qualified':'tag-teal','New Lead':'tag-gray','Draft':'tag-gray','Sent':'tag-teal','Accepted':'tag-green','Rejected':'tag-danger',
+    'Negotiation':'tag-purple','Active':'tag-green','Inactive':'tag-gray'};
+  return h('span',{class:'tag ' + (map[s]||'tag-gray')}, s||'—');
+}
+
+/* ============================================================
+   NAVIGATION / ROUTER
+============================================================ */
+const NAV = [
+  {group:'Overview', items:[
+    {id:'dashboard', label:'Dashboard', ico:'📊'},
+  ]},
+  {group:'Marketing', items:[
+    {id:'rawleads', label:'Raw Lead Data', ico:'📥'},
+    {id:'leads', label:'Lead Management', ico:'🧭'},
+    {id:'followups', label:"Follow-Ups", ico:'📞'},
+  ]},
+  {group:'Sales Pipeline', items:[
+    {id:'customers', label:'Customer / Party Master', ico:'🏢'},
+    {id:'opportunities', label:'Opportunities', ico:'🎯'},
+    {id:'quotations', label:'Quotations', ico:'📄'},
+    {id:'won', label:'Order Won', ico:'✅'},
+    {id:'lost', label:'Order Lost', ico:'❌'},
+  ]},
+  {group:'Activity', items:[
+    {id:'tasks', label:'Tasks & Reminders', ico:'🗒️'},
+  ]},
+  {group:'Configuration', items:[
+    {id:'campaigns', label:'Marketing Sources & Campaigns', ico:'📣'},
+    {id:'products', label:'Product Master', ico:'🪵'},
+    {id:'salespersons', label:'Salesperson Management', ico:'👤'},
+    {id:'settings', label:'Master Settings', ico:'⚙️'},
+  ]},
+  {group:'Insights', items:[
+    {id:'reports', label:'Reports & Analytics', ico:'📈'},
+  ]},
+];
+let CURRENT_PAGE = 'dashboard';
+
+function buildSidebar(){
+  const sb = $('#sidebar'); clear(sb);
+  NAV.forEach(g=>{
+    sb.appendChild(h('div',{class:'sb-group'}, g.group));
+    g.items.forEach(it=>{
+      const item = h('div', {class:'sb-item' + (it.id===CURRENT_PAGE?' active':''), onClick:()=>navigate(it.id)},
+        h('span',{class:'ico'}, it.ico), it.label);
+      sb.appendChild(item);
+    });
+  });
+}
+function navigate(page){
+  CURRENT_PAGE = page;
+  $('#sidebar').classList.remove('open');
+  buildSidebar();
+  render();
+  window.scrollTo(0,0);
+}
+
+const RENDERERS = {}; // page id -> function(container)
+
+function render(){
+  const c = $('#content'); clear(c);
+  const wrap = h('div', {class:'page active'});
+  c.appendChild(wrap);
+  const fn = RENDERERS[CURRENT_PAGE];
+  if(fn) fn(wrap); else wrap.appendChild(h('div',{class:'empty-state'},'Page not found'));
+  refreshNotifDot();
+}
+
+function pageHead(container, title, sub, actions){
+  const head = h('div',{class:'page-head'},
+    h('div',{}, h('div',{class:'page-title'}, title), sub?h('div',{class:'page-sub'}, sub):null),
+    h('div',{class:'page-actions'}, actions||[])
+  );
+  container.appendChild(head);
+}
+
+/* ============================================================
+   FOLLOW-UP HELPERS (shared by Dashboard + Follow-Up module)
+============================================================ */
+function followupBuckets(){
+  const fus = DB.get('followups').filter(f=>f.status==='Pending' || f.status==='Rescheduled');
+  const today = todayISO();
+  const buckets = {overdue:[], today:[], tomorrow:[], upcoming:[]};
+  const tmrw = new Date(); tmrw.setDate(tmrw.getDate()+1); const tmrwISO = tmrw.toISOString().slice(0,10);
+  fus.forEach(f=>{
+    const d = f.nextFollowUpDate || f.date;
+    if(!d) return;
+    if(d < today) buckets.overdue.push(f);
+    else if(d === today) buckets.today.push(f);
+    else if(d === tmrwISO) buckets.tomorrow.push(f);
+    else buckets.upcoming.push(f);
+  });
+  return buckets;
+}
+function refreshNotifDot(){
+  const b = followupBuckets();
+  $('#notif-dot').style.display = (b.overdue.length + b.today.length) ? 'block' : 'none';
+}
+
+/* ============================================================
+   DASHBOARD
+============================================================ */
+RENDERERS.dashboard = function(c){
+  const customers = DB.get('customers'), leads = DB.get('leads'), opps = DB.get('opportunities'),
+    quotes = DB.get('quotations'), won = DB.get('ordersWon'), lost = DB.get('ordersLost');
+  const buckets = followupBuckets();
+  pageHead(c, 'Dashboard', 'Management overview · Strandply LLP Marketing &amp; Sales'.replace('&amp;','&'), [
+    h('button',{class:'btn btn-red', onClick:()=>navigate('followups')}, "📞 Today's Follow-Ups")
+  ]);
+
+  const openOpps = opps.filter(o=>o.stage!=='Order Won' && o.stage!=='Order Lost');
+  const pipelineValue = openOpps.reduce((s,o)=>s+(Number(o.estValue)||0),0);
+  const wonValue = won.reduce((s,o)=>s+(Number(o.orderValue)||0),0);
+  const lostValue = lost.reduce((s,o)=>s+(Number(o.estValue)||0),0);
+  const qualified = leads.filter(l=>['Qualified','Product Discussion','Sample Required','Sample Sent','Follow-Up','Quotation','Negotiation','Order Won'].includes(l.status));
+
+  const kpis = [
+    {lbl:'Total Leads', val: leads.length, sub: qualified.length + ' qualified', page:'rawleads'},
+    {lbl:'Open Opportunities', val: openOpps.length, sub: fmtMoney(pipelineValue) + ' pipeline', page:'opportunities'},
+    {lbl:"Today's Follow-Ups", val: buckets.today.length, sub: buckets.overdue.length + ' overdue', page:'followups'},
+    {lbl:'Orders Won', val: won.length, sub: fmtMoney(wonValue) + ' value', page:'won'},
+    {lbl:'Orders Lost', val: lost.length, sub: fmtMoney(lostValue) + ' value', page:'lost'},
+    {lbl:'Overdue Follow-Ups', val: buckets.overdue.length, sub: 'needs attention', page:'followups'},
+    {lbl:'Active Customers', val: customers.length, sub: 'in party master', page:'customers'},
+    {lbl:'Quotations Sent', val: quotes.filter(q=>q.status!=='Draft').length, sub: quotes.length + ' total', page:'quotations'},
+  ];
+  const row = h('div',{class:'kpi-row'});
+  kpis.forEach(k=> row.appendChild(h('div',{class:'kpi', onClick:()=>navigate(k.page)},
+    h('div',{class:'kpi-lbl'}, k.lbl), h('div',{class:'kpi-val'}, k.val), h('div',{class:'kpi-sub'}, k.sub))));
+  c.appendChild(row);
+
+  // Alerts
+  const alerts = [];
+  if(buckets.overdue.length) alerts.push({icon:'🔴', text: buckets.overdue.length + ' follow-up(s) overdue', page:'followups'});
+  const highValNoActivity = openOpps.filter(o=>{
+    const lastF = DB.get('followups').filter(f=>f.customerId===o.customerId).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+    return (Number(o.estValue)||0) > 200000 && (!lastF || daysBetween(lastF.date, todayISO()) > 14);
+  });
+  if(highValNoActivity.length) alerts.push({icon:'🔴', text: highValNoActivity.length + ' high-value opportunit(y/ies) with no recent activity', page:'opportunities'});
+  const oldQuotes = quotes.filter(q=>q.status==='Sent' && daysBetween(q.date, todayISO())>15);
+  if(oldQuotes.length) alerts.push({icon:'🔴', text: oldQuotes.length + ' quotation(s) pending response for 15+ days', page:'quotations'});
+  const noNextFollowup = openOpps.filter(o=>{
+    const cust = DB.get('customers').find(x=>x.id===o.customerId);
+    return cust && !cust.nextFollowUp;
+  });
+  if(noNextFollowup.length) alerts.push({icon:'🔴', text: noNextFollowup.length + ' opportunit(y/ies) without a next follow-up date', page:'opportunities'});
+  const dormant = customers.filter(cu=> cu.lastContactDate && daysBetween(cu.lastContactDate, todayISO()) >= 30);
+  if(dormant.length) alerts.push({icon:'🟡', text: dormant.length + ' dormant customer(s) — 30+ days no activity', page:'customers'});
+  const reactivateToday = lost.filter(l=>l.reactivationDate === todayISO());
+  if(reactivateToday.length) alerts.push({icon:'🟢', text: reactivateToday.length + ' customer(s) due for reactivation today', page:'lost'});
+
+  if(alerts.length){
+    const card = h('div',{class:'card'});
+    card.appendChild(h('div',{class:'card-title'},'Management Alerts'));
+    const list = h('div',{});
+    alerts.forEach(a=> list.appendChild(h('div',{style:{padding:'8px 0',borderBottom:'1px solid var(--g1)',fontSize:'12.5px',cursor:'pointer'}, onClick:()=>navigate(a.page)}, a.icon+' '+a.text)));
+    card.appendChild(list); c.appendChild(card);
+  }
+
+  const g2 = h('div',{class:'grid2'});
+  const left = h('div');
+  const funnelCard = h('div',{class:'card'});
+  funnelCard.appendChild(h('div',{class:'card-title'},'Sales Funnel'));
+  const funnelBox = h('div',{class:'chart-box'}); funnelCard.appendChild(funnelBox); left.appendChild(funnelCard);
+
+  const srcCard = h('div',{class:'card'});
+  srcCard.appendChild(h('div',{class:'card-title'},'Lead Source Performance'));
+  const srcBox = h('div',{class:'chart-box'}); srcCard.appendChild(srcBox); left.appendChild(srcCard);
+  g2.appendChild(left);
+
+  const right = h('div');
+  const fuCard = h('div',{class:'card'});
+  fuCard.appendChild(h('div',{class:'card-title'}, "Overdue Follow-Ups", h('span',{class:'badge-count'}, buckets.overdue.length)));
+  const fuList = h('div');
+  buckets.overdue.slice(0,6).forEach(f=>{
+    const cust = DB.get('customers').find(x=>x.id===f.customerId) || {};
+    fuList.appendChild(h('div',{style:{padding:'8px 0',borderBottom:'1px solid var(--g1)'}},
+      h('div',{style:{fontWeight:'700',fontSize:'12.5px'}}, cust.companyName||'—'),
+      h('div',{class:'mono',style:{fontSize:'10.5px',color:'var(--g4)'}}, (f.nextAction||'Follow up') + ' · due ' + toDisp(f.nextFollowUpDate||f.date))));
+  });
+  if(!buckets.overdue.length) fuList.appendChild(h('div',{class:'empty-state'},'No overdue follow-ups 🎉'));
+  fuCard.appendChild(fuList);
+  fuCard.appendChild(h('button',{class:'btn btn-outline btn-sm', style:{marginTop:'8px'}, onClick:()=>navigate('followups')},'View All'));
+  right.appendChild(fuCard);
+
+  const lostCard = h('div',{class:'card'});
+  lostCard.appendChild(h('div',{class:'card-title'},'Lost Reason Split'));
+  const lostBox = h('div',{class:'chart-box sm'}); lostCard.appendChild(lostBox); right.appendChild(lostCard);
+  g2.appendChild(right);
+  c.appendChild(g2);
+
+  // Charts (after DOM attached)
+  setTimeout(()=>{
+    const funnelStages = ['New Lead','Contacted','Qualified','Sample Sent','Quotation','Negotiation','Order Won'];
+    const funnelData = funnelStages.map(s=> leads.filter(l=>l.status===s).length + opps.filter(o=>o.stage===s).length);
+    new Chart(mkCanvas(funnelBox), {type:'bar', data:{labels:funnelStages, datasets:[{label:'Leads', data:funnelData, backgroundColor:'#C8102E'}]},
+      options: baseChartOpts({indexAxis:'y'})});
+
+    const srcAgg = {};
+    leads.forEach(l=>{ srcAgg[l.source||'Other'] = (srcAgg[l.source||'Other']||0)+1; });
+    const srcLabels = Object.keys(srcAgg);
+    new Chart(mkCanvas(srcBox), {type:'bar', data:{labels:srcLabels, datasets:[{label:'Leads', data:srcLabels.map(k=>srcAgg[k]), backgroundColor:'#0891b2'}]},
+      options: baseChartOpts({})});
+
+    const reasonAgg = {};
+    lost.forEach(l=>{ reasonAgg[l.lostReason||'Other'] = (reasonAgg[l.lostReason||'Other']||0)+1; });
+    const rl = Object.keys(reasonAgg);
+    if(rl.length){
+      new Chart(mkCanvas(lostBox), {type:'doughnut', data:{labels:rl, datasets:[{data:rl.map(k=>reasonAgg[k]),
+        backgroundColor:['#C8102E','#d97706','#7c3aed','#0891b2','#16a34a','#4a5568','#a00d24','#dc2626']}]}, options:{plugins:{legend:{position:'bottom', labels:{boxWidth:10,font:{size:9}}}}}, maintainAspectRatio:false});
+    } else { lostBox.appendChild(h('div',{class:'empty-state'},'No lost orders yet')); }
+  }, 0);
+};
+
+function mkCanvas(box){ const cv = h('canvas'); box.appendChild(cv); return cv; }
+function baseChartOpts(extra){
+  return Object.assign({maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'#f1f3f7'}}, y:{grid:{display:false}}}}, extra||{});
+}
+
+/* ============================================================
+   RAW LEAD DATA
+============================================================ */
+function leadFieldDefs(l){
+  l = l || {};
+  return [
+    {key:'companyName', label:'Company / Party Name', required:true, value:l.companyName},
+    {key:'contactPerson', label:'Contact Person 1', value:l.contactPerson},
+    {key:'contactPerson2', label:'Contact Person 2', value:l.contactPerson2},
+    {key:'mobile', label:'Mobile Number', required:true, value:l.mobile},
+    {key:'mobile2', label:'Contact Person 2 — Mobile', value:l.mobile2},
+    {key:'altMobile', label:'Alternate Mobile', value:l.altMobile},
+    {key:'whatsapp', label:'WhatsApp Number', value:l.whatsapp},
+    {key:'email', label:'Email', value:l.email},
+    {key:'city', label:'City', value:l.city},
+    {key:'state', label:'State', value:l.state},
+    {key:'pincode', label:'Pincode', value:l.pincode},
+    {key:'address', label:'Address', full:true, value:l.address, type:'textarea'},
+    {key:'customerType', label:'Customer Type', type:'select', options:CUSTOMER_TYPES, value:l.customerType},
+    {key:'productInterested', label:'Product Interested In', type:'select', options:productNames(), value:l.productInterested},
+    {key:'source', label:'Source', type:'select', options:sourceNames(), value:l.source},
+    {key:'campaign', label:'Campaign', value:l.campaign},
+    {key:'salesperson', label:'Salesperson', type:'select', options:salespersonNames(), value:l.salesperson},
+    {key:'nextFollowUpDate', label:'Next Follow-Up Date', type:'date', value:l.nextFollowUpDate},
+    {key:'remarks', label:'Remarks', full:true, type:'textarea', value:l.remarks},
+  ];
+}
+function findDuplicateLeadOrCustomer(rec){
+  const leads = DB.get('leads'), custs = DB.get('customers');
+  const hit = [];
+  leads.forEach(l=>{
+    if(rec.mobile && l.mobile===rec.mobile) hit.push('lead mobile match: '+l.companyName);
+    else if(rec.companyName && rec.city && l.companyName===rec.companyName && l.city===rec.city) hit.push('lead company+city match: '+l.companyName);
+    else if(rec.email && l.email===rec.email) hit.push('lead email match: '+l.companyName);
+  });
+  custs.forEach(cu=>{
+    if(rec.mobile && cu.mobile===rec.mobile) hit.push('customer mobile match: '+cu.companyName);
+    else if(rec.companyName && rec.city && cu.companyName===rec.companyName && cu.city===rec.city) hit.push('customer company+city match: '+cu.companyName);
+  });
+  return hit;
+}
+
+RENDERERS.rawleads = function(c){
+  pageHead(c, 'Raw Lead Data', 'Bulk marketing enquiry capture · duplicate detection on import', [
+    h('button',{class:'btn btn-outline', onClick:triggerImport}, '⬆ Import Excel'),
+    h('button',{class:'btn btn-gray', onClick:()=>exportExcel('raw_leads.xlsx', DB.get('leads'))}, '⬇ Export'),
+    h('button',{class:'btn btn-red', onClick:()=>openLeadModal(null)}, '＋ Add Lead'),
+  ]);
+  const fileInput = h('input',{type:'file', accept:'.xlsx,.xls,.csv', style:{display:'none'}, onChange:handleImportFile});
+  c.appendChild(fileInput);
+  function triggerImport(){ fileInput.click(); }
+  window._rawLeadFileInput = fileInput;
+
+  const toolbar = h('div',{class:'toolbar'});
+  const search = h('input',{type:'text', placeholder:'Search company / mobile / city…'});
+  const stageF = h('select'); stageF.appendChild(h('option',{value:''},'All Stages')); LEAD_STAGES.forEach(s=>stageF.appendChild(h('option',{value:s},s)));
+  const spF = h('select'); spF.appendChild(h('option',{value:''},'All Salespersons')); salespersonNames().forEach(s=>spF.appendChild(h('option',{value:s},s)));
+  const typeF = h('select'); typeF.appendChild(h('option',{value:''},'All Customer Types')); CUSTOMER_TYPES.forEach(s=>typeF.appendChild(h('option',{value:s},s)));
+  const prodF = h('select'); prodF.appendChild(h('option',{value:''},'All Products')); productNames().forEach(s=>prodF.appendChild(h('option',{value:s},s)));
+  toolbar.appendChild(search); toolbar.appendChild(stageF); toolbar.appendChild(spF); toolbar.appendChild(typeF); toolbar.appendChild(prodF);
+  c.appendChild(toolbar);
+
+  const tblContainer = h('div'); c.appendChild(tblContainer);
+
+  function draw(){
+    let rows = DB.get('leads');
+    if(search.value) rows = rows.filter(r => (r.companyName+r.mobile+r.city).toLowerCase().includes(search.value.toLowerCase()));
+    if(stageF.value) rows = rows.filter(r=>r.status===stageF.value);
+    if(spF.value) rows = rows.filter(r=>r.salesperson===spF.value);
+    if(typeF.value) rows = rows.filter(r=>r.customerType===typeF.value);
+    if(prodF.value) rows = rows.filter(r=>r.productInterested===prodF.value);
+    rows = rows.slice().sort((a,b)=>(b.dateAdded||'').localeCompare(a.dateAdded||''));
+    renderTable(tblContainer, [
+      {label:'Date', key:'dateAdded', render:r=>toDisp(r.dateAdded)},
+      {label:'Company', render:r=>h('a',{class:'linklike', onClick:()=>openLeadModal(r.id)}, r.companyName||'—')},
+      {label:'Contact', key:'contactPerson'},
+      {label:'Mobile', key:'mobile', mono:true},
+      {label:'City', key:'city'},
+      {label:'Type', key:'customerType'},
+      {label:'Product', key:'productInterested'},
+      {label:'Source', key:'source'},
+      {label:'Salesperson', key:'salesperson'},
+      {label:'Stage', render:r=>statusTag(r.status||'New Lead')},
+      {label:'Next Follow-up', render:r=>toDisp(r.nextFollowUpDate)},
+      {label:'', render:r=> h('button',{class:'btn btn-outline btn-xs', onClick:()=>convertToCustomer(r.id)}, r.customerId?'✓ Converted':'Convert')},
+    ], rows, {emptyText:'No raw leads yet — click "Add Lead" or import an Excel sheet.'});
+  }
+  [search,stageF,spF,typeF,prodF].forEach(el=>el.addEventListener('input', draw));
+  draw();
+};
+
+function openLeadModal(id){
+  const existing = id ? DB.byId('leads', id) : null;
+  openModal(existing?'Edit Lead':'Add New Lead', leadFieldDefs(existing), (data)=>{
+    if(!data.companyName || !data.mobile){ toast('Company name and mobile are required'); return false; }
+    if(!existing){
+      const dupes = findDuplicateLeadOrCustomer(data);
+      if(dupes.length){
+        // proceed but warn
+        toast('⚠ Possible duplicate: ' + dupes[0]);
+      }
+      const rec = Object.assign({id:uid(), dateAdded: todayISO(), status:'New Lead', lastContactDate:'', dataQuality:'Good', customerId:null}, data);
+      DB.add('leads', rec);
+      logAudit('Lead created', 'lead', rec.id, '', rec.companyName);
+      toast('Lead added');
+    } else {
+      DB.update('leads', id, data);
+      logAudit('Lead updated', 'lead', id, '', '');
+      toast('Lead updated');
+    }
+    render();
+  });
+}
+
+function convertToCustomer(leadId){
+  const lead = DB.byId('leads', leadId);
+  if(!lead) return;
+  if(lead.customerId){ navigate('customers'); return; }
+  const cust = {
+    id: uid(), companyName: lead.companyName, contactPerson: lead.contactPerson, designation:'', mobile: lead.mobile,
+    whatsapp: lead.whatsapp, email: lead.email, website:'', address: lead.address, city: lead.city, state: lead.state,
+    pincode: lead.pincode, gst:'', pan:'', customerType: lead.customerType, estMonthlyReq:'', productsUsed: lead.productInterested,
+    currentSupplier:'', approxPurchaseValue:'', preferredThickness:'', preferredSize:'', application:'', existingBrand:'',
+    competitorBrand:'', paymentPreference:'', creditRequirement:'', territory: lead.state||'', leadSource: lead.source,
+    firstContactDate: lead.dateAdded, lastContactDate: todayISO(), nextFollowUp: lead.nextFollowUpDate, salesperson: lead.salesperson,
+    status:'Active', priority:'Warm', rating:'', createdAt: todayISO()
+  };
+  DB.add('customers', cust);
+  DB.update('leads', leadId, {customerId: cust.id, status: lead.status==='New Lead'?'Contacted':lead.status});
+  logAudit('Lead converted to customer', 'customer', cust.id, '', cust.companyName);
+  toast('Converted to Customer: ' + cust.companyName);
+  render();
+}
+
+function handleImportFile(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    const wb = XLSX.read(ev.target.result, {type:'binary'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(ws, {defval:''});
+    showImportPreview(json);
+  };
+  reader.readAsBinaryString(file);
+  e.target.value = '';
+}
+
+function showImportPreview(rows){
+  const norm = rows.map(r=>{
+    const get = (...keys)=>{ for(const k of keys){ for(const rk in r){ if(rk.toLowerCase().replace(/[^a-z]/g,'')===k) return r[rk]; } } return ''; };
+    return {
+      companyName: get('companyname','company','partyname','name'),
+      contactPerson: get('contactperson','contact'),
+      mobile: String(get('mobilenumber','mobile','phone')),
+      email: get('email'),
+      city: get('city'),
+      state: get('state'),
+      customerType: get('customertype','type') || 'Other',
+      productInterested: get('productinterestedin','product') ,
+      source: get('source') || 'Other',
+      salesperson: get('salesperson'),
+      remarks: get('remarks'),
+    };
+  }).filter(r=>r.companyName || r.mobile);
+
+  let dupCount = 0;
+  norm.forEach(r=> { if(findDuplicateLeadOrCustomer(r).length) dupCount++; });
+
+  const body = h('div', {},
+    h('p',{style:{marginBottom:'10px',fontSize:'12.5px'}},
+      'Total Records: ' + rows.length + '  ·  Valid: ' + norm.length + '  ·  Possible Duplicates: ' + dupCount),
+    h('div',{style:{maxHeight:'320px', overflow:'auto', border:'1px solid var(--g1)', borderRadius:'6px'}})
+  );
+  const tblHolder = body.children[1];
+  renderTable(tblHolder, [
+    {label:'Company', key:'companyName'}, {label:'Contact', key:'contactPerson'}, {label:'Mobile', key:'mobile', mono:true},
+    {label:'City', key:'city'}, {label:'Source', key:'source'},
+    {label:'Dup?', render:r=> findDuplicateLeadOrCustomer(r).length ? h('span',{class:'tag tag-amber'},'DUPLICATE') : h('span',{class:'tag tag-green'},'NEW')}
+  ], norm.slice(0,200));
+
+  openModal('Import Preview', [], null, {custom: body}, [
+    {label:'Cancel', cls:'btn-gray', action: closeModal},
+    {label:'Import ' + norm.length + ' Records', cls:'btn-red', action: ()=>{
+      let imported=0;
+      norm.forEach(r=>{
+        const rec = Object.assign({id:uid(), dateAdded: todayISO(), status:'New Lead', lastContactDate:'', nextFollowUpDate:'', dataQuality:'Imported', customerId:null, altMobile:'', whatsapp:'', address:'', pincode:'', campaign:''}, r);
+        DB.add('leads', rec); imported++;
+      });
+      logAudit('Bulk import', 'lead', '-', '', imported + ' records imported');
+      toast(imported + ' leads imported');
+      closeModal(); navigate('rawleads');
+    }}
+  ]);
+}
+
+/* ============================================================
+   CUSTOMER / PARTY MASTER (list + 360° view)
+============================================================ */
+let CUSTOMER_VIEW_ID = null;
+
+function customerFieldDefs(cu){
+  cu = cu || {};
+  return [
+    {type:'section', label:'Basic Information'},
+    {key:'companyName', label:'Company Name', required:true, value:cu.companyName},
+    {key:'contactPerson', label:'Contact Person 1', value:cu.contactPerson},
+    {key:'contactPerson2', label:'Contact Person 2', value:cu.contactPerson2},
+    {key:'designation', label:'Designation', value:cu.designation},
+    {key:'mobile', label:'Mobile', required:true, value:cu.mobile},
+    {key:'mobile2', label:'Contact Person 2 — Mobile', value:cu.mobile2},
+    {key:'whatsapp', label:'WhatsApp', value:cu.whatsapp},
+    {key:'email', label:'Email', value:cu.email},
+    {key:'website', label:'Website', value:cu.website},
+    {key:'city', label:'City', value:cu.city},
+    {key:'state', label:'State', value:cu.state},
+    {key:'pincode', label:'Pincode', value:cu.pincode},
+    {key:'address', label:'Address', full:true, type:'textarea', value:cu.address},
+    {key:'gst', label:'GST Number', value:cu.gst},
+    {key:'pan', label:'PAN', value:cu.pan},
+    {key:'customerType', label:'Customer Type', type:'select', options:CUSTOMER_TYPES, value:cu.customerType},
+    {type:'section', label:'Business Information'},
+    {key:'estMonthlyReq', label:'Est. Monthly Requirement', value:cu.estMonthlyReq},
+    {key:'productsUsed', label:'Products Used', type:'select', options:productNames(), value:cu.productsUsed},
+    {key:'currentSupplier', label:'Current Supplier', value:cu.currentSupplier},
+    {key:'approxPurchaseValue', label:'Approx. Purchase Value', value:cu.approxPurchaseValue},
+    {key:'preferredThickness', label:'Preferred Board Thickness', value:cu.preferredThickness},
+    {key:'preferredSize', label:'Preferred Board Size', value:cu.preferredSize},
+    {key:'application', label:'Application', value:cu.application},
+    {key:'existingBrand', label:'Existing Brand', value:cu.existingBrand},
+    {key:'competitorBrand', label:'Competitor Brand', value:cu.competitorBrand},
+    {key:'paymentPreference', label:'Payment Preference', value:cu.paymentPreference},
+    {key:'creditRequirement', label:'Credit Requirement', value:cu.creditRequirement},
+    {key:'territory', label:'Geographic Territory', value:cu.territory},
+    {type:'section', label:'Relationship Information'},
+    {key:'leadSource', label:'Lead Source', type:'select', options:sourceNames(), value:cu.leadSource},
+    {key:'salesperson', label:'Assigned Salesperson', type:'select', options:salespersonNames(), value:cu.salesperson},
+    {key:'status', label:'Customer Status', type:'select', options:['Active','Inactive','Archived'], value:cu.status||'Active'},
+    {key:'priority', label:'Priority', type:'select', options:PRIORITIES, value:cu.priority||'Warm'},
+    {key:'nextFollowUp', label:'Next Follow-Up', type:'date', value:cu.nextFollowUp},
+    {key:'remarks', label:'Remarks', full:true, type:'textarea', value:cu.remarks},
+  ];
+}
+
+RENDERERS.customers = function(c){
+  if(CUSTOMER_VIEW_ID){ renderCustomer360(c, CUSTOMER_VIEW_ID); return; }
+  pageHead(c, 'Customer / Party Master', 'Every qualified lead lives here as a full customer profile', [
+    h('button',{class:'btn btn-gray', onClick:()=>exportExcel('customers.xlsx', DB.get('customers'))}, '⬇ Export'),
+    h('button',{class:'btn btn-red', onClick:()=>openCustomerModal(null)}, '＋ Add Customer'),
+  ]);
+  const toolbar = h('div',{class:'toolbar'});
+  const search = h('input',{type:'text', placeholder:'Search company / mobile / city / GST…'});
+  const typeF = h('select'); typeF.appendChild(h('option',{value:''},'All Types')); CUSTOMER_TYPES.forEach(t=>typeF.appendChild(h('option',{value:t},t)));
+  const priF = h('select'); priF.appendChild(h('option',{value:''},'All Priority')); PRIORITIES.forEach(t=>priF.appendChild(h('option',{value:t},t)));
+  toolbar.appendChild(search); toolbar.appendChild(typeF); toolbar.appendChild(priF);
+  c.appendChild(toolbar);
+  const tblContainer = h('div'); c.appendChild(tblContainer);
+  function draw(){
+    let rows = DB.get('customers');
+    if(search.value){ const q=search.value.toLowerCase(); rows = rows.filter(r=>(r.companyName+r.mobile+r.city+(r.gst||'')).toLowerCase().includes(q)); }
+    if(typeF.value) rows = rows.filter(r=>r.customerType===typeF.value);
+    if(priF.value) rows = rows.filter(r=>r.priority===priF.value);
+    renderTable(tblContainer, [
+      {label:'Company', render:r=>h('a',{class:'linklike', onClick:()=>{CUSTOMER_VIEW_ID=r.id; render();}}, r.companyName)},
+      {label:'Contact', key:'contactPerson'},
+      {label:'Mobile', key:'mobile', mono:true},
+      {label:'City', key:'city'},
+      {label:'Type', key:'customerType'},
+      {label:'Salesperson', key:'salesperson'},
+      {label:'Priority', render:r=>priorityTag(r.priority)},
+      {label:'Status', render:r=>statusTag(r.status)},
+      {label:'Next Follow-up', render:r=>toDisp(r.nextFollowUp)},
+    ], rows, {emptyText:'No customers yet. Convert a raw lead or add one directly.'});
+  }
+  [search,typeF,priF].forEach(el=>el.addEventListener('input', draw));
+  draw();
+};
+
+function openCustomerModal(id){
+  const existing = id ? DB.byId('customers', id) : null;
+  openModal(existing?'Edit Customer':'Add Customer', customerFieldDefs(existing), (data)=>{
+    if(!data.companyName || !data.mobile){ toast('Company name and mobile are required'); return false; }
+    if(!existing){
+      const rec = Object.assign({id:uid(), firstContactDate: todayISO(), lastContactDate: todayISO(), createdAt: todayISO()}, data);
+      DB.add('customers', rec); logAudit('Customer created','customer',rec.id,'',rec.companyName); toast('Customer added');
+    } else {
+      DB.update('customers', id, data); logAudit('Customer updated','customer',id,'',''); toast('Customer updated');
+    }
+    render();
+  });
+}
+
+function renderCustomer360(c, custId){
+  const cu = DB.byId('customers', custId);
+  if(!cu){ CUSTOMER_VIEW_ID=null; render(); return; }
+  pageHead(c, cu.companyName, (cu.city||'')+', '+(cu.state||'')+'  ·  '+(cu.customerType||''), [
+    h('button',{class:'btn btn-gray', onClick:()=>{CUSTOMER_VIEW_ID=null; render();}}, '← Back'),
+    h('button',{class:'btn btn-outline', onClick:()=>openCustomerModal(custId)}, 'Edit Profile'),
+    h('button',{class:'btn btn-teal', onClick:()=>quickFollowupModal(custId)}, '📞 Quick Follow-Up'),
+    h('button',{class:'btn btn-red', onClick:()=>openOpportunityModal(null, custId)}, '＋ Opportunity'),
+  ]);
+
+  const g2 = h('div',{class:'grid2'});
+  const left = h('div');
+  const tabs = h('div',{class:'tabs'});
+  const panes = h('div');
+  const tabDefs = [
+    {id:'overview', label:'Overview'},
+    {id:'opps', label:'Opportunities'},
+    {id:'fu', label:'Follow-Ups'},
+    {id:'quotes', label:'Quotations'},
+    {id:'orders', label:'Orders'},
+    {id:'timeline', label:'Timeline'},
+  ];
+  tabDefs.forEach((t,i)=>{
+    const btn = h('button',{class:'tab-btn'+(i===0?' active':''), onClick:()=>switchTab(t.id)}, t.label);
+    tabs.appendChild(btn);
+  });
+  left.appendChild(tabs); left.appendChild(panes);
+
+  function switchTab(id){
+    $all('.tab-btn', tabs).forEach((b,i)=>b.classList.toggle('active', tabDefs[i].id===id));
+    clear(panes);
+    if(id==='overview') drawOverview();
+    else if(id==='opps') drawOpps();
+    else if(id==='fu') drawFollowups();
+    else if(id==='quotes') drawQuotes();
+    else if(id==='orders') drawOrders();
+    else if(id==='timeline') drawTimeline();
+  }
+  function drawOverview(){
+    const grid = h('div',{class:'fgrid'});
+    const rows = [
+      ['Contact Person 1', cu.contactPerson], ['Contact Person 2', cu.contactPerson2], ['Designation', cu.designation],
+      ['Mobile', cu.mobile], ['Contact 2 Mobile', cu.mobile2], ['WhatsApp', cu.whatsapp],
+      ['Email', cu.email], ['GST', cu.gst], ['PAN', cu.pan], ['Address', cu.address], ['Remarks', cu.remarks],
+      ['Est. Monthly Req.', cu.estMonthlyReq], ['Products Used', cu.productsUsed], ['Current Supplier', cu.currentSupplier],
+      ['Preferred Thickness', cu.preferredThickness], ['Preferred Size', cu.preferredSize], ['Payment Preference', cu.paymentPreference],
+      ['Credit Requirement', cu.creditRequirement], ['Existing Brand', cu.existingBrand], ['Competitor Brand', cu.competitorBrand],
+      ['Lead Source', cu.leadSource], ['Salesperson', cu.salesperson], ['First Contact', toDisp(cu.firstContactDate)],
+      ['Last Contact', toDisp(cu.lastContactDate)], ['Next Follow-Up', toDisp(cu.nextFollowUp)],
+    ];
+    rows.forEach(r=> grid.appendChild(h('div',{class:'fld'}, h('label',{},r[0]), h('div',{style:{fontSize:'13px',padding:'4px 0'}}, r[1]||'—'))));
+    panes.appendChild(grid);
+  }
+  function drawOpps(){
+    const rows = DB.get('opportunities').filter(o=>o.customerId===custId);
+    renderTable(panes, [
+      {label:'Product', key:'product'}, {label:'Qty', key:'quantity'}, {label:'Est. Value', render:r=>fmtMoney(r.estValue)},
+      {label:'Stage', render:r=>statusTag(r.stage)}, {label:'Probability', render:r=>(r.probability||0)+'%'},
+      {label:'Expected Close', render:r=>toDisp(r.expectedClosingDate)},
+      {label:'', render:r=>h('button',{class:'btn btn-outline btn-xs', onClick:()=>openOpportunityModal(r.id, custId)},'Edit')}
+    ], rows, {emptyText:'No opportunities yet.'});
+  }
+  function drawFollowups(){
+    const rows = DB.get('followups').filter(f=>f.customerId===custId).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    renderTable(panes, [
+      {label:'Date', render:r=>toDisp(r.date)}, {label:'Type', key:'type'}, {label:'Discussion', key:'discussion'},
+      {label:'Next Action', key:'nextAction'}, {label:'Next Date', render:r=>toDisp(r.nextFollowUpDate)}, {label:'Status', render:r=>statusTag(r.status)},
+    ], rows, {emptyText:'No follow-ups logged yet.'});
+  }
+  function drawQuotes(){
+    const rows = DB.get('quotations').filter(q=>q.customerId===custId);
+    renderTable(panes, [
+      {label:'Quote #', key:'id', mono:true}, {label:'Product', key:'product'}, {label:'Final Value', render:r=>fmtMoney(r.finalValue)},
+      {label:'Date', render:r=>toDisp(r.date)}, {label:'Status', render:r=>statusTag(r.status)},
+      {label:'', render:r=>h('button',{class:'btn btn-outline btn-xs', onClick:()=>printQuotation(r.id)},'Print')}
+    ], rows, {emptyText:'No quotations yet.'});
+  }
+  function drawOrders(){
+    const wrap = h('div');
+    wrap.appendChild(h('h3',{style:{fontFamily:'var(--fh)',fontSize:'13px',marginBottom:'8px'}},'Orders Won'));
+    const wonC = h('div'); wrap.appendChild(wonC);
+    renderTable(wonC, [{label:'Product',key:'product'},{label:'Qty',key:'quantity'},{label:'Value',render:r=>fmtMoney(r.orderValue)},{label:'Date',render:r=>toDisp(r.orderDate)}],
+      DB.get('ordersWon').filter(o=>o.customerId===custId), {emptyText:'None yet.'});
+    wrap.appendChild(h('h3',{style:{fontFamily:'var(--fh)',fontSize:'13px',margin:'16px 0 8px'}},'Orders Lost'));
+    const lostC = h('div'); wrap.appendChild(lostC);
+    renderTable(lostC, [{label:'Product',key:'product'},{label:'Est. Value',render:r=>fmtMoney(r.estValue)},{label:'Reason',key:'lostReason'},{label:'Date',render:r=>toDisp(r.lostDate)}],
+      DB.get('ordersLost').filter(o=>o.customerId===custId), {emptyText:'None yet.'});
+    panes.appendChild(wrap);
+  }
+  function drawTimeline(){
+    const events = [];
+    DB.get('followups').filter(f=>f.customerId===custId).forEach(f=> events.push({date:f.date, type:f.type, text:f.discussion||f.nextAction||'Follow-up logged'}));
+    DB.get('quotations').filter(q=>q.customerId===custId).forEach(q=> events.push({date:q.date, type:'QUOTATION', text:'Quotation '+q.id+' — '+fmtMoney(q.finalValue)}));
+    DB.get('ordersWon').filter(o=>o.customerId===custId).forEach(o=> events.push({date:o.orderDate, type:'ORDER WON', text:o.quantity+' '+o.product}));
+    DB.get('ordersLost').filter(o=>o.customerId===custId).forEach(o=> events.push({date:o.lostDate, type:'ORDER LOST', text:o.lostReason}));
+    events.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const tl = h('div',{class:'tl'});
+    if(!events.length) tl.appendChild(h('div',{class:'empty-state'},'No activity recorded yet.'));
+    events.forEach(ev=>{
+      tl.appendChild(h('div',{class:'tl-item'},
+        h('div',{class:'tl-date'}, toDisp(ev.date)),
+        h('div',{class:'tl-type'}, statusTag(ev.type)),
+        h('div',{class:'tl-text'}, ev.text)));
+    });
+    panes.appendChild(tl);
+  }
+  switchTab('overview');
+  g2.appendChild(left);
+
+  const right = h('div');
+  const scoreCard = h('div',{class:'card'});
+  scoreCard.appendChild(h('div',{class:'card-title'},'Lead Score'));
+  scoreCard.appendChild(priorityTag(cu.priority||'Warm'));
+  scoreCard.appendChild(h('div',{style:{marginTop:'10px'}}, statusTag(cu.status)));
+  right.appendChild(scoreCard);
+
+  const nextCard = h('div',{class:'card'});
+  nextCard.appendChild(h('div',{class:'card-title'},'Next Action'));
+  nextCard.appendChild(h('div',{style:{fontSize:'13px'}}, cu.nextFollowUp ? ('Follow up on ' + toDisp(cu.nextFollowUp)) : 'No next follow-up scheduled'));
+  right.appendChild(nextCard);
+  g2.appendChild(right);
+  c.appendChild(g2);
+}
+
+function quickFollowupModal(customerId){
+  const cu = DB.byId('customers', customerId);
+  openModal('Quick Follow-Up — ' + (cu?cu.companyName:''), [
+    {key:'type', label:'Follow-Up Type', type:'select', options:FOLLOWUP_TYPES},
+    {key:'discussion', label:'Discussion', full:true, type:'textarea'},
+    {key:'customerResponse', label:'Customer Response', full:true, type:'textarea'},
+    {key:'nextAction', label:'Next Action', value:''},
+    {key:'nextFollowUpDate', label:'Next Follow-Up Date', type:'date', value: todayISO()},
+    {key:'status', label:'Status', type:'select', options:FOLLOWUP_STATUSES},
+  ], (data)=>{
+    const rec = Object.assign({id:uid(), customerId, contactPerson: cu?cu.contactPerson:'', salesperson: cu?cu.salesperson:CURRENT_USER,
+      date: todayISO(), time: new Date().toTimeString().slice(0,5), priority: cu?cu.priority:'Warm'}, data);
+    DB.add('followups', rec);
+    DB.update('customers', customerId, {lastContactDate: todayISO(), nextFollowUp: data.nextFollowUpDate});
+    logAudit('Follow-up logged','followup',rec.id,'', data.discussion||'');
+    toast('Follow-up saved');
+    render();
+  });
+}
+
+/* ============================================================
+   LEAD MANAGEMENT — pipeline board
+============================================================ */
+RENDERERS.leads = function(c){
+  pageHead(c, 'Lead Management', 'Full lifecycle: Raw Data → New Lead → … → Order Won / Lost', [
+    h('button',{class:'btn btn-red', onClick:()=>openLeadModal(null)}, '＋ Add Lead'),
+  ]);
+  const leads = DB.get('leads');
+
+  // Stage summary — tabular, not card-row
+  const sumCard = h('div',{class:'card'});
+  sumCard.appendChild(h('div',{class:'card-title'},'Stage Summary'));
+  const sumCont = h('div'); sumCard.appendChild(sumCont);
+  const stageRows = LEAD_STAGES.map(stage=>{
+    const items = leads.filter(l=>l.status===stage);
+    return {stage, count: items.length};
+  });
+  renderTable(sumCont, [
+    {label:'Stage', render:r=>h('a',{class:'linklike', onClick:()=>{ stageF.value=r.stage; draw(); }}, r.stage)},
+    {label:'Leads in Stage', key:'count'},
+  ], stageRows);
+  c.appendChild(sumCard);
+
+  const toolbar = h('div',{class:'toolbar'});
+  const search = h('input',{type:'text', placeholder:'Search company / mobile / city…'});
+  const stageF = h('select'); stageF.appendChild(h('option',{value:''},'All Stages')); LEAD_STAGES.forEach(s=>stageF.appendChild(h('option',{value:s},s)));
+  const spF = h('select'); spF.appendChild(h('option',{value:''},'All Salespersons')); salespersonNames().forEach(s=>spF.appendChild(h('option',{value:s},s)));
+  toolbar.appendChild(search); toolbar.appendChild(stageF); toolbar.appendChild(spF);
+  c.appendChild(toolbar);
+
+  const listCard = h('div',{class:'card'});
+  listCard.appendChild(h('div',{class:'card-title'},'All Leads'));
+  const listCont = h('div'); listCard.appendChild(listCont); c.appendChild(listCard);
+
+  function draw(){
+    let rows = leads;
+    if(search.value){ const q=search.value.toLowerCase(); rows = rows.filter(r=>(r.companyName+r.mobile+r.city).toLowerCase().includes(q)); }
+    if(stageF.value) rows = rows.filter(r=>r.status===stageF.value);
+    if(spF.value) rows = rows.filter(r=>r.salesperson===spF.value);
+    renderTable(listCont, [
+      {label:'Company', render:r=>h('a',{class:'linklike', onClick:()=>openLeadModal(r.id)}, r.companyName)},
+      {label:'Contact', key:'contactPerson'}, {label:'Mobile', key:'mobile', mono:true}, {label:'City', key:'city'},
+      {label:'Product', key:'productInterested'}, {label:'Salesperson', key:'salesperson'},
+      {label:'Stage', render:r=>statusTag(r.status)}, {label:'Next Follow-up', render:r=>toDisp(r.nextFollowUpDate)},
+      {label:'', render:r=>h('button',{class:'btn btn-outline btn-xs', onClick:()=>openLeadStageModal(r)},'Move Stage')},
+    ], rows, {emptyText:'No leads yet.'});
+  }
+  [search,stageF,spF].forEach(el=>el.addEventListener('input', draw));
+  draw();
+};
+
+function openLeadStageModal(lead){
+  openModal('Move Stage — ' + lead.companyName, [
+    {key:'status', label:'Current Stage', type:'select', options:LEAD_STAGES, value:lead.status},
+    {key:'nextAction', label:'Next Action', value:lead.nextAction||''},
+    {key:'nextFollowUpDate', label:'Next Follow-Up Date', type:'date', value:lead.nextFollowUpDate||''},
+    {key:'remarks', label:'Remarks', full:true, type:'textarea', value:lead.remarks||''},
+  ], (data)=>{
+    const old = lead.status;
+    DB.update('leads', lead.id, data);
+    logAudit('Lead stage changed', 'lead', lead.id, old, data.status);
+    if(data.status==='Order Lost') toast('Consider recording this in Order Lost module');
+    toast('Stage updated to ' + data.status);
+    render();
+  });
+}
+
+/* ============================================================
+   FOLLOW-UP MANAGEMENT — Today's Follow-Ups screen
+============================================================ */
+RENDERERS.followups = function(c){
+  pageHead(c, "Follow-Up Management", 'Daily action screen and full follow-up history report', [
+    h('button',{class:'btn btn-red', onClick:()=>quickFollowupPicker()}, '＋ Quick Follow-Up Entry'),
+  ]);
+
+  const tabs = h('div',{class:'tabs'});
+  const panes = h('div');
+  const tabDefs = [
+    {id:'today', label:"Today's Follow-Ups"},
+    {id:'report', label:'Follow-Up Report'},
+  ];
+  tabDefs.forEach((t,i)=> tabs.appendChild(h('button',{class:'tab-btn'+(i===0?' active':''), onClick:()=>switchFuTab(t.id)}, t.label)));
+  c.appendChild(tabs); c.appendChild(panes);
+
+  function switchFuTab(id){
+    $all('.tab-btn', tabs).forEach((b,i)=>b.classList.toggle('active', tabDefs[i].id===id));
+    clear(panes);
+    if(id==='today') drawTodayScreen(panes); else drawFollowupReport(panes);
+  }
+
+  function drawTodayScreen(cont){
+    const buckets = followupBuckets();
+    const sections = [
+      {title:'🔴 Overdue', data:buckets.overdue, cls:'txt-red'},
+      {title:'🟢 Today', data:buckets.today},
+      {title:'🟡 Tomorrow', data:buckets.tomorrow},
+      {title:'Upcoming', data:buckets.upcoming},
+    ];
+    sections.forEach(sec=>{
+      const card = h('div',{class:'card'});
+      card.appendChild(h('div',{class:'card-title'}, sec.title, h('span',{class:'badge-count'}, sec.data.length)));
+      const tblc = h('div'); card.appendChild(tblc);
+      renderTable(tblc, [
+        {label:'Customer', render:r=>{ const cu=DB.byId('customers',r.customerId); return h('a',{class:'linklike', onClick:()=>{CUSTOMER_VIEW_ID=r.customerId; navigate('customers');}}, cu?cu.companyName:(r.contactPerson||'—')); }},
+        {label:'Contact', key:'contactPerson'},
+        {label:'City', render:r=>{ const cu=DB.byId('customers',r.customerId); return cu?cu.city:''; }},
+        {label:'Salesperson', key:'salesperson'},
+        {label:'Last Discussion', key:'discussion'},
+        {label:'Next Action', key:'nextAction'},
+        {label:'Due', render:r=>toDisp(r.nextFollowUpDate||r.date)},
+        {label:'Priority', render:r=>priorityTag(r.priority||'Warm')},
+        {label:'Status', render:r=>statusTag(r.status)},
+        {label:'Actions', render:r=> h('div',{style:{display:'flex',gap:'4px'}},
+          h('button',{class:'btn btn-teal btn-xs', onClick:()=>callAction(r)}, '📞'),
+          h('button',{class:'btn btn-green btn-xs', onClick:()=>waAction(r)}, '💬'),
+          h('button',{class:'btn btn-outline btn-xs', onClick:()=>noteAction(r)}, 'Note'),
+          h('button',{class:'btn btn-gray btn-xs', onClick:()=>rescheduleAction(r)}, 'Resched.'),
+          h('button',{class:'btn btn-red btn-xs', onClick:()=>completeAction(r)}, 'Complete'),
+        )},
+      ], sec.data, {emptyText:'Nothing here.'});
+      cont.appendChild(card);
+    });
+  }
+
+  function drawFollowupReport(cont){
+    const custs = DB.get('customers');
+    const toolbar = h('div',{class:'toolbar'});
+    const dFrom = h('input',{type:'date'});
+    const dTo = h('input',{type:'date'});
+    const cityF = h('select'); cityF.appendChild(h('option',{value:''},'All Cities'));
+    Array.from(new Set(custs.map(cu=>cu.city).filter(Boolean))).sort().forEach(ct=>cityF.appendChild(h('option',{value:ct},ct)));
+    const spF = h('select'); spF.appendChild(h('option',{value:''},'All Salespersons'));
+    salespersonNames().forEach(s=>spF.appendChild(h('option',{value:s},s)));
+    const typeF = h('select'); typeF.appendChild(h('option',{value:''},'All Types'));
+    FOLLOWUP_TYPES.forEach(t=>typeF.appendChild(h('option',{value:t},t)));
+    const statusF = h('select'); statusF.appendChild(h('option',{value:''},'All Statuses'));
+    FOLLOWUP_STATUSES.forEach(s=>statusF.appendChild(h('option',{value:s},s)));
+    toolbar.appendChild(h('div',{class:'fld',style:{minWidth:'0'}}, h('label',{},'From'), dFrom));
+    toolbar.appendChild(h('div',{class:'fld',style:{minWidth:'0'}}, h('label',{},'To'), dTo));
+    toolbar.appendChild(cityF); toolbar.appendChild(spF); toolbar.appendChild(typeF); toolbar.appendChild(statusF);
+    toolbar.appendChild(h('button',{class:'btn btn-gray btn-sm', onClick:()=>exportExcel('followup_report.xlsx', filtered().map(exportRow))}, '⬇ Export'));
+    cont.appendChild(toolbar);
+
+    const chartsRow = h('div',{class:'grid2'});
+    const chartCard1 = h('div',{class:'card'}); chartCard1.appendChild(h('div',{class:'card-title'},'Follow-Ups by Type'));
+    const box1 = h('div',{class:'chart-box sm'}); chartCard1.appendChild(box1);
+    const chartCard2 = h('div',{class:'card'}); chartCard2.appendChild(h('div',{class:'card-title'},'Follow-Ups Trend (by date)'));
+    const box2 = h('div',{class:'chart-box sm'}); chartCard2.appendChild(box2);
+    chartsRow.appendChild(chartCard1); chartsRow.appendChild(chartCard2);
+    cont.appendChild(chartsRow);
+
+    const tblCard = h('div',{class:'card'});
+    tblCard.appendChild(h('div',{class:'card-title'}, 'Follow-Up Details', h('span',{class:'badge-count'}, '0')));
+    const tblc = h('div'); tblCard.appendChild(tblc);
+    cont.appendChild(tblCard);
+
+    function filtered(){
+      let rows = DB.get('followups');
+      if(dFrom.value) rows = rows.filter(f=>(f.date||'') >= dFrom.value);
+      if(dTo.value) rows = rows.filter(f=>(f.date||'') <= dTo.value);
+      if(cityF.value) rows = rows.filter(f=>{ const cu=DB.byId('customers',f.customerId); return cu && cu.city===cityF.value; });
+      if(spF.value) rows = rows.filter(f=>f.salesperson===spF.value);
+      if(typeF.value) rows = rows.filter(f=>f.type===typeF.value);
+      if(statusF.value) rows = rows.filter(f=>f.status===statusF.value);
+      return rows.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    }
+    function exportRow(f){
+      const cu = DB.byId('customers', f.customerId) || {};
+      return {ID:f.id, PartyName:cu.companyName||'', City:cu.city||'', Date:toDisp(f.date), Type:f.type,
+        Comments:f.discussion||'', NextAction:f.nextAction||'', NextFollowUp:toDisp(f.nextFollowUpDate), Status:f.status};
+    }
+    let chart1, chart2;
+    function draw(){
+      const rows = filtered();
+      $('.badge-count', tblCard).textContent = rows.length;
+      renderTable(tblc, [
+        {label:'ID', key:'id', mono:true},
+        {label:'Party Name', render:r=>{ const cu=DB.byId('customers',r.customerId); return h('a',{class:'linklike', onClick:()=>{CUSTOMER_VIEW_ID=r.customerId; navigate('customers');}}, cu?cu.companyName:(r.contactPerson||'—')); }},
+        {label:'City', render:r=>{ const cu=DB.byId('customers',r.customerId); return cu?cu.city:'—'; }},
+        {label:'Date', render:r=>toDisp(r.date)},
+        {label:'Type', key:'type'},
+        {label:'Comments', key:'discussion'},
+        {label:'Next Action', key:'nextAction'},
+        {label:'Status', render:r=>statusTag(r.status)},
+      ], rows, {emptyText:'No follow-ups match this filter.'});
+
+      const typeAgg = {}; rows.forEach(r=>{ const t=r.type||'Other'; typeAgg[t]=(typeAgg[t]||0)+1; });
+      const tl = Object.keys(typeAgg);
+      if(chart1) chart1.destroy();
+      clear(box1);
+      if(tl.length) chart1 = new Chart(mkCanvas(box1), {type:'bar', data:{labels:tl, datasets:[{label:'Follow-ups', data:tl.map(k=>typeAgg[k]), backgroundColor:'#C8102E'}]}, options:baseChartOpts({})});
+      else box1.appendChild(h('div',{class:'empty-state'},'No data'));
+
+      const dateAgg = {}; rows.forEach(r=>{ const d=r.date||'Unknown'; dateAgg[d]=(dateAgg[d]||0)+1; });
+      const dl = Object.keys(dateAgg).sort();
+      if(chart2) chart2.destroy();
+      clear(box2);
+      if(dl.length) chart2 = new Chart(mkCanvas(box2), {type:'line', data:{labels:dl.map(toDisp), datasets:[{label:'Follow-ups', data:dl.map(k=>dateAgg[k]), borderColor:'#0891b2', backgroundColor:'rgba(8,145,178,.15)', tension:.25, fill:true}]}, options:baseChartOpts({})});
+      else box2.appendChild(h('div',{class:'empty-state'},'No data'));
+    }
+    [dFrom,dTo,cityF,spF,typeF,statusF].forEach(el=>el.addEventListener('input', draw));
+    setTimeout(draw, 0);
+  }
+
+  switchFuTab('today');
+};
+
+function callAction(f){ toast('Calling ' + (f.contactPerson||'customer') + ' — ' + (f.mobile||DB.byId('customers',f.customerId)?.mobile||'')); }
+function waAction(f){ const cu = DB.byId('customers',f.customerId); const num = (cu&&cu.whatsapp)||(cu&&cu.mobile)||''; if(num) window.open('https://wa.me/'+num.replace(/\D/g,''),'_blank'); else toast('No WhatsApp number on file'); }
+function noteAction(f){
+  openModal('Add Note', [{key:'discussion', label:'Note', full:true, type:'textarea', value:f.discussion||''}], (data)=>{
+    DB.update('followups', f.id, {discussion: data.discussion}); toast('Note saved'); render();
+  });
+}
+function rescheduleAction(f){
+  openModal('Reschedule Follow-Up', [{key:'nextFollowUpDate', label:'New Date', type:'date', value:f.nextFollowUpDate}], (data)=>{
+    DB.update('followups', f.id, {nextFollowUpDate: data.nextFollowUpDate, status:'Rescheduled'}); toast('Rescheduled'); render();
+  });
+}
+function completeAction(f){
+  DB.update('followups', f.id, {status:'Completed'});
+  if(f.customerId) DB.update('customers', f.customerId, {lastContactDate: todayISO()});
+  logAudit('Follow-up completed','followup',f.id,'','Completed');
+  toast('Marked completed'); render();
+}
+
+function quickFollowupPicker(){
+  const custs = DB.get('customers');
+  if(!custs.length){ toast('Add a customer first'); return; }
+  openModal('Quick Follow-Up — Select Customer', [
+    {key:'customerId', label:'Customer', type:'select', options: customerOptions()},
+    {key:'discussion', label:'Discussion', full:true, type:'textarea'},
+    {key:'customerResponse', label:'Customer Response', full:true, type:'textarea'},
+    {key:'nextAction', label:'Next Action'},
+    {key:'nextFollowUpDate', label:'Next Follow-Up Date', type:'date', value: todayISO()},
+  ], (data)=>{
+    const cu = DB.byId('customers', data.customerId);
+    const rec = Object.assign({id:uid(), contactPerson: cu?cu.contactPerson:'', salesperson: cu?cu.salesperson:CURRENT_USER,
+      date: todayISO(), time: new Date().toTimeString().slice(0,5), status:'Pending', priority: cu?cu.priority:'Warm', type:'Call'}, data);
+    DB.add('followups', rec);
+    if(cu) DB.update('customers', data.customerId, {lastContactDate: todayISO(), nextFollowUp: data.nextFollowUpDate});
+    toast('Follow-up saved'); render();
+  });
+}
+
+/* ============================================================
+   OPPORTUNITY MANAGEMENT
+============================================================ */
+RENDERERS.opportunities = function(c){
+  pageHead(c, 'Opportunity Management', 'A customer can carry multiple concurrent opportunities', [
+    h('button',{class:'btn btn-gray', onClick:()=>exportExcel('opportunities.xlsx', DB.get('opportunities'))}, '⬇ Export'),
+    h('button',{class:'btn btn-red', onClick:()=>openOpportunityModal(null, null)}, '＋ Add Opportunity'),
+  ]);
+  const toolbar = h('div',{class:'toolbar'});
+  const stageF = h('select'); stageF.appendChild(h('option',{value:''},'All Stages')); OPP_STAGES.forEach(s=>stageF.appendChild(h('option',{value:s},s)));
+  const spF = h('select'); spF.appendChild(h('option',{value:''},'All Salespersons')); salespersonNames().forEach(s=>spF.appendChild(h('option',{value:s},s)));
+  toolbar.appendChild(stageF); toolbar.appendChild(spF);
+  c.appendChild(toolbar);
+  const cont = h('div'); c.appendChild(cont);
+  function draw(){
+    let rows = DB.get('opportunities');
+    if(stageF.value) rows = rows.filter(o=>o.stage===stageF.value);
+    if(spF.value) rows = rows.filter(o=>o.salesperson===spF.value);
+    renderTable(cont, [
+      {label:'Customer', render:r=>{ const cu=DB.byId('customers',r.customerId); return h('a',{class:'linklike', onClick:()=>{CUSTOMER_VIEW_ID=r.customerId; navigate('customers');}}, cu?cu.companyName:'—'); }},
+      {label:'Product', key:'product'}, {label:'Qty', key:'quantity'}, {label:'Est. Value', render:r=>fmtMoney(r.estValue)},
+      {label:'Stage', render:r=>statusTag(r.stage)}, {label:'Probability', render:r=>(r.probability||0)+'%'},
+      {label:'Salesperson', key:'salesperson'}, {label:'Expected Close', render:r=>toDisp(r.expectedClosingDate)},
+      {label:'Actions', render:r=> h('div',{style:{display:'flex',gap:'4px'}},
+        h('button',{class:'btn btn-outline btn-xs', onClick:()=>openOpportunityModal(r.id, r.customerId)}, 'Edit'),
+        h('button',{class:'btn btn-green btn-xs', onClick:()=>markOpportunityWon(r)}, 'Won'),
+        h('button',{class:'btn btn-red btn-xs', onClick:()=>markOpportunityLost(r)}, 'Lost'),
+      )}
+    ], rows, {emptyText:'No opportunities yet.'});
+  }
+  [stageF,spF].forEach(el=>el.addEventListener('input', draw));
+  draw();
+};
+
+function openOpportunityModal(id, customerId){
+  const existing = id ? DB.byId('opportunities', id) : null;
+  const custOpts = customerOptions();
+  openModal(existing?'Edit Opportunity':'Add Opportunity', [
+    {key:'customerId', label:'Customer', type:'select', options:custOpts, value: existing?existing.customerId:(customerId||'')},
+    {key:'product', label:'Product', type:'select', options:productNames(), value:existing?existing.product:''},
+    {key:'thickness', label:'Thickness', value:existing?existing.thickness:''},
+    {key:'size', label:'Size', value:existing?existing.size:''},
+    {key:'quantity', label:'Quantity', value:existing?existing.quantity:''},
+    {key:'estValue', label:'Estimated Order Value (₹)', type:'number', value:existing?existing.estValue:''},
+    {key:'expectedClosingDate', label:'Expected Closing Date', type:'date', value:existing?existing.expectedClosingDate:''},
+    {key:'salesperson', label:'Salesperson', type:'select', options:salespersonNames(), value:existing?existing.salesperson:''},
+    {key:'stage', label:'Stage', type:'select', options:OPP_STAGES, value:existing?existing.stage:'Qualification'},
+    {key:'probability', label:'Probability (%)', type:'number', value:existing?existing.probability:'25'},
+    {key:'competitor', label:'Competitor', value:existing?existing.competitor:''},
+    {key:'currentSupplier', label:'Current Supplier', value:existing?existing.currentSupplier:''},
+    {key:'notes', label:'Notes', full:true, type:'textarea', value:existing?existing.notes:''},
+  ], (data)=>{
+    if(!data.customerId || !data.product){ toast('Customer and Product are required'); return false; }
+    if(!existing){
+      const rec = Object.assign({id:uid(), createdAt: todayISO()}, data);
+      DB.add('opportunities', rec); logAudit('Opportunity created','opportunity',rec.id,'',rec.product); toast('Opportunity added');
+    } else {
+      DB.update('opportunities', id, data); logAudit('Opportunity updated','opportunity',id,'',''); toast('Opportunity updated');
+    }
+    render();
+  });
+}
+
+function markOpportunityWon(o){
+  const cu = DB.byId('customers', o.customerId);
+  openModal('Mark Order Won — ' + o.product, [
+    {key:'rate', label:'Rate', type:'number'},
+    {key:'orderValue', label:'Order Value (₹)', type:'number', value:o.estValue},
+    {key:'dispatchDate', label:'Expected Dispatch Date', type:'date'},
+    {key:'reason', label:'Reason for Conversion', full:true, type:'textarea'},
+    {key:'remarks', label:'Remarks', full:true, type:'textarea'},
+  ], (data)=>{
+    const leadDays = cu && cu.firstContactDate ? daysBetween(cu.firstContactDate, todayISO()) : '';
+    const rec = Object.assign({id: nextId('ORD'), opportunityId:o.id, customerId:o.customerId, orderDate: todayISO(),
+      product:o.product, quantity:o.quantity, salesperson:o.salesperson, source: cu?cu.leadSource:'', leadToOrderDays: leadDays}, data);
+    DB.add('ordersWon', rec);
+    DB.update('opportunities', o.id, {stage:'Order Won'});
+    logAudit('Order Won','opportunity',o.id,'', fmtMoney(data.orderValue));
+    toast('🎉 Order marked WON'); render();
+  });
+}
+function markOpportunityLost(o){
+  openModal('Mark Order Lost — ' + o.product, [
+    {key:'competitor', label:'Competitor', value:o.competitor||''},
+    {key:'competitorPrice', label:'Competitor Price', type:'number'},
+    {key:'ourPrice', label:'Our Quoted Price', type:'number'},
+    {key:'customerExpectedPrice', label:'Customer Expected Price', type:'number'},
+    {key:'lostReason', label:'Lost Reason', type:'select', options:lostReasonNames(), required:true},
+    {key:'remarks', label:'Detailed Remarks', full:true, type:'textarea'},
+    {key:'reactivationDate', label:'Next Potential Reactivation Date', type:'date'},
+  ], (data)=>{
+    const rec = Object.assign({id:uid(), opportunityId:o.id, customerId:o.customerId, product:o.product, quantity:o.quantity,
+      estValue:o.estValue, salesperson:o.salesperson, lostDate: todayISO()}, data);
+    DB.add('ordersLost', rec);
+    DB.update('opportunities', o.id, {stage:'Order Lost'});
+    logAudit('Order Lost','opportunity',o.id,'', data.lostReason);
+    toast('Order marked LOST — recorded for analysis'); render();
+  });
+}
+
+/* ============================================================
+   QUOTATION MANAGEMENT
+============================================================ */
+RENDERERS.quotations = function(c){
+  pageHead(c, 'Quotation Management', 'Track every quotation from draft to acceptance', [
+    h('button',{class:'btn btn-gray', onClick:()=>exportExcel('quotations.xlsx', DB.get('quotations'))}, '⬇ Export'),
+    h('button',{class:'btn btn-red', onClick:()=>openQuotationModal(null)}, '＋ New Quotation'),
+  ]);
+  const cont = h('div'); c.appendChild(cont);
+  const rows = DB.get('quotations').slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  renderTable(cont, [
+    {label:'Quote #', key:'id', mono:true},
+    {label:'Customer', render:r=>{const cu=DB.byId('customers',r.customerId); return cu?cu.companyName:'—';}},
+    {label:'Product', key:'product'}, {label:'Qty', key:'quantity'}, {label:'Rate', render:r=>fmtMoney(r.rate)},
+    {label:'Final Value', render:r=>fmtMoney(r.finalValue)}, {label:'Date', render:r=>toDisp(r.date)},
+    {label:'Validity', render:r=>toDisp(r.validity)}, {label:'Status', render:r=>statusTag(r.status)},
+    {label:'Actions', render:r=>h('div',{style:{display:'flex',gap:'4px'}},
+      h('button',{class:'btn btn-outline btn-xs', onClick:()=>openQuotationModal(r.id)},'Edit'),
+      h('button',{class:'btn btn-teal btn-xs', onClick:()=>printQuotation(r.id)},'🖨 Print'),
+    )}
+  ], rows, {emptyText:'No quotations yet.'});
+};
+
+function openQuotationModal(id){
+  const existing = id ? DB.byId('quotations', id) : null;
+  openModal(existing?'Edit Quotation':'New Quotation', [
+    {key:'customerId', label:'Customer', type:'select', options:customerOptions(), value:existing?existing.customerId:''},
+    {key:'opportunityId', label:'Opportunity', type:'select', options: DB.get('opportunities').map(o=>({value:o.id,label:o.product+' — '+fmtMoney(o.estValue)})), value:existing?existing.opportunityId:''},
+    {key:'product', label:'Product', type:'select', options:productNames(), value:existing?existing.product:''},
+    {key:'quantity', label:'Quantity', value:existing?existing.quantity:''},
+    {key:'rate', label:'Rate (₹)', type:'number', value:existing?existing.rate:''},
+    {key:'gst', label:'GST %', type:'number', value:existing?existing.gst:'18'},
+    {key:'date', label:'Quotation Date', type:'date', value:existing?existing.date:todayISO()},
+    {key:'validity', label:'Valid Until', type:'date', value:existing?existing.validity:''},
+    {key:'salesperson', label:'Salesperson', type:'select', options:salespersonNames(), value:existing?existing.salesperson:''},
+    {key:'status', label:'Status', type:'select', options:QUOTE_STATUSES, value:existing?existing.status:'Draft'},
+  ], (data)=>{
+    if(!data.customerId || !data.product){ toast('Customer and product required'); return false; }
+    const rate = Number(data.rate)||0, qty = Number(data.quantity)||0, gstP = Number(data.gst)||0;
+    const total = rate*qty; const finalVal = total + (total*gstP/100);
+    data.totalValue = total.toFixed(2); data.finalValue = finalVal.toFixed(2);
+    if(!existing){
+      const rec = Object.assign({id: nextId('QT')}, data);
+      DB.add('quotations', rec); logAudit('Quotation created','quotation',rec.id,'',rec.id); toast('Quotation created: '+rec.id);
+    } else {
+      DB.update('quotations', id, data); logAudit('Quotation updated','quotation',id,'',''); toast('Quotation updated');
+    }
+    render();
+  });
+}
+
+function printQuotation(id){
+  const q = DB.byId('quotations', id);
+  const cu = DB.byId('customers', q.customerId) || {};
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${q.id}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+  body{font-family: Inter,sans-serif;color:#1a202c;padding:36px;font-size:13px}
+  .hd{background:#C8102E;color:#fff;padding:22px 28px;border-radius:8px;margin-bottom:20px;display:flex;justify-content:space-between}
+  .hd h1{font-family: Inter, sans-serif;font-size:22px;font-weight:900;letter-spacing:1px}
+  .hd .sub{font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.85;margin-top:4px}
+  .box{border:1px solid #dde3ec;border-radius:8px;padding:14px 18px;margin-bottom:16px}
+  .box h4{font-family: Inter, sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8a96a8;margin-bottom:8px}
+  table{width:100%;border-collapse:collapse;margin-bottom:16px}
+  th{background:#C8102E;color:#fff;font-family: Inter, sans-serif;font-size:11px;text-transform:uppercase;padding:9px 12px;text-align:left}
+  td{padding:9px 12px;border-bottom:1px solid #f1f3f7;font-family:'JetBrains Mono',monospace;font-size:12px}
+  .netrow td{font-weight:700;color:#C8102E;font-size:13px;background:#fff0f2}
+  .foot{font-size:10.5px;color:#8a96a8;margin-top:30px;text-align:center;font-family:'JetBrains Mono',monospace}
+  </style></head><body>
+  <div class="hd"><div><h1>STRANDPLY LLP</h1><div class="sub">Wankaner, Morbi, Gujarat</div></div>
+  <div style="text-align:right"><h1>QUOTATION</h1><div class="sub">${q.id}</div></div></div>
+  <div class="box"><h4>To</h4>
+  <b>${esc(cu.companyName)}</b><br>${esc(cu.contactPerson||'')}<br>${esc(cu.address||'')}, ${esc(cu.city||'')}, ${esc(cu.state||'')}<br>Mobile: ${esc(cu.mobile||'')} &nbsp; GST: ${esc(cu.gst||'-')}
+  </div>
+  <table><tr><th>Product</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>
+  <tr><td>${esc(q.product)}</td><td>${esc(q.quantity)}</td><td>${fmtMoney(q.rate,true)}</td><td>${fmtMoney(q.totalValue,true)}</td></tr>
+  <tr><td colspan="3">GST @ ${esc(q.gst)}%</td><td>${fmtMoney((q.finalValue-q.totalValue),true)}</td></tr>
+  <tr class="netrow"><td colspan="3">NET PAYABLE</td><td>${fmtMoney(q.finalValue,true)}</td></tr>
+  </table>
+  <div class="box"><h4>Terms</h4>Quotation Date: ${toDisp(q.date)} &nbsp;·&nbsp; Valid Until: ${toDisp(q.validity)} &nbsp;·&nbsp; Salesperson: ${esc(q.salesperson)}</div>
+  <div class="foot">Generated by Strandply LLP · ${toDisp(todayISO())} · Confidential</div>
+  <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script>
+    <script src="../shell.js"></script>
+</body></html>`);
+  w.document.close();
+}
+
+/* ============================================================
+   ORDER WON / ORDER LOST
+============================================================ */
+RENDERERS.won = function(c){
+  pageHead(c, 'Order Won', 'Converted opportunities — full history retained', [
+    h('button',{class:'btn btn-gray', onClick:()=>exportExcel('orders_won.xlsx', DB.get('ordersWon'))}, '⬇ Export'),
+  ]);
+  const rows = DB.get('ordersWon').slice().sort((a,b)=>(b.orderDate||'').localeCompare(a.orderDate||''));
+  const totalVal = rows.reduce((s,r)=>s+(Number(r.orderValue)||0),0);
+  const kr = h('div',{class:'kpi-row'});
+  kr.appendChild(h('div',{class:'kpi'}, h('div',{class:'kpi-lbl'},'Orders Won'), h('div',{class:'kpi-val'},rows.length)));
+  kr.appendChild(h('div',{class:'kpi'}, h('div',{class:'kpi-lbl'},'Total Value'), h('div',{class:'kpi-val'},fmtMoney(totalVal))));
+  c.appendChild(kr);
+  const cont = h('div'); c.appendChild(cont);
+  renderTable(cont, [
+    {label:'Order Date', render:r=>toDisp(r.orderDate)},
+    {label:'Customer', render:r=>{const cu=DB.byId('customers',r.customerId); return cu?cu.companyName:'—';}},
+    {label:'Product', key:'product'}, {label:'Qty', key:'quantity'}, {label:'Value', render:r=>fmtMoney(r.orderValue)},
+    {label:'Salesperson', key:'salesperson'}, {label:'Lead→Order Days', key:'leadToOrderDays'}, {label:'Dispatch', render:r=>toDisp(r.dispatchDate)},
+  ], rows, {emptyText:'No orders won yet.'});
+};
+
+RENDERERS.lost = function(c){
+  pageHead(c, 'Order Lost', 'Every lost order recorded with reason — nothing is deleted', [
+    h('button',{class:'btn btn-gray', onClick:()=>exportExcel('orders_lost.xlsx', DB.get('ordersLost'))}, '⬇ Export'),
+  ]);
+  const rows = DB.get('ordersLost');
+  const totalVal = rows.reduce((s,r)=>s+(Number(r.estValue)||0),0);
+  const avgVal = rows.length ? totalVal/rows.length : 0;
+  const kr = h('div',{class:'kpi-row'});
+  kr.appendChild(h('div',{class:'kpi'}, h('div',{class:'kpi-lbl'},'Orders Lost'), h('div',{class:'kpi-val'},rows.length)));
+  kr.appendChild(h('div',{class:'kpi'}, h('div',{class:'kpi-lbl'},'Total Lost Value'), h('div',{class:'kpi-val'},fmtMoney(totalVal))));
+  kr.appendChild(h('div',{class:'kpi'}, h('div',{class:'kpi-lbl'},'Average Lost Value'), h('div',{class:'kpi-val'},fmtMoney(avgVal))));
+  const reactivateToday = rows.filter(r=>r.reactivationDate===todayISO());
+  kr.appendChild(h('div',{class:'kpi'}, h('div',{class:'kpi-lbl'},'Reactivate Today'), h('div',{class:'kpi-val'},reactivateToday.length)));
+  c.appendChild(kr);
+
+  if(reactivateToday.length){
+    const rc = h('div',{class:'card'});
+    rc.appendChild(h('div',{class:'card-title'},'🟢 Customers to Reactivate Today'));
+    const rcont = h('div'); rc.appendChild(rcont);
+    renderTable(rcont, [
+      {label:'Customer', render:r=>{const cu=DB.byId('customers',r.customerId); return cu?cu.companyName:'—';}},
+      {label:'Product', key:'product'}, {label:'Lost Reason', key:'lostReason'},
+      {label:'', render:r=>h('button',{class:'btn btn-red btn-xs', onClick:()=>reactivateLost(r)},'Reactivate')}
+    ], reactivateToday);
+    c.appendChild(rc);
+  }
+
+  const g2 = h('div',{class:'grid2'});
+  const left = h('div',{class:'card'});
+  left.appendChild(h('div',{class:'card-title'},'Lost Orders by Reason'));
+  const box1 = h('div',{class:'chart-box'}); left.appendChild(box1);
+  const right = h('div',{class:'card'});
+  right.appendChild(h('div',{class:'card-title'},'Lost Orders by Salesperson'));
+  const box2 = h('div',{class:'chart-box'}); right.appendChild(box2);
+  g2.appendChild(left); g2.appendChild(right); c.appendChild(g2);
+
+  const cont = h('div'); c.appendChild(cont);
+  renderTable(cont, [
+    {label:'Lost Date', render:r=>toDisp(r.lostDate)},
+    {label:'Customer', render:r=>{const cu=DB.byId('customers',r.customerId); return cu?cu.companyName:'—';}},
+    {label:'Product', key:'product'}, {label:'Est. Value', render:r=>fmtMoney(r.estValue)},
+    {label:'Competitor', key:'competitor'}, {label:'Lost Reason', render:r=>statusTag(r.lostReason)},
+    {label:'Salesperson', key:'salesperson'}, {label:'Reactivation', render:r=>toDisp(r.reactivationDate)},
+  ], rows.slice().sort((a,b)=>(b.lostDate||'').localeCompare(a.lostDate||'')), {emptyText:'No lost orders recorded.'});
+
+  setTimeout(()=>{
+    const reasonAgg={}; rows.forEach(r=>{ reasonAgg[r.lostReason||'Other']=(reasonAgg[r.lostReason||'Other']||0)+1; });
+    const rl=Object.keys(reasonAgg);
+    if(rl.length) new Chart(mkCanvas(box1), {type:'doughnut', data:{labels:rl, datasets:[{data:rl.map(k=>reasonAgg[k]),
+      backgroundColor:['#C8102E','#d97706','#7c3aed','#0891b2','#16a34a','#4a5568','#a00d24','#1a202c','#dc2626','#c5cdd8']}]},
+      options:{plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{size:9}}}}, maintainAspectRatio:false}});
+    else box1.appendChild(h('div',{class:'empty-state'},'No data'));
+    const spAgg={}; rows.forEach(r=>{ spAgg[r.salesperson||'Unassigned']=(spAgg[r.salesperson||'Unassigned']||0)+1; });
+    const sl=Object.keys(spAgg);
+    if(sl.length) new Chart(mkCanvas(box2), {type:'bar', data:{labels:sl, datasets:[{label:'Lost',data:sl.map(k=>spAgg[k]),backgroundColor:'#C8102E'}]}, options:baseChartOpts({})});
+    else box2.appendChild(h('div',{class:'empty-state'},'No data'));
+  },0);
+};
+
+function reactivateLost(lostRec){
+  const opp = {id:uid(), customerId:lostRec.customerId, product:lostRec.product, thickness:'', size:'', quantity:lostRec.quantity,
+    estValue:lostRec.estValue, expectedClosingDate:'', salesperson:lostRec.salesperson, stage:'Qualification', probability:20,
+    competitor:lostRec.competitor, currentSupplier:'', requirement:'Reactivated after lost order', notes:'Reactivated from lost record '+lostRec.id, createdAt: todayISO()};
+  DB.add('opportunities', opp);
+  logAudit('Lost order reactivated','opportunity',opp.id,'', lostRec.id);
+  toast('New opportunity created for reactivation');
+  render();
+}
+
+/* ============================================================
+   TASKS & REMINDERS
+============================================================ */
+RENDERERS.tasks = function(c){
+  pageHead(c, 'Tasks & Reminders', 'Action items for the sales &amp; marketing team'.replace('&amp;','&'), [
+    h('button',{class:'btn btn-red', onClick:()=>openTaskModal(null)}, '＋ Add Task'),
+  ]);
+  const rows = DB.get('tasks').slice().sort((a,b)=>(a.dueDate||'').localeCompare(b.dueDate||''));
+  const cont = h('div'); c.appendChild(cont);
+  renderTable(cont, [
+    {label:'Type', key:'type'},
+    {label:'Customer', render:r=>{const cu=DB.byId('customers',r.customerId); return cu?cu.companyName:'—';}},
+    {label:'Assigned To', key:'assignedTo'}, {label:'Due Date', render:r=>toDisp(r.dueDate)},
+    {label:'Priority', render:r=>priorityTag(r.priority)}, {label:'Status', render:r=>statusTag(r.status)},
+    {label:'Remarks', key:'remarks'},
+    {label:'', render:r=>h('div',{style:{display:'flex',gap:'4px'}},
+      h('button',{class:'btn btn-outline btn-xs', onClick:()=>openTaskModal(r.id)},'Edit'),
+      h('button',{class:'btn btn-green btn-xs', onClick:()=>{DB.update('tasks',r.id,{status:'Completed'}); toast('Task completed'); render();}},'Done'))}
+  ], rows, {emptyText:'No tasks yet.'});
+};
+function openTaskModal(id){
+  const existing = id?DB.byId('tasks',id):null;
+  openModal(existing?'Edit Task':'Add Task', [
+    {key:'type', label:'Task Type', type:'select', options:TASK_TYPES, value:existing?existing.type:''},
+    {key:'customerId', label:'Related Customer', type:'select', options:customerOptions(), value:existing?existing.customerId:''},
+    {key:'assignedTo', label:'Assigned To', type:'select', options:salespersonNames(), value:existing?existing.assignedTo:''},
+    {key:'dueDate', label:'Due Date', type:'date', value:existing?existing.dueDate:todayISO()},
+    {key:'priority', label:'Priority', type:'select', options:PRIORITIES, value:existing?existing.priority:'Warm'},
+    {key:'status', label:'Status', type:'select', options:['Pending','In Progress','Completed'], value:existing?existing.status:'Pending'},
+    {key:'remarks', label:'Remarks', full:true, type:'textarea', value:existing?existing.remarks:''},
+  ], (data)=>{
+    if(!existing){ DB.add('tasks', Object.assign({id:uid()}, data)); toast('Task added'); }
+    else { DB.update('tasks', id, data); toast('Task updated'); }
+    render();
+  });
+}
+
+/* ============================================================
+   MARKETING SOURCE & CAMPAIGN MANAGEMENT
+============================================================ */
+RENDERERS.campaigns = function(c){
+  pageHead(c, 'Marketing Sources & Campaigns', 'Which marketing activity actually generates business', [
+    h('button',{class:'btn btn-red', onClick:()=>openCampaignModal(null)}, '＋ Add Campaign'),
+  ]);
+
+  const srcCard = h('div',{class:'card'});
+  srcCard.appendChild(h('div',{class:'card-title'},'Source → Leads → Qualified → Quotations → Won → Lost → Revenue'));
+  const srcCont = h('div'); srcCard.appendChild(srcCont);
+  const leads = DB.get('leads'), opps = DB.get('opportunities'), quotes = DB.get('quotations'), won = DB.get('ordersWon'), lost = DB.get('ordersLost'), custs = DB.get('customers');
+  const srcRows = sourceNames().map(s=>{
+    const sLeads = leads.filter(l=>l.source===s);
+    const sCustIds = custs.filter(cu=>cu.leadSource===s).map(cu=>cu.id);
+    const qualified = sLeads.filter(l=>['Qualified','Product Discussion','Sample Required','Sample Sent','Follow-Up','Quotation','Negotiation','Order Won'].includes(l.status)).length;
+    const sQuotes = quotes.filter(q=>sCustIds.includes(q.customerId)).length;
+    const sWon = won.filter(o=>sCustIds.includes(o.customerId));
+    const sLost = lost.filter(o=>sCustIds.includes(o.customerId)).length;
+    const revenue = sWon.reduce((sum,o)=>sum+(Number(o.orderValue)||0),0);
+    return {name:s, leads:sLeads.length, qualified, quotes:sQuotes, won:sWon.length, lost:sLost, revenue};
+  }).filter(r=>r.leads>0 || r.won>0);
+  renderTable(srcCont, [
+    {label:'Source', key:'name'},{label:'Leads', key:'leads'},{label:'Qualified', key:'qualified'},
+    {label:'Quotations', key:'quotes'},{label:'Won', key:'won'},{label:'Lost', key:'lost'},{label:'Revenue', render:r=>fmtMoney(r.revenue)}
+  ], srcRows, {emptyText:'No source activity recorded yet.'});
+  c.appendChild(srcCard);
+
+  const campCard = h('div',{class:'card'});
+  campCard.appendChild(h('div',{class:'card-title'},'Campaigns'));
+  const campCont = h('div'); campCard.appendChild(campCont);
+  const campRows = DB.get('campaigns').map(cp=>{
+    const cLeads = leads.filter(l=>l.campaign===cp.name);
+    const cost = Number(cp.budget)||0;
+    return Object.assign({}, cp, {leadsGenerated:cLeads.length, costPerLead: cLeads.length?(cost/cLeads.length).toFixed(0):'—'});
+  });
+  renderTable(campCont, [
+    {label:'Campaign', key:'name'}, {label:'Platform', key:'platform'}, {label:'Start', render:r=>toDisp(r.startDate)}, {label:'End', render:r=>toDisp(r.endDate)},
+    {label:'Budget', render:r=>fmtMoney(r.budget)}, {label:'Leads', key:'leadsGenerated'}, {label:'Cost/Lead', render:r=>'₹'+r.costPerLead},
+    {label:'', render:r=>h('button',{class:'btn btn-outline btn-xs', onClick:()=>openCampaignModal(r.id)},'Edit')}
+  ], campRows, {emptyText:'No campaigns yet.'});
+  c.appendChild(campCard);
+};
+function openCampaignModal(id){
+  const existing = id?DB.byId('campaigns',id):null;
+  openModal(existing?'Edit Campaign':'Add Campaign', [
+    {key:'name', label:'Campaign Name', required:true, value:existing?existing.name:''},
+    {key:'startDate', label:'Start Date', type:'date', value:existing?existing.startDate:''},
+    {key:'endDate', label:'End Date', type:'date', value:existing?existing.endDate:''},
+    {key:'platform', label:'Platform', value:existing?existing.platform:''},
+    {key:'budget', label:'Budget (₹)', type:'number', value:existing?existing.budget:''},
+    {key:'targetAudience', label:'Target Audience', value:existing?existing.targetAudience:''},
+    {key:'product', label:'Product', type:'select', options:productNames(), value:existing?existing.product:''},
+  ], (data)=>{
+    if(!existing){ DB.add('campaigns', Object.assign({id:uid()}, data)); toast('Campaign added'); }
+    else { DB.update('campaigns', id, data); toast('Campaign updated'); }
+    render();
+  });
+}
+
+/* ============================================================
+   GENERIC MASTER CRUD (Products, Salespersons, Sources, Lost Reasons)
+============================================================ */
+function genericMasterPage(c, opts){
+  pageHead(c, opts.title, opts.sub, [ h('button',{class:'btn btn-red', onClick:()=>openMasterModal(opts, null)}, '＋ Add') ]);
+  const cont = h('div'); c.appendChild(cont);
+  const rows = DB.get(opts.key);
+  renderTable(cont, opts.columns.concat([
+    {label:'', render:r=>h('div',{style:{display:'flex',gap:'4px'}},
+      h('button',{class:'btn btn-outline btn-xs', onClick:()=>openMasterModal(opts, r.id)},'Edit'),
+      h('button',{class:'btn btn-gray btn-xs', onClick:()=>{ if(confirm('Remove this entry?')){ DB.remove(opts.key, r.id); render(); } }},'Remove'))}
+  ]), rows, {emptyText:'None yet.'});
+}
+function openMasterModal(opts, id){
+  const existing = id?DB.byId(opts.key,id):null;
+  const fields = opts.fields.map(f=>Object.assign({}, f, {value: existing?existing[f.key]:(f.value||'')}));
+  openModal(existing?('Edit '+opts.title):('Add '+opts.title), fields, (data)=>{
+    if(!existing){ DB.add(opts.key, Object.assign({id:uid()}, data)); toast('Added'); }
+    else { DB.update(opts.key, id, data); toast('Updated'); }
+    render();
+  });
+}
+
+RENDERERS.products = function(c){
+  genericMasterPage(c, {
+    key:'products', title:'Product Master', sub:'Add new products without touching any code',
+    columns:[{label:'Product',key:'name'},{label:'Thickness',key:'thickness'},{label:'Size',key:'size'},{label:'Grade',key:'grade'},
+      {label:'Application',key:'application'},{label:'Standard Rate',render:r=>r.rate?fmtMoney(r.rate):'—'},{label:'MOQ',key:'moq'},{label:'Status',render:r=>statusTag(r.status)}],
+    fields:[
+      {key:'name', label:'Product Name', required:true},{key:'thickness', label:'Thickness'},{key:'size', label:'Size'},
+      {key:'grade', label:'Grade'},{key:'application', label:'Application'},{key:'rate', label:'Standard Rate (₹)', type:'number'},
+      {key:'moq', label:'Minimum Order Quantity'},{key:'status', label:'Sales Status', type:'select', options:['Active','Inactive']}
+    ]
+  });
+};
+RENDERERS.salespersons = function(c){
+  pageHead(c, 'Salesperson Management', 'Territory, targets and personal pipeline', [
+    h('button',{class:'btn btn-red', onClick:()=>openMasterModal({key:'salespersons', title:'Salesperson', fields:[
+      {key:'name', label:'Name', required:true},{key:'mobile', label:'Mobile'},{key:'email', label:'Email'},
+      {key:'territory', label:'Territory'},{key:'designation', label:'Designation'},{key:'active', label:'Active/Inactive', type:'select', options:['Active','Inactive']}
+    ]}, null)}, '＋ Add Salesperson'),
+  ]);
+  const rows = DB.get('salespersons');
+  const cont = h('div'); c.appendChild(cont);
+  renderTable(cont, [
+    {label:'Name', key:'name'}, {label:'Mobile', key:'mobile'}, {label:'Territory', key:'territory'}, {label:'Designation', key:'designation'},
+    {label:'Status', render:r=>statusTag(r.active)},
+    {label:'My Leads', render:r=>DB.get('leads').filter(l=>l.salesperson===r.name).length},
+    {label:'My Overdue', render:r=>followupBuckets().overdue.filter(f=>f.salesperson===r.name).length},
+    {label:'My Pipeline', render:r=>fmtMoney(DB.get('opportunities').filter(o=>o.salesperson===r.name && o.stage!=='Order Won' && o.stage!=='Order Lost').reduce((s,o)=>s+(Number(o.estValue)||0),0))},
+    {label:'My Won Value', render:r=>fmtMoney(DB.get('ordersWon').filter(o=>o.salesperson===r.name).reduce((s,o)=>s+(Number(o.orderValue)||0),0))},
+    {label:'', render:r=>h('button',{class:'btn btn-outline btn-xs', onClick:()=>openMasterModal({key:'salespersons', title:'Salesperson', fields:[
+      {key:'name', label:'Name', required:true},{key:'mobile', label:'Mobile'},{key:'email', label:'Email'},
+      {key:'territory', label:'Territory'},{key:'designation', label:'Designation'},{key:'active', label:'Active/Inactive', type:'select', options:['Active','Inactive']}
+    ]}, r.id)},'Edit')}
+  ], rows, {emptyText:'No salespersons yet.'});
+};
+
+RENDERERS.settings = function(c){
+  pageHead(c, 'Master Settings', 'Lost reasons, sources and lead-score rules — editable without code changes');
+  const tabs = h('div',{class:'tabs'});
+  const panes = h('div');
+  const defs = [{id:'lr', label:'Lost Reasons'}, {id:'src', label:'Marketing Sources'}, {id:'score', label:'Lead Scoring Rules'}, {id:'audit', label:'Audit Trail'}];
+  defs.forEach((d,i)=> tabs.appendChild(h('button',{class:'tab-btn'+(i===0?' active':''), onClick:()=>sw(d.id)}, d.label)));
+  c.appendChild(tabs); c.appendChild(panes);
+  function sw(id){
+    $all('.tab-btn', tabs).forEach((b,i)=>b.classList.toggle('active', defs[i].id===id));
+    clear(panes);
+    if(id==='lr') genericMasterPage(panes, {key:'lostReasons', title:'Lost Reason', sub:'Reasons offered when marking an opportunity lost',
+      columns:[{label:'Reason', key:'name'}], fields:[{key:'name', label:'Reason', required:true}]});
+    if(id==='src') genericMasterPage(panes, {key:'sources', title:'Marketing Source', sub:'Where leads come from',
+      columns:[{label:'Source', key:'name'}], fields:[{key:'name', label:'Source Name', required:true}]});
+    if(id==='score'){
+      panes.appendChild(h('div',{class:'card'}, h('div',{class:'card-title'},'Lead Score Weights (illustrative — Hot ≥ 70, Warm 40-69, Cold < 40)'),
+        h('p',{style:{fontSize:'12.5px',color:'var(--g5)',lineHeight:'1.7'}},
+          'Factors: Customer Type, Estimated Requirement, Product Interest match, Purchase Timeline, Budget fit, Decision-maker contact, Existing relationship, Previous purchase, Engagement level. ',
+          'Priority (Hot/Warm/Cold) is set manually today on each Customer/Lead record via the Priority field — assign it based on these factors during qualification.')));
+    }
+    if(id==='audit'){
+      const rows = DB.get('audit').slice().sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).slice(0,200);
+      renderTable(panes, [{label:'Date',render:r=>toDisp(r.date)},{label:'Time',key:'time'},{label:'User',key:'user'},
+        {label:'Action',key:'action'},{label:'Entity',key:'entity'},{label:'Old',key:'oldValue'},{label:'New',key:'newValue'}], rows, {emptyText:'No activity logged yet.'});
+    }
+  }
+  sw('lr');
+};
+
+/* ============================================================
+   REPORTS & ANALYTICS
+============================================================ */
+RENDERERS.reports = function(c){
+  pageHead(c, 'Reports & Analytics', 'Pipeline, conversion, ageing and product/city breakdowns', [
+    h('button',{class:'btn btn-gray', onClick:()=>exportExcel('leads_export.xlsx', DB.get('leads'))}, '⬇ Export Leads'),
+    h('button',{class:'btn btn-gray', onClick:()=>exportExcel('opportunities_export.xlsx', DB.get('opportunities'))}, '⬇ Export Opportunities'),
+  ]);
+  const leads = DB.get('leads'), opps = DB.get('opportunities'), won = DB.get('ordersWon'), lost = DB.get('ordersLost'), custs = DB.get('customers');
+
+  // ---- Follow-Up Report: city / salesperson / date-range ----
+  const fuCard = h('div',{class:'card'});
+  fuCard.appendChild(h('div',{class:'card-title'}, 'Follow-Up Report', h('button',{class:'btn btn-gray btn-xs', onClick:()=>exportExcel('followup_report.xlsx', fuFiltered().map(fuExportRow))}, '⬇ Export')));
+  const fuToolbar = h('div',{class:'toolbar'});
+  const fuCityF = h('select'); fuCityF.appendChild(h('option',{value:''},'All Cities'));
+  Array.from(new Set(custs.map(cu=>cu.city).filter(Boolean))).sort().forEach(ct=>fuCityF.appendChild(h('option',{value:ct},ct)));
+  const fuSpF = h('select'); fuSpF.appendChild(h('option',{value:''},'All Salespersons'));
+  salespersonNames().forEach(s=>fuSpF.appendChild(h('option',{value:s},s)));
+  const fuStatusF = h('select'); fuStatusF.appendChild(h('option',{value:''},'All Statuses'));
+  FOLLOWUP_STATUSES.forEach(s=>fuStatusF.appendChild(h('option',{value:s},s)));
+  const fuFrom = h('input',{type:'date'}); const fuTo = h('input',{type:'date'});
+  fuToolbar.appendChild(h('div',{class:'fld',style:{minWidth:'0'}}, h('label',{},'From'), fuFrom));
+  fuToolbar.appendChild(h('div',{class:'fld',style:{minWidth:'0'}}, h('label',{},'To'), fuTo));
+  fuToolbar.appendChild(fuCityF); fuToolbar.appendChild(fuSpF); fuToolbar.appendChild(fuStatusF);
+  fuCard.appendChild(fuToolbar);
+  const fuCont = h('div'); fuCard.appendChild(fuCont);
+
+  function fuFiltered(){
+    let rows = DB.get('followups');
+    if(fuFrom.value) rows = rows.filter(f=>(f.date||'') >= fuFrom.value);
+    if(fuTo.value) rows = rows.filter(f=>(f.date||'') <= fuTo.value);
+    if(fuCityF.value) rows = rows.filter(f=>{ const cu=DB.byId('customers',f.customerId); return cu && cu.city===fuCityF.value; });
+    if(fuSpF.value) rows = rows.filter(f=>f.salesperson===fuSpF.value);
+    if(fuStatusF.value) rows = rows.filter(f=>f.status===fuStatusF.value);
+    return rows.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  }
+  function fuExportRow(f){
+    const cu = DB.byId('customers', f.customerId) || {};
+    return {Date:toDisp(f.date), Customer:cu.companyName||'', City:cu.city||'', Salesperson:f.salesperson, Type:f.type,
+      Discussion:f.discussion, NextAction:f.nextAction, NextFollowUp:toDisp(f.nextFollowUpDate), Status:f.status};
+  }
+  function drawFuReport(){
+    const rows = fuFiltered();
+    renderTable(fuCont, [
+      {label:'Date', render:r=>toDisp(r.date)},
+      {label:'Customer', render:r=>{const cu=DB.byId('customers',r.customerId); return cu?cu.companyName:'—';}},
+      {label:'City', render:r=>{const cu=DB.byId('customers',r.customerId); return cu?cu.city:'—';}},
+      {label:'Salesperson', key:'salesperson'}, {label:'Type', key:'type'}, {label:'Discussion', key:'discussion'},
+      {label:'Next Action', key:'nextAction'}, {label:'Next Follow-up', render:r=>toDisp(r.nextFollowUpDate)},
+      {label:'Status', render:r=>statusTag(r.status)},
+    ], rows, {emptyText:'No follow-ups match this filter.'});
+  }
+  [fuFrom,fuTo,fuCityF,fuSpF,fuStatusF].forEach(el=>el.addEventListener('input', drawFuReport));
+  drawFuReport();
+  c.appendChild(fuCard);
+
+  const g2 = h('div',{class:'grid2'});
+  const left = h('div');
+  const c1 = h('div',{class:'card'}); c1.appendChild(h('div',{class:'card-title'},'Product-wise Enquiries'));
+  const b1 = h('div',{class:'chart-box'}); c1.appendChild(b1); left.appendChild(c1);
+  const c2 = h('div',{class:'card'}); c2.appendChild(h('div',{class:'card-title'},'City-wise Leads'));
+  const b2 = h('div',{class:'chart-box'}); c2.appendChild(b2); left.appendChild(c2);
+  const c3 = h('div',{class:'card'}); c3.appendChild(h('div',{class:'card-title'},'Salesperson Performance (Won vs Lost)'));
+  const b3 = h('div',{class:'chart-box'}); c3.appendChild(b3); left.appendChild(c3);
+  g2.appendChild(left);
+
+  const right = h('div');
+  const c4 = h('div',{class:'card'}); c4.appendChild(h('div',{class:'card-title'},'Lead Ageing (open leads)'));
+  const b4 = h('div',{class:'chart-box sm'}); c4.appendChild(b4); right.appendChild(c4);
+  const c5 = h('div',{class:'card'}); c5.appendChild(h('div',{class:'card-title'},'Competitor Analysis (Lost Orders)'));
+  const b5 = h('div',{class:'chart-box sm'}); c5.appendChild(b5); right.appendChild(c5);
+  const c6 = h('div',{class:'card'}); c6.appendChild(h('div',{class:'card-title'},'Dormant Customers'));
+  const dormCont = h('div'); c6.appendChild(dormCont); right.appendChild(c6);
+  g2.appendChild(right);
+  c.appendChild(g2);
+
+  const dormant = custs.filter(cu=> cu.lastContactDate && daysBetween(cu.lastContactDate, todayISO())>=30)
+    .map(cu=>Object.assign({}, cu, {daysSince: daysBetween(cu.lastContactDate, todayISO())}));
+  renderTable(dormCont, [{label:'Customer',key:'companyName'},{label:'Salesperson',key:'salesperson'},{label:'Days Since Contact',key:'daysSince'}],
+    dormant.sort((a,b)=>b.daysSince-a.daysSince).slice(0,10), {emptyText:'No dormant customers 🎉'});
+
+  setTimeout(()=>{
+    const prodAgg={}; leads.forEach(l=>{ const p=l.productInterested||'Other'; prodAgg[p]=(prodAgg[p]||0)+1; });
+    const pl=Object.keys(prodAgg);
+    if(pl.length) new Chart(mkCanvas(b1), {type:'bar', data:{labels:pl, datasets:[{label:'Enquiries', data:pl.map(k=>prodAgg[k]), backgroundColor:'#C8102E'}]}, options:baseChartOpts({})});
+    else b1.appendChild(h('div',{class:'empty-state'},'No data'));
+
+    const cityAgg={}; leads.forEach(l=>{ const ct=l.city||'Unknown'; cityAgg[ct]=(cityAgg[ct]||0)+1; });
+    const cl=Object.keys(cityAgg).sort((a,b)=>cityAgg[b]-cityAgg[a]).slice(0,10);
+    if(cl.length) new Chart(mkCanvas(b2), {type:'bar', data:{labels:cl, datasets:[{label:'Leads', data:cl.map(k=>cityAgg[k]), backgroundColor:'#0891b2'}]}, options:baseChartOpts({indexAxis:'y'})});
+    else b2.appendChild(h('div',{class:'empty-state'},'No data'));
+
+    const spNames = salespersonNames();
+    if(spNames.length){
+      new Chart(mkCanvas(b3), {type:'bar', data:{labels:spNames, datasets:[
+        {label:'Won', data:spNames.map(n=>won.filter(o=>o.salesperson===n).length), backgroundColor:'#16a34a'},
+        {label:'Lost', data:spNames.map(n=>lost.filter(o=>o.salesperson===n).length), backgroundColor:'#dc2626'}
+      ]}, options:Object.assign({maintainAspectRatio:false},{plugins:{legend:{position:'bottom'}}})});
+    } else b3.appendChild(h('div',{class:'empty-state'},'No salespersons'));
+
+    const openLeads = leads.filter(l=>!['Order Won','Order Lost'].includes(l.status));
+    const buckets = {'0-7':0,'8-15':0,'16-30':0,'31-60':0,'61-90':0,'90+':0};
+    openLeads.forEach(l=>{ const d = daysBetween(l.dateAdded, todayISO());
+      if(d<=7) buckets['0-7']++; else if(d<=15) buckets['8-15']++; else if(d<=30) buckets['16-30']++;
+      else if(d<=60) buckets['31-60']++; else if(d<=90) buckets['61-90']++; else buckets['90+']++; });
+    new Chart(mkCanvas(b4), {type:'doughnut', data:{labels:Object.keys(buckets), datasets:[{data:Object.values(buckets),
+      backgroundColor:['#16a34a','#0891b2','#d97706','#7c3aed','#C8102E','#4a5568']}]}, options:{maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{size:9}}}}}});
+
+    const compAgg={}; lost.forEach(l=>{ const cn=l.competitor||'Unknown'; compAgg[cn]=(compAgg[cn]||0)+1; });
+    const cml = Object.keys(compAgg);
+    if(cml.length) new Chart(mkCanvas(b5), {type:'pie', data:{labels:cml, datasets:[{data:cml.map(k=>compAgg[k]),
+      backgroundColor:['#C8102E','#0891b2','#7c3aed','#d97706','#4a5568','#16a34a']}]}, options:{maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{boxWidth:9,font:{size:9}}}}}});
+    else b5.appendChild(h('div',{class:'empty-state'},'No lost orders yet'));
+  }, 0);
+};
+
+/* ============================================================
+   GLOBAL SEARCH
+============================================================ */
+function globalSearch(q){
+  q = q.toLowerCase().trim();
+  const results = [];
+  if(!q) return results;
+  DB.get('customers').forEach(cu=>{
+    if((cu.companyName+cu.mobile+cu.city+cu.state+(cu.contactPerson||'')+(cu.gst||'')).toLowerCase().includes(q))
+      results.push({tag:'Customer', label:cu.companyName+' — '+(cu.city||''), action:()=>{CUSTOMER_VIEW_ID=cu.id; navigate('customers');}});
+  });
+  DB.get('leads').forEach(l=>{
+    if((l.companyName+l.mobile+l.city).toLowerCase().includes(q))
+      results.push({tag:'Lead', label:l.companyName+' — '+(l.status||''), action:()=>navigate('rawleads')});
+  });
+  DB.get('opportunities').forEach(o=>{
+    if((o.product||'').toLowerCase().includes(q))
+      results.push({tag:'Opportunity', label:o.product, action:()=>navigate('opportunities')});
+  });
+  DB.get('quotations').forEach(qq=>{
+    if(qq.id.toLowerCase().includes(q) || (qq.product||'').toLowerCase().includes(q))
+      results.push({tag:'Quotation', label:qq.id, action:()=>navigate('quotations')});
+  });
+  salespersonNames().forEach(n=>{
+    if(n.toLowerCase().includes(q)) results.push({tag:'Salesperson', label:n, action:()=>navigate('salespersons')});
+  });
+  return results.slice(0,15);
+}
+$('#gsearch-input').addEventListener('input', (e)=>{
+  const box = $('#gsearch-results');
+  const results = globalSearch(e.target.value);
+  clear(box);
+  if(!results.length){ box.style.display='none'; return; }
+  results.forEach(r=> box.appendChild(h('div',{class:'gr-item', onClick:()=>{ r.action(); box.style.display='none'; e.target.value=''; }},
+    h('span',{class:'gr-tag'}, r.tag), r.label)));
+  box.style.display='block';
+});
+document.addEventListener('click', (e)=>{ if(!$('#gsearch').contains(e.target)) $('#gsearch-results').style.display='none'; });
+
+/* ============================================================
+   NOTIFICATIONS PANEL
+============================================================ */
+$('#notif-btn').addEventListener('click', ()=>{
+  const b = followupBuckets();
+  const body = h('div');
+  const items = [
+    ...b.overdue.map(f=>({icon:'🔴', text:'Overdue: '+(DB.byId('customers',f.customerId)||{}).companyName}) ),
+    ...b.today.map(f=>({icon:'🟢', text:'Today: '+(DB.byId('customers',f.customerId)||{}).companyName}) ),
+  ];
+  const lostReact = DB.get('ordersLost').filter(l=>l.reactivationDate===todayISO());
+  lostReact.forEach(l=> items.push({icon:'🟢', text:'Reactivate today: '+(DB.byId('customers',l.customerId)||{}).companyName}));
+  if(!items.length) body.appendChild(h('p',{},'No pending notifications.'));
+  items.slice(0,20).forEach(it=> body.appendChild(h('div',{style:{padding:'8px 0',borderBottom:'1px solid var(--g1)',fontSize:'12.5px'}}, it.icon+' '+it.text)));
+  openModal('Notifications', [], null, {custom: body}, [{label:'Close', cls:'btn-red', action:closeModal}]);
+});
+
+/* ============================================================
+   BOOT
+============================================================ */
+loadCRMState().then(()=>{
+  seedIfEmpty();
+  buildSidebar();
+  render();
+});
+</script>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -5,10 +5,21 @@
 export async function onRequestGet(ctx) {
   const db = ctx.env.DB;
   try {
-    const { results } = await db.prepare(
-      'SELECT * FROM dwpas_departments WHERE is_active = 1 ORDER BY id'
-    ).all();
-    return Response.json({ departments: results || [] });
+    try {
+      const { results } = await db.prepare(
+        'SELECT * FROM dwpas_departments WHERE is_active = 1 ORDER BY id'
+      ).all();
+      return Response.json({ departments: results || [] });
+    } catch (e) {
+      if (e.message && e.message.includes('no such table')) {
+        await db.prepare(`CREATE TABLE IF NOT EXISTS dwpas_departments (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, head TEXT, code TEXT,
+          description TEXT, is_active INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now'))
+        )`).run();
+        return Response.json({ departments: [] });
+      }
+      throw e;
+    }
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
   }

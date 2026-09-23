@@ -7,12 +7,19 @@ export async function onRequestGet(context) {
     if (!db) return jsonResponse({ error: 'D1 not configured' }, 500);
 
     const { results } = await db.prepare('SELECT * FROM vendor_cities ORDER BY city').all();
-    const cities = (results || []).map(row => ({
-      _id: row.id,
-      city: row.city,
-      state: row.state,
-      pincodes: JSON.parse(row.pincodes || '[]'),
-    }));
+    const cities = [];
+    for (const row of (results || [])) {
+      try {
+        cities.push({
+          _id: row.id,
+          city: row.city,
+          state: row.state,
+          pincodes: JSON.parse(row.pincodes || '[]'),
+        });
+      } catch (parseErr) {
+        console.error('Skipping city row with id=' + row.id + ': ' + parseErr.message);
+      }
+    }
 
     return jsonResponse(cities);
   } catch (e) {

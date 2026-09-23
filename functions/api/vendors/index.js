@@ -7,40 +7,48 @@ export async function onRequestGet(context) {
     if (!db) return jsonResponse({ error: 'D1 not configured' }, 500);
 
     const { results } = await db.prepare('SELECT * FROM vendor_records').all();
-    const vendors = (results || []).map(row => ({
-      _id: row.id,
-      name: row.name,
-      code: row.code,
-      type: row.type,
-      categories: JSON.parse(row.categories || '[]'),
-      products: JSON.parse(row.products || '[]'),
-      contact: row.contact,
-      designation: row.designation,
-      phone: row.phone,
-      email: row.email,
-      address: row.address,
-      pincode: row.pincode,
-      city: row.city,
-      state: row.state,
-      website: row.website,
-      gst: row.gst,
-      pan: row.pan,
-      msme: row.msme,
-      payment_terms: row.payment_terms,
-      bank: row.bank,
-      account_no: row.account_no,
-      ifsc: row.ifsc,
-      notes: row.notes,
-      rating: row.rating,
-      status: row.status,
-      created_by: row.created_by,
-      created_at: row.created_at,
-      approved_at: row.approved_at,
-      approved_by: row.approved_by,
-      activated_at: row.activated_at,
-      blacklisted_at: row.blacklisted_at,
-      blacklist_reason: row.blacklist_reason,
-    }));
+    const vendors = [];
+    for (const row of (results || [])) {
+      try {
+        vendors.push({
+          _id: row.id,
+          name: row.name,
+          code: row.code,
+          type: row.type,
+          categories: JSON.parse(row.categories || '[]'),
+          products: JSON.parse(row.products || '[]'),
+          contact: row.contact,
+          designation: row.designation,
+          phone: row.phone,
+          email: row.email,
+          address: row.address,
+          pincode: row.pincode,
+          city: row.city,
+          state: row.state,
+          website: row.website,
+          gst: row.gst,
+          pan: row.pan,
+          msme: row.msme,
+          payment_terms: row.payment_terms,
+          bank: row.bank,
+          account_no: row.account_no,
+          ifsc: row.ifsc,
+          notes: row.notes,
+          rating: row.rating,
+          status: row.status,
+          created_by: row.created_by,
+          created_at: row.created_at,
+          approved_at: row.approved_at,
+          approved_by: row.approved_by,
+          activated_at: row.activated_at,
+          blacklisted_at: row.blacklisted_at,
+          blacklist_reason: row.blacklist_reason,
+        });
+      } catch (parseErr) {
+        // Skip malformed rows instead of breaking the entire listing
+        console.error('Skipping vendor row with id=' + row.id + ': ' + parseErr.message);
+      }
+    }
 
     return jsonResponse(vendors);
   } catch (e) {

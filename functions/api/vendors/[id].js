@@ -9,7 +9,7 @@ export async function onRequestPut(context) {
     const id = context.params.id;
     const body = await context.request.json();
 
-    await db.prepare(
+    const result = await db.prepare(
       `UPDATE vendor_records SET
         name = ?, code = ?, type = ?, categories = ?, products = ?, contact = ?, designation = ?,
         phone = ?, email = ?, address = ?, pincode = ?, city = ?, state = ?, website = ?,
@@ -43,6 +43,10 @@ export async function onRequestPut(context) {
       body.status || 'pending',
       id
     ).run();
+
+    if (result.meta.changes === 0) {
+      return jsonResponse({ error: 'Vendor not found' }, 404);
+    }
 
     return jsonResponse({ success: true });
   } catch (e) {

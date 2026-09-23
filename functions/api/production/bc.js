@@ -3,19 +3,31 @@ export async function onRequestGet(context) {
     const db = context.env.DB;
     if (!db) return jsonResponse({ error: 'D1 not configured' }, 500);
 
-    const { results } = await db.prepare(
-      'SELECT remarks FROM production_bc_reports ORDER BY created_at DESC'
-    ).all();
+    try {
+      const { results } = await db.prepare(
+        'SELECT remarks FROM production_bc_reports ORDER BY created_at DESC'
+      ).all();
 
-    const reports = (results || []).map(row => {
-      try {
-        return JSON.parse(row.remarks);
-      } catch (e) {
-        return null;
+      const reports = (results || []).map(row => {
+        try {
+          return JSON.parse(row.remarks);
+        } catch (e) {
+          return null;
+        }
+      }).filter(Boolean);
+
+      return jsonResponse(reports);
+    } catch (e) {
+      if (e.message && e.message.includes('no such table')) {
+        await db.prepare(`CREATE TABLE IF NOT EXISTS production_bc_reports (
+          id TEXT PRIMARY KEY, report_date TEXT, shift TEXT, operator_name TEXT, product TEXT,
+          size TEXT, linked_hp TEXT, hp_pcs INTEGER, cut_pcs INTEGER, reject_pcs INTEGER,
+          reject_pct REAL, wf_state TEXT, status TEXT, remarks TEXT, created_at TEXT DEFAULT (datetime('now'))
+        )`).run();
+        return jsonResponse([]);
       }
-    }).filter(Boolean);
-
-    return jsonResponse(reports);
+      throw e;
+    }
   } catch (e) {
     return jsonResponse({ error: e.message }, 500);
   }

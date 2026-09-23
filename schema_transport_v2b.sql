@@ -1,0 +1,64 @@
+-- Transport v2 — Missing columns for rate_comparisons, approvals, orders
+-- Single-file upload: one API call to avoid rate limit issues
+
+ALTER TABLE transport_rate_comparisons ADD COLUMN rc_no TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN from_location TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN from_pin TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN to_location TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN to_pin TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN vehicle TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN material TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN weight TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN budget REAL DEFAULT 0;
+ALTER TABLE transport_rate_comparisons ADD COLUMN quotes_json TEXT DEFAULT '[]';
+ALTER TABLE transport_rate_comparisons ADD COLUMN selected_tid TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN selected_transporter TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN selected_rate REAL DEFAULT 0;
+ALTER TABLE transport_rate_comparisons ADD COLUMN selected_transit TEXT DEFAULT '';
+ALTER TABLE transport_rate_comparisons ADD COLUMN selected_mg_weight REAL DEFAULT 0;
+ALTER TABLE transport_rate_comparisons ADD COLUMN is_lowest INTEGER DEFAULT 0;
+ALTER TABLE transport_rate_comparisons ADD COLUMN exceeds_budget INTEGER DEFAULT 0;
+ALTER TABLE transport_rate_comparisons ADD COLUMN status TEXT DEFAULT 'pending_approval';
+ALTER TABLE transport_rate_comparisons ADD COLUMN created_at TEXT DEFAULT (datetime('now'));
+
+ALTER TABLE transport_approvals ADD COLUMN rc_id TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN transporter TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN selected_transit TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN from_location TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN from_pin TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN to_location TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN to_pin TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN vehicle TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN material TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN weight TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN pickup_date TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN dtype TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN budget REAL DEFAULT 0;
+ALTER TABLE transport_approvals ADD COLUMN is_lowest INTEGER DEFAULT 0;
+ALTER TABLE transport_approvals ADD COLUMN exceeds_budget INTEGER DEFAULT 0;
+ALTER TABLE transport_approvals ADD COLUMN justification TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN next_approver TEXT DEFAULT '';
+ALTER TABLE transport_approvals ADD COLUMN history_json TEXT DEFAULT '[]';
+
+ALTER TABLE transport_orders ADD COLUMN ap_id TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN rc_id TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN inq_id TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN transporter_name TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN tp_phone TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN tp_contact TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN tp_gst TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN tp_address TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN tp_city TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN tp_state TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN tp_credit TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN from_location TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN from_pin TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN to_location TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN to_pin TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN vehicle TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN material TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN weight TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN dtype TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN rate REAL DEFAULT 0;
+ALTER TABLE transport_orders ADD COLUMN transit TEXT DEFAULT '';
+ALTER TABLE transport_orders ADD COLUMN pickup_date TEXT DEFAULT '';

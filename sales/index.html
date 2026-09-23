@@ -14,11 +14,11 @@
   --off:#f4f6fa; --g0:#f8f9fb; --g1:#f1f3f7; --g2:#e4e8ef; --g3:#c5cdd8;
   --g4:#8a96a8; --g5:#4a5568; --g6:#1a202c; --border:#dde3ec;
   --green:#16a34a; --amber:#d97706; --purple:#7c3aed; --teal:#0891b2; --danger:#dc2626;
-  --fh:'Urbanist',sans-serif; --fb:'Inter',sans-serif; --fm:'JetBrains Mono',monospace;
+  --fh: 'Inter', sans-serif; --fb:'Inter',sans-serif; --fm:'JetBrains Mono',monospace;
   --shadow:0 1px 3px rgba(0,0,0,.08); --shadow2:0 4px 16px rgba(0,0,0,.12); --shadow3:0 8px 32px rgba(0,0,0,.16);
   --sidebar:240px;
 }
-body.font-a{--fh:'Urbanist',sans-serif; --fb:'Inter',sans-serif; --fm:'JetBrains Mono',monospace;}
+body.font-a{--fh: 'Inter', sans-serif; --fb:'Inter',sans-serif; --fm:'JetBrains Mono',monospace;}
 body.font-b{--fh:'Sora',sans-serif; --fb:'Inter',sans-serif; --fm:'JetBrains Mono',monospace;}
 body.font-c{--fh:'Space Grotesk',sans-serif; --fb:'Inter',sans-serif; --fm:'IBM Plex Mono',monospace;}
 body.font-d{--fh:'Lexend',sans-serif; --fb:'Manrope',sans-serif; --fm:'JetBrains Mono',monospace;}
@@ -228,6 +228,10 @@ table.dtable tfoot td{padding:10px 12px;font-weight:700;background:var(--g1);bor
   .content{margin:0;padding:0}
 }
 </style>
+  <!-- shell_patched_v2 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../shell-override.css">
 </head>
 <body>
 
@@ -6895,5 +6899,29 @@ function emailPi(piId) {
   }, function () { printPiPdf(piId); });
 }
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  // Inject "Back to Portal" at the TOP of the sidebar nav
+  var targets = ['#sidebar .menu','#sidebar nav','#sidebar ul','nav.sb','aside#sidebar','#sidebar'];
+  var injected = false;
+  for(var i=0;i<targets.length;i++){
+    var el = document.querySelector(targets[i]);
+    if(el){
+      var btn = document.createElement('a');
+      btn.className='shell-back-btn';
+      btn.href='../index.html';
+      btn.title='Back to Portal';
+      btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/></svg> Portal';
+      btn.style.cssText='display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#667085;background:#F8F9FA;border:1px solid #E6E8EC;border-radius:7px;padding:6px 12px;cursor:pointer;transition:all .12s;text-decoration:none;margin:8px 10px 4px;';
+      btn.onmouseover=function(){this.style.background='#FFF1F2';this.style.color='#D71920';this.style.borderColor='#fecaca'};
+      btn.onmouseout=function(){this.style.background='#F8F9FA';this.style.color='#667085';this.style.borderColor='#E6E8EC'};
+      el.insertBefore(btn, el.firstChild);
+      injected = true;
+      break;
+    }
+  }
+});
+</script>
+<script src="../shell.js"></script>
 </body>
 </html>
