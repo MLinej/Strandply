@@ -268,49 +268,112 @@ var _curRole='dispatch';
 var _roleMap={dispatch:'Jimit Mehta',logistics:'Ramesh Shah',accounts:'Priya Agarwal'};
 var _roleLabel={dispatch:'Dispatch Executive',logistics:'Logistics Manager',accounts:'Accounts'};
 
-// ═══ LOCALSTORAGE PERSISTENCE ══════════════════════════════════════════════
+// ═══ PERSISTENCE & API SYNC ══════════════════════════════════════════════
 var LS_KEY='stp_transport_v1';
-function saveState(){
-  try{
-    localStorage.setItem(LS_KEY,JSON.stringify({
-      INQUIRIES:INQUIRIES,
-      RATE_CMPS:RATE_CMPS,
-      APPROVALS:APPROVALS,
-      ORDERS:ORDERS,
-      RC_DRAFTS:RC_DRAFTS,
-      TRANSPORTERS:TRANSPORTERS,
-      VEHICLES:VEHICLES,
-      _seqInq:_seqInq,
-      _seqRc:_seqRc,
-      _seqAp:_seqAp,
-      _seqOr:_seqOr
-    }));
-  }catch(e){console.error('saveState failed',e);}
+
+async function apiGet(url) {
+  const res = await fetch(url);
+  return res.json();
 }
-function loadState(){
+
+async function apiPost(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+var saveTimer = null;
+function saveState(){
+  var payload = {
+    INQUIRIES: INQUIRIES,
+    RATE_CMPS: RATE_CMPS,
+    APPROVALS: APPROVALS,
+    ORDERS: ORDERS,
+    RC_DRAFTS: RC_DRAFTS,
+    TRANSPORTERS: TRANSPORTERS,
+    VEHICLES: VEHICLES,
+    _seqInq: _seqInq,
+    _seqRc: _seqRc,
+    _seqAp: _seqAp,
+    _seqOr: _seqOr
+  };
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(payload));
+  }catch(e){console.error('saveState localStorage failed', e);}
+
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async function() {
+    try {
+      await apiPost('/api/transport/state', payload);
+    } catch(e) {
+      console.error('Failed to sync transport state to D1 database:', e);
+    }
+  }, 300);
+}
+
+async function loadState(){
+  // 1. Load from localStorage cache first for fast initial UI rendering
   try{
     var raw=localStorage.getItem(LS_KEY);
-    if(!raw)return;
-    var d=JSON.parse(raw);
-    if(d.INQUIRIES)INQUIRIES=d.INQUIRIES;
-    if(d.RATE_CMPS)RATE_CMPS=d.RATE_CMPS;
-    if(d.APPROVALS)APPROVALS=d.APPROVALS;
-    if(d.ORDERS)ORDERS=d.ORDERS;
-    if(d.RC_DRAFTS)RC_DRAFTS=d.RC_DRAFTS;
-    if(d.TRANSPORTERS)TRANSPORTERS=d.TRANSPORTERS;
-    if(d.VEHICLES)VEHICLES=d.VEHICLES;
-    // Restore or reconstruct sequence counters from max existing ID
-    _seqInq=d._seqInq||1;
-    _seqRc=d._seqRc||1;
-    _seqAp=d._seqAp||1;
-    _seqOr=d._seqOr||1;
-    var m;
-    INQUIRIES.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqInq)_seqInq=n;}});
-    RATE_CMPS.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqRc)_seqRc=n;}});
-    RC_DRAFTS&&Object.keys(RC_DRAFTS).forEach(function(k){m=k.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqRc)_seqRc=n;}});
-    APPROVALS.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqAp)_seqAp=n;}});
-    ORDERS.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqOr)_seqOr=n;}});
-  }catch(e){console.error('loadState failed',e);}
+    if(raw){
+      var d=JSON.parse(raw);
+      if(d.INQUIRIES)INQUIRIES=d.INQUIRIES;
+      if(d.RATE_CMPS)RATE_CMPS=d.RATE_CMPS;
+      if(d.APPROVALS)APPROVALS=d.APPROVALS;
+      if(d.ORDERS)ORDERS=d.ORDERS;
+      if(d.RC_DRAFTS)RC_DRAFTS=d.RC_DRAFTS;
+      if(d.TRANSPORTERS)TRANSPORTERS=d.TRANSPORTERS;
+      if(d.VEHICLES)VEHICLES=d.VEHICLES;
+      _seqInq=d._seqInq||1;
+      _seqRc=d._seqRc||1;
+      _seqAp=d._seqAp||1;
+      _seqOr=d._seqOr||1;
+    }
+  }catch(e){console.error('loadState local cache error:', e);}
+
+  // 2. Fetch full state from D1 database endpoint /api/transport/state
+  try {
+    var d = await apiGet('/api/transport/state');
+    if(d && !d.error){
+      if(Array.isArray(d.INQUIRIES)) INQUIRIES = d.INQUIRIES;
+      if(Array.isArray(d.RATE_CMPS)) RATE_CMPS = d.RATE_CMPS;
+      if(Array.isArray(d.APPROVALS)) APPROVALS = d.APPROVALS;
+      if(Array.isArray(d.ORDERS)) ORDERS = d.ORDERS;
+      if(Array.isArray(d.TRANSPORTERS) && d.TRANSPORTERS.length) TRANSPORTERS = d.TRANSPORTERS;
+      if(Array.isArray(d.VEHICLES) && d.VEHICLES.length) VEHICLES = d.VEHICLES;
+      if(d.RC_DRAFTS) RC_DRAFTS = d.RC_DRAFTS;
+      if(d._seqInq) _seqInq = d._seqInq;
+      if(d._seqRc) _seqRc = d._seqRc;
+      if(d._seqAp) _seqAp = d._seqAp;
+      if(d._seqOr) _seqOr = d._seqOr;
+
+      // Recalculate sequence counters from maximum existing entity IDs
+      var m;
+      INQUIRIES.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqInq)_seqInq=n;}});
+      RATE_CMPS.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqRc)_seqRc=n;}});
+      RC_DRAFTS&&Object.keys(RC_DRAFTS).forEach(function(k){m=k.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqRc)_seqRc=n;}});
+      APPROVALS.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqAp)_seqAp=n;}});
+      ORDERS.forEach(function(x){m=x.id&&x.id.match(/\d+$/);if(m){var n=parseInt(m[0],10)+1;if(n>_seqOr)_seqOr=n;}});
+
+      // Update localStorage cache with latest D1 DB data
+      try{
+        localStorage.setItem(LS_KEY,JSON.stringify({
+          INQUIRIES:INQUIRIES, RATE_CMPS:RATE_CMPS, APPROVALS:APPROVALS,
+          ORDERS:ORDERS, RC_DRAFTS:RC_DRAFTS, TRANSPORTERS:TRANSPORTERS,
+          VEHICLES:VEHICLES, _seqInq:_seqInq, _seqRc:_seqRc, _seqAp:_seqAp, _seqOr:_seqOr
+        }));
+      }catch(e){}
+
+      updateBadges();
+      var activeNav = document.querySelector('.nb.on');
+      if(activeNav) showSec(activeNav.id.replace('nb-','')); else renderDashboard();
+    }
+  } catch(e) {
+    console.error('loadState D1 database fetch error:', e);
+  }
 }
 
 // ═══ UTILS ═══════════════════════════════════════════════════════════════
