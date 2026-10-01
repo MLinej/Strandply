@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GSTR-2B match</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}a{color:#172033}a:hover{color:#D71920}</style>
+</helmet>
+<div style="width: 1440px; height: 1000px; display: flex; background: #F8F9FA; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: #172033; overflow: hidden">
+<dc-import name="Sidebar" active="accounts" sub="GSTR-2B match" height="1000px" hint-size="232px,1000px"></dc-import>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+<dc-import name="Topbar" module="Accounts" page="GSTR-2B match" hint-size="100%,60px"></dc-import>
+<main style="padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.2px">GSTR-2B match</h1>
+<div style="font-size: 13px; color: #667085">Strandply LLP · Aug 2026 — input tax credit is safe only for invoices that appear in 2B</div>
+</div>
+<button style="height: 36px; padding: 0 12px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>Export this tab</button>
+</div>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 600">Firm</span><button style="width: 190px; height: 36px; box-sizing: border-box; padding: 0 12px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; font: inherit; font-size: 13px; color: #172033; display: flex; align-items: center; justify-content: space-between; cursor: pointer">Strandply LLP<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button></label>
+<label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 600">Return period</span><button style="width: 170px; height: 36px; box-sizing: border-box; padding: 0 12px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; font: inherit; font-size: 13px; color: #172033; display: flex; align-items: center; justify-content: space-between; cursor: pointer">August 2026<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path></svg></button></label>
+<button style="height: 36px; padding: 0 14px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Show</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 1.5fr; gap: 14px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+<div style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="width: 34px; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; {{k.circle}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{k.d}}"></path></svg></div>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<div style="font-size: 11px; font-weight: 500; letter-spacing: 0.4px; text-transform: uppercase; color: #98A2B3">{{k.label}}</div>
+<div style="font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap">{{k.value}}</div>
+<div style="font-size: 12px; color: #667085">{{k.meta}}</div>
+</div>
+</div>
+</sc-for>
+<div style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<div style="font-size: 14px; font-weight: 600">Import GSTR-2B</div>
+<div style="font-size: 11.5px; color: #98A2B3">Last: 17 Sept 2026, 08:31 pm · Accounts</div>
+</div>
+<div style="height: 44px; box-sizing: border-box; border: 1px dashed #D0D5DD; border-radius: 8px; background: #F8F9FA; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 12.5px; color: #667085">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path></svg>
+Drop the 2B JSON from the GST portal, or a CSV
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 10px">
+<span style="font-size: 11.5px; color: #98A2B3; line-height: 1.4">Importing again replaces this period</span>
+<button style="height: 34px; padding: 0 14px; border: 1px solid #D71920; background: #D71920; color: #FFFFFF; border-radius: 8px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; flex-shrink: 0">Import &amp; match</button>
+</div>
+</div>
+</div>
+<div role="tablist" style="display: flex; gap: 22px; border-bottom: 1px solid #E6E8EC">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button role="tab" style="height: 38px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 13.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-bottom: -1px; {{t.style}}">{{t.label}}<span style="font-size: 11.5px; font-weight: 600; color: #98A2B3">{{t.count}}</span></button>
+</sc-for>
+</div>
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; overflow: hidden">
+<div style="display: grid; grid-template-columns: 130px minmax(0, 1fr) 170px 150px 120px 130px 140px 150px; align-items: center; height: 34px; background: #F8F9FA; border-bottom: 1px solid #E6E8EC; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: #667085">
+<div style="padding: 0 8px 0 16px">Bill</div><div style="padding: 0 8px">Vendor</div><div style="padding: 0 8px">GSTIN</div><div style="padding: 0 8px">Invoice</div><div style="padding: 0 8px">Received</div><div style="padding: 0 8px; text-align: right">Taxable</div><div style="padding: 0 8px; text-align: right">ITC at risk</div><div style="padding: 0 16px 0 8px"></div>
+</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 130px minmax(0, 1fr) 170px 150px 120px 130px 140px 150px; align-items: center; height: 48px; border-bottom: 1px solid #EEF0F3; font-size: 12.5px; font-variant-numeric: tabular-nums">
+<a href="#" style="padding: 0 8px 0 16px; font-weight: 600; text-decoration: none">{{r.bill}}</a>
+<div style="padding: 0 8px">{{r.vendor}}</div>
+<div style="padding: 0 8px; color: #667085; letter-spacing: 0.2px">{{r.gstin}}</div>
+<div style="padding: 0 8px; display: flex; flex-direction: column"><span>{{r.inv}}</span><span style="font-size: 11px; color: #98A2B3">{{r.invDate}}</span></div>
+<div style="padding: 0 8px; color: #667085">{{r.recd}}</div>
+<div style="padding: 0 8px; text-align: right">{{r.taxable}}</div>
+<div style="padding: 0 8px; text-align: right; font-weight: 600; color: #D71920">{{r.tax}}</div>
+<div style="padding: 0 16px 0 8px; display: flex; justify-content: flex-end"><button style="height: 30px; padding: 0 10px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 7px; font: inherit; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6"></path></svg>Remind supplier</button></div>
+</div>
+</sc-for>
+<div style="display: grid; grid-template-columns: 130px minmax(0, 1fr) 170px 150px 120px 130px 140px 150px; align-items: center; height: 42px; background: #F8F9FA; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums">
+<div style="padding: 0 8px 0 16px">ITC at risk</div><div></div><div></div><div></div><div></div>
+<div style="padding: 0 8px; text-align: right">₹3,76,595.00</div>
+<div style="padding: 0 8px; text-align: right; color: #D71920">₹67,787.06</div><div></div>
+</div>
+</section>
+<div style="font-size: 12px; color: #98A2B3; line-height: 1.5">Matching: same supplier GSTIN and the same invoice number, ignoring case, spaces, punctuation and leading zeros. Follow up with suppliers whose invoices are missing so they file their GSTR-1.</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var kpis = [
+      { label: '2B invoices', value: '21', meta: 'Tax ₹7,38,079.09', circle: 'background:#F5F6F8;color:#667085', d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8' },
+      { label: 'Matched', value: '19', meta: 'ITC available ₹7,28,952.09', circle: 'background:#F0FDF4;color:#16A34A', d: 'M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4 12 14.01l-3-3' },
+      { label: 'Not in books', value: '2', meta: 'Bills to enter or query', circle: 'background:#FFFBEB;color:#D97706', d: 'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01' },
+      { label: 'ITC at risk', value: '₹67,787.06', meta: '3 bills not in 2B', circle: 'background:#FFF1F2;color:#D71920', d: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 8v4M12 16h.01' }
+    ];
+    var tabs = [['Matched', '19'], ['In 2B, not in books', '2'], ['In books, not in 2B', '3'], ['Tax differences', '1']].map(function (t, i) {
+      return { label: t[0], count: t[1], style: i === 2 ? 'color:#D71920;font-weight:600;border-bottom:2px solid #D71920' : 'color:#667085;font-weight:500;border-bottom:2px solid transparent' };
+    });
+    var rows = [
+      { bill: 'VB/26-27/0057', vendor: 'Saurashtra Wood Suppliers', gstin: '24ABCPS5678D1ZJ', inv: 'SWS/26-27/109', invDate: '13 Aug 2026', recd: '17 Aug 2026', taxable: '₹1,26,212.50', tax: '₹22,718.26' },
+      { bill: 'VB/26-27/0065', vendor: 'Jay Ambe Paper Mills', gstin: '24AAFCJ2468G1ZM', inv: 'JAPM/26-27/109', invDate: '27 Aug 2026', recd: '31 Aug 2026', taxable: '₹51,782.25', tax: '₹9,320.80' },
+      { bill: 'VB/26-27/0103', vendor: 'Rajkot Bearing Centre', gstin: '24AARFR6666J1ZH', inv: 'RBC/004102', invDate: '29 Aug 2026', recd: '31 Aug 2026', taxable: '₹1,98,600.00', tax: '₹35,748.00' }
+    ];
+    return { kpis: kpis, tabs: tabs, rows: rows };
+  }
+}
+</script>
+</body>
+</html>

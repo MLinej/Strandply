@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Goods receipt (GRN)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}a{color:#172033}a:hover{color:#D71920}</style>
+</helmet>
+<div style="width: 1440px; height: 1040px; display: flex; background: #F8F9FA; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: #172033; overflow: hidden">
+<dc-import name="Sidebar" active="stores" sub="Goods receipt (GRN)" height="1040px" hint-size="232px,1040px"></dc-import>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+<dc-import name="Topbar" module="Stores" page="Goods receipt (GRN)" hint-size="100%,60px"></dc-import>
+<main style="padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.2px">Goods receipt (GRN)</h1>
+<div style="font-size: 13px; color: #667085">Store count against gate entries — review → approval → accounting</div>
+</div>
+<div style="display: flex; gap: 8px">
+<button style="height: 36px; padding: 0 14px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>Export CSV</button>
+<button style="height: 36px; padding: 0 16px; border: 1px solid #D71920; background: #D71920; color: #FFFFFF; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>New GRN</button>
+</div>
+</div>
+<div role="tablist" style="display: flex; gap: 22px; border-bottom: 1px solid #E6E8EC">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="6">
+<button role="tab" style="height: 38px; padding: 0; border: 0; background: transparent; font: inherit; font-size: 13.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-bottom: -1px; {{t.style}}">{{t.label}}<span style="font-size: 11.5px; font-weight: 600; color: #98A2B3">{{t.count}}</span></button>
+</sc-for>
+</div>
+<div style="display: flex; gap: 10px; align-items: center">
+<label style="width: 300px; height: 36px; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; color: #98A2B3">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35"></path></svg>
+<input type="text" placeholder="GRN, MRN, invoice or item" aria-label="Search GRNs" style="flex-grow: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 13px">
+</label>
+<button style="width: 200px; height: 36px; box-sizing: border-box; padding: 0 12px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; font: inherit; font-size: 13px; color: #172033; display: flex; align-items: center; justify-content: space-between; cursor: pointer">All vendors<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button>
+<button style="width: 150px; height: 36px; box-sizing: border-box; padding: 0 12px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; font: inherit; font-size: 13px; color: #98A2B3; display: flex; align-items: center; justify-content: space-between; cursor: pointer">From date<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path></svg></button>
+<button style="width: 150px; height: 36px; box-sizing: border-box; padding: 0 12px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; font: inherit; font-size: 13px; color: #98A2B3; display: flex; align-items: center; justify-content: space-between; cursor: pointer">To date<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path></svg></button>
+<button style="height: 36px; padding: 0 14px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Apply</button>
+<a href="#" style="font-size: 12.5px; font-weight: 600; color: #667085; text-decoration: none; margin-left: 4px">Save this view</a>
+</div>
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; overflow: hidden">
+<div style="height: 50px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #F8F9FA; border-bottom: 1px solid #E6E8EC">
+<span style="font-size: 13px; font-weight: 600; margin-right: 6px">5 GRNs selected</span>
+<button style="height: 32px; padding: 0 12px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">Review</button>
+<button style="height: 32px; padding: 0 14px; border: 1px solid #D71920; background: #D71920; color: #FFFFFF; border-radius: 8px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">Approve</button>
+<button style="height: 32px; padding: 0 12px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">Account</button>
+<button style="height: 32px; padding: 0 12px; border: 1px solid #F3C4C6; background: #FFFFFF; color: #D71920; border-radius: 8px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">Reject</button>
+<a href="#" style="font-size: 12.5px; font-weight: 600; color: #667085; text-decoration: none; margin-left: 4px">Clear</a>
+<span style="margin-left: auto; font-size: 12px; color: #98A2B3">Each GRN is checked on its own; rows that can’t move are skipped and listed</span>
+</div>
+<div style="display: grid; grid-template-columns: 36px 108px 86px 108px minmax(0, 1fr) 110px 40px 92px 80px 98px 90px 104px; align-items: center; height: 34px; background: #F8F9FA; border-bottom: 1px solid #E6E8EC; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: #667085">
+<div style="padding: 0 0 0 12px"><input type="checkbox" aria-label="Select all" style="margin: 0; accent-color: #D71920"></div>
+<div style="padding: 0 8px">GRN no.</div>
+<div style="padding: 0 8px">Date</div>
+<div style="padding: 0 8px">MRN</div>
+<div style="padding: 0 8px">Vendor</div>
+<div style="padding: 0 8px">Invoice</div>
+<div style="padding: 0 8px; text-align: right">Lines</div>
+<div style="padding: 0 8px; text-align: right">Taxable</div>
+<div style="padding: 0 8px; text-align: right">GST</div>
+<div style="padding: 0 8px; text-align: right">Total</div>
+<div style="padding: 0 8px">Status</div>
+<div style="padding: 0 8px">Bill</div>
+</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="15">
+<div style="display: grid; grid-template-columns: 36px 108px 86px 108px minmax(0, 1fr) 110px 40px 92px 80px 98px 90px 104px; align-items: center; height: 38px; border-bottom: 1px solid #EEF0F3; font-size: 12.5px; font-variant-numeric: tabular-nums; {{r.bg}}">
+<div style="padding: 0 0 0 12px"><input type="checkbox" checked="{{r.sel}}" readOnly="{{true}}" aria-label="Select {{r.no}}" style="margin: 0; accent-color: #D71920"></div>
+<a href="#" style="padding: 0 8px; font-weight: 600; text-decoration: none; white-space: nowrap">{{r.no}}</a>
+<div style="padding: 0 8px; color: #667085; white-space: nowrap">{{r.date}}</div>
+<div style="padding: 0 8px; color: #667085; white-space: nowrap">{{r.mrn}}</div>
+<div style="padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.vendor}}</div>
+<div style="padding: 0 8px; color: #667085; white-space: nowrap">{{r.inv}}</div>
+<div style="padding: 0 8px; text-align: right">{{r.lines}}</div>
+<div style="padding: 0 8px; text-align: right">{{r.taxable}}</div>
+<div style="padding: 0 8px; text-align: right; color: #667085">{{r.gst}}</div>
+<div style="padding: 0 8px; text-align: right; font-weight: 600">{{r.total}}</div>
+<div style="padding: 0 8px"><span style="display: inline-flex; align-items: center; height: 20px; padding: 0 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; {{r.tone}}">{{r.status}}</span></div>
+<div style="padding: 0 8px; color: #667085; white-space: nowrap">{{r.bill}}</div>
+</div>
+</sc-for>
+<div style="height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 12.5px; color: #667085">
+<span>Showing 1–15 of 43</span>
+<div style="display: flex; gap: 6px">
+<button aria-label="Previous page" style="width: 30px; height: 30px; border: 1px solid #E6E8EC; border-radius: 7px; background: #FFFFFF; color: #98A2B3; font: inherit; cursor: pointer">‹</button>
+<button style="width: 30px; height: 30px; border: 1px solid #D71920; border-radius: 7px; background: #FFF1F2; color: #D71920; font: inherit; font-weight: 600; cursor: pointer">1</button>
+<button style="width: 30px; height: 30px; border: 1px solid #E6E8EC; border-radius: 7px; background: #FFFFFF; color: #172033; font: inherit; cursor: pointer">2</button>
+<button style="width: 30px; height: 30px; border: 1px solid #E6E8EC; border-radius: 7px; background: #FFFFFF; color: #172033; font: inherit; cursor: pointer">3</button>
+<button aria-label="Next page" style="width: 30px; height: 30px; border: 1px solid #E6E8EC; border-radius: 7px; background: #FFFFFF; color: #172033; font: inherit; cursor: pointer">›</button>
+</div>
+</div>
+</section>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var T = { Reviewed: 'color:#D97706;background:#FFFBEB', Approved: 'color:#7C3AED;background:#F5F3FF', Accounted: 'color:#16A34A;background:#F0FDF4', Rejected: 'color:#D71920;background:#FFF1F2', Draft: 'color:#667085;background:#F5F6F8' };
+    var tabs = [['All', '43'], ['Draft', '0'], ['Reviewed', '1'], ['Approved', '3'], ['Accounted', '38'], ['Rejected', '1']].map(function (t, i) {
+      return { label: t[0], count: t[1], style: i === 0 ? 'color:#D71920;font-weight:600;border-bottom:2px solid #D71920' : 'color:#667085;font-weight:500;border-bottom:2px solid transparent' };
+    });
+    var data = [
+      ['0043', '22 Sept 2026', '0041', 'Ahmedabad Industrial Stores', 'MBS1345698', '1', '84,000.00', '15,120.00', '99,120.00', 'Approved', '—', true],
+      ['0042', '16 Sept 2026', '0040', 'Rajkot Bearing Centre', 'S001/26-27/440', '1', '20,900.00', '3,762.00', '24,662.00', 'Approved', '—', true],
+      ['0041', '15 Sept 2026', '0039', 'Ahmedabad Industrial Stores', '—', '1', '6,720.00', '1,209.60', '7,929.60', 'Reviewed', '—', true],
+      ['0040', '14 Sept 2026', '0038', 'Ahmedabad Industrial Stores', 'S002/26-27/438', '1', '1,650.00', '297.00', '1,947.00', 'Approved', '—', true],
+      ['0039', '12 Sept 2026', '0036', 'Mumbai Hydraulics & Lubes', 'S003/26-27/436', '3', '2,06,340.00', '37,141.20', '2,43,481.20', 'Reviewed', '—', true],
+      ['0038', '10 Sept 2026', '0035', 'Mumbai Hydraulics & Lubes', '—', '2', '97,440.00', '17,539.20', '1,14,979.20', 'Accounted', 'VB/26-27/0107', false],
+      ['0037', '08 Sept 2026', '0034', 'Surat Packaging Materials', 'S004/26-27/434', '3', '43,300.00', '7,794.00', '51,094.00', 'Accounted', 'VB/26-27/0106', false],
+      ['0036', '06 Sept 2026', '0033', 'Surat Packaging Materials', 'S004/26-27/433', '2', '44,200.00', '7,956.00', '52,156.00', 'Accounted', 'VB/26-27/0105', false],
+      ['0035', '04 Sept 2026', '0032', 'Ahmedabad Industrial Stores', '—', '3', '28,600.00', '5,148.00', '33,748.00', 'Accounted', 'VB/26-27/0104', false],
+      ['0034', '30 Aug 2026', '0031', 'Rajkot Bearing Centre', '—', '3', '1,98,600.00', '35,748.00', '2,34,348.00', 'Accounted', 'VB/26-27/0103', false],
+      ['0033', '25 Aug 2026', '0030', 'Rajkot Bearing Centre', 'S001/26-27/430', '2', '34,440.00', '6,199.20', '40,639.20', 'Accounted', 'VB/26-27/0102', false],
+      ['0032', '20 Aug 2026', '0029', 'Rajkot Bearing Centre', 'S001/26-27/429', '3', '55,000.00', '9,900.00', '64,900.00', 'Accounted', 'VB/26-27/0101', false],
+      ['0031', '16 Aug 2026', '0028', 'Rajkot Bearing Centre', 'S001/26-27/428', '2', '84,060.00', '15,130.80', '99,190.80', 'Accounted', 'VB/26-27/0100', false],
+      ['0030', '15 Aug 2026', '0028', 'Rajkot Bearing Centre', 'S001/26-27/428', '2', '1,12,080.00', '20,174.40', '1,32,254.40', 'Rejected', '—', false],
+      ['0029', '10 Aug 2026', '0027', 'Surat Packaging Materials', 'S004/26-27/427', '1', '7,200.00', '1,296.00', '8,496.00', 'Accounted', 'VB/26-27/0099', false]
+    ];
+    var rows = data.map(function (d) {
+      return { no: 'GRN/26-27/' + d[0], date: d[1], mrn: 'MRN/26-27/' + d[2], vendor: d[3], inv: d[4], lines: d[5], taxable: d[6], gst: d[7], total: d[8], status: d[9], tone: T[d[9]], bill: d[10], sel: d[11], bg: d[11] ? 'background:#FFF7F7' : 'background:#FFFFFF' };
+    });
+    return { tabs: tabs, rows: rows };
+  }
+}
+</script>
+</body>
+</html>

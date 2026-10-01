@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Global search (Ctrl K)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}a{color:#172033}a:hover{color:#D71920}</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; display: flex; background: #F8F9FA; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: #172033; overflow: hidden">
+<dc-import name="Sidebar" active="home" height="900px" hint-size="232px,900px"></dc-import>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+<dc-import name="Topbar" module="Home" page="My work list" hint-size="100%,60px"></dc-import>
+<main style="padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="width: 360px; height: 26px; border-radius: 6px; background: #EEF0F3"></div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px">
+<div style="height: 118px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px"></div>
+<div style="height: 118px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px"></div>
+<div style="height: 118px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px"></div>
+<div style="height: 118px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px"></div>
+<div style="height: 118px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px"></div>
+<div style="height: 118px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px"></div>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px">
+<div style="height: 420px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px"></div>
+<div style="height: 420px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px"></div>
+</div>
+</main>
+</div>
+<div style="position: absolute; left: 0; top: 0; width: 1440px; height: 900px; box-sizing: border-box; background: rgba(23, 32, 51, 0.32); display: flex; justify-content: center; align-items: flex-start; padding-top: 92px">
+<div role="dialog" aria-label="Search" style="width: 640px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; box-shadow: 0 8px 24px rgba(23, 32, 51, 0.12); overflow: hidden">
+<div style="height: 54px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid #EEF0F3">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35"></path></svg>
+<input type="text" value="lucknow" aria-label="Search" readonly="readonly" style="flex-grow: 1; border: 0; outline: none; font: inherit; font-size: 15px; color: #172033; background: transparent">
+<span style="font-size: 11px; font-weight: 600; color: #667085; border: 1px solid #E6E8EC; border-radius: 5px; padding: 2px 6px">Esc</span>
+</div>
+<div style="display: flex; gap: 6px; padding: 10px 16px; border-bottom: 1px solid #EEF0F3">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="7">
+<button style="height: 26px; padding: 0 10px; border-radius: 20px; font: inherit; font-size: 12px; cursor: pointer; {{f.style}}">{{f.label}}</button>
+</sc-for>
+</div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<div style="padding: 7px 16px; background: #F8F9FA; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: #667085">{{g.title}}</div>
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="5">
+<a href="#" style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px; text-decoration: none; border-top: 1px solid #EEF0F3; {{r.bg}}">
+<span style="position: absolute; left: 0; top: 0; bottom: 0; width: 2px; {{r.bar}}"></span>
+<span style="display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 13px; font-weight: 600; color: #172033">{{r.no}}</span>
+<span style="font-size: 12px; color: #667085">{{r.meta}}</span>
+</span>
+<span style="display: inline-flex; align-items: center; height: 20px; padding: 0 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; {{r.tone}}">{{r.status}}</span>
+</a>
+</sc-for>
+</sc-for>
+<div style="height: 36px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-top: 1px solid #E6E8EC; background: #F8F9FA; font-size: 11.5px; color: #667085">
+<span>↑ ↓ move · Enter open · Esc close</span>
+<span>19 results</span>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var T = { ok: 'color:#16A34A;background:#F0FDF4', warn: 'color:#D97706;background:#FFFBEB', info: 'color:#7C3AED;background:#F5F3FF', neu: 'color:#667085;background:#F5F6F8' };
+    var filters = ['All', 'Invoices', 'Sales orders', 'GRNs', 'Customers', 'Vendors', 'Employees'].map(function (l, i) {
+      return { label: l, style: i === 0 ? 'border:1px solid #D71920;background:#FFF1F2;color:#D71920;font-weight:600' : 'border:1px solid #E6E8EC;background:#FFFFFF;color:#667085;font-weight:500' };
+    });
+    var row = function (no, meta, status, tone, first) {
+      return { no: no, meta: meta, status: status, tone: T[tone],
+        bg: first ? 'background:#F8F9FA' : 'background:#FFFFFF',
+        bar: first ? 'background:#D71920' : 'background:transparent' };
+    };
+    var groups = [
+      { title: 'Invoices', rows: [
+        row('LLP/26-27/0085', 'Lucknow Furniture Mfg · 03 Sept 2026 · ₹84,346', 'Active', 'ok', true),
+        row('LLP/26-27/0069', 'Lucknow Furniture Mfg · 03 Aug 2026 · ₹76,464', 'Active', 'ok'),
+        row('LLP/26-27/0056', 'Lucknow Furniture Mfg · 13 Jul 2026 · ₹1,94,338', 'Active', 'ok'),
+        row('LLP/26-27/0026', 'Lucknow Furniture Mfg · 22 May 2026 · ₹1,34,520', 'Active', 'ok'),
+        row('LLP/26-27/0019', 'Lucknow Furniture Mfg · 04 May 2026 · ₹71,248', 'Active', 'ok')
+      ] },
+      { title: 'Sales orders', rows: [
+        row('LLP/SO/26-27/0054', 'Lucknow Furniture Mfg · 16 Sept 2026', 'Open', 'warn'),
+        row('LLP/SO/26-27/0048', 'Lucknow Furniture Mfg · 30 Aug 2026', 'Completed', 'ok'),
+        row('LLP/SO/26-27/0029', 'Lucknow Furniture Mfg · 08 Jul 2026', 'Partial', 'info'),
+        row('LLP/SO/26-27/0023', 'Lucknow Furniture Mfg · 18 Jun 2026', 'Cancelled', 'neu'),
+        row('LLP/SO/26-27/0013', 'Lucknow Furniture Mfg · 19 May 2026', 'Completed', 'ok')
+      ] }
+    ];
+    return { filters: filters, groups: groups };
+  }
+}
+</script>
+</body>
+</html>

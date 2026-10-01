@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sidebar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<aside style="width: 232px; height: {{h}}; box-sizing: border-box; background: #FFFFFF; border-right: 1px solid #E6E8EC; display: flex; flex-direction: column; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: #172033; flex-shrink: 0">
+<div style="height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 14px 0 18px; border-bottom: 1px solid #EEF0F3">
+<img src="/_blob/c732c3a8f199e477eee50d6ed195056d" alt="Strandply" style="width: 134px; height: auto; display: block">
+<button aria-label="Collapse sidebar" style="width: 28px; height: 28px; border: 1px solid #E6E8EC; border-radius: 7px; background: #FFFFFF; color: #667085; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4l-8 8 8 8"></path></svg></button>
+</div>
+<nav aria-label="Modules" style="flex-grow: 1; overflow: hidden; padding: 10px; display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{items}}" as="it" hint-placeholder-count="18">
+<a href="#" style="position: relative; display: flex; align-items: center; gap: 10px; height: 32px; flex-shrink: 0; padding: 0 10px; border-radius: 8px; text-decoration: none; font-size: 13.5px; {{it.rowStyle}}">
+<span style="position: absolute; left: -10px; top: 7px; bottom: 7px; width: 3px; border-radius: 0 3px 3px 0; {{it.barStyle}}"></span>
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0"><path d="{{it.d}}"></path></svg>
+<span style="flex-grow: 1">{{it.label}}</span>
+<sc-if value="{{it.hasSubs}}" hint-placeholder-val="{{false}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; opacity: 0.7"><path d="{{it.chev}}"></path></svg></sc-if>
+</a>
+<sc-if value="{{it.open}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; flex-direction: column; gap: 1px; margin: 2px 0 4px">
+<sc-for list="{{it.subs}}" as="s" hint-placeholder-count="5">
+<a href="#" style="display: flex; align-items: center; height: 28px; flex-shrink: 0; padding: 0 10px 0 37px; border-radius: 7px; text-decoration: none; font-size: 13px; {{s.style}}">{{s.label}}</a>
+</sc-for>
+</div>
+</sc-if>
+</sc-for>
+</nav>
+<div style="height: 64px; flex-shrink: 0; border-top: 1px solid #EEF0F3; display: flex; align-items: center; gap: 10px; padding: 0 14px 0 16px">
+<div style="width: 32px; height: 32px; border-radius: 16px; background: #F5F6F8; color: #172033; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0">AD</div>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px">
+<div style="font-size: 13px; font-weight: 600">Administrator</div>
+<div style="font-size: 11.5px; color: #98A2B3">All modules</div>
+</div>
+<button aria-label="Log out" style="width: 30px; height: 30px; border: 0; background: transparent; color: #667085; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg></button>
+</div>
+</aside>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["home","purchase","vendors","stores","stock","production","sales","samples","transport","complaints","maintenance","electricity","dwpas","hr","payroll","accounts","reports","admin"],"default":"home"},"sub":{"editor":null,"default":""},"height":{"editor":null,"default":"1000px"},"$preview":{"width":232,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var active = this.props.active ?? 'home';
+    var sub = this.props.sub ?? '';
+    var I = {
+      home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+      purchase: 'M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM17 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+      vendors: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+      stores: 'M3 21V8l9-5 9 5v13M7 21v-8h10v8M7 17h10',
+      stock: 'M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8',
+      production: 'M2 21h20M4 21V10l5 3v-3l5 3V6l6 3v12',
+      sales: 'M3 17l6-6 4 4 8-8M15 7h6v6',
+      samples: 'M12 3 2 8l10 5 10-5zM2 13l10 5 10-5',
+      transport: 'M1 5h13v11H1zM14 9h4l3 3v4h-7M5.5 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17.5 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z',
+      complaints: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM12 7v4M12 14h.01',
+      maintenance: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z',
+      electricity: 'M13 2 3 14h9l-1 8 10-12h-9z',
+      dwpas: 'M9 3h6v4H9zM8 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2M9 12h6M9 16h4',
+      hr: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+      payroll: 'M20 7V4H5a2 2 0 0 0 0 4h15v12H5a2 2 0 0 1-2-2V6M16 14h.01',
+      accounts: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5',
+      reports: 'M3 3v18h18M8 17v-5M13 17V8M18 17v-7',
+      admin: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6'
+    };
+    var S = {
+      stores: ['Stores dashboard', 'Gate entry (MRN)', 'Goods receipt (GRN)', 'Store POs', 'Item issues', 'Item stock'],
+      sales: ['Sales dashboard', 'Sales orders', 'Invoices', 'Credit notes', 'Customers', 'Outstanding & ageing'],
+      reports: ['Reports hub', 'Daily report', 'Monthly report', 'Cost per board', 'Purchase analysis', 'Vendor ranking'],
+      accounts: ['Accounts dashboard', 'Receipts', 'Vendor bills', 'Payments', 'Payables ageing', 'GST returns', 'GSTR-2B match']
+    };
+    var mods = [
+      ['home', 'Home'], ['purchase', 'Purchase'], ['vendors', 'Vendors'], ['stores', 'Stores'], ['stock', 'Stock (SKU)'],
+      ['production', 'Production'], ['sales', 'Sales'], ['samples', 'Samples'], ['transport', 'Transport'],
+      ['complaints', 'Complaints'], ['maintenance', 'Maintenance'], ['electricity', 'Electricity'], ['dwpas', 'DWPAS'],
+      ['hr', 'HR'], ['payroll', 'Payroll'], ['accounts', 'Accounts'], ['reports', 'Reports'], ['admin', 'Admin']
+    ];
+    var items = mods.map(function (m) {
+      var key = m[0];
+      var on = key === active;
+      var subs = S[key] || [];
+      return {
+        label: m[1],
+        d: I[key],
+        hasSubs: key !== 'home',
+        open: on && subs.length > 0,
+        chev: on && subs.length > 0 ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6',
+        rowStyle: on ? 'background:#FFF1F2;color:#D71920;font-weight:600' : 'color:#667085;font-weight:500',
+        barStyle: on ? 'background:#D71920' : 'background:transparent',
+        subs: subs.map(function (s) {
+          return { label: s, style: s === sub ? 'color:#D71920;font-weight:600;background:#FFF7F7' : 'color:#667085;font-weight:500' };
+        })
+      };
+    });
+    return { items: items, h: this.props.height ?? '1000px' };
+  }
+}
+</script>
+</body>
+</html>

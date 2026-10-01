@@ -1,0 +1,37 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-page font-sans text-base text-ink antialiased;
+  }
+  a {
+    @apply text-ink no-underline hover:text-primary;
+  }
+  /* No blue browser focus rings anywhere. Keyboard focus uses ink. */
+  :focus-visible {
+    outline: 2px solid rgb(var(--ink) / 0.8);
+    outline-offset: 2px;
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: rgb(var(--primary));
+  }
+  dialog::backdrop {
+    background: rgb(var(--ink) / 0.32);
+  }
+}
+
+@layer components {
+  /* Uppercase label used by table headers, KPI labels and group titles */
+  .label-caps {
+    @apply text-label font-semibold uppercase tracking-label text-muted;
+  }
+}

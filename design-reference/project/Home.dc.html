@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home — my work list</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}a{color:#172033}a:hover{color:#D71920}</style>
+</helmet>
+<div style="width: 1440px; height: 1200px; display: flex; background: #F8F9FA; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: #172033; overflow: hidden">
+<dc-import name="Sidebar" active="home" height="1200px" hint-size="232px,1200px"></dc-import>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+<dc-import name="Topbar" module="Home" page="My work list" hint-size="100%,60px"></dc-import>
+<main style="padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.2px">Good evening, Administrator</h1>
+<div style="font-size: 13px; color: #667085">Pending approvals, overdue items and today’s figures for your role · Tue, 23 Sept 2026</div>
+</div>
+<div role="group" aria-label="Firm" style="display: flex; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; padding: 3px; gap: 2px">
+<button style="height: 30px; padding: 0 12px; border: 0; border-radius: 6px; background: #FFF1F2; color: #D71920; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer">Both firms</button>
+<button style="height: 30px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: #667085; font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer">Strandply LLP</button>
+<button style="height: 30px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: #667085; font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer">OSB Unit</button>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="6">
+<div style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="width: 34px; height: 34px; border-radius: 17px; display: flex; align-items: center; justify-content: center; {{k.circle}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{k.d}}"></path></svg></div>
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 11px; font-weight: 500; letter-spacing: 0.4px; text-transform: uppercase; color: #98A2B3">{{k.label}}</div>
+<div style="font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap">{{k.value}}</div>
+<div style="font-size: 12px; color: #667085">{{k.meta}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: start">
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; overflow: hidden">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 600">Pending my action</h2>
+<div style="display: flex; gap: 6px">
+<span style="height: 22px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: #D71920; background: #FFF1F2">7 overdue</span>
+<span style="height: 22px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 20px; font-size: 11px; font-weight: 600; color: #667085; background: #F5F6F8">322 in all</span>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 140px 70px 80px; align-items: center; height: 34px; padding: 0 20px; background: #F8F9FA; border-top: 1px solid #E6E8EC; border-bottom: 1px solid #E6E8EC; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: #667085">
+<div>Item</div>
+<div>Module</div>
+<div style="text-align: right">Count</div>
+<div></div>
+</div>
+<sc-for list="{{pending}}" as="p" hint-placeholder-count="8">
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 140px 70px 80px; align-items: center; height: 38px; padding: 0 20px; border-bottom: 1px solid #EEF0F3; font-size: 13px">
+<div style="display: flex; align-items: center; gap: 8px"><span style="width: 6px; height: 6px; border-radius: 3px; flex-shrink: 0; {{p.dot}}"></span><span style="{{p.labelStyle}}">{{p.label}}</span></div>
+<div style="color: #667085">{{p.module}}</div>
+<div style="text-align: right; font-weight: 600; font-variant-numeric: tabular-nums">{{p.count}}</div>
+<a href="#" style="text-align: right; font-size: 12.5px; font-weight: 600; text-decoration: none">Open ›</a>
+</div>
+</sc-for>
+<a href="#" style="display: block; text-align: center; padding: 11px; font-size: 12.5px; font-weight: 600; color: #667085; text-decoration: none">Show 11 more</a>
+</section>
+<div style="display: flex; flex-direction: column; gap: 16px">
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 600">Alerts</h2>
+<div style="display: flex; gap: 10px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#D71920" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 8v4M12 16h.01"></path></svg>
+<div><div style="font-size: 13px; font-weight: 500">7 complaints are past their resolution date</div><div style="font-size: 11.5px; color: #98A2B3; margin-top: 2px">Complaints · today</div></div>
+</div>
+<div style="display: flex; gap: 10px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"></path></svg>
+<div><div style="font-size: 13px; font-weight: 500">4 store items at or below minimum</div><div style="font-size: 11.5px; color: #98A2B3; margin-top: 2px">Stores · today</div></div>
+</div>
+<div style="display: flex; gap: 10px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01"></path></svg>
+<div><div style="font-size: 13px; font-weight: 500">4 trips delayed</div><div style="font-size: 11.5px; color: #98A2B3; margin-top: 2px">Transport · today</div></div>
+</div>
+</section>
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 600">Go to</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{goto}}" as="g" hint-placeholder-count="10">
+<a href="#" style="height: 30px; display: inline-flex; align-items: center; padding: 0 11px; border: 1px solid #E6E8EC; border-radius: 8px; font-size: 12.5px; font-weight: 500; text-decoration: none">{{g}}</a>
+</sc-for>
+</div>
+</section>
+</div>
+</div>
+<h2 style="margin: 4px 0 0; font-size: 16px; font-weight: 600">At a glance</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start">
+<sc-for list="{{glance}}" as="c" hint-placeholder-count="6">
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 14px 18px 12px">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px">
+<h3 style="margin: 0; font-size: 14px; font-weight: 600">{{c.title}}</h3>
+<a href="#" style="font-size: 12px; font-weight: 600; text-decoration: none; color: #667085">Open ›</a>
+</div>
+<sc-for list="{{c.rows}}" as="r" hint-placeholder-count="2">
+<div style="display: flex; justify-content: space-between; align-items: center; height: 32px; border-top: 1px solid #EEF0F3; font-size: 13px">
+<span style="color: #667085">{{r.k}}</span>
+<span style="font-weight: 600; font-variant-numeric: tabular-nums; {{r.vs}}">{{r.v}}</span>
+</div>
+</sc-for>
+<sc-if value="{{c.hasNote}}" hint-placeholder-val="{{false}}"><div style="font-size: 11.5px; color: #98A2B3; margin-top: 6px">{{c.note}}</div></sc-if>
+</section>
+</sc-for>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var neutral = 'background:#F5F6F8;color:#667085';
+    var kpis = [
+      { label: 'Production', value: '0', meta: 'Good boards yesterday', circle: neutral, d: 'M2 21h20M4 21V10l5 3v-3l5 3V6l6 3v12' },
+      { label: 'Sales', value: '₹12,60,741', meta: 'Strandply LLP · this month', circle: neutral, d: 'M3 17l6-6 4 4 8-8M15 7h6v6' },
+      { label: 'Finished stock', value: '24,438', meta: 'Boards in hand', circle: neutral, d: 'M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8' },
+      { label: 'Payables due', value: '₹16,86,956', meta: 'Strandply LLP · next 7 days', circle: 'background:#FFF1F2;color:#D71920', d: 'M20 7V4H5a2 2 0 0 0 0 4h15v12H5a2 2 0 0 1-2-2V6M16 14h.01' },
+      { label: 'Purchase', value: '₹40,77,741', meta: 'Purchases this month', circle: neutral, d: 'M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM17 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2z' },
+      { label: 'People', value: '55', meta: 'Active employees', circle: neutral, d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' }
+    ];
+    var P = function (label, module, count, critical) {
+      return { label: label, module: module, count: count,
+        dot: critical ? 'background:#D71920' : 'background:transparent',
+        labelStyle: critical ? 'color:#D71920;font-weight:600' : 'color:#172033;font-weight:500' };
+    };
+    var pending = [
+      P('Complaints past resolution date', 'Complaints', '7', true),
+      P('GRNs to approve', 'Stores', '1'),
+      P('GRNs to account', 'Stores', '3'),
+      P('Stock slips to approve', 'Stock (SKU)', '4'),
+      P('Shifts to approve', 'Production', '1'),
+      P('Sales orders on credit hold', 'Sales', '1'),
+      P('Sample requests to approve', 'Samples', '3'),
+      P('Samples to dispatch', 'Samples', '2')
+    ];
+    var goto = ['Shift register', 'Vendor master', 'Complaint register', 'Payroll runs', 'Goods receipt (GRN)', 'Invoices', 'Work orders', 'Sample requests', 'Store POs', 'Gate entry (MRN)'];
+    var R = function (k, v, tone) {
+      var vs = tone === 'warn' ? 'color:#D97706' : tone === 'bad' ? 'color:#D71920' : 'color:#172033';
+      return { k: k, v: v, vs: vs };
+    };
+    var glance = [
+      { title: 'Purchase', rows: [R('Purchases this month', '₹40,77,741'), R('Pending DN / CN', '₹92,127')], hasNote: false, note: '' },
+      { title: 'Stores', rows: [R('Items at or below minimum', '4', 'warn')], hasNote: false, note: '' },
+      { title: 'Finished stock', rows: [R('Boards in hand', '24,438'), R('On hold / rejected', '43')], hasNote: false, note: '' },
+      { title: 'Production', rows: [R('Good boards yesterday', '0'), R('Reject % yesterday', '—'), R('Good boards today', '0')], hasNote: true, note: 'Submitted and approved shifts only' },
+      { title: 'Sales', rows: [R('Strandply LLP sales this month', '₹12,60,741'), R('Strandply LLP overdue receivables', '₹14,72,092', 'bad'), R('OSB Unit sales this month', '₹3,10,971'), R('OSB Unit overdue receivables', '₹2,37,442', 'bad')], hasNote: true, note: 'Each firm shown separately' },
+      { title: 'Transport', rows: [R('Delayed trips', '4', 'warn'), R('Trips in transit', '4')], hasNote: false, note: '' }
+    ];
+    return { kpis: kpis, pending: pending, goto: goto, glance: glance };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "CostPerBoard.dc.html": {
+      "h": 1160,
+      "title": "06 · Reports — Cost per board",
+      "w": 1440,
+      "x": 1520,
+      "y": 2480
+    },
+    "GoodsReceipt.dc.html": {
+      "h": 1040,
+      "title": "04 · Stores — Goods receipt (GRN)",
+      "w": 1440,
+      "x": 1520,
+      "y": 1320
+    },
+    "Gstr2bMatch.dc.html": {
+      "h": 1000,
+      "title": "07 · Accounts — GSTR-2B match",
+      "w": 1440,
+      "x": 0,
+      "y": 3900
+    },
+    "Home.dc.html": {
+      "h": 1200,
+      "title": "02 · Home — my work list",
+      "w": 1440,
+      "x": 1520,
+      "y": 0
+    },
+    "Invoice.dc.html": {
+      "h": 1300,
+      "title": "05 · Sales — GST tax invoice",
+      "w": 1440,
+      "x": 0,
+      "y": 2480
+    },
+    "Main.dc.html": {
+      "h": 900,
+      "title": "01 · Sign in",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "SalesDashboard.dc.html": {
+      "h": 1140,
+      "title": "08 · Sales dashboard",
+      "w": 1440,
+      "x": 1520,
+      "y": 3900
+    },
+    "Search.dc.html": {
+      "h": 900,
+      "title": "03 · Global search (Ctrl K)",
+      "w": 1440,
+      "x": 0,
+      "y": 1320
+    },
+    "Sidebar.dc.html": {
+      "h": 1000,
+      "title": "Sidebar (shared)",
+      "w": 232,
+      "x": 0,
+      "y": 5400
+    },
+    "Topbar.dc.html": {
+      "h": 60,
+      "title": "Topbar (shared)",
+      "w": 1208,
+      "x": 312,
+      "y": 5400
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-09-27T10:00:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "comps": {
+      "kind": "title1",
+      "maxW": 1520,
+      "text": "Shared components",
+      "w": 240,
+      "x": 0,
+      "y": 5110
+    },
+    "n1": {
+      "fill": "gray",
+      "text": "01 · SIGN IN\n\nIn the video: split card on a dark photo background, solid-red left panel labelled 'Internal ERP', user code + PIN, vendor credit in the footer.\n\nRedrawn: flat #F5F6F8 page (the logo sits only on white / soft grey), full lockup on white, no red block. Added a firm switch (Strandply LLP / OSB Unit) since the build serves both. Red appears once — the Sign in button.",
+      "w": 520,
+      "x": -600,
+      "y": 0
+    },
+    "n2": {
+      "fill": "gray",
+      "text": "02 · HOME — MY WORK LIST\n\nIn the video: greeting, 6 KPI tiles (Production, Sales, Finished stock, Accounts, Purchase, People), a 'Pending my action' list with Open links (7 overdue · 322 in all), Go-to shortcuts, and an At-a-glance grid per module. Active nav item is a solid red bar; nav uses letter badges instead of icons.\n\nRedrawn: outline icons in the sidebar with a red-light active state; KPI icons in neutral circles and only Payables due gets the red tint; pending list gains a Module column; overdue complaints flagged with a red dot; alerts and shortcuts move to a right rail.",
+      "w": 520,
+      "x": 3040,
+      "y": 0
+    },
+    "n3": {
+      "fill": "gray",
+      "text": "03 · GLOBAL SEARCH (CTRL K)\n\nIn the video: palette over Home; typing 'lucknow' returns grouped Invoices and Sales orders with status pills, keyboard hints and a result count (19).\n\nRedrawn: same pattern plus type filters (All, Invoices, Sales orders, GRNs, Customers, Vendors, Employees). 'Partial' moves from pink to purple (the no-blue info colour); Cancelled turns neutral so red stays scarce.",
+      "w": 520,
+      "x": -600,
+      "y": 1320
+    },
+    "n4": {
+      "fill": "gray",
+      "text": "04 · STORES — GOODS RECEIPT (GRN)\n\nIn the video: GRN list with status tabs (All 43, Draft, Reviewed, Approved, Accounted 38, Rejected), filters, checkbox multi-select, and a bottom bar where Review, Approve, Account and Reject are ALL solid red. GRN numbers in red.\n\nRedrawn: one primary (Approve), Reject as a danger outline, the rest secondary; doc numbers in primary text; selected rows tinted #FFF7F7; pills follow the workflow Reviewed (amber) → Approved (purple) → Accounted (green); Rejected red.",
+      "w": 520,
+      "x": 3040,
+      "y": 1320
+    },
+    "n5": {
+      "fill": "gray",
+      "text": "05 · SALES — GST TAX INVOICE\n\nIn the video: invoice detail with tabs (Invoice, Payment, e-Invoice, Files & history), actions Print/PDF, e-Invoice JSON, Receipt, Credit note and a solid-red Cancel invoice; GST invoice preview with IRN, bill-to / ship-to, e-way bill, vehicle, transporter.\n\nRedrawn: A4 portrait preview in Inter, amounts as 'Rs.' (the PDF font has no ₹ glyph), a right rail for payment, e-Invoice and dispatch status. Cancel demoted to a danger outline; Record receipt is the one primary. Bank details left as placeholders.",
+      "w": 520,
+      "x": -600,
+      "y": 2480
+    },
+    "n6": {
+      "fill": "gray",
+      "text": "06 · REPORTS — COST PER BOARD\n\nIn the video: plant-wide cost Apr–Sept 2026 — 12,803 good boards, ₹2.05 Cr, ₹1,602.89 per board, ₹538.46 per sqm, 4 of 6 months flagged; month table (material, power, PGVCL bill, labour, maintenance, other); raw material consumed; 'how this is worked out' notes.\n\nRedrawn: added a cost-split bar (power ≈ 55% of cost) and an Inputs pill per month so flagged months are obvious.",
+      "w": 520,
+      "x": 3040,
+      "y": 2480
+    },
+    "n7": {
+      "fill": "gray",
+      "text": "07 · ACCOUNTS — GSTR-2B MATCH\n\nIn the video: 2B vs books reconciliation for Aug 2026 — 21 in 2B, 19 matched, 2 not in books, ₹67,787.06 ITC at risk; JSON/CSV import; tabs by mismatch type; 3 bills (Saurashtra Wood, Jay Ambe Paper, Rajkot Bearing).\n\nRedrawn: coloured left-border cards replaced by tinted icons; ITC at risk is the one red KPI; per-row 'Remind supplier' action; totals row keeps taxable and tax together.",
+      "w": 520,
+      "x": -600,
+      "y": 3900
+    },
+    "n8": {
+      "fill": "gray",
+      "text": "08 · SALES DASHBOARD\n\nIn the video: shown in dark mode — per-firm KPIs for Strandply LLP and OSB Unit, monthly sales bars, top customers and top SKUs, with red bars everywhere.\n\nRedrawn in the light theme: bars neutral, only the current month red; Overdue is the single emphasised KPI per firm. Dark mode can be the same layout with swapped tokens.",
+      "w": 520,
+      "x": 3040,
+      "y": 3900
+    },
+    "title": {
+      "kind": "title1",
+      "maxW": 2960,
+      "text": "Strandply ERP — screens from the video, redrawn to the design guideline",
+      "w": 240,
+      "x": 0,
+      "y": -320
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Home.dc.html",
+    "Search.dc.html",
+    "GoodsReceipt.dc.html",
+    "Invoice.dc.html",
+    "CostPerBoard.dc.html",
+    "Gstr2bMatch.dc.html",
+    "SalesDashboard.dc.html",
+    "Sidebar.dc.html",
+    "Topbar.dc.html"
+  ],
+  "pages": [],
+  "title": "Strandply ERP — Screen Layouts"
+}

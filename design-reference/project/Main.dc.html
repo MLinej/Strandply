@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}a{color:#172033}a:hover{color:#D71920}</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #F5F6F8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: #172033">
+<div style="width: 920px; height: 540px; display: flex; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; overflow: hidden">
+<div style="width: 440px; box-sizing: border-box; padding: 44px; border-right: 1px solid #EEF0F3; display: flex; flex-direction: column; justify-content: space-between">
+<img src="/_blob/c732c3a8f199e477eee50d6ed195056d" alt="Strandply — Out do the new" style="width: 220px; height: auto; display: block">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: #98A2B3">Factory ERP</div>
+<div style="font-size: 26px; font-weight: 700; line-height: 1.25; letter-spacing: -0.2px">One system for Strandply LLP and the OSB Unit</div>
+<div style="font-size: 14px; line-height: 1.55; color: #667085">Purchase, stores, production, sales, transport, accounts and payroll — each person sees the work their role owns.</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<span style="font-size: 11.5px; font-weight: 500; color: #667085; background: #F5F6F8; border-radius: 20px; padding: 3px 10px">Purchase</span>
+<span style="font-size: 11.5px; font-weight: 500; color: #667085; background: #F5F6F8; border-radius: 20px; padding: 3px 10px">Stores</span>
+<span style="font-size: 11.5px; font-weight: 500; color: #667085; background: #F5F6F8; border-radius: 20px; padding: 3px 10px">Production</span>
+<span style="font-size: 11.5px; font-weight: 500; color: #667085; background: #F5F6F8; border-radius: 20px; padding: 3px 10px">Sales</span>
+<span style="font-size: 11.5px; font-weight: 500; color: #667085; background: #F5F6F8; border-radius: 20px; padding: 3px 10px">Transport</span>
+<span style="font-size: 11.5px; font-weight: 500; color: #667085; background: #F5F6F8; border-radius: 20px; padding: 3px 10px">Accounts</span>
+<span style="font-size: 11.5px; font-weight: 500; color: #667085; background: #F5F6F8; border-radius: 20px; padding: 3px 10px">Payroll</span>
+<span style="font-size: 11.5px; font-weight: 500; color: #667085; background: #F5F6F8; border-radius: 20px; padding: 3px 10px">+ 10 more</span>
+</div>
+</div>
+<div style="flex-grow: 1; box-sizing: border-box; padding: 48px 56px; display: flex; flex-direction: column; justify-content: center; gap: 18px">
+<div>
+<h1 style="margin: 0; font-size: 22px; font-weight: 700">Sign in</h1>
+<p style="margin: 6px 0 0; font-size: 14px; color: #667085">Use the user code and PIN issued to you.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12.5px; font-weight: 600">Firm</span>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<button style="height: 40px; border: 1px solid #D71920; background: #FFF1F2; color: #D71920; border-radius: 8px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer">Strandply LLP</button>
+<button style="height: 40px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #667085; border-radius: 8px; font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer">OSB Unit</button>
+</div>
+</div>
+<label style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12.5px; font-weight: 600">User code</span>
+<input type="text" placeholder="e.g. ACC01" style="box-sizing: border-box; height: 42px; padding: 11px 14px; background: #F8F9FA; border: 1px solid #172033; border-radius: 8px; font: inherit; font-size: 14px; color: #172033; outline: none">
+</label>
+<label style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12.5px; font-weight: 600">PIN</span>
+<input type="password" placeholder="4-digit PIN" style="box-sizing: border-box; height: 42px; padding: 11px 14px; background: #F8F9FA; border: 1px solid #E6E8EC; border-radius: 8px; font: inherit; font-size: 14px; color: #172033; outline: none">
+</label>
+<button style="height: 44px; border: 0; background: #D71920; color: #FFFFFF; border-radius: 8px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer">Sign in</button>
+<div style="border-top: 1px solid #EEF0F3; padding-top: 14px; font-size: 12.5px; color: #667085">Forgotten your PIN? Ask the administrator to reset it.</div>
+</div>
+</div>
+<div style="width: 920px; display: flex; justify-content: space-between; font-size: 12px; color: #98A2B3">
+<span>Website <a href="https://strandplyosb.com" style="font-weight: 600; text-decoration: none">strandplyosb.com</a></span>
+<span>© 2026 Strandply LLP. All rights reserved.</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

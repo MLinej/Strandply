@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sales dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}a{color:#172033}a:hover{color:#D71920}</style>
+</helmet>
+<div style="width: 1440px; height: 1140px; display: flex; background: #F8F9FA; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: #172033; overflow: hidden">
+<dc-import name="Sidebar" active="sales" sub="Sales dashboard" height="1140px" hint-size="232px,1140px"></dc-import>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+<dc-import name="Topbar" module="Sales" page="Sales dashboard" hint-size="100%,60px"></dc-import>
+<main style="padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.2px">Sales dashboard</h1>
+<div style="font-size: 13px; color: #667085">FY 2026-27 · month to date 01–23 Sept 2026 · values before GST unless marked</div>
+</div>
+<div style="display: flex; gap: 8px">
+<button style="height: 36px; padding: 0 12px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Outstanding</button>
+<button style="height: 36px; padding: 0 12px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>Order</button>
+<button style="height: 36px; padding: 0 16px; border: 1px solid #D71920; background: #D71920; color: #FFFFFF; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>Invoice</button>
+</div>
+</div>
+<sc-for list="{{firms}}" as="f" hint-placeholder-count="2">
+<section style="display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 6px 0 0; font-size: 16px; font-weight: 600">{{f.name}}</h2>
+<div style="display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px">
+<sc-for list="{{f.kpis}}" as="k" hint-placeholder-count="8">
+<div style="background: #FFFFFF; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; {{k.border}}">
+<div style="font-size: 10.5px; font-weight: 500; letter-spacing: 0.4px; text-transform: uppercase; color: #98A2B3; white-space: nowrap">{{k.label}}</div>
+<div style="font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; {{k.vs}}">{{k.value}}</div>
+<div style="font-size: 11.5px; color: #667085; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{k.meta}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px">
+<sc-if value="{{f.chart}}" hint-placeholder-val="{{true}}">
+<div style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 14px 18px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h3 style="margin: 0; font-size: 14px; font-weight: 600">Monthly sales · FY 2026-27</h3><span style="font-size: 11.5px; color: #98A2B3">Sept to date</span></div>
+<div style="height: 170px; display: flex; align-items: flex-end; gap: 6px; border-bottom: 1px solid #E6E8EC">
+<sc-for list="{{months}}" as="m" hint-placeholder-count="12"><div style="flex-grow: 1; flex-basis: 0; border-radius: 4px 4px 0 0; {{m.bar}}"></div></sc-for>
+</div>
+<div style="display: flex; gap: 6px">
+<sc-for list="{{months}}" as="m" hint-placeholder-count="12"><div style="flex-grow: 1; flex-basis: 0; text-align: center; font-size: 10.5px; color: #98A2B3">{{m.label}}</div></sc-for>
+</div>
+</div>
+</sc-if>
+<div style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 14px; font-weight: 600">Top customers · MTD</h3>
+<sc-for list="{{f.customers}}" as="c" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 5px">
+<div style="display: flex; justify-content: space-between; font-size: 12.5px"><a href="#" style="text-decoration: none; font-weight: 500">{{c.name}}</a><span style="font-weight: 600; font-variant-numeric: tabular-nums">{{c.amt}}</span></div>
+<div style="height: 4px; border-radius: 2px; background: #F5F6F8"><div style="height: 4px; border-radius: 2px; background: #172033; {{c.w}}"></div></div>
+</div>
+</sc-for>
+</div>
+<div style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px">
+<h3 style="margin: 0; font-size: 14px; font-weight: 600">Top SKUs · MTD</h3>
+<sc-for list="{{f.skus}}" as="s" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 5px">
+<div style="display: flex; justify-content: space-between; font-size: 12.5px"><span><span style="font-weight: 600">{{s.code}}</span><span style="color: #98A2B3"> · {{s.qty}}</span></span><span style="font-weight: 600; font-variant-numeric: tabular-nums">{{s.amt}}</span></div>
+<div style="height: 4px; border-radius: 2px; background: #F5F6F8"><div style="height: 4px; border-radius: 2px; background: #667085; {{s.w}}"></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+</sc-for>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1140}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var K = function (label, value, meta, tone) {
+      var border = tone === 'bad' ? 'border:1px solid #F3C4C6' : 'border:1px solid #E6E8EC';
+      var vs = tone === 'bad' ? 'color:#D71920' : tone === 'warn' ? 'color:#D97706' : 'color:#172033';
+      return { label: label, value: value, meta: meta, border: border, vs: vs };
+    };
+    var bars = function (list) {
+      var max = list[0][1];
+      return list.map(function (x) { return { name: x[0], code: x[0], amt: x[2], qty: x[3] || '', w: 'width:' + Math.round((x[1] / max) * 100) + '%' }; });
+    };
+    var firms = [
+      { name: 'Strandply LLP', chart: true,
+        kpis: [K('Sales MTD', '₹10.68 L', '13 invoices · ₹12.61 L incl. GST'), K('Sales FYTD', '₹70.60 L', '94 invoices'), K('Collections MTD', '₹11.75 L', 'Incl. TDS'), K('Outstanding', '₹32.05 L', 'All customers'), K('Overdue', '₹16.50 L', 'Past due date', 'bad'), K('Orders on hold', '1', 'Credit hold', 'warn'), K('Open order value', '₹3.09 L', 'Uninvoiced, incl. GST'), K('Margin MTD', '₹2.22 L', 'At standard cost')],
+        customers: bars([['Jaipur Panel Traders', 179312, '₹1,79,312'], ['Mumbai Build Supplies LLP', 130837.6, '₹1,30,837.60'], ['Nagpur Wood Depot', 130270, '₹1,30,270'], ['Ahmedabad Plywood House', 114097.6, '₹1,14,097.60'], ['Pune Modular Kitchens', 93830, '₹93,830']]),
+        skus: bars([['PLY-19-84', 227336, '₹2,27,336', '200 pcs'], ['MDO-12-84', 174107, '₹1,74,107', '140 pcs'], ['OSBT6-18-78', 129936, '₹1,29,936', '90 pcs'], ['FILM-12-84', 105446, '₹1,05,446', '80 pcs'], ['OSB3-18-84', 96960, '₹96,960', '80 pcs']]) },
+      { name: 'OSB Unit', chart: false,
+        kpis: [K('Sales MTD', '₹2.64 L', '4 invoices · ₹3.11 L incl. GST'), K('Sales FYTD', '₹37.70 L', '47 invoices'), K('Collections MTD', '₹5.92 L', 'Incl. TDS'), K('Outstanding', '₹9.94 L', 'All customers'), K('Overdue', '₹2.37 L', 'Past due date', 'bad'), K('Orders on hold', '0', 'Credit hold'), K('Open order value', '₹1.43 L', 'Uninvoiced, incl. GST'), K('Margin MTD', '₹58,645', 'At standard cost')],
+        customers: bars([['Morbi Ceramic Packers', 97580, '₹97,580'], ['Kolkata Board Centre', 76560, '₹76,560'], ['Bhavnagar Shipping Crates', 52561, '₹52,561'], ['Chennai Crate Works', 36833.8, '₹36,833.80']]),
+        skus: bars([['FILM-18-84', 76560, '₹76,560', '40 pcs'], ['OSB3-12-84', 60970, '₹60,970', '70 pcs'], ['OSB2-08-84', 36810, '₹36,810', '70 pcs'], ['OSB3-09-84', 35313.8, '₹35,313.80', '50 pcs'], ['OSB2-12-84', 30160, '₹30,160', '']]) }
+    ];
+    var h = [88, 88, 70, 90, 88, 76, 0, 0, 0, 0, 0, 0];
+    var labels = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+    var months = labels.map(function (l, i) {
+      var c = i === 5 ? '#D71920' : '#CBD2DC';
+      return { label: l, bar: h[i] > 0 ? 'height:' + h[i] + '%;background:' + c : 'height:2px;background:#EEF0F3' };
+    });
+    return { firms: firms, months: months };
+  }
+}
+</script>
+</body>
+</html>

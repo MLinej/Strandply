@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cost per board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>body{margin:0}a{color:#172033}a:hover{color:#D71920}</style>
+</helmet>
+<div style="width: 1440px; height: 1160px; display: flex; background: #F8F9FA; font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; color: #172033; overflow: hidden">
+<dc-import name="Sidebar" active="reports" sub="Cost per board" height="1160px" hint-size="232px,1160px"></dc-import>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column">
+<dc-import name="Topbar" module="Reports" page="Cost per board" hint-size="100%,60px"></dc-import>
+<main style="padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.2px">Cost per board</h1>
+<div style="font-size: 13px; color: #667085">01 Apr 2026 – 23 Sept 2026 · plant-wide · from the entries people already make</div>
+</div>
+<div style="display: flex; gap: 8px">
+<button style="height: 36px; padding: 0 12px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>Export CSV</button>
+<button style="height: 36px; padding: 0 12px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"></path></svg>Print / PDF</button>
+</div>
+</div>
+<div style="display: flex; gap: 10px; align-items: flex-end">
+<label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 600">From</span><input type="text" value="01/04/2026" aria-label="From date" style="width: 150px; box-sizing: border-box; height: 36px; padding: 0 12px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; font: inherit; font-size: 13px; color: #172033"></label>
+<label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 600">To</span><input type="text" value="23/09/2026" aria-label="To date" style="width: 150px; box-sizing: border-box; height: 36px; padding: 0 12px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; font: inherit; font-size: 13px; color: #172033"></label>
+<label style="display: flex; flex-direction: column; gap: 5px"><span style="font-size: 12.5px; font-weight: 600">Power cost from</span><button style="width: 220px; height: 36px; box-sizing: border-box; padding: 0 12px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 8px; font: inherit; font-size: 13px; color: #172033; display: flex; align-items: center; justify-content: space-between; cursor: pointer">Main meter readings<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg></button></label>
+<button style="height: 36px; padding: 0 14px; border: 1px solid #E6E8EC; background: #FFFFFF; color: #172033; border-radius: 8px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer">Apply</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+<div style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 16px; display: flex; gap: 12px; align-items: flex-start">
+<div style="width: 34px; height: 34px; border-radius: 17px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; {{k.circle}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="{{k.d}}"></path></svg></div>
+<div style="display: flex; flex-direction: column; gap: 3px">
+<div style="font-size: 11px; font-weight: 500; letter-spacing: 0.4px; text-transform: uppercase; color: #98A2B3">{{k.label}}</div>
+<div style="font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap">{{k.value}}</div>
+<div style="font-size: 12px; color: #667085">{{k.meta}}</div>
+</div>
+</div>
+</sc-for>
+</div>
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: baseline">
+<h2 style="margin: 0; font-size: 15px; font-weight: 600">Where the ₹2.05 Cr went</h2>
+<span style="font-size: 12px; color: #98A2B3">Share of period cost</span>
+</div>
+<div style="display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px">
+<sc-for list="{{split}}" as="s" hint-placeholder-count="5"><div style="height: 14px; {{s.bar}}"></div></sc-for>
+</div>
+<div style="display: flex; gap: 24px; flex-wrap: wrap">
+<sc-for list="{{split}}" as="s" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px">
+<span style="width: 10px; height: 10px; border-radius: 3px; {{s.swatch}}"></span>
+<span style="color: #667085">{{s.label}}</span>
+<span style="font-weight: 600; font-variant-numeric: tabular-nums">{{s.amt}}</span>
+<span style="color: #98A2B3">{{s.pct}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; overflow: hidden">
+<div style="display: grid; grid-template-columns: 108px 78px 70px minmax(0, 1fr) 104px 104px 92px 92px 76px 104px 84px 108px; align-items: center; height: 34px; background: #F8F9FA; border-bottom: 1px solid #E6E8EC; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: #667085">
+<div style="padding: 0 8px 0 16px">Month</div>
+<div style="padding: 0 8px; text-align: right">Boards</div>
+<div style="padding: 0 8px; text-align: right">Sqm</div>
+<div style="padding: 0 8px; text-align: right">Material</div>
+<div style="padding: 0 8px; text-align: right">Power</div>
+<div style="padding: 0 8px; text-align: right">PGVCL bill</div>
+<div style="padding: 0 8px; text-align: right">Labour</div>
+<div style="padding: 0 8px; text-align: right">Maint.</div>
+<div style="padding: 0 8px; text-align: right">Other</div>
+<div style="padding: 0 8px; text-align: right">Total</div>
+<div style="padding: 0 8px; text-align: right">₹ / board</div>
+<div style="padding: 0 16px 0 8px">Inputs</div>
+</div>
+<sc-for list="{{months}}" as="m" hint-placeholder-count="6">
+<div style="display: grid; grid-template-columns: 108px 78px 70px minmax(0, 1fr) 104px 104px 92px 92px 76px 104px 84px 108px; align-items: center; height: 40px; border-bottom: 1px solid #EEF0F3; font-size: 12.5px; font-variant-numeric: tabular-nums">
+<div style="padding: 0 8px 0 16px; display: flex; flex-direction: column"><span style="font-weight: 600">{{m.month}}</span><sc-if value="{{m.partial}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; color: #98A2B3">part month</span></sc-if></div>
+<div style="padding: 0 8px; text-align: right">{{m.boards}}</div>
+<div style="padding: 0 8px; text-align: right; color: #667085">{{m.sqm}}</div>
+<div style="padding: 0 8px; text-align: right">{{m.mat}}</div>
+<div style="padding: 0 8px; text-align: right">{{m.pow}}</div>
+<div style="padding: 0 8px; text-align: right; color: #667085">{{m.pgvcl}}</div>
+<div style="padding: 0 8px; text-align: right">{{m.lab}}</div>
+<div style="padding: 0 8px; text-align: right">{{m.mnt}}</div>
+<div style="padding: 0 8px; text-align: right">{{m.oth}}</div>
+<div style="padding: 0 8px; text-align: right; font-weight: 600">{{m.total}}</div>
+<div style="padding: 0 8px; text-align: right; font-weight: 600">{{m.per}}</div>
+<div style="padding: 0 16px 0 8px"><span style="display: inline-flex; align-items: center; height: 20px; padding: 0 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; {{m.tone}}">{{m.flag}}</span></div>
+</div>
+</sc-for>
+<div style="display: grid; grid-template-columns: 108px 78px 70px minmax(0, 1fr) 104px 104px 92px 92px 76px 104px 84px 108px; align-items: center; height: 42px; background: #F8F9FA; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums">
+<div style="padding: 0 8px 0 16px">Period total</div>
+<div style="padding: 0 8px; text-align: right">12,803</div>
+<div style="padding: 0 8px; text-align: right">38,112</div>
+<div style="padding: 0 8px; text-align: right">₹34,18,376</div>
+<div style="padding: 0 8px; text-align: right">₹1,12,73,479</div>
+<div style="padding: 0 8px; text-align: right; font-weight: 500; color: #667085">₹1,06,79,128</div>
+<div style="padding: 0 8px; text-align: right">₹42,54,600</div>
+<div style="padding: 0 8px; text-align: right">₹11,94,308</div>
+<div style="padding: 0 8px; text-align: right">₹3,81,100</div>
+<div style="padding: 0 8px; text-align: right">₹2,05,21,863</div>
+<div style="padding: 0 8px; text-align: right; color: #D71920">₹1,602.89</div>
+<div style="padding: 0 16px 0 8px; font-weight: 500; font-size: 11.5px; color: #98A2B3">PGVCL: 2 months</div>
+</div>
+</section>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start">
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; overflow: hidden">
+<h2 style="margin: 0; padding: 14px 18px; font-size: 15px; font-weight: 600">Raw material consumed</h2>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 100px 90px 100px 64px 100px; align-items: center; height: 32px; background: #F8F9FA; border-top: 1px solid #E6E8EC; border-bottom: 1px solid #E6E8EC; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: #667085">
+<div style="padding: 0 8px 0 18px">Material</div><div style="padding: 0 8px; text-align: right">Qty</div><div style="padding: 0 8px; text-align: right">Unit cost</div><div style="padding: 0 8px; text-align: right">Cost</div><div style="padding: 0 8px; text-align: right">Share</div><div style="padding: 0 18px 0 8px; text-align: right">Per board</div>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 100px 90px 100px 64px 100px; align-items: center; height: 38px; border-bottom: 1px solid #EEF0F3; font-size: 12.5px; font-variant-numeric: tabular-nums">
+<div style="padding: 0 8px 0 18px; font-weight: 600">Nilgiri wood</div><div style="padding: 0 8px; text-align: right">3,57,600 kg</div><div style="padding: 0 8px; text-align: right">₹5.93/kg</div><div style="padding: 0 8px; text-align: right">₹21,18,958</div><div style="padding: 0 8px; text-align: right">62.0%</div><div style="padding: 0 18px 0 8px; text-align: right; font-weight: 600">₹165.50</div>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 100px 90px 100px 64px 100px; align-items: center; height: 38px; font-size: 12.5px; font-variant-numeric: tabular-nums">
+<div style="padding: 0 8px 0 18px; font-weight: 600">Resin</div><div style="padding: 0 8px; text-align: right">8,686 kg</div><div style="padding: 0 8px; text-align: right">₹81.44/kg</div><div style="padding: 0 8px; text-align: right">₹7,07,400</div><div style="padding: 0 8px; text-align: right">20.7%</div><div style="padding: 0 18px 0 8px; text-align: right; font-weight: 600">₹55.25</div>
+</div>
+</section>
+<section style="background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 12px; padding: 14px 18px; display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; font-size: 15px; font-weight: 600">How this is worked out</h2>
+<div style="font-size: 12.5px; line-height: 1.55; color: #667085">Good boards = boards − rejects on submitted and approved shifts; voided entries excluded. Sqm uses each SKU’s size.</div>
+<div style="font-size: 12.5px; line-height: 1.55; color: #667085">Material = quantity consumed × weighted average purchase cost (ex GST, per kg / pcs / sqm) over the selected period.</div>
+<div style="font-size: 12.5px; line-height: 1.55; color: #667085">Power = main meter readings × tariff, shown beside the PGVCL bill where one is entered. A month is flagged when any input is missing.</div>
+</section>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var neutral = 'background:#F5F6F8;color:#667085';
+    var kpis = [
+      { label: 'Good boards', value: '12,803', meta: '38,112 sqm', circle: neutral, d: 'M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8' },
+      { label: 'Total cost', value: '₹2.05 Cr', meta: 'Apr – Sept 2026', circle: neutral, d: 'M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4.5 4.5 0 0 0 0-9' },
+      { label: 'Cost per good board', value: '₹1,602.89', meta: 'Total cost ÷ good boards', circle: 'background:#FFF1F2;color:#D71920', d: 'M3 3v18h18M8 17v-5M13 17V8M18 17v-7' },
+      { label: 'Cost per sqm', value: '₹538.46', meta: 'Total cost ÷ sqm', circle: neutral, d: 'M3 3h18v18H3zM3 9h18M9 21V9' },
+      { label: 'Months flagged', value: '4 of 6', meta: 'Missing inputs — see Inputs', circle: 'background:#FFFBEB;color:#D97706', d: 'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01' }
+    ];
+    var split = [
+      { label: 'Power', amt: '₹1,12,73,479', pct: '54.9%', w: 54.9, c: '#D71920' },
+      { label: 'Labour', amt: '₹42,54,600', pct: '20.7%', w: 20.7, c: '#172033' },
+      { label: 'Material', amt: '₹34,18,376', pct: '16.7%', w: 16.7, c: '#667085' },
+      { label: 'Maintenance', amt: '₹11,94,308', pct: '5.8%', w: 5.8, c: '#98A2B3' },
+      { label: 'Other', amt: '₹3,81,100', pct: '1.9%', w: 1.9, c: '#D0D5DD' }
+    ].map(function (s) {
+      return { label: s.label, amt: s.amt, pct: s.pct, bar: 'flex-grow:' + s.w + ';flex-basis:0;background:' + s.c, swatch: 'background:' + s.c };
+    });
+    var warn = 'color:#D97706;background:#FFFBEB';
+    var ok = 'color:#16A34A;background:#F0FDF4';
+    var M = function (month, partial, boards, sqm, mat, pow, pgvcl, lab, mnt, oth, total, per, flag, tone) {
+      return { month: month, partial: partial, boards: boards, sqm: sqm, mat: mat, pow: pow, pgvcl: pgvcl, lab: lab, mnt: mnt, oth: oth, total: total, per: per, flag: flag, tone: tone };
+    };
+    var months = [
+      M('Apr 2026', false, '0', '0', '₹0', '₹0', '—', '₹0', '₹80,218', '₹0', '₹80,218', '—', 'No production', warn),
+      M('May 2026', false, '0', '0', '₹0', '₹0', '—', '₹0', '₹1,16,505', '₹0', '₹1,16,505', '—', 'No production', warn),
+      M('Jun 2026', false, '0', '0', '₹0', '₹0', '—', '₹0', '₹2,30,390', '₹0', '₹2,30,390', '—', 'No production', warn),
+      M('Jul 2026', false, '5,602', '16,676', '₹14,79,362', '₹44,53,612', '₹52,97,418', '₹18,72,700', '₹88,340', '₹1,56,700', '₹80,50,714', '₹1,437.11', 'Complete', ok),
+      M('Aug 2026', false, '4,858', '14,461', '₹12,75,355', '₹45,14,743', '₹53,81,710', '₹16,01,000', '₹2,64,375', '₹1,56,100', '₹78,11,573', '₹1,607.98', 'Complete', ok),
+      M('Sept 2026', true, '2,343', '6,975', '₹6,63,659', '₹23,05,124', '—', '₹7,80,900', '₹4,14,480', '₹68,300', '₹42,32,463', '₹1,806.43', 'PGVCL bill due', warn)
+    ];
+    return { kpis: kpis, split: split, months: months };
+  }
+}
+</script>
+</body>
+</html>

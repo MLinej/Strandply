@@ -1,0 +1,44 @@
+/*
+ * Strandply design tokens: the single source of raw values.
+ * Colours are RGB channels so Tailwind can apply opacity (bg-ink/5).
+ * Dark mode (later) only redefines these variables under a [data-theme="dark"] block.
+ */
+:root {
+  /* Brand: scarce. One primary action per screen. */
+  --primary: 215 25 32; /* #D71920 */
+  --primary-light: 255 241 242; /* #FFF1F2 */
+  --primary-tint: 255 247 247; /* #FFF7F7 */
+  --primary-border: 243 196 198; /* #F3C4C6 */
+
+  /* Neutrals */
+  --ink: 23 32 51; /* #172033 */
+  --muted: 102 112 133; /* #667085 */
+  --faint: 152 162 179; /* #98A2B3 */
+  --border: 230 232 236; /* #E6E8EC */
+  --divider: 238 240 243; /* #EEF0F3 */
+  --subtle: 245 246 248; /* #F5F6F8 */
+  --page: 248 249 250; /* #F8F9FA */
+  --card: 255 255 255; /* #FFFFFF */
+
+  /* Status. There is no blue; purple is the info colour. */
+  --amber: 217 119 6; /* #D97706 */
+  --amber-light: 255 251 235; /* #FFFBEB */
+  --green: 22 163 74; /* #16A34A */
+  --green-light: 240 253 244; /* #F0FDF4 */
+  --purple: 124 58 237; /* #7C3AED */
+  --purple-light: 245 243 255; /* #F5F3FF */
+
+  /* Charts */
+  --chart-bar: 203 210 220; /* #CBD2DC */
+  --chart-faint: 208 213 221; /* #D0D5DD */
+
+  /* Non-colour tokens, mirrored in tailwind.config.ts, for use in plain CSS */
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-pill: 9999px;
+  --shadow-overlay: 0 8px 24px rgb(23 32 51 / 0.12);
+  --h-control: 36px;
+  --h-row: 38px;
+  --h-row-head: 34px;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
