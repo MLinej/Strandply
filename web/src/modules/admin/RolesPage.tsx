@@ -15,7 +15,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
   {
     key: 'pages',
     title: 'Samples & admin pages',
-    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor')),
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -37,10 +37,22 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
     label: { vendors: 'Vendors (list, compare, find)', vendor_reports: 'Vendor reports', vendor_masters: 'Vendor masters', vendor_settings: 'Vendor settings' },
   },
   {
+    key: 'pages',
+    title: 'Purchase pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('purchase_')),
+    label: {
+      purchase_dashboard: 'Dashboard, reports, audit',
+      purchase_entries: 'Register, trucks, returns, documents',
+      purchase_orders: 'Purchase orders',
+      purchase_notes: 'Debit / credit notes',
+      purchase_inventory: 'Raw material stock',
+    },
+  },
+  {
     key: 'actions',
     title: 'Actions',
     items: ACTION_KEYS,
-    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors' },
+    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors', purchase_approve: 'Approve purchases' },
   },
   {
     key: 'widgets',

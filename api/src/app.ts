@@ -27,15 +27,24 @@ import { TncService, VendorCategoryService, VendorProductService } from './modul
 import { vendorRoutes } from './modules/vendors/routes';
 import { VendorSettingsService } from './modules/vendors/settings-service';
 import { VendorService } from './modules/vendors/vendor-service';
+import { MemoryBlobStore, type BlobStore } from './lib/blob-store';
+import { PurchaseDocumentService } from './modules/purchase/document-service';
+import { PurchaseEntryService } from './modules/purchase/entry-service';
+import { InventoryService } from './modules/purchase/inventory-service';
+import { PurchaseMasterService, PurchaseOrderService, PurchaseReturnService } from './modules/purchase/order-service';
+import { PurchaseReportService } from './modules/purchase/report-service';
+import { purchaseRoutes } from './modules/purchase/routes';
 import type { DataLayer } from './repos';
 
 export interface AppDeps {
   data: DataLayer;
   config: AppConfig;
   clock?: Clock;
+  /** Uploaded files. Defaults to memory (tests); entry.node.ts passes a disk store. */
+  blobs?: BlobStore;
 }
 
-export function createServices({ data, config, clock = systemClock }: AppDeps): Services {
+export function createServices({ data, config, clock = systemClock, blobs = new MemoryBlobStore() }: AppDeps): Services {
   const activity = new ActivityService(data, clock);
   const notifications = new NotificationService(data, clock);
   const requests = new RequestService(data, activity, notifications, clock);
@@ -43,6 +52,7 @@ export function createServices({ data, config, clock = systemClock }: AppDeps): 
   const company = new CompanyService(data, activity, clock);
   const print = new PrintService(data, dispatches, requests, activity, company, clock);
   const vendors = new VendorService(data, activity, clock);
+  const inventory = new InventoryService(data, activity, clock);
   return {
     activity,
     permissions: new PermissionService(data, activity, clock, config.permissionCacheMs),
@@ -65,6 +75,13 @@ export function createServices({ data, config, clock = systemClock }: AppDeps): 
     tnc: new TncService(data, activity, clock),
     vendorImport: new VendorImportService(data, activity, clock),
     vendorSettings: new VendorSettingsService(data, vendors, company, activity, clock),
+    purchaseMasters: new PurchaseMasterService(data, activity, clock),
+    purchaseEntries: new PurchaseEntryService(data, activity, company, clock),
+    purchaseOrders: new PurchaseOrderService(data, activity, company, clock),
+    purchaseReturns: new PurchaseReturnService(data, activity, clock),
+    inventory,
+    purchaseReports: new PurchaseReportService(data, inventory, activity, clock),
+    purchaseDocuments: new PurchaseDocumentService(data, blobs, activity, clock),
     clock,
   };
 }
@@ -90,6 +107,7 @@ export function createApp(deps: AppDeps) {
   mount('/api', authRoutes());
   mount('/api/sampletrack', sampletrackRoutes());
   mount('/api/vendors', vendorRoutes());
+  mount('/api/purchase', purchaseRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

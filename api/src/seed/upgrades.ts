@@ -43,6 +43,33 @@ export const UPGRADES: Upgrade[] = [
   },
 ];
 
+/** Appends page and action keys to roles' saved permissions (keeps any custom changes). */
+function grant(data: Partial<MemoryData>, roles: string[], pages: readonly string[], actions: readonly string[] = []) {
+  for (const row of data.rolePermissions ?? []) {
+    if (!roles.includes(row.role)) continue;
+    const p = row.permissions as PermissionSet;
+    p.pages = PAGE_KEYS.filter((k) => p.pages.includes(k) || pages.includes(k));
+    p.actions = ACTION_KEYS.filter((k) => p.actions.includes(k) || actions.includes(k));
+  }
+}
+
+const PURCHASE_PAGES = ['purchase_dashboard', 'purchase_entries', 'purchase_orders', 'purchase_notes', 'purchase_inventory'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0006_purchase.sql on an existing database. The new tables come from the seed.
+  name: '0006_purchase',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], PURCHASE_PAGES, ['purchase_approve']);
+    grant(data, ['management'], ['purchase_dashboard', 'purchase_inventory']);
+    // PO clauses join the shared T&C master.
+    const have = new Set((data.vnTnc ?? []).map((t) => t.id));
+    if (data.vnTnc) data.vnTnc.push(...seed.vnTnc.filter((t) => t.id.startsWith('tnc-po-') && !have.has(t.id)));
+    // A snapshot written by a half-built version can hold these tables empty; nothing real lives in
+    // them before this upgrade, so take the seed's (type masters, plus the demo register in dev).
+    for (const t of ['puTypes', 'puEntries', 'puOrders'] as const) if (!data[t]?.length) (data as Record<string, unknown>)[t] = structuredClone(seed[t]);
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

@@ -291,6 +291,86 @@ CASES.push(
   { method: 'DELETE', route: `${VN}/:id`, path: `${VN}/ven-pend`, allowed: ADMINS, ok: 204 },
 );
 
+// Purchase module. Admins have everything. Management: purchase_dashboard and purchase_inventory pages
+// with print and export, no edit/delete/purchase_approve. Dispatch and marketing: nothing.
+const PU = '/api/purchase';
+const PU_VIEW: Role[] = ['superadmin', 'admin', 'management']; // dashboard / inventory pages
+const pdf = () => {
+  const f = new FormData();
+  f.append('file', new File([new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31])], 'invoice.pdf', { type: 'application/pdf' }));
+  f.append('type', 'Invoice');
+  return f;
+};
+const newEntry = { material: 'resin', date: '2026-09-25', vendorName: 'V.K.Industrioes', invoiceNo: 'VK/99', taxType: 'SG+CG', invQty: 1000, splQty: 1000, ratePaise: 4000000 };
+CASES.push(
+  { method: 'GET', route: `${PU}/meta`, path: `${PU}/meta`, allowed: PU_VIEW, ok: 200 },
+  { method: 'POST', route: `${PU}/types`, path: `${PU}/types`, body: { kind: 'nilgiri_species', name: 'Casuarina' }, allowed: ADMINS, ok: 201 },
+  { method: 'DELETE', route: `${PU}/types/:id`, path: `${PU}/types/ptype-nilgiri-other`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${PU}/vendor-options`, path: `${PU}/vendor-options?q=active`, allowed: ADMINS, ok: 200 },
+  // Entries
+  { method: 'GET', route: `${PU}/entries`, path: `${PU}/entries?material=nilgiri&fy=2026-27`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/entries/stats`, path: `${PU}/entries/stats?month=2026-09`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/entries/next-lot`, path: `${PU}/entries/next-lot?material=nilgiri&date=2026-09-30`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/entries/export`, path: `${PU}/entries/export`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/entries/:id`, path: `${PU}/entries/pe-1`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/entries/:id/print`, path: `${PU}/entries/pe-1/print?kind=label`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PU}/entries`, path: `${PU}/entries`, body: newEntry, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${PU}/entries/:id`, path: `${PU}/entries/pe-1`, body: { remarks: 'x' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PU}/entries/:id/approve`, path: `${PU}/entries/pe-1/approve`, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${PU}/entries/:id`, path: `${PU}/entries/pe-2`, allowed: ADMINS, ok: 204 },
+  // Notes
+  { method: 'GET', route: `${PU}/notes`, path: `${PU}/notes?type=rd`, allowed: ADMINS, ok: 200 },
+  { method: 'PATCH', route: `${PU}/notes/:entryId/:kind`, path: `${PU}/notes/pe-1/rate`, body: { status: 'Issued' }, allowed: ADMINS, ok: 204 },
+  // POs
+  { method: 'GET', route: `${PU}/pos`, path: `${PU}/pos?progress=Partial`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/pos/options`, path: `${PU}/pos/options?material=nilgiri`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/pos/tnc-options`, path: `${PU}/pos/tnc-options`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/pos/export`, path: `${PU}/pos/export`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/pos/:id`, path: `${PU}/pos/po-used`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/pos/:id/print`, path: `${PU}/pos/po-used/print`, allowed: ADMINS, ok: 200 },
+  {
+    method: 'POST',
+    route: `${PU}/pos`,
+    path: `${PU}/pos`,
+    body: { date: '2026-09-30', material: 'kraft', vendorName: 'V.K.Industrioes', qty: 5000, ratePaise: 3200 },
+    allowed: ADMINS,
+    ok: 201,
+  },
+  { method: 'PATCH', route: `${PU}/pos/:id`, path: `${PU}/pos/po-free`, body: { remarks: 'Urgent' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PU}/pos/:id/approve`, path: `${PU}/pos/po-free/approve`, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${PU}/pos/:id`, path: `${PU}/pos/po-free`, allowed: ADMINS, ok: 204 },
+  // Returns
+  { method: 'GET', route: `${PU}/returns`, path: `${PU}/returns`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PU}/returns`, path: `${PU}/returns`, body: { date: '2026-09-28', material: 'resin', entryId: 'pe-2', qty: 100, ratePaise: 4000000 }, allowed: ADMINS, ok: 201 },
+  { method: 'POST', route: `${PU}/returns/:id/approve`, path: `${PU}/returns/ret-1/approve`, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${PU}/returns/:id`, path: `${PU}/returns/ret-1`, allowed: ADMINS, ok: 204 },
+  // Inventory
+  { method: 'GET', route: `${PU}/inventory`, path: `${PU}/inventory?fy=2026-27`, allowed: PU_VIEW, ok: 200 },
+  { method: 'GET', route: `${PU}/inventory/export`, path: `${PU}/inventory/export`, allowed: PU_VIEW, ok: 200 },
+  {
+    method: 'PUT',
+    route: `${PU}/opening-stock/:fy`,
+    path: `${PU}/opening-stock/2026-27`,
+    body: { asOnDate: '2026-03-31', mode: 'submit', items: [{ material: 'resin', qty: 500, ratePaise: 4000000 }] },
+    allowed: ADMINS,
+    ok: 200,
+  },
+  // Nothing is saved for FY 2025-26, so allowed roles get 409 (the guard let them through).
+  { method: 'POST', route: `${PU}/opening-stock/:fy/approve`, path: `${PU}/opening-stock/2025-26/approve`, allowed: ADMINS, ok: 409 },
+  { method: 'POST', route: `${PU}/opening-stock/:fy/unlock`, path: `${PU}/opening-stock/2025-26/unlock`, allowed: ADMINS, ok: 409 },
+  { method: 'PUT', route: `${PU}/consumption/:fy`, path: `${PU}/consumption/2026-27`, body: { key: 'resin', qty: 100 }, allowed: ADMINS, ok: 204 },
+  // Dashboard, reports, audit
+  { method: 'GET', route: `${PU}/dashboard`, path: `${PU}/dashboard?fy=2026-27`, allowed: PU_VIEW, ok: 200 },
+  { method: 'GET', route: `${PU}/reports`, path: `${PU}/reports?month=2026-09`, allowed: PU_VIEW, ok: 200 },
+  { method: 'GET', route: `${PU}/reports/export`, path: `${PU}/reports/export?kind=product-day`, allowed: PU_VIEW, ok: 200 },
+  { method: 'GET', route: `${PU}/audit`, path: `${PU}/audit`, allowed: PU_VIEW, ok: 200 },
+  // Documents (the file route 404s for an unknown id once the guard lets the role through)
+  { method: 'GET', route: `${PU}/documents`, path: `${PU}/documents`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PU}/documents`, path: `${PU}/documents`, form: pdf, allowed: ADMINS, ok: 201 },
+  { method: 'GET', route: `${PU}/documents/:id/file`, path: `${PU}/documents/nope/file`, allowed: ADMINS, ok: 404 },
+  { method: 'DELETE', route: `${PU}/documents/:id`, path: `${PU}/documents/nope`, allowed: ADMINS, ok: 404 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

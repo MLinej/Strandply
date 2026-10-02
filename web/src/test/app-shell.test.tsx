@@ -83,9 +83,11 @@ describe('app shell', () => {
   it('expands another module’s sub-menu on click', async () => {
     renderApp('/');
     await screen.findByRole('heading', { level: 1 });
-    expect(screen.queryByRole('link', { name: 'Purchase orders' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /Purchase/ }));
-    expect(screen.getByRole('link', { name: 'Purchase orders' })).toBeTruthy();
+    // Scoped to the sidebar: Home's "Go to" list also links built pages such as Purchase orders.
+    const nav = within(screen.getByRole('navigation', { name: 'Modules' }));
+    expect(nav.queryByRole('link', { name: 'Purchase orders' })).toBeNull();
+    fireEvent.click(nav.getByRole('button', { name: /Purchase/ }));
+    expect(nav.getByRole('link', { name: 'Purchase orders' })).toBeTruthy();
   });
 
   it('switches the firm globally', async () => {

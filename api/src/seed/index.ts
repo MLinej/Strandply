@@ -3,11 +3,14 @@ import { DEMO_COURIERS, DEMO_DISPATCH_HISTORY, DEMO_DISPATCHES, DEMO_PARTIES, DE
 import { REF_CITIES, REF_CITY_PINCODES, REF_PRODUCTS, REF_STATES } from './reference';
 import { defaultRolePermissionRows } from './role-permissions';
 import { DEFAULT_SETTINGS } from './settings';
+import { DEMO_PURCHASE_ENTRIES, DEMO_PURCHASE_ORDERS } from './purchase-demo.dev';
+import { REF_PURCHASE_TYPES } from './purchase';
 import { UPGRADES } from './upgrades';
 import { DEV_USERS } from './users.dev';
 import {
   DEFAULT_VENDOR_SETTINGS,
   DEMO_VENDORS,
+  REF_PO_TNC,
   REF_TNC,
   REF_VENDOR_CATEGORIES,
   REF_VENDOR_PRODUCTS,
@@ -50,7 +53,14 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     vnCategories: REF_VENDOR_CATEGORIES.map((c) => ({ ...c, ...audit })),
     vnProducts: REF_VENDOR_PRODUCTS.map((p) => ({ ...p, ...audit })),
     vendors: dev(DEMO_VENDORS),
-    vnTnc: REF_TNC.map((t) => ({ ...t, ...audit })),
+    vnTnc: [...REF_TNC, ...REF_PO_TNC].map((t) => ({ ...t, ...audit })),
+    puTypes: REF_PURCHASE_TYPES.map((t) => ({ ...t, ...audit })),
+    puEntries: dev(DEMO_PURCHASE_ENTRIES),
+    puOrders: dev(DEMO_PURCHASE_ORDERS),
+    puReturns: [],
+    puOpening: [],
+    puConsumption: [],
+    puDocuments: [],
     // A fresh seed already has everything the upgrades add.
     upgrades: UPGRADES.map((u) => ({ name: u.name, appliedAt: at })),
   };

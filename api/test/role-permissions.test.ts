@@ -99,13 +99,13 @@ describe('role permissions', () => {
 });
 
 describe('SQL seed stays in sync with the code defaults', () => {
-  it('0004 seed + the 0005 appends give exactly DEFAULT_ROLE_PERMISSIONS (files are parsed, never executed)', () => {
+  it('0004 seed + the 0005/0006 appends give exactly DEFAULT_ROLE_PERMISSIONS (files are parsed, never executed)', () => {
     const read = (f: string) => readFileSync(new URL(`../../db/migrations/${f}`, import.meta.url), 'utf8');
     const rows = [...read('0004_access_control.sql').matchAll(/^\s+\('(\w+)', '(\{.*\})', ([01])\)/gm)].map(
       (m) => [m[1]!, JSON.parse(m[2]!) as PermissionSet, m[3] === '1'] as const,
     );
     // 0005: UPDATE … json_insert(permissions, '$.pages[#]', 'x', …) … WHERE role IN ('a', 'b');
-    for (const stmt of read('0005_vendors.sql').matchAll(/UPDATE st_role_permissions\s+SET permissions = json_insert\(permissions,([\s\S]*?)\)[\s\S]*?WHERE role IN \(([^)]*)\);/g)) {
+    for (const stmt of ['0005_vendors.sql', '0006_purchase.sql'].map(read).join('\n').matchAll(/UPDATE st_role_permissions\s+SET permissions = json_insert\(permissions,([\s\S]*?)\)[\s\S]*?WHERE role IN \(([^)]*)\);/g)) {
       const appends = [...stmt[1]!.matchAll(/'\$\.(pages|actions|widgets)\[#\]', '(\w+)'/g)];
       const roles = [...stmt[2]!.matchAll(/'(\w+)'/g)].map((m) => m[1]);
       for (const [role, perms] of rows) {

@@ -14,6 +14,7 @@ import { MemorySessionRepo } from './sessions';
 import { MemorySettingsRepo } from './settings';
 import { MemoryStore, type MemoryData } from './store';
 import { MemoryUserRepo } from './users';
+import { MemoryConsumptionRepo, MemoryOpeningStockRepo, MemoryPurchaseDocumentRepo, MemoryPurchaseEntryRepo, MemoryPurchaseOrderRepo, MemoryPurchaseReturnRepo, MemoryPurchaseTypeRepo } from './purchase';
 import { MemoryTncRepo, MemoryVendorCategoryRepo, MemoryVendorProductRepo, MemoryVendorRepo } from './vendors';
 import { MemoryCounterRepo, MemoryDispatchRepo, MemoryNotificationRepo, MemoryRequestRepo } from './workflow';
 
@@ -77,6 +78,13 @@ export function createMemoryDataLayer(store: MemoryStore): DataLayer {
     vendorProducts: new MemoryVendorProductRepo(store),
     vendors: new MemoryVendorRepo(store),
     tnc: new MemoryTncRepo(store),
+    purchaseTypes: new MemoryPurchaseTypeRepo(store),
+    purchaseEntries: new MemoryPurchaseEntryRepo(store),
+    purchaseOrders: new MemoryPurchaseOrderRepo(store),
+    purchaseReturns: new MemoryPurchaseReturnRepo(store),
+    openingStock: new MemoryOpeningStockRepo(store),
+    consumption: new MemoryConsumptionRepo(store),
+    purchaseDocuments: new MemoryPurchaseDocumentRepo(store),
   };
   return { repos, uow: new MemoryUnitOfWork(store, repos) };
 }

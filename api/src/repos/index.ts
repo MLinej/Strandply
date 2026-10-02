@@ -5,6 +5,7 @@ import type { CityRepo, CourierRepo, PartyRepo, ProductRepo, StateRepo, UsageRep
 import type { SettingsRepo } from './settings';
 import type { UserRepo } from './users';
 import type { TncRepo, VendorCategoryRepo, VendorProductRepo, VendorRepo } from './vendors';
+import type { ConsumptionRepo, OpeningStockRepo, PurchaseDocumentRepo, PurchaseEntryRepo, PurchaseOrderRepo, PurchaseReturnRepo, PurchaseTypeRepo } from './purchase';
 import type { CounterRepo, DispatchRepo, NotificationRepo, RequestRepo } from './workflow';
 
 export * from './types';
@@ -16,6 +17,7 @@ export * from './masters';
 export * from './workflow';
 export * from './settings';
 export * from './vendors';
+export * from './purchase';
 
 /** Every repo the app uses. Routes and services receive this, never a concrete implementation. */
 export interface Repos {
@@ -38,6 +40,13 @@ export interface Repos {
   vendorProducts: VendorProductRepo;
   vendors: VendorRepo;
   tnc: TncRepo;
+  purchaseTypes: PurchaseTypeRepo;
+  purchaseEntries: PurchaseEntryRepo;
+  purchaseOrders: PurchaseOrderRepo;
+  purchaseReturns: PurchaseReturnRepo;
+  openingStock: OpeningStockRepo;
+  consumption: ConsumptionRepo;
+  purchaseDocuments: PurchaseDocumentRepo;
 }
 
 /**

@@ -214,7 +214,8 @@ describe('vendor masters', () => {
     const t = await (await call('POST', '/tnc', { title: 'Force Majeure', body: 'Neither party is liable…', category: 'Legal' })).json();
     expect(t).toMatchObject({ version: '1.0', status: 'active', appliesTo: 'all' });
     await call('PATCH', `/tnc/${t.id}`, { status: 'inactive' });
-    expect(await (await call('GET', '/tnc/stats')).json()).toEqual({ total: 6, categories: 5, active: 5 });
+    // 5 vendor clauses + 4 PO clauses (0006) + the new one, now inactive.
+    expect(await (await call('GET', '/tnc/stats')).json()).toEqual({ total: 10, categories: 5, active: 9 });
   });
 });
 
@@ -293,12 +294,12 @@ describe('dev snapshot upgrade (0005)', () => {
 
     const up = upgradeSnapshot(old, seed, T0.toISOString());
     const adminAfter = up.rolePermissions!.find((r) => r.role === 'admin')!.permissions;
-    expect(adminAfter.pages).toEqual(['dashboard', 'users', 'vendors', 'vendor_reports', 'vendor_masters', 'vendor_settings']);
-    expect(adminAfter.actions).toEqual(['edit', 'vendor_approve']);
+    expect(adminAfter.pages.filter((p) => !p.startsWith('purchase_'))).toEqual(['dashboard', 'users', 'vendors', 'vendor_reports', 'vendor_masters', 'vendor_settings']);
+    expect(adminAfter.actions).toEqual(['edit', 'vendor_approve', 'purchase_approve']);
     expect(up.rolePermissions!.find((r) => r.role === 'dispatch')!.permissions.pages).not.toContain('vendors');
     expect(up.cities!.find((c) => c.id === 'city-morbi')!.pincodes).toEqual(['363641', '363650']);
     expect(up.cities!.some((c) => c.id === 'city-valsad')).toBe(true);
-    expect(up.upgrades!.map((u) => u.name)).toEqual(['0005_vendors']);
+    expect(up.upgrades!.map((u) => u.name)).toEqual(['0005_vendors', '0006_purchase']);
 
     // Running again changes nothing.
     adminAfter.pages = ['dashboard'];

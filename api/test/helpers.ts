@@ -5,6 +5,7 @@ import type { AppConfig } from '../src/config';
 import { ROLES, type Role } from '../src/domain/access';
 import type { Courier, Party, Product } from '../src/contracts/sampletrack';
 import type { Vendor, VendorCategory } from '../src/contracts/vendors';
+import type { PurchaseEntry, PurchaseOrder, PurchaseReturn } from '../src/contracts/purchase';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -200,6 +201,107 @@ export function vendorFixtures() {
   };
 }
 
+export const purchaseEntry = (id: string, over: Partial<PurchaseEntry> = {}): PurchaseEntry => ({
+  id,
+  material: 'nilgiri',
+  date: '2026-09-10',
+  lotNo: 'N01',
+  poId: null,
+  vendorId: null,
+  vendorName: 'TM Nilgiri Supplier',
+  vendorCode: null,
+  gstin: null,
+  pan: null,
+  city: 'Morbi',
+  state: 'Gujarat',
+  mobile: null,
+  invoiceNo: `INV-${id}`,
+  invoiceDate: '2026-09-10',
+  taxType: 'SG+CG',
+  gstPct: 18,
+  vehicleNo: 'GJ01HT0324',
+  driver: null,
+  transporter: null,
+  rstNo: '4713',
+  mrnNo: '1499',
+  grnNo: '1499',
+  remarks: null,
+  itemId: null,
+  itemName: null,
+  hsn: null,
+  species: 'Eucalyptus',
+  veneerType: null,
+  altQtyPcs: null,
+  invQty: 12400,
+  splQty: 12730,
+  ratePaise: 770000,
+  rateDiffPaise: 20000,
+  otherChargesPaise: 0,
+  status: 'pending',
+  approvedBy: null,
+  approvedAt: null,
+  qtyNoteStatus: 'Pending',
+  rateNoteStatus: 'Pending',
+  ...audit,
+  ...over,
+});
+
+/**
+ * Purchase fixtures (FY 2026-27; the test clock is 2026-10-01):
+ * - po-used: nilgiri PO for 300 000 kg at ₹7,700/t, with pe-1 (12 730 kg received) against it
+ * - po-free: resin PO with nothing received (deletable)
+ * - pe-1: the legacy GT/1/26-27 numbers (inv 12 400, SPL 12 730, rate diff +₹200) → qty CN + rate DN
+ * - pe-2: resin, inv 18 265 > SPL 18 250 → qty DN; pe-draft: a draft
+ * - ret-1: 1 000 kg nilgiri (Eucalyptus) returned
+ */
+export function purchaseFixtures() {
+  const po = (id: string, over: Partial<PurchaseOrder>): PurchaseOrder => ({
+    id,
+    poNo: id.toUpperCase(),
+    date: '2026-09-01',
+    material: 'nilgiri',
+    vendorId: null,
+    vendorName: 'TM Nilgiri Supplier',
+    qty: 300000,
+    ratePaise: 770000,
+    remarks: null,
+    tncIds: [],
+    status: 'pending',
+    approvedBy: null,
+    approvedAt: null,
+    ...audit,
+    ...over,
+  });
+  const ret: PurchaseReturn = {
+    id: 'ret-1',
+    returnNo: 'RET-26-001',
+    date: '2026-09-20',
+    material: 'nilgiri',
+    species: 'Eucalyptus',
+    entryId: 'pe-1',
+    vendorName: 'TM Nilgiri Supplier',
+    originalInvoiceNo: 'INV-pe-1',
+    qty: 1000,
+    ratePaise: 770000,
+    taxType: 'SG+CG',
+    gstPct: 18,
+    reason: 'Wet wood',
+    status: 'pending',
+    approvedBy: null,
+    approvedAt: null,
+    ...audit,
+  };
+  return {
+    puOrders: [po('po-used', {}), po('po-free', { material: 'resin', vendorName: 'V.K.Industrioes', qty: 100000, ratePaise: 4000000 })],
+    puEntries: [
+      purchaseEntry('pe-1', { poId: 'po-used' }),
+      purchaseEntry('pe-2', { material: 'resin', date: '2026-09-15', lotNo: 'R01', vendorName: 'V.K.Industrioes', species: null, invQty: 18265, splQty: 18250, ratePaise: 4000000, rateDiffPaise: 0 }),
+      purchaseEntry('pe-draft', { material: 'kraft', lotNo: 'K01', species: null, invQty: 3000, splQty: 3000, ratePaise: 3200, rateDiffPaise: 0, status: 'draft' }),
+    ],
+    puReturns: [ret],
+  };
+}
+
 /**
  * Masters every test app starts with (besides the reference seed):
  * - p-free / c-free / prod-osb-12-8x4: unreferenced, so they can be deleted
@@ -339,6 +441,7 @@ export function testData(users: User[]) {
   return {
     ...seed,
     ...f,
+    ...purchaseFixtures(),
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
     users,

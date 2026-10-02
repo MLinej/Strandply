@@ -20,8 +20,13 @@ export const PAGE_KEYS = [
   'vendor_reports',
   'vendor_masters',
   'vendor_settings',
+  'purchase_dashboard',
+  'purchase_entries',
+  'purchase_orders',
+  'purchase_notes',
+  'purchase_inventory',
 ] as const;
-export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve'] as const;
+export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve'] as const;
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;
 
 export interface PublicUser {

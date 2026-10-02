@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0005` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 5 T&C clauses).
+- [ ] Apply `0001`–`0006` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -54,7 +54,18 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] `VendorRepo.listAll` feeds reports, find-by-product and pickers. Fine for a few thousand vendors; past that, move the report grouping into SQL.
 - [ ] TODO(purchase): block vendor deletes once purchase orders reference vendors.
 
+### Purchase module (0006)
+- [ ] `PurchaseEntryRepo.list` searches several text columns; `fy` / `month` filters are date ranges on `pu_entries.date` (index exists). `posted` = `status <> 'draft'`.
+- [ ] `listBetween` feeds the dashboard, reports and stock ledger. At a few thousand entries a year it is fine; past that, move the grouping (product × day, monthly, vendor) into SQL — `calcEntry` must then be mirrored in SQL or the totals computed from stored amounts. Keep the unit tests on `calcEntry` as the reference.
+- [ ] Opening stock: `pu_opening_stock` + `pu_opening_stock_items` replace the memory row's `items` array; `put` = upsert the header and replace the items in one batch. Species '' ↔ null.
+- [ ] `pu_orders.tnc_ids` is a JSON array of `vn_tnc` ids (no FK). If clauses can be deleted, decide whether a printed PO should keep the deleted text (store a snapshot on approval).
+- [ ] PO received quantities: one `SELECT po_id, SUM(spl_qty) … WHERE status <> 'draft' GROUP BY po_id`, not a query per PO.
+- [ ] Lot / PO / RET numbering: same counter-in-batch question as REQ/DSP (`PO-YY`, `RET-YY` counters; lots use MAX within the FY).
+- [ ] Approvals and status changes: guarded `UPDATE … WHERE status = 'pending'`, check `changes`.
+- [ ] Deleting a PO is blocked while entries reference it: guarded soft delete with `NOT EXISTS`.
+
 ## Infrastructure services (stubs now)
 - [ ] Google Sheets sync: real `SheetsSyncService` and a cron trigger for `sheets.interval_min`.
 - [ ] Cloud backup: real `BackupService`.
+- [ ] File storage: an R2 implementation of `BlobStore` (`api/src/lib/blob-store.ts`) for purchase documents, wired in the Workers entry; a retention job for blobs of soft-deleted documents.
 - [ ] E-mail relay: vendor e-mails use the sender in Vendor settings (`vendors.email.from_name`, `vendors.email.reply_to`). Connect sending (the legacy portal's "Send test" was itself a placeholder) together with the Sales module's e-mail relay.

@@ -8,6 +8,7 @@ import { createDataLayer } from './container';
 import { withMissingTables, type MemoryData } from './repos/memory';
 import { buildSeed } from './seed';
 import { upgradeSnapshot } from './seed/upgrades';
+import { FsBlobStore } from './lib/blob-store.fs';
 
 const env = process.env;
 const isProd = env.NODE_ENV === 'production';
@@ -46,7 +47,9 @@ const data = createDataLayer(env, {
   onMemoryChange: saveSnapshot,
 });
 
-const { app } = createApp({ data, config: loadConfig(env) });
+// Uploaded documents: api/.data/files in dev. TODO(r2): an R2 bucket on Workers.
+const blobs = new FsBlobStore(resolve(dirname(snapshotPath), 'files'));
+const { app } = createApp({ data, config: loadConfig(env), blobs });
 const port = Number(env.API_PORT ?? 8787);
 serve({ fetch: app.fetch, port }, () => {
   console.log(`api listening on http://localhost:${port} (DATA_BACKEND=${env.DATA_BACKEND ?? 'memory'})`);

@@ -14,6 +14,7 @@ import type {
   State,
 } from '../../contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../../contracts/vendors';
+import type { OpeningStock, PurchaseDocument, PurchaseEntry, PurchaseOrder, PurchaseReturn, PurchaseType } from '../../contracts/purchase';
 import type { ActivityEntry } from '../activity';
 import type { RolePermissionsRow } from '../role-permissions';
 import type { Session } from '../sessions';
@@ -43,6 +44,14 @@ export interface MemoryData {
   vnProducts: VendorProduct[];
   vendors: Vendor[];
   vnTnc: TncClause[];
+  // Purchase module
+  puTypes: PurchaseType[];
+  puEntries: PurchaseEntry[];
+  puOrders: PurchaseOrder[];
+  puReturns: PurchaseReturn[];
+  puOpening: OpeningStock[];
+  puConsumption: { fy: string; key: string; qty: number; createdBy: string | null; createdAt: string; updatedAt: string; deletedAt: string | null }[];
+  puDocuments: PurchaseDocument[];
   /** Data upgrades already applied to this store (see seed/upgrades.ts). The memory twin of a migrations table. */
   upgrades: { name: string; appliedAt: string }[];
 }
@@ -73,6 +82,13 @@ const KEYS: { [K in TableName]: (keyof Row<K> & string) | ((row: Row<K>) => stri
   vnProducts: 'id',
   vendors: 'id',
   vnTnc: 'id',
+  puTypes: 'id',
+  puEntries: 'id',
+  puOrders: 'id',
+  puReturns: 'id',
+  puOpening: 'fy',
+  puConsumption: (r) => `${r.fy}|${r.key}`,
+  puDocuments: 'id',
   upgrades: 'name',
 };
 

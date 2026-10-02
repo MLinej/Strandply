@@ -107,6 +107,14 @@ export const REF_TNC: Ref<TncClause>[] = [
   },
 ];
 
+/** Legacy Purchase ERP PO clauses (TC_MASTER) not already covered above; added with the Purchase module (0006). */
+export const REF_PO_TNC: Ref<TncClause>[] = [
+  { id: 'tnc-po-weight', title: 'Weight Variation', category: 'Quality', version: '1.0', status: 'active', appliesTo: 'po', body: 'Acceptable weight variation ±2%. Beyond that, debit/credit note will be issued.', summary: 'Weight variation over ±2% settled by debit/credit note.', notes: null },
+  { id: 'tnc-po-delivery', title: 'Delivery Schedule', category: 'Delivery', version: '1.0', status: 'active', appliesTo: 'po', body: 'Delivery as per agreed schedule. Delay penalty 0.5% per week.', summary: 'Delay penalty 0.5% per week.', notes: null },
+  { id: 'tnc-po-rate', title: 'Rate Revision', category: 'Payment', version: '1.0', status: 'active', appliesTo: 'po', body: 'Rates are fixed for the PO period. Any revision requires written consent.', summary: 'Rates fixed for the PO period.', notes: null },
+  { id: 'tnc-po-gst', title: 'GST Compliance', category: 'Legal', version: '1.0', status: 'active', appliesTo: 'po', body: 'Vendor must provide valid GST invoice. ITC credit subject to vendor filing.', summary: 'Valid GST invoice required.', notes: null },
+];
+
 const blank: Omit<Vendor, 'id' | 'code' | 'name' | 'status' | 'categoryIds' | 'productIds' | 'createdAt' | 'updatedAt'> = {
   type: null,
   yearEstablished: null,

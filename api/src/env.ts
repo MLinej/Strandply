@@ -21,6 +21,11 @@ import type { VendorImportService } from './modules/vendors/import-service';
 import type { TncService, VendorCategoryService, VendorProductService } from './modules/vendors/masters';
 import type { VendorSettingsService } from './modules/vendors/settings-service';
 import type { VendorService } from './modules/vendors/vendor-service';
+import type { PurchaseDocumentService } from './modules/purchase/document-service';
+import type { PurchaseEntryService } from './modules/purchase/entry-service';
+import type { InventoryService } from './modules/purchase/inventory-service';
+import type { PurchaseMasterService, PurchaseOrderService, PurchaseReturnService } from './modules/purchase/order-service';
+import type { PurchaseReportService } from './modules/purchase/report-service';
 
 export interface AuthContext {
   user: User;
@@ -51,6 +56,13 @@ export interface Services {
   tnc: TncService;
   vendorImport: VendorImportService;
   vendorSettings: VendorSettingsService;
+  purchaseMasters: PurchaseMasterService;
+  purchaseEntries: PurchaseEntryService;
+  purchaseOrders: PurchaseOrderService;
+  purchaseReturns: PurchaseReturnService;
+  inventory: InventoryService;
+  purchaseReports: PurchaseReportService;
+  purchaseDocuments: PurchaseDocumentService;
   clock: Clock;
 }
 

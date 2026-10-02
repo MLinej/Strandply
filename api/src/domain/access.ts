@@ -1,6 +1,7 @@
 // Roles and permission keys. One matrix per role covers every rebuilt module.
 // SampleTrack defaults follow the legacy ROLE_PERMS (docs/sampletrack-spec.md §2);
-// the vendor_* keys come from the Vendor Portal (docs/vendors-spec.md §2).
+// the vendor_* keys come from the Vendor Portal (docs/vendors-spec.md §2), purchase_* from the
+// Purchase ERP (docs/purchase-spec.md §2).
 
 export const ROLES = ['superadmin', 'admin', 'dispatch', 'marketing', 'management'] as const;
 export type Role = (typeof ROLES)[number];
@@ -30,14 +31,21 @@ export const PAGE_KEYS = [
   'vendor_reports',
   'vendor_masters',
   'vendor_settings',
+  // Purchase module
+  'purchase_dashboard',
+  'purchase_entries',
+  'purchase_orders',
+  'purchase_notes',
+  'purchase_inventory',
 ] as const;
 export type PageKey = (typeof PAGE_KEYS)[number];
 
 /**
  * `approve` = approve sample requests (separate from edit, so it can be granted on its own).
  * `vendor_approve` = approve, activate, blacklist and reinstate vendors (the legacy "Director" check).
+ * `purchase_approve` = approve purchase entries, POs, returns and opening stock (the legacy PIN approval).
  */
-export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve'] as const;
+export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve'] as const;
 export type ActionKey = (typeof ACTION_KEYS)[number];
 
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;
@@ -69,7 +77,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionSet> = {
     widgets: ['pending', 'parties'],
   },
   management: {
-    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports'],
+    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory'],
     actions: ['print', 'export'],
     widgets: [...WIDGET_KEYS],
   },

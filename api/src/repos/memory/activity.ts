@@ -25,6 +25,7 @@ export class MemoryActivityRepo implements ActivityRepo {
         // ISO strings compare correctly as text. A bare YYYY-MM-DD means midnight UTC.
         from: (r, v) => r.createdAt >= String(v),
         to: (r, v) => r.createdAt < String(v),
+        entityPrefix: (r, v) => (r.entityType ?? '').startsWith(String(v)),
       },
     });
   }

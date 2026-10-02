@@ -35,6 +35,8 @@ export interface ActivityFilters {
   userId: string;
   action: ActivityAction;
   entityType: string;
+  /** Entity types starting with this (e.g. "purchase_" for the Purchase audit trail). */
+  entityPrefix: string;
   /** Inclusive lower bound on createdAt (ISO timestamp or YYYY-MM-DD). */
   from: string;
   /** Exclusive upper bound on createdAt (ISO timestamp or YYYY-MM-DD). */

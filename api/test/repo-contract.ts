@@ -3,6 +3,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
+import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
+import { purchaseEntry } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -824,6 +826,77 @@ export function runVendorRepoContract(name: string, make: DataLayerFactory) {
       await repos.tnc.create(tnc('t2', 'Warranty', 'Warranty', 'Twelve months'));
       expect((await repos.tnc.list({ q: 'twelve' })).rows.map((t) => t.id)).toEqual(['t2']);
       expect((await repos.tnc.list({ filters: { category: 'Payment' } })).rows.map((t) => t.id)).toEqual(['t1']);
+    });
+  });
+}
+
+/** Purchase module repos. `make` returns an EMPTY data layer. */
+export function runPurchaseRepoContract(name: string, make: DataLayerFactory) {
+  const audit = { createdBy: null, createdAt: at(0), updatedAt: at(0) };
+  const { deletedAt: _d, ...e } = purchaseEntry('x');
+  const entry = (id: string, over: Partial<typeof e> = {}) => ({ ...e, id, ...over });
+
+  describe(`repo contract (purchase): ${name}`, () => {
+    it('entries: FY and month filters, date range oldest first, invoice lookup ignoring case and spaces, lot numbers', async () => {
+      const { repos } = await make();
+      await repos.purchaseEntries.create(entry('a', { date: '2026-03-31', lotNo: 'N09' }));
+      await repos.purchaseEntries.create(entry('b', { date: '2026-04-01', lotNo: 'N01', invoiceNo: 'GT/1/26-27' }));
+      await repos.purchaseEntries.create(entry('c', { date: '2026-05-10', lotNo: 'N02', material: 'resin' }));
+      const ids = async (filters: object) => (await repos.purchaseEntries.list({ filters })).rows.map((r) => r.id);
+      expect(await ids({ fy: '2026-27' })).toEqual(['c', 'b']);
+      expect(await ids({ month: '2026-03' })).toEqual(['a']);
+      expect((await repos.purchaseEntries.listBetween('2026-03-01', '2026-04-30')).map((r) => r.id)).toEqual(['a', 'b']);
+      expect((await repos.purchaseEntries.findByInvoice('TM  nilgiri supplier', 'gt/1/ 26-27')).map((r) => r.id)).toEqual(['b']);
+      expect(await repos.purchaseEntries.lotNos('nilgiri', '2026-04-01', '2027-03-31')).toEqual(['N01']);
+      await repos.purchaseEntries.softDelete('b', at(1));
+      expect(await ids({ fy: '2026-27' })).toEqual(['c']);
+    });
+
+    it('orders: PO number unique ignoring case; listAll newest first by material', async () => {
+      const { repos } = await make();
+      const po = (id: string, poNo: string, date: string, material: PurchaseOrder['material'] = 'nilgiri'): Omit<PurchaseOrder, 'deletedAt'> => ({
+        id, poNo, date, material, vendorId: null, vendorName: 'V', qty: 1, ratePaise: 1, remarks: null, tncIds: [], status: 'pending', approvedBy: null, approvedAt: null, ...audit,
+      });
+      await repos.purchaseOrders.create(po('p1', 'PO-1', '2026-04-01'));
+      await repos.purchaseOrders.create(po('p2', 'PO-2', '2026-05-01'));
+      await repos.purchaseOrders.create(po('p3', 'PO-3', '2026-06-01', 'resin'));
+      await expect(repos.purchaseOrders.create(po('p4', 'po-1', '2026-04-01'))).rejects.toBeInstanceOf(UniqueViolationError);
+      expect((await repos.purchaseOrders.listAll({ material: 'nilgiri' })).map((p) => p.id)).toEqual(['p2', 'p1']);
+      expect((await repos.purchaseOrders.getByPoNo('po-3'))?.id).toBe('p3');
+    });
+
+    it('opening stock put keeps createdAt; consumption per FY and key', async () => {
+      const { repos } = await make();
+      const os = { fy: '2026-27', asOnDate: '2026-03-31', items: [], status: 'draft' as const, approvedBy: null, approvedAt: null, ...audit };
+      await repos.openingStock.put(os);
+      const again = await repos.openingStock.put({ ...os, status: 'pending', createdAt: at(5), updatedAt: at(5) });
+      expect(again).toMatchObject({ status: 'pending', createdAt: at(0), updatedAt: at(5) });
+      await repos.consumption.set('2026-27', 'resin', 10, null, at(1));
+      await repos.consumption.set('2026-27', 'resin', 12, null, at(2));
+      await repos.consumption.set('2025-26', 'resin', 99, null, at(2));
+      expect(await repos.consumption.forFy('2026-27')).toEqual({ resin: 12 });
+    });
+
+    it('documents: counts per entry and type ignore deleted rows', async () => {
+      const { repos } = await make();
+      const doc = (id: string, entryId: string | null, type: PurchaseDocument['type']): Omit<PurchaseDocument, 'deletedAt'> => ({
+        id, name: `${id}.pdf`, type, mime: 'application/pdf', sizeBytes: 1, blobKey: id, entryId, ...audit,
+      });
+      await repos.purchaseDocuments.create(doc('d1', 'e1', 'Invoice'));
+      await repos.purchaseDocuments.create(doc('d2', 'e1', 'Photo'));
+      await repos.purchaseDocuments.create(doc('d3', null, 'Invoice'));
+      await repos.purchaseDocuments.softDelete('d2', at(1));
+      expect(Object.fromEntries(await repos.purchaseDocuments.countByEntry(['e1', 'e2']))).toEqual({ e1: 1 });
+      expect(await repos.purchaseDocuments.countByType()).toEqual({ Invoice: 2 });
+    });
+
+    it('types: unique per kind ignoring case', async () => {
+      const { repos } = await make();
+      const t = (id: string, kind: 'nilgiri_species' | 'face_veneer', n: string) => ({ id, kind, name: n, sortOrder: 1, ...audit });
+      await repos.purchaseTypes.create(t('t1', 'face_veneer', 'Other'));
+      await repos.purchaseTypes.create(t('t2', 'nilgiri_species', 'Other'));
+      await expect(repos.purchaseTypes.create(t('t3', 'face_veneer', 'OTHER'))).rejects.toBeInstanceOf(UniqueViolationError);
+      expect((await repos.purchaseTypes.listAll('face_veneer')).map((x) => x.id)).toEqual(['t1']);
     });
   });
 }
