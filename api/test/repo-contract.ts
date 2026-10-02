@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
-import { purchaseEntry } from './helpers';
+import { grn, mrn, purchaseEntry } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -897,6 +897,52 @@ export function runPurchaseRepoContract(name: string, make: DataLayerFactory) {
       await repos.purchaseTypes.create(t('t2', 'nilgiri_species', 'Other'));
       await expect(repos.purchaseTypes.create(t('t3', 'face_veneer', 'OTHER'))).rejects.toBeInstanceOf(UniqueViolationError);
       expect((await repos.purchaseTypes.listAll('face_veneer')).map((x) => x.id)).toEqual(['t1']);
+    });
+  });
+}
+
+export function runStoresRepoContract(name: string, make: DataLayerFactory) {
+  const row = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+
+  describe(`repo contract (stores): ${name}`, () => {
+    it('MRNs: number unique ignoring case; material / status / date / FY filters; pending oldest first; per-day count', async () => {
+      const { repos } = await make();
+      await repos.mrns.create(row(mrn('a', 1, { date: '2026-03-30', createdAt: at(0), items: [{ id: 'a1', material: 'kraft', approxQty: 1, unit: 'Nos', packages: null, remarks: null }] })));
+      await repos.mrns.create(row(mrn('b', 2, { date: '2026-04-02', time: '09:00', createdAt: at(1) })));
+      await repos.mrns.create(row(mrn('c', 3, { date: '2026-04-01', status: 'grn_created', createdAt: at(2) })));
+      await expect(repos.mrns.create(row(mrn('d', 1)))).rejects.toBeInstanceOf(UniqueViolationError);
+      const ids = async (filters: object, q?: string) => (await repos.mrns.list({ filters, q })).rows.map((r) => r.id);
+      expect(await ids({})).toEqual(['c', 'b', 'a']);
+      expect(await ids({ material: 'kraft' })).toEqual(['a']);
+      expect(await ids({ status: 'pending_grn' })).toEqual(['b', 'a']);
+      expect(await ids({ from: '2026-04-01', to: '2026-04-01' })).toEqual(['c']);
+      expect(await ids({ fy: '2026-27' })).toEqual(['c', 'b']);
+      expect(await ids({}, 'mrn/26-27/0002')).toEqual(['b']);
+      expect((await repos.mrns.listPending()).map((r) => r.id)).toEqual(['a', 'b']);
+      expect(await repos.mrns.countByDate('2026-04-02')).toBe(1);
+      expect((await repos.mrns.getByMrnNo('mrn/26-27/0003'))?.id).toBe('c');
+      await repos.mrns.softDelete('b', at(3));
+      expect((await repos.mrns.listPending()).map((r) => r.id)).toEqual(['a']);
+    });
+
+    it('GRNs: lookup by MRN; status / accounted filters; counts per status', async () => {
+      const { repos } = await make();
+      const m = mrn('m', 1);
+      await repos.grns.create(row(grn('g1', 1, m)));
+      await repos.grns.create(row(grn('g2', 2, { ...m, id: 'm2' }, { status: 'approved', createdAt: at(1) })));
+      await repos.grns.create(row(grn('g3', 3, { ...m, id: 'm3' }, { status: 'approved', accounted: true, voucherNo: 'V1', createdAt: at(2) })));
+      await expect(repos.grns.create(row(grn('g4', 1, m)))).rejects.toBeInstanceOf(UniqueViolationError);
+      expect((await repos.grns.getByMrn('m2'))?.id).toBe('g2');
+      expect((await repos.grns.getByGrnNo('grn/26-27/0003'))?.id).toBe('g3');
+      const ids = async (filters: object) => (await repos.grns.list({ filters })).rows.map((r) => r.id);
+      expect(await ids({ status: 'approved', accounted: false })).toEqual(['g2']);
+      expect(await ids({ accounted: true })).toEqual(['g3']);
+      expect(await repos.grns.countByStatus()).toEqual({ draft: 1, reviewed: 0, approved: 2, unaccounted: 1 });
+      await repos.grns.softDelete('g1', at(3));
+      expect(await repos.grns.getByMrn('m')).toBeNull();
     });
   });
 }

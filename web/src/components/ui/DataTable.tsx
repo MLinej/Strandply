@@ -120,7 +120,8 @@ export function DataTable<T>(props: DataTableProps<T>) {
         </PrimaryScope>
       )}
 
-      <div className="overflow-x-auto">
+      {/* relative: keeps absolutely positioned cell content (sr-only headers) inside the scroll box */}
+      <div className="relative overflow-x-auto">
         <table className="w-full table-fixed border-collapse" style={{ minWidth: props.minWidth }} aria-label={label} aria-busy={loading || undefined}>
           <colgroup>
             {selectable && <col style={{ width: 36 }} />}

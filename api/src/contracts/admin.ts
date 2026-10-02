@@ -25,8 +25,14 @@ export const PAGE_KEYS = [
   'purchase_orders',
   'purchase_notes',
   'purchase_inventory',
+  'stores_dashboard',
+  'stores_gate',
+  'stores_grn',
+  'stores_accounting',
+  'stores_reports',
+  'stores_settings',
 ] as const;
-export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve'] as const;
+export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account'] as const;
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;
 
 export interface PublicUser {

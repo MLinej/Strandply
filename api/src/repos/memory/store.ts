@@ -14,6 +14,7 @@ import type {
   State,
 } from '../../contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../../contracts/vendors';
+import type { Grn, Mrn } from '../../contracts/stores';
 import type { OpeningStock, PurchaseDocument, PurchaseEntry, PurchaseOrder, PurchaseReturn, PurchaseType } from '../../contracts/purchase';
 import type { ActivityEntry } from '../activity';
 import type { RolePermissionsRow } from '../role-permissions';
@@ -52,6 +53,9 @@ export interface MemoryData {
   puOpening: OpeningStock[];
   puConsumption: { fy: string; key: string; qty: number; createdBy: string | null; createdAt: string; updatedAt: string; deletedAt: string | null }[];
   puDocuments: PurchaseDocument[];
+  // Stores module
+  stoMrns: Mrn[];
+  stoGrns: Grn[];
   /** Data upgrades already applied to this store (see seed/upgrades.ts). The memory twin of a migrations table. */
   upgrades: { name: string; appliedAt: string }[];
 }
@@ -89,6 +93,8 @@ const KEYS: { [K in TableName]: (keyof Row<K> & string) | ((row: Row<K>) => stri
   puOpening: 'fy',
   puConsumption: (r) => `${r.fy}|${r.key}`,
   puDocuments: 'id',
+  stoMrns: 'id',
+  stoGrns: 'id',
   upgrades: 'name',
 };
 

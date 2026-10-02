@@ -371,6 +371,46 @@ CASES.push(
   { method: 'DELETE', route: `${PU}/documents/:id`, path: `${PU}/documents/nope`, allowed: ADMINS, ok: 404 },
 );
 
+// Stores module. Admins have everything. Management: stores_dashboard and stores_reports with print and
+// export (so the reports, accounting status and GRN print), no gate / GRN / accounting pages. Others: nothing.
+const STO = '/api/stores';
+const STO_VIEW: Role[] = ['superadmin', 'admin', 'management'];
+const gateEntry = { vehicleNo: 'gj03ab1234', securityName: 'Ramesh', vendorName: 'Typed Vendor', items: [{ material: 'kraft', approxQty: 3000, unit: 'Nos' }] };
+const receive = { mrnId: 'mrn-open', invoiceNo: 'INV-pe-1', receivedByName: 'Keeper', items: [{ mrnItemId: 'mrn-open-1', actualQty: 11950, unit: 'Kg', quality: 'short' }] };
+CASES.push(
+  { method: 'GET', route: `${STO}/meta`, path: `${STO}/meta`, allowed: STO_VIEW, ok: 200 },
+  { method: 'PATCH', route: `${STO}/settings`, path: `${STO}/settings`, body: { autoPunchGrn: false }, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${STO}/vendor-options`, path: `${STO}/vendor-options?q=a`, allowed: ADMINS, ok: 200 },
+  // MRN
+  { method: 'GET', route: `${STO}/mrns`, path: `${STO}/mrns?status=pending_grn`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${STO}/mrns/export`, path: `${STO}/mrns/export`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${STO}/mrns/:id`, path: `${STO}/mrns/mrn-open`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${STO}/mrns/:id/print`, path: `${STO}/mrns/mrn-open/print`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${STO}/mrns`, path: `${STO}/mrns`, body: gateEntry, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${STO}/mrns/:id`, path: `${STO}/mrns/mrn-open`, body: { remarks: 'Seal intact' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${STO}/mrns/:id`, path: `${STO}/mrns/mrn-open`, allowed: ADMINS, ok: 204 },
+  // GRN
+  { method: 'GET', route: `${STO}/grns`, path: `${STO}/grns?status=draft`, allowed: STO_VIEW, ok: 200 },
+  { method: 'GET', route: `${STO}/grns/export`, path: `${STO}/grns/export`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${STO}/grns/invoice-link`, path: `${STO}/grns/invoice-link?invoiceNo=INV-pe-1`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${STO}/grns/:id`, path: `${STO}/grns/grn-appr`, allowed: STO_VIEW, ok: 200 },
+  { method: 'GET', route: `${STO}/grns/:id/print`, path: `${STO}/grns/grn-appr/print`, allowed: STO_VIEW, ok: 200 },
+  { method: 'POST', route: `${STO}/grns`, path: `${STO}/grns`, body: receive, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${STO}/grns/:id`, path: `${STO}/grns/grn-draft`, body: { remarks: 'Two logs cracked' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${STO}/grns/:id`, path: `${STO}/grns/grn-draft`, allowed: ADMINS, ok: 204 },
+  { method: 'POST', route: `${STO}/grns/:id/review`, path: `${STO}/grns/grn-draft/review`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${STO}/grns/:id/approve`, path: `${STO}/grns/grn-rev/approve`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${STO}/grns/:id/account`, path: `${STO}/grns/grn-appr/account`, body: { voucherNo: 'PV/009/26-27' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${STO}/grns/:id/account`, path: `${STO}/grns/grn-acct/account`, allowed: ADMINS, ok: 200 },
+  // Dashboard and reports
+  { method: 'GET', route: `${STO}/dashboard`, path: `${STO}/dashboard`, allowed: STO_VIEW, ok: 200 },
+  { method: 'GET', route: `${STO}/reports/pending`, path: `${STO}/reports/pending?minDays=1`, allowed: STO_VIEW, ok: 200 },
+  { method: 'GET', route: `${STO}/reports/pending/export`, path: `${STO}/reports/pending/export`, allowed: STO_VIEW, ok: 200 },
+  { method: 'GET', route: `${STO}/accounting`, path: `${STO}/accounting?accounted=false`, allowed: STO_VIEW, ok: 200 },
+  { method: 'GET', route: `${STO}/accounting/export`, path: `${STO}/accounting/export`, allowed: STO_VIEW, ok: 200 },
+  { method: 'GET', route: `${STO}/audit`, path: `${STO}/audit`, allowed: STO_VIEW, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

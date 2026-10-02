@@ -15,7 +15,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
   {
     key: 'pages',
     title: 'Samples & admin pages',
-    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_')),
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -49,10 +49,23 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
     },
   },
   {
+    key: 'pages',
+    title: 'Stores pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('stores_')),
+    label: {
+      stores_dashboard: 'Dashboard, audit',
+      stores_gate: 'Gate entry (MRN)',
+      stores_grn: 'Goods receipt (GRN)',
+      stores_accounting: 'Accounting',
+      stores_reports: 'Stores reports',
+      stores_settings: 'Stores settings',
+    },
+  },
+  {
     key: 'actions',
     title: 'Actions',
     items: ACTION_KEYS,
-    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors', purchase_approve: 'Approve purchases' },
+    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors', purchase_approve: 'Approve purchases', stores_review: 'Review GRNs', stores_approve: 'Approve GRNs', stores_account: 'Account GRNs' },
   },
   {
     key: 'widgets',

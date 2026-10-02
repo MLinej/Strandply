@@ -5,6 +5,7 @@ import { defaultRolePermissionRows } from './role-permissions';
 import { DEFAULT_SETTINGS } from './settings';
 import { DEMO_PURCHASE_ENTRIES, DEMO_PURCHASE_ORDERS } from './purchase-demo.dev';
 import { REF_PURCHASE_TYPES } from './purchase';
+import { DEFAULT_STORES_SETTINGS } from './stores';
 import { UPGRADES } from './upgrades';
 import { DEV_USERS } from './users.dev';
 import {
@@ -48,7 +49,7 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     ],
     notifications: [],
     dispatchHistory: dev(DEMO_DISPATCH_HISTORY),
-    settings: Object.entries({ ...DEFAULT_SETTINGS, ...DEFAULT_VENDOR_SETTINGS }).map(([key, value]) => ({ key, value, ...audit })),
+    settings: Object.entries({ ...DEFAULT_SETTINGS, ...DEFAULT_VENDOR_SETTINGS, ...DEFAULT_STORES_SETTINGS }).map(([key, value]) => ({ key, value, ...audit })),
     notificationReads: [],
     vnCategories: REF_VENDOR_CATEGORIES.map((c) => ({ ...c, ...audit })),
     vnProducts: REF_VENDOR_PRODUCTS.map((p) => ({ ...p, ...audit })),
@@ -61,6 +62,8 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     puOpening: [],
     puConsumption: [],
     puDocuments: [],
+    stoMrns: [],
+    stoGrns: [],
     // A fresh seed already has everything the upgrades add.
     upgrades: UPGRADES.map((u) => ({ name: u.name, appliedAt: at })),
   };

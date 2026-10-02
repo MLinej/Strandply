@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { emptyMemoryData, MemoryStore, memoryDataLayerFrom, createMemoryDataLayer } from '../src/repos/memory';
-import { runMasterRepoContract, runRepoContract, runPurchaseRepoContract, runVendorRepoContract, runWorkflowRepoContract } from './repo-contract';
+import { runMasterRepoContract, runRepoContract, runPurchaseRepoContract, runStoresRepoContract, runVendorRepoContract, runWorkflowRepoContract } from './repo-contract';
 
 runRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
 runMasterRepoContract('memory', async (seed) => memoryDataLayerFrom({ ...emptyMemoryData(), ...seed }));
 runWorkflowRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
 runVendorRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
 runPurchaseRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
+runStoresRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
 
 describe('memory backend: snapshot hook', () => {
   it('fires onChange after writes, once per committed unit of work, never for a rollback', async () => {

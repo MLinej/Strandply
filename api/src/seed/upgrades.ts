@@ -70,6 +70,19 @@ UPGRADES.push({
   },
 });
 
+const STORES_PAGES = ['stores_dashboard', 'stores_gate', 'stores_grn', 'stores_accounting', 'stores_reports', 'stores_settings'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0007_stores.sql on an existing database. The new tables come from the seed.
+  name: '0007_stores',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], STORES_PAGES, ['stores_review', 'stores_approve', 'stores_account']);
+    grant(data, ['management'], ['stores_dashboard', 'stores_reports']);
+    const keys = new Set((data.settings ?? []).map((s) => s.key));
+    if (data.settings) data.settings.push(...seed.settings.filter((s) => s.key.startsWith('stores.') && !keys.has(s.key)));
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

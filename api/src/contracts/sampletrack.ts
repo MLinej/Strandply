@@ -832,6 +832,8 @@ export interface Badges {
   pendingRequests?: number;
   /** Vendors waiting for approval (Vendors module). */
   pendingVendors?: number;
+  /** MRNs waiting for a GRN (Stores module). */
+  pendingGrn?: number;
 }
 
 /** Company details (Settings). Printed on labels and slips and used in WhatsApp messages. */

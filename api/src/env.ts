@@ -26,6 +26,9 @@ import type { PurchaseEntryService } from './modules/purchase/entry-service';
 import type { InventoryService } from './modules/purchase/inventory-service';
 import type { PurchaseMasterService, PurchaseOrderService, PurchaseReturnService } from './modules/purchase/order-service';
 import type { PurchaseReportService } from './modules/purchase/report-service';
+import type { GrnService } from './modules/stores/grn-service';
+import type { MrnService } from './modules/stores/mrn-service';
+import type { StoresReportService } from './modules/stores/report-service';
 
 export interface AuthContext {
   user: User;
@@ -63,6 +66,9 @@ export interface Services {
   inventory: InventoryService;
   purchaseReports: PurchaseReportService;
   purchaseDocuments: PurchaseDocumentService;
+  mrns: MrnService;
+  grns: GrnService;
+  storesReports: StoresReportService;
   clock: Clock;
 }
 

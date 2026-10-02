@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0006` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types).
+- [ ] Apply `0001`–`0007` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -63,6 +63,16 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] Lot / PO / RET numbering: same counter-in-batch question as REQ/DSP (`PO-YY`, `RET-YY` counters; lots use MAX within the FY).
 - [ ] Approvals and status changes: guarded `UPDATE … WHERE status = 'pending'`, check `changes`.
 - [ ] Deleting a PO is blocked while entries reference it: guarded soft delete with `NOT EXISTS`.
+
+### Stores module (0007)
+- [ ] MRN and GRN lines are arrays on the memory rows. On D1 they are `sto_mrn_items` / `sto_grn_items` (ordered by `line_no`): create = header + lines in one batch; edit = UPDATE the header, DELETE + INSERT the lines, same batch. Keep line ids that came back from the client (the GRN lines point at MRN line ids).
+- [ ] MRN / GRN numbers come from per-FY counters (`MRN-2026-27`, `GRN-2026-27`). Bump the counter and insert in one batch; retry on `UniqueViolationError('store_mrns', 'mrnNo')`. `peekDocNo` reads the counter without bumping it.
+- [ ] Creating a GRN also flips its MRN to `grn_created`; deleting it flips it back. One batch, and the `sto_grns_mrn_uq` partial index stops two live GRNs for one MRN — map that violation to 409 `grn_exists`.
+- [ ] GRN steps (review, approve, account, undo): guarded `UPDATE sto_grns SET … WHERE id = ? AND status = ? [AND accounted = ?]`, check `changes`, 409 when 0.
+- [ ] `MrnRepo.list` material filter: `EXISTS (SELECT 1 FROM sto_mrn_items WHERE mrn_id = m.id AND material = ?)`.
+- [ ] `findInvoice` uses `purchaseEntries.list({ q })` and then an exact match ignoring spaces. On D1 add a dedicated lookup (`WHERE replace(lower(invoice_no), ' ', '') = ?`) or a normalised column with an index.
+- [ ] `listPending` feeds the dashboard, pending report and badge (polled every 30 s). Index `sto_mrns_status_idx` covers it; the badge could use a COUNT instead.
+- [ ] Settings `stores.auto_punch_mrn` / `stores.auto_punch_grn` are JSON booleans in `st_settings`.
 
 ## Infrastructure services (stubs now)
 - [ ] Google Sheets sync: real `SheetsSyncService` and a cron trigger for `sheets.interval_min`.

@@ -50,6 +50,8 @@ export function Sidebar({ collapsed, onToggle, onLogout }: SidebarProps) {
     'samples/requests': badges?.pendingRequests,
     vendors: badges?.pendingVendors,
     'vendors/directory': badges?.pendingVendors,
+    stores: badges?.pendingGrn,
+    'stores/grn': badges?.pendingGrn,
   };
   const { pathname } = useLocation();
   const activeKey = activeModuleKey(pathname, visibleModules);

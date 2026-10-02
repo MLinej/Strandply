@@ -34,6 +34,10 @@ import { InventoryService } from './modules/purchase/inventory-service';
 import { PurchaseMasterService, PurchaseOrderService, PurchaseReturnService } from './modules/purchase/order-service';
 import { PurchaseReportService } from './modules/purchase/report-service';
 import { purchaseRoutes } from './modules/purchase/routes';
+import { GrnService } from './modules/stores/grn-service';
+import { MrnService } from './modules/stores/mrn-service';
+import { StoresReportService } from './modules/stores/report-service';
+import { storesRoutes } from './modules/stores/routes';
 import type { DataLayer } from './repos';
 
 export interface AppDeps {
@@ -53,6 +57,8 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const print = new PrintService(data, dispatches, requests, activity, company, clock);
   const vendors = new VendorService(data, activity, clock);
   const inventory = new InventoryService(data, activity, clock);
+  const mrns = new MrnService(data, activity, company, clock);
+  const grns = new GrnService(data, activity, company, clock);
   return {
     activity,
     permissions: new PermissionService(data, activity, clock, config.permissionCacheMs),
@@ -82,6 +88,9 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     inventory,
     purchaseReports: new PurchaseReportService(data, inventory, activity, clock),
     purchaseDocuments: new PurchaseDocumentService(data, blobs, activity, clock),
+    mrns,
+    grns,
+    storesReports: new StoresReportService(data, mrns, grns, activity, clock),
     clock,
   };
 }
@@ -108,6 +117,7 @@ export function createApp(deps: AppDeps) {
   mount('/api/sampletrack', sampletrackRoutes());
   mount('/api/vendors', vendorRoutes());
   mount('/api/purchase', purchaseRoutes());
+  mount('/api/stores', storesRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

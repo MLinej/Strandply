@@ -6,6 +6,7 @@ import { ROLES, type Role } from '../src/domain/access';
 import type { Courier, Party, Product } from '../src/contracts/sampletrack';
 import type { Vendor, VendorCategory } from '../src/contracts/vendors';
 import type { PurchaseEntry, PurchaseOrder, PurchaseReturn } from '../src/contracts/purchase';
+import type { Grn, Mrn } from '../src/contracts/stores';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -302,6 +303,87 @@ export function purchaseFixtures() {
   };
 }
 
+export const mrn = (id: string, n: number, over: Partial<Mrn> = {}): Mrn => ({
+  id,
+  mrnNo: `MRN/26-27/${String(n).padStart(4, '0')}`,
+  fy: '2026-27',
+  date: '2026-09-28',
+  time: '10:15',
+  vehicleNo: 'GJ01HT0324',
+  securityName: 'Ramesh',
+  driverName: 'Suresh',
+  driverPhone: '9876543210',
+  vendorId: null,
+  vendorName: 'TM Nilgiri Supplier',
+  invoiceNo: 'INV-pe-1',
+  remarks: null,
+  items: [
+    { id: `${id}-1`, material: 'nilgiri', approxQty: 12000, unit: 'Kg', packages: null, remarks: null },
+    { id: `${id}-2`, material: 'resin', approxQty: 500, unit: 'Kg', packages: '2 drums', remarks: null },
+  ],
+  status: 'pending_grn',
+  grnId: null,
+  grnNo: null,
+  ...audit,
+  ...over,
+});
+
+export const grn = (id: string, n: number, m: Mrn, over: Partial<Grn> = {}): Grn => ({
+  id,
+  grnNo: `GRN/26-27/${String(n).padStart(4, '0')}`,
+  fy: '2026-27',
+  date: m.date,
+  time: '11:00',
+  mrnId: m.id,
+  mrnNo: m.mrnNo,
+  vehicleNo: m.vehicleNo,
+  vendorName: m.vendorName,
+  invoiceNo: m.invoiceNo ?? 'INV-1',
+  purchaseEntryId: null,
+  items: m.items.map((it) => ({ id: `${id}-${it.id}`, mrnItemId: it.id, material: it.material, approxQty: it.approxQty, actualQty: it.approxQty, unit: it.unit, quality: 'ok' as const, qualityRemarks: null })),
+  receivedByName: 'Stores Keeper',
+  remarks: null,
+  status: 'draft',
+  reviewedBy: null,
+  reviewedAt: null,
+  approvedBy: null,
+  approvedAt: null,
+  accounted: false,
+  voucherNo: null,
+  accountedBy: null,
+  accountedAt: null,
+  ...audit,
+  ...over,
+});
+
+/**
+ * Stores fixtures:
+ * - mrn-open (MRN/26-27/0001): pending GRN, nilgiri + resin lines, invoice INV-pe-1 (= purchase entry pe-1)
+ * - grn-draft / grn-rev / grn-appr / grn-acct (GRN 0001..0004) on MRNs 0002..0005, one per workflow stage
+ * Counters MRN-2026-27 = 5, GRN-2026-27 = 4.
+ */
+export function storesFixtures() {
+  const open = mrn('mrn-open', 1);
+  const stages = [
+    { id: 'grn-draft', over: {} },
+    { id: 'grn-rev', over: { status: 'reviewed' as const, reviewedAt: T0.toISOString() } },
+    { id: 'grn-appr', over: { status: 'approved' as const, reviewedAt: T0.toISOString(), approvedAt: T0.toISOString() } },
+    {
+      id: 'grn-acct',
+      over: { status: 'approved' as const, reviewedAt: T0.toISOString(), approvedAt: T0.toISOString(), accounted: true, voucherNo: 'PV/001/26-27', accountedAt: T0.toISOString() },
+    },
+  ];
+  const mrns: Mrn[] = [open];
+  const grns: Grn[] = [];
+  stages.forEach((s, i) => {
+    const m = mrn(`mrn-${s.id.slice(4)}`, i + 2, { vendorName: `Vendor ${i + 2}`, invoiceNo: `INV-${i + 2}`, date: '2026-09-20' });
+    const g = grn(s.id, i + 1, m, s.over);
+    mrns.push({ ...m, status: 'grn_created', grnId: g.id, grnNo: g.grnNo });
+    grns.push(g);
+  });
+  return { stoMrns: mrns, stoGrns: grns };
+}
+
 /**
  * Masters every test app starts with (besides the reference seed):
  * - p-free / c-free / prod-osb-12-8x4: unreferenced, so they can be deleted
@@ -442,10 +524,15 @@ export function testData(users: User[]) {
     ...seed,
     ...f,
     ...purchaseFixtures(),
+    ...storesFixtures(),
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
     users,
-    counters: seed.counters.map((c) => ({ ...c, lastValue: c.name === 'REQ' ? 2 : 1 })), // fixtures use REQ-0001..2, DSP-0001
+    counters: [
+      ...seed.counters.map((c) => ({ ...c, lastValue: c.name === 'REQ' ? 2 : 1 })), // fixtures use REQ-0001..2, DSP-0001
+      { name: 'MRN-2026-27', lastValue: 5, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
+      { name: 'GRN-2026-27', lastValue: 4, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
+    ],
     cities: [...seed.cities, ...extraCities],
     products: [...seed.products, ...extraProducts],
   };
