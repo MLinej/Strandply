@@ -2,6 +2,7 @@
 // Today: memory (repo-contract.memory.test.ts). TODO(d1): add repo-contract.d1.test.ts against a local D1.
 import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
+import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -398,7 +399,7 @@ export function runMasterRepoContract(name: string, makeWith: (seed: MasterSeed)
 
     it('cities: unique per (city, state) ignoring case; soft delete frees the name', async () => {
       const { repos } = await make();
-      const city = (id: string, name: string, stateId: string) => ({ id, city: name, stateId, isCustom: true, ...audit });
+      const city = (id: string, name: string, stateId: string) => ({ id, city: name, stateId, isCustom: true, pincodes: [] as string[], ...audit });
       await repos.cities.create(city('c1', 'Morbi', 'st-gj'));
       await expect(repos.cities.create(city('c2', 'MORBI', 'st-gj'))).rejects.toBeInstanceOf(UniqueViolationError);
       await repos.cities.create(city('c3', 'Morbi', 'st-mh'));
@@ -407,6 +408,19 @@ export function runMasterRepoContract(name: string, makeWith: (seed: MasterSeed)
       await repos.cities.softDelete('c1', at(1));
       expect((await repos.cities.listAll()).map((c) => c.id)).toEqual(['c3']);
       await expect(repos.cities.create(city('c4', 'Morbi', 'st-gj'))).resolves.toBeTruthy();
+    });
+
+    it('cities: pincode lookup ignores deleted cities; update keeps (city, state) unique', async () => {
+      const { repos } = await make();
+      const city = (id: string, name: string, pincodes: string[]) => ({ id, city: name, stateId: 'st-gj', isCustom: true, pincodes, ...audit });
+      await repos.cities.create(city('c1', 'Morbi', ['363641']));
+      await repos.cities.create(city('c2', 'Rajkot', ['360001']));
+      expect((await repos.cities.findByPincode('363641'))?.id).toBe('c1');
+      expect((await repos.cities.list({ q: '3600' })).rows.map((c) => c.id)).toEqual(['c2']);
+      await expect(repos.cities.update('c2', { city: 'morbi', updatedAt: at(1) })).rejects.toBeInstanceOf(UniqueViolationError);
+      expect((await repos.cities.update('c2', { pincodes: ['360001', '360002'], updatedAt: at(1) }))?.pincodes).toEqual(['360001', '360002']);
+      await repos.cities.softDelete('c1', at(2));
+      expect(await repos.cities.findByPincode('363641')).toBeNull();
     });
 
     it('usage: counts only live requests/dispatches (and live request items for products)', async () => {
@@ -734,6 +748,82 @@ export function runWorkflowRepoContract(name: string, makeEmpty: DataLayerFactor
       expect(await ids('u1')).toEqual([]);
       expect(await ids('u2')).toHaveLength(2); // u1's clear doesn't touch u2
       expect((await repos.notifications.list({})).total).toBe(3);
+    });
+  });
+}
+
+/** Vendors module repos. `make` returns an EMPTY data layer. */
+export function runVendorRepoContract(name: string, make: DataLayerFactory) {
+  const audit = { createdBy: null, createdAt: at(0), updatedAt: at(0) };
+  const cat = (id: string, name: string, sortOrder: number): Omit<VendorCategory, 'deletedAt'> => ({
+    id, name, icon: null, color: 'grey', description: null, sortOrder, status: 'active', notes: null, ...audit,
+  });
+  const product = (id: string, code: string, name: string, categoryId: string): Omit<VendorProduct, 'deletedAt'> => ({
+    id, code, name, categoryId, unit: 'MT', altUnit: null, convFactor: null, hsn: null, gstRate: null, moq: null, leadTimeDays: null,
+    description: null, notes: null, ...audit,
+  });
+  const vendor = (id: string, over: Partial<Vendor> = {}): Omit<Vendor, 'deletedAt'> => ({
+    id, code: id.toUpperCase(), name: `Vendor ${id}`, type: null, yearEstablished: null, categoryIds: [], productIds: [],
+    contact: null, designation: null, phone: null, email: null, address: null, pincode: null, city: null, state: null,
+    website: null, gst: null, pan: null, msme: null, paymentTerms: null, bank: null, accountNo: null, ifsc: null, rating: null,
+    notes: null, status: 'pending', submittedAt: null, approvedAt: null, approvedBy: null, activatedAt: null, activatedBy: null,
+    blacklistReason: null, blacklistedAt: null, blacklistedBy: null, ...audit, ...over,
+  });
+
+  describe(`repo contract (vendors): ${name}`, () => {
+    it('categories: listAll by sortOrder then name; names unique ignoring case among live rows', async () => {
+      const { repos } = await make();
+      await repos.vendorCategories.create(cat('b', 'Resin', 2));
+      await repos.vendorCategories.create(cat('a', 'Timber', 1));
+      await repos.vendorCategories.create(cat('c', 'Packaging', 2));
+      expect((await repos.vendorCategories.listAll()).map((c) => c.id)).toEqual(['a', 'c', 'b']);
+      await expect(repos.vendorCategories.create(cat('d', 'TIMBER', 3))).rejects.toBeInstanceOf(UniqueViolationError);
+      expect((await repos.vendorCategories.getByName(' resin '))?.id).toBe('b');
+      await repos.vendorCategories.softDelete('a', at(1));
+      await expect(repos.vendorCategories.create(cat('e', 'Timber', 3))).resolves.toBeTruthy();
+    });
+
+    it('products: code and name unique; filter by category; count per category', async () => {
+      const { repos } = await make();
+      await repos.vendorProducts.create(product('p1', 'P-1', 'MDI Resin', 'c1'));
+      await repos.vendorProducts.create(product('p2', 'P-2', 'Dry Strands', 'c2'));
+      await expect(repos.vendorProducts.create(product('p3', 'p-1', 'Other', 'c1'))).rejects.toBeInstanceOf(UniqueViolationError);
+      await expect(repos.vendorProducts.create(product('p4', 'P-4', 'mdi resin', 'c1'))).rejects.toBeInstanceOf(UniqueViolationError);
+      expect((await repos.vendorProducts.list({ filters: { categoryId: 'c2' } })).rows.map((p) => p.id)).toEqual(['p2']);
+      expect((await repos.vendorProducts.listAll()).map((p) => p.id)).toEqual(['p2', 'p1']);
+      expect(Object.fromEntries(await repos.vendorProducts.countByCategory())).toEqual({ c1: 1, c2: 1 });
+    });
+
+    it('vendors: filters (status, categoryId, state ignoring case), code unique, counts', async () => {
+      const { repos } = await make();
+      await repos.vendors.create(vendor('v1', { status: 'active', categoryIds: ['c1'], productIds: ['p1'], state: 'Gujarat', rating: 4 }));
+      await repos.vendors.create(vendor('v2', { categoryIds: ['c1', 'c2'], productIds: ['p1', 'p2'], state: 'Maharashtra', rating: 5 }));
+      await repos.vendors.create(vendor('v3', { status: 'blacklisted', categoryIds: ['c2'] }));
+      await expect(repos.vendors.create(vendor('v4', { code: 'v1' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      const ids = async (filters: object, sort?: string) => (await repos.vendors.list({ filters, sort })).rows.map((v) => v.id);
+      expect(await ids({ status: 'active' })).toEqual(['v1']);
+      expect(await ids({ categoryId: 'c1' }, '-rating')).toEqual(['v2', 'v1']);
+      expect(await ids({ state: 'gujarat' })).toEqual(['v1']);
+      expect(await repos.vendors.countByStatus()).toEqual({ pending: 1, approved: 0, active: 1, inactive: 0, blacklisted: 1 });
+      expect(await repos.vendors.countUsingCategory('c2')).toBe(2);
+      expect(await repos.vendors.countUsingProduct('p1')).toBe(2);
+      expect((await repos.vendors.findByName('VENDOR  v2')).map((v) => v.id)).toEqual(['v2']);
+      // Link lists round-trip in the order given.
+      expect((await repos.vendors.update('v2', { productIds: ['p2', 'p1'], updatedAt: at(1) }))?.productIds).toEqual(['p2', 'p1']);
+      await repos.vendors.softDelete('v2', at(2));
+      expect(await repos.vendors.countUsingProduct('p1')).toBe(1);
+      expect((await repos.vendors.listAll()).map((v) => v.id).sort()).toEqual(['v1', 'v3']);
+    });
+
+    it('tnc: search title and body; filter category', async () => {
+      const { repos } = await make();
+      const tnc = (id: string, title: string, category: TncClause['category'], body: string): Omit<TncClause, 'deletedAt'> => ({
+        id, title, category, version: '1.0', body, summary: null, status: 'active', appliesTo: 'all', notes: null, ...audit,
+      });
+      await repos.tnc.create(tnc('t1', 'Payment', 'Payment', 'Pay in 30 days'));
+      await repos.tnc.create(tnc('t2', 'Warranty', 'Warranty', 'Twelve months'));
+      expect((await repos.tnc.list({ q: 'twelve' })).rows.map((t) => t.id)).toEqual(['t2']);
+      expect((await repos.tnc.list({ filters: { category: 'Payment' } })).rows.map((t) => t.id)).toEqual(['t1']);
     });
   });
 }

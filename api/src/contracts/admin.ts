@@ -4,8 +4,24 @@ import type { PermissionSetView } from './session';
 export const ROLE_KEYS = ['superadmin', 'admin', 'dispatch', 'marketing', 'management'] as const;
 export type RoleKey = (typeof ROLE_KEYS)[number];
 
-export const PAGE_KEYS = ['dashboard', 'requests', 'dispatch', 'tracking', 'parties', 'couriers', 'products', 'reports', 'notifications', 'users', 'settings'] as const;
-export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full'] as const;
+export const PAGE_KEYS = [
+  'dashboard',
+  'requests',
+  'dispatch',
+  'tracking',
+  'parties',
+  'couriers',
+  'products',
+  'reports',
+  'notifications',
+  'users',
+  'settings',
+  'vendors',
+  'vendor_reports',
+  'vendor_masters',
+  'vendor_settings',
+] as const;
+export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve'] as const;
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;
 
 export interface PublicUser {

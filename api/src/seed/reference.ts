@@ -223,7 +223,34 @@ export const REF_STATES: State[] = [
   },
 ];
 
-export const REF_CITIES: Ref<City>[] = [
+/**
+ * Pincodes for the built-in cities, from the legacy Vendor Portal city master (dCit).
+ * Same as the UPDATEs in db/migrations/0005_vendors.sql.
+ */
+export const REF_CITY_PINCODES: Record<string, string[]> = {
+  'city-wankaner': ['363621', '363622'],
+  'city-morbi': ['363641', '363650'],
+  'city-rajkot': ['360001', '360002', '360003'],
+  'city-ahmedabad': ['380001', '380006', '380015', '382415'],
+  'city-surat': ['395001', '395002', '395003'],
+  'city-vadodara': ['390001', '390002', '390005'],
+  'city-ankleshwar': ['393001', '393002'],
+  'city-valsad': ['396001', '396002'],
+  'city-mumbai': ['400001', '400093', '400013'],
+  'city-pune': ['411001', '411057'],
+  'city-nagpur': ['440001', '440002'],
+  'city-new-delhi': ['110001', '110002'],
+  'city-bengaluru': ['560001', '560010'],
+  'city-chennai': ['600001', '600002'],
+  'city-hyderabad': ['500001', '500008'],
+  'city-jaipur': ['302001', '302003'],
+  'city-indore': ['452001', '452002'],
+  'city-ludhiana': ['141001', '141002'],
+  'city-coimbatore': ['641001', '641006'],
+  'city-kolkata': ['700001', '700006'],
+};
+
+export const REF_CITIES: Omit<Ref<City>, 'pincodes'>[] = [
   {
     id: 'city-agra',
     city: 'Agra',
@@ -833,6 +860,13 @@ export const REF_CITIES: Ref<City>[] = [
   {
     id: 'city-vadodara',
     city: 'Vadodara',
+    stateId: 'state-24',
+    isCustom: false,
+  },
+  // Added with the Vendors module (0005): the legacy vendor city master listed it.
+  {
+    id: 'city-valsad',
+    city: 'Valsad',
     stateId: 'state-24',
     isCustom: false,
   },

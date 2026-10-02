@@ -48,6 +48,8 @@ export function Sidebar({ collapsed, onToggle, onLogout }: SidebarProps) {
   const counts: Record<string, number | undefined> = {
     samples: badges?.pendingRequests,
     'samples/requests': badges?.pendingRequests,
+    vendors: badges?.pendingVendors,
+    'vendors/directory': badges?.pendingVendors,
   };
   const { pathname } = useLocation();
   const activeKey = activeModuleKey(pathname, visibleModules);

@@ -4,6 +4,7 @@ import type { SessionRepo } from './sessions';
 import type { CityRepo, CourierRepo, PartyRepo, ProductRepo, StateRepo, UsageRepo } from './masters';
 import type { SettingsRepo } from './settings';
 import type { UserRepo } from './users';
+import type { TncRepo, VendorCategoryRepo, VendorProductRepo, VendorRepo } from './vendors';
 import type { CounterRepo, DispatchRepo, NotificationRepo, RequestRepo } from './workflow';
 
 export * from './types';
@@ -14,6 +15,7 @@ export * from './activity';
 export * from './masters';
 export * from './workflow';
 export * from './settings';
+export * from './vendors';
 
 /** Every repo the app uses. Routes and services receive this, never a concrete implementation. */
 export interface Repos {
@@ -32,6 +34,10 @@ export interface Repos {
   notifications: NotificationRepo;
   dispatches: DispatchRepo;
   settings: SettingsRepo;
+  vendorCategories: VendorCategoryRepo;
+  vendorProducts: VendorProductRepo;
+  vendors: VendorRepo;
+  tnc: TncRepo;
 }
 
 /**

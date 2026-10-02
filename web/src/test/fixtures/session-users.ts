@@ -19,7 +19,7 @@ export const TEST_USERS = [] = [
     role: 'Store keeper',
     scopeNote: 'Stores, purchase, stock',
     firms: ['llp', 'osb'] as FirmCode[],
-    permissions: ['purchase.view', 'vendors.view', 'stores.view', 'stock.view'],
+    permissions: ['purchase.view', 'vendors.view', 'vendors.directory', 'stores.view', 'stock.view'],
     st: { pages: [], actions: [], widgets: [] },
   },
   {
@@ -29,7 +29,7 @@ export const TEST_USERS = [] = [
     role: 'Accountant',
     scopeNote: 'Accounts, sales, reports',
     firms: ['llp'] as FirmCode[],
-    permissions: ['accounts.view', 'accounts.gst', 'sales.view', 'vendors.view', 'reports.view'],
+    permissions: ['accounts.view', 'accounts.gst', 'sales.view', 'vendors.view', 'vendors.directory', 'reports.view'],
     st: { pages: [], actions: [], widgets: [] },
   },
 ] satisfies SessionUser[];

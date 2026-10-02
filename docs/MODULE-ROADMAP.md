@@ -30,7 +30,8 @@ The legacy app is 14 single-file modules in `legacy/<name>/index.html`. Each is 
 
 - [x] 0 Sign-in (`/sign-in`), real session from `/api/me` with guard and 401 handling, Home with live module contributions, live notification bell and sidebar badges
 - [x] 1 SampleTrack: all screens built and browser-tested for every role. Samples: dashboard (role-aware tiles, six-month trend chart with table view, status bars, recent dispatches, pending requests), sample requests, sample dispatch, live tracking (timeline, label print, QR, WhatsApp share), parties, couriers, products (Excel import with dry-run preview, export), and reports (7 server-side reports, CSV/Excel/print). Admin: users (stats, filters, add/edit/deactivate/delete), roles & permissions matrix (Super Admin only edits; Super Admin column locked; reset to defaults), activity log (filters, purge for Super Admin), company settings, and city master (add/remove custom cities, export).
-- [ ] 2–14 not started
+- [x] 2 Vendors: API (`/api/vendors`, migration 0005, docs/vendors-spec.md) and all screens, browser-tested. Vendors list with status tabs, add/edit with pincode lookup and product picker, detail tabs (overview, products, finance, history), approve / activate / blacklist / reinstate (new `vendor_approve` action), compare 2–4, find by product, reports with CSV/Excel, print card and list, product master, categories, city & pincodes (shared city master), T&C master, vendor settings with import preview and exports. Pending-vendors sidebar badge.
+- [ ] 3–14 not started
 
 ## Where legacy data lived (for the import at DB-connect time)
 

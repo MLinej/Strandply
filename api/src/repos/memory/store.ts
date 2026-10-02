@@ -13,6 +13,7 @@ import type {
   Setting,
   State,
 } from '../../contracts/sampletrack';
+import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../../contracts/vendors';
 import type { ActivityEntry } from '../activity';
 import type { RolePermissionsRow } from '../role-permissions';
 import type { Session } from '../sessions';
@@ -37,6 +38,13 @@ export interface MemoryData {
   dispatchHistory: DispatchHistoryEntry[];
   settings: Setting[];
   notificationReads: NotificationRead[];
+  // Vendors module
+  vnCategories: VendorCategory[];
+  vnProducts: VendorProduct[];
+  vendors: Vendor[];
+  vnTnc: TncClause[];
+  /** Data upgrades already applied to this store (see seed/upgrades.ts). The memory twin of a migrations table. */
+  upgrades: { name: string; appliedAt: string }[];
 }
 
 export type TableName = keyof MemoryData;
@@ -61,6 +69,11 @@ const KEYS: { [K in TableName]: (keyof Row<K> & string) | ((row: Row<K>) => stri
   dispatchHistory: 'id',
   settings: 'key',
   notificationReads: (r) => readKey(r.notificationId, r.userId),
+  vnCategories: 'id',
+  vnProducts: 'id',
+  vendors: 'id',
+  vnTnc: 'id',
+  upgrades: 'name',
 };
 
 export const readKey = (notificationId: string, userId: string) => `${notificationId}\u0000${userId}`;

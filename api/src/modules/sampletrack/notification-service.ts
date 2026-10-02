@@ -75,6 +75,7 @@ export class NotificationService {
     const out: Badges = {};
     if (perms.pages.includes('notifications')) out.unreadNotifications = await this.data.repos.notifications.unreadCount(userId);
     if (perms.pages.includes('requests')) out.pendingRequests = (await this.data.repos.requests.countByStatus({})).Pending;
+    if (perms.pages.includes('vendors')) out.pendingVendors = (await this.data.repos.vendors.countByStatus()).pending;
     return out;
   }
 }

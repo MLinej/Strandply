@@ -144,13 +144,14 @@ describe('who receives notifications', () => {
 });
 
 describe('sidebar badges', () => {
-  it('unread notifications and pending requests, each only with the matching page', async () => {
+  it('unread notifications, pending requests and pending vendors, each only with the matching page', async () => {
     const t = await makeTestApp();
     await withEvents(t);
     const badges = async (role: string) => (await t.request('GET', `${ST}/badges`, { cookie: await t.login(role) })).json();
-    expect(await badges('admin')).toEqual({ unreadNotifications: 1, pendingRequests: 2 }); // r1, r2 Pending; the new one is Approved
+    // r1, r2 Pending (the new one is Approved); one pending vendor fixture.
+    expect(await badges('admin')).toEqual({ unreadNotifications: 1, pendingRequests: 2, pendingVendors: 1 });
     expect(await badges('marketing')).toEqual({ unreadNotifications: 1, pendingRequests: 2 });
     expect(await badges('dispatch')).toEqual({ unreadNotifications: 2 });
-    expect(await badges('management')).toEqual({ unreadNotifications: 2 });
+    expect(await badges('management')).toEqual({ unreadNotifications: 2, pendingVendors: 1 });
   });
 });

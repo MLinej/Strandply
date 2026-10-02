@@ -14,8 +14,8 @@ type Section = keyof PermissionSetView;
 const SECTIONS: { key: Section; title: string; items: readonly string[]; label: Record<string, string> }[] = [
   {
     key: 'pages',
-    title: 'Pages',
-    items: PAGE_KEYS,
+    title: 'Samples & admin pages',
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -31,10 +31,16 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
     },
   },
   {
+    key: 'pages',
+    title: 'Vendors pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('vendor')),
+    label: { vendors: 'Vendors (list, compare, find)', vendor_reports: 'Vendor reports', vendor_masters: 'Vendor masters', vendor_settings: 'Vendor settings' },
+  },
+  {
     key: 'actions',
     title: 'Actions',
     items: ACTION_KEYS,
-    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard' },
+    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors' },
   },
   {
     key: 'widgets',
@@ -46,7 +52,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
 
 type Matrix = Record<RoleKey, PermissionSetView>;
 const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
-const samePerms = (a: PermissionSetView, b: PermissionSetView) => SECTIONS.every((s) => sameSet(a[s.key], b[s.key]));
+const samePerms = (a: PermissionSetView, b: PermissionSetView) => (['pages', 'actions', 'widgets'] as const).every((k) => sameSet(a[k], b[k]));
 
 /** Role permissions matrix (legacy renderPermMatrix / savePerms / resetPerms). Only a Super Admin edits it. */
 export function RolesPage() {
@@ -135,7 +141,7 @@ export function RolesPage() {
               </thead>
               <tbody>
                 {SECTIONS.map((s) => (
-                  <Fragment key={s.key}>
+                  <Fragment key={s.title}>
                     <tr className="bg-page/60">
                       <th colSpan={rows.length + 1} scope="colgroup" className="px-4 pb-1 pt-3 text-left text-label font-semibold uppercase tracking-label text-primary">
                         {s.title}

@@ -10,12 +10,14 @@ import {
 } from '../../../contracts/sampletrack';
 import { policy, requireAuthContext } from '../../../auth/guards';
 import { SecureRouter } from '../../../auth/secure-router';
+import type { PageKey } from '../../../domain/access';
 import { validationFailed } from '../../../lib/errors';
 import { MAX_UPLOAD_BYTES, xlsxResponse } from '../../../lib/spreadsheet';
 import { paging, parseJson, parseQuery } from '../../../lib/validate';
 import { actorOf, type Actor } from '../actor';
 import {
   cityCreateBody,
+  cityUpdateBody,
   courierCreateBody,
   courierUpdateBody,
   partyCreateBody,
@@ -155,20 +157,32 @@ export function productRoutes(r: SecureRouter) {
 }
 
 export function cityRoutes(r: SecureRouter) {
-  // The party form needs states and city options; Settings needs them for the city master.
-  r.get('/states', policy.anyPage(['parties', 'settings']), async (c) => c.json(await c.var.services.cities.states()));
-  r.get('/cities/options', policy.anyPage(['parties', 'settings']), async (c) => c.json(await c.var.services.cities.options()));
-  r.get('/cities', policy.page('settings'), async (c) =>
+  // The city master is shared: Settings (SampleTrack) and the Vendors masters both manage it.
+  const MASTER: PageKey[] = ['settings', 'vendor_masters'];
+  // The party and vendor forms need states and city options; the city masters need them too.
+  r.get('/states', policy.anyPage(['parties', 'vendors', ...MASTER]), async (c) => c.json(await c.var.services.cities.states()));
+  r.get('/cities/options', policy.anyPage(['parties', 'vendors', ...MASTER]), async (c) => c.json(await c.var.services.cities.options()));
+  // Vendor form: pincode → city and state.
+  r.get('/cities/pincode/:pincode', policy.anyPage(['vendors', ...MASTER]), async (c) => {
+    const pincode = c.req.param('pincode') ?? '';
+    if (!/^[1-9][0-9]{5}$/.test(pincode)) throw validationFailed('Pincode must be 6 digits');
+    return c.json(await c.var.services.cities.lookupPincode(pincode));
+  });
+  r.get('/cities', policy.anyPage(MASTER), async (c) =>
     c.json(await c.var.services.cities.list(toListQuery(parseQuery(c, cityQuery)))),
   );
-  r.get('/cities/export', policy.page('settings', 'export'), async (c) =>
+  r.get('/cities/export', policy.anyPage(MASTER, 'export'), async (c) =>
     xlsxResponse(c, await c.var.services.cities.exportXlsx(actor(c)), 'CityStateMaster', c.var.services.clock()),
   );
-  r.post('/cities', policy.page('settings', 'edit'), async (c) => {
+  r.post('/cities', policy.anyPage(MASTER, 'edit'), async (c) => {
     const body = await parseJson(c, cityCreateBody);
     return c.json(await c.var.services.cities.add(actor(c), body), 201);
   });
-  r.delete('/cities/:id', policy.page('settings', 'delete'), async (c) => {
+  r.patch('/cities/:id', policy.anyPage(MASTER, 'edit'), async (c) => {
+    const body = await parseJson(c, cityUpdateBody);
+    return c.json(await c.var.services.cities.update(actor(c), idParam(c), body));
+  });
+  r.delete('/cities/:id', policy.anyPage(MASTER, 'delete'), async (c) => {
     await c.var.services.cities.remove(actor(c), idParam(c));
     return c.body(null, 204);
   });

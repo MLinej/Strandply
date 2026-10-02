@@ -21,12 +21,12 @@ export function normalizeIndianMobile(raw: string): string | null {
 }
 
 /** Optional field where '' or null means "no value" (stored as null). Otherwise `schema` applies, with its own messages. */
-const nullableBlank = <T extends z.ZodType>(schema: T) =>
+export const nullableBlank = <T extends z.ZodType>(schema: T) =>
   z.preprocess((v) => (typeof v === 'string' && v.trim() === '' ? null : v), schema.nullable().optional());
 
-const email = nullableBlank(z.email('Enter a valid email').max(200).transform((v) => v.trim().toLowerCase()));
+export const email = nullableBlank(z.email('Enter a valid email').max(200).transform((v) => v.trim().toLowerCase()));
 
-const gst = nullableBlank(
+export const gst = nullableBlank(
   z
     .string()
     .trim()
@@ -52,10 +52,10 @@ const mobile = nullableBlank(
     }),
 );
 
-const pin = nullableBlank(z.string().trim().regex(PINCODE, 'Pincode must be 6 digits'));
+export const pin = nullableBlank(z.string().trim().regex(PINCODE, 'Pincode must be 6 digits'));
 
 /** Contact numbers for couriers: toll-free and landline numbers are allowed, so only basic characters are checked. */
-const phone = nullableBlank(
+export const phone = nullableBlank(
   z
     .string()
     .trim()
@@ -132,10 +132,34 @@ export const productCreateBody = z.object({
 });
 export const productUpdateBody = z.object(productFields).partial();
 
+/** Pincodes as an array or "363621, 363622": trimmed, de-duplicated, each 6 digits. */
+export const pincodeList = z
+  .union([z.array(z.string()), z.string()])
+  .transform((v, ctx) => {
+    const list = (Array.isArray(v) ? v : v.split(/[\s,;|]+/)).map((p) => p.trim()).filter(Boolean);
+    const bad = list.filter((p) => !PINCODE.test(p));
+    if (bad.length) ctx.addIssue({ code: 'custom', message: `Not a 6-digit pincode: ${bad.join(', ')}` });
+    if (list.length > 200) ctx.addIssue({ code: 'custom', message: 'At most 200 pincodes per city' });
+    return [...new Set(list)];
+  });
+
 export const cityCreateBody = z.object({
   city: z.string().trim().min(1, 'City is required').max(100),
   stateId: z.string().trim().min(1, 'State is required').max(40),
+  pincodes: pincodeList.optional(),
 });
+
+/** Built-in cities: only pincodes can change. Custom cities: name and state too. */
+export const cityUpdateBody = z
+  .object({
+    city: z.string().trim().min(1, 'City is required').max(100).optional(),
+    stateId: z.string().trim().min(1, 'State is required').max(40).optional(),
+    pincodes: pincodeList.optional(),
+  })
+  .refine((v) => Object.values(v).some((x) => x !== undefined), 'Nothing to update');
+
+export type CityCreate = z.output<typeof cityCreateBody>;
+export type CityUpdate = z.output<typeof cityUpdateBody>;
 
 export type PartyCreate = z.output<typeof partyCreateBody>;
 export type PartyUpdate = z.output<typeof partyUpdateBody>;

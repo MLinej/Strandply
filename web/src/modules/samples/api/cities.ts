@@ -48,11 +48,21 @@ function useInvalidateCities() {
   return () => void qc.invalidateQueries({ queryKey: stKeys.geo.cities });
 }
 
-/** A city already in that state fails with ApiError 'city_exists'. */
+/** A city already in that state fails with ApiError 'city_exists'; a pincode another city has, with 'pincode_taken'. */
 export function useAddCity() {
   const invalidate = useInvalidateCities();
   return useMutation({
-    mutationFn: (input: { city: string; stateId: string }) => api<CityView>(`${ST}/cities`, { method: 'POST', body: input }),
+    mutationFn: (input: { city: string; stateId: string; pincodes?: string[] }) => api<CityView>(`${ST}/cities`, { method: 'POST', body: input }),
+    onSuccess: invalidate,
+  });
+}
+
+/** Pincodes on any city; name and state on custom cities only (ApiError 'builtin_city'). */
+export function useUpdateCity() {
+  const invalidate = useInvalidateCities();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: { city?: string; stateId?: string; pincodes?: string[] } }) =>
+      api<CityView>(`${ST}/cities/${id}`, { method: 'PATCH', body: input }),
     onSuccess: invalidate,
   });
 }

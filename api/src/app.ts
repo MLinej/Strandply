@@ -22,6 +22,11 @@ import { PrintService } from './modules/sampletrack/print/print-service';
 import { CompanyService } from './modules/sampletrack/settings/company-service';
 import { DashboardService } from './modules/sampletrack/reports/dashboard-service';
 import { ReportService } from './modules/sampletrack/reports/report-service';
+import { VendorImportService } from './modules/vendors/import-service';
+import { TncService, VendorCategoryService, VendorProductService } from './modules/vendors/masters';
+import { vendorRoutes } from './modules/vendors/routes';
+import { VendorSettingsService } from './modules/vendors/settings-service';
+import { VendorService } from './modules/vendors/vendor-service';
 import type { DataLayer } from './repos';
 
 export interface AppDeps {
@@ -37,6 +42,7 @@ export function createServices({ data, config, clock = systemClock }: AppDeps): 
   const dispatches = new DispatchService(data, activity, notifications, clock);
   const company = new CompanyService(data, activity, clock);
   const print = new PrintService(data, dispatches, requests, activity, company, clock);
+  const vendors = new VendorService(data, activity, clock);
   return {
     activity,
     permissions: new PermissionService(data, activity, clock, config.permissionCacheMs),
@@ -53,6 +59,12 @@ export function createServices({ data, config, clock = systemClock }: AppDeps): 
     notifications,
     dashboard: new DashboardService(data, dispatches, clock),
     reports: new ReportService(data, dispatches, print, activity, clock),
+    vendors,
+    vendorCategories: new VendorCategoryService(data, activity, clock),
+    vendorProducts: new VendorProductService(data, activity, clock),
+    tnc: new TncService(data, activity, clock),
+    vendorImport: new VendorImportService(data, activity, clock),
+    vendorSettings: new VendorSettingsService(data, vendors, company, activity, clock),
     clock,
   };
 }
@@ -77,6 +89,7 @@ export function createApp(deps: AppDeps) {
   };
   mount('/api', authRoutes());
   mount('/api/sampletrack', sampletrackRoutes());
+  mount('/api/vendors', vendorRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

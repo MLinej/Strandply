@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0004` to a local D1 and check that the schema and seed counts are right (36 states, 109 cities, 6 products, 9 settings, 2 counters, 5 role-permission rows).
+- [ ] Apply `0001`–`0005` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 5 T&C clauses).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -40,9 +40,21 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] Notifications per user: visibility is `n.deleted_at IS NULL AND (n.target_user_id IS NULL OR n.target_user_id = ?) AND NOT EXISTS (dismissed read row)`. Read/clear are `INSERT … ON CONFLICT(notification_id, user_id) DO UPDATE` over `INSERT … SELECT` of the visible set. Add an index on `st_notifications(created_at)` (exists) and consider a retention job; the read table grows by users × notifications.
 - [ ] `SettingsRepo`: `value` is JSON text in SQL and decoded in the repo. `set` is `INSERT … ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at`.
 - [ ] Dispatch list: JOIN parties/couriers/requests for the names. Overdue filter: `expected_delivery_date < ? AND status NOT IN ('Delivered','Returned')`. Index `st_dispatches(expected_delivery_date)` if the list grows.
-- [ ] Persisted role permissions: a new action key (e.g. `approve`) isn't added to roles that already exist in the database. Either ship a data migration that adds it to admin, or tell the superadmin to use "Reset to defaults". This also applies to an old `api/.data/dev.json`.
+- [ ] Persisted role permissions: a new page or action key isn't added to roles that already exist in the database. Ship it in a migration that appends with `json_insert(permissions, '$.pages[#]', …)` (0005 does this for the Vendors keys, and a test checks 0004 + 0005 against the code defaults). The memory backend mirrors each such migration in `api/src/seed/upgrades.ts`; the `upgrades` table is memory-only and has no D1 counterpart.
 - [ ] If the API moves to Workers: argon2id is pure JS (~300 ms per hash with m=19 MiB, t=2 on a laptop). Check this fits the Workers CPU limit, or move hashing elsewhere.
+
+### Vendors module (0005)
+- [ ] `vn_vendors.category_ids` / `product_ids` are id arrays in the memory backend. On D1 they are the `vn_vendor_categories` / `vn_vendor_products` link tables: read them back in `position` order, and on edit DELETE + INSERT them in the same batch as the vendor UPDATE.
+- [ ] `VendorRepo.list` category filter: `EXISTS (SELECT 1 FROM vn_vendor_categories WHERE vendor_id = v.id AND category_id = ?)`. State filter is case-insensitive.
+- [ ] Vendor and vendor-product codes come from per-year counters (`VEN-YY`, `VP-YY`, e.g. `VEN-26`) and skip codes already taken (typed in by hand or imported). On D1: bump the counter and insert in one batch, and retry on `UniqueViolationError('vendors', 'code')`.
+- [ ] Vendor workflow steps (`VendorService.act`): guarded `UPDATE vn_vendors SET status = ? … WHERE id = ? AND status IN (…) AND deleted_at IS NULL`, then check `changes` and return 409 `invalid_transition` when it is 0.
+- [ ] Category and product deletes are blocked while used (products/vendors). Use the guarded `UPDATE … WHERE NOT EXISTS (…)` pattern from the master deletes above.
+- [ ] Pincodes: `st_city_master.pincodes` is a JSON array, so "one city per pincode" can't be a unique index. Keep the API check, or move pincodes into their own `st_city_pincodes(pincode PRIMARY KEY, city_id)` table if the lookup gets slow (`findByPincode` scans with `json_each`).
+- [ ] Vendor import commit: up to 5,000 vendors, each with link rows. Same batch-size question as the product import.
+- [ ] `VendorRepo.listAll` feeds reports, find-by-product and pickers. Fine for a few thousand vendors; past that, move the report grouping into SQL.
+- [ ] TODO(purchase): block vendor deletes once purchase orders reference vendors.
 
 ## Infrastructure services (stubs now)
 - [ ] Google Sheets sync: real `SheetsSyncService` and a cron trigger for `sheets.interval_min`.
 - [ ] Cloud backup: real `BackupService`.
+- [ ] E-mail relay: vendor e-mails use the sender in Vendor settings (`vendors.email.from_name`, `vendors.email.reply_to`). Connect sending (the legacy portal's "Send test" was itself a placeholder) together with the Sales module's e-mail relay.

@@ -52,9 +52,12 @@ describe('app shell', () => {
   });
 
   it('hides pages that need an extra permission', async () => {
-    renderApp('/vendors/master', 'stores');
-    await screen.findByRole('heading', { name: 'Vendor master' });
-    expect(screen.queryByRole('link', { name: 'Portal access' })).toBeNull();
+    // Store keeper: vendors.directory but not vendors.masters / vendors.reports.
+    renderApp('/vendors/find', 'stores');
+    await screen.findByRole('heading', { name: 'Find vendors by product' });
+    expect(screen.getByRole('link', { name: 'Compare vendors' })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Product master' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Vendor reports' })).toBeNull();
   });
 
   it('blocks modules the user cannot open, even by URL', async () => {

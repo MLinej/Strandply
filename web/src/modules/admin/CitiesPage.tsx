@@ -1,69 +1,99 @@
-import { Download, MapPin, Plus, Search, Trash2 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { Download, MapPin, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
 import type { CityView } from '@contracts/sampletrack';
 import { useSession } from '@/app/session';
 import { Button, DataTable, EmptyState, Input, Modal, Pagination, Pill, Select, useToast, type Column } from '@/components/ui';
-import { exportCities, useAddCity, useCities, useRemoveCity, useStates } from '../samples/api';
+import { exportCities, useAddCity, useCities, useRemoveCity, useStates, useUpdateCity } from '../samples/api';
 import { ConfirmDialog } from '../samples/ui/ConfirmDialog';
-import { errorMessage } from '../samples/ui/errors';
+import { errorMessage, fieldErrors } from '../samples/ui/errors';
 import { useSearchParam, useUrlState } from '../samples/ui/list-state';
 import { PageHeader } from '../samples/ui/PageHeader';
 
 const PAGE_SIZE = 25;
+const splitPins = (s: string) => [...new Set(s.split(/[\s,;|]+/).map((p) => p.trim()).filter(Boolean))];
 
-function AddCityDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+/** Add a city, or edit one: pincodes on any city, name and state only on custom cities. */
+function CityDialog({ open, city, onClose }: { open: boolean; city: CityView | null; onClose: () => void }) {
   const toast = useToast();
   const states = useStates();
   const add = useAddCity();
-  const [city, setCity] = useState('');
+  const update = useUpdateCity();
+  const [name, setName] = useState('');
   const [stateId, setStateId] = useState('');
-  const [errors, setErrors] = useState<{ city?: string; stateId?: string }>({});
-  function close() {
-    setCity('');
-    setStateId('');
+  const [pins, setPins] = useState('');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const builtin = !!city && !city.isCustom;
+  useEffect(() => {
+    if (!open) return;
     setErrors({});
-    onClose();
-  }
+    setName(city?.city ?? '');
+    setStateId(city?.stateId ?? '');
+    setPins(city?.pincodes.join(', ') ?? '');
+  }, [open, city]);
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const local = { city: city.trim() ? undefined : 'Enter the city name', stateId: stateId ? undefined : 'Pick a state' };
-    if (local.city || local.stateId) {
-      setErrors(local);
-      return;
-    }
+    const local: Record<string, string> = {};
+    if (!name.trim()) local.city = 'Enter the city name';
+    if (!stateId) local.stateId = 'Pick a state';
+    const bad = splitPins(pins).filter((p) => !/^[1-9][0-9]{5}$/.test(p));
+    if (bad.length) local.pincodes = `Not a 6-digit pincode: ${bad.join(', ')}`;
+    if (Object.keys(local).length) return setErrors(local);
+    const pincodes = splitPins(pins);
     try {
-      const r = await add.mutateAsync({ city: city.trim(), stateId });
-      toast({ tone: 'success', title: `${r.city}, ${r.stateName} added` });
-      close();
+      const r = city
+        ? await update.mutateAsync({ id: city.id, input: builtin ? { pincodes } : { city: name.trim(), stateId, pincodes } })
+        : await add.mutateAsync({ city: name.trim(), stateId, pincodes });
+      toast({ tone: 'success', title: city ? `${r.city} updated` : `${r.city}, ${r.stateName} added` });
+      onClose();
     } catch (err) {
-      if ((err as { code?: string }).code === 'city_exists') setErrors({ city: 'That city is already listed for this state' });
-      else toast({ tone: 'error', title: 'Couldn’t add the city', description: errorMessage(err) });
+      const code = (err as { code?: string }).code;
+      if (code === 'city_exists') setErrors({ city: 'That city is already listed for this state' });
+      else if (code === 'pincode_taken') setErrors({ pincodes: errorMessage(err) });
+      else {
+        setErrors(fieldErrors(err));
+        toast({ tone: 'error', title: 'Couldn’t save the city', description: errorMessage(err) });
+      }
     }
   }
   return (
     <Modal
       open={open}
-      onClose={close}
-      title="Add city"
+      onClose={onClose}
+      title={city ? `Edit ${city.city}` : 'Add city'}
+      description={builtin ? 'A built-in city: only its pincodes can change.' : undefined}
       footer={
         <>
-          <Button onClick={close}>Cancel</Button>
-          <Button variant="primary" type="submit" form="city-form" loading={add.isPending}>
-            Add city
+          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="primary" type="submit" form="city-form" loading={add.isPending || update.isPending}>
+            {city ? 'Save changes' : 'Add city'}
           </Button>
         </>
       }
     >
       <form id="city-form" noValidate onSubmit={onSubmit} className="grid gap-3 sm:grid-cols-2">
-        <Input label="City" value={city} onChange={(e) => setCity(e.target.value)} error={errors.city} />
-        <Select label="State / UT" placeholder="Pick a state" options={(states.data ?? []).map((s) => ({ value: s.id, label: s.name }))} value={stateId} onChange={(e) => setStateId(e.target.value)} error={errors.stateId} />
+        <Input label="City" value={name} onChange={(e) => setName(e.target.value)} error={errors.city} disabled={builtin} />
+        <Select label="State / UT" placeholder="Pick a state" options={(states.data ?? []).map((s) => ({ value: s.id, label: s.name }))} value={stateId} onChange={(e) => setStateId(e.target.value)} error={errors.stateId} disabled={builtin} />
+        <Input
+          label="Pincodes"
+          placeholder="363621, 363622"
+          value={pins}
+          onChange={(e) => setPins(e.target.value)}
+          error={errors.pincodes}
+          hint="Separate with commas or spaces. Typing one in the vendor form fills this city and state."
+          containerClassName="sm:col-span-2"
+        />
       </form>
     </Modal>
   );
 }
 
-/** City master (legacy renderCityMaster / addCustomCity / removeCustomCity / exportCityMaster). */
-export function CitiesPage() {
+/**
+ * City master, shared by Admin (SampleTrack) and Vendors: built-in and custom cities with their pincodes
+ * (legacy renderCityMaster / addCustomCity / removeCustomCity / exportCityMaster, and the vendor
+ * portal's City / State master with pincodes).
+ */
+export function CitiesPage({ title = 'City master', description = 'Cities offered in the party and vendor forms, with their pincodes. Built-in cities can’t be removed or renamed.' }: { title?: string; description?: string }) {
   const toast = useToast();
   const { canDo } = useSession();
   const url = useUrlState(['stateId', 'kind'] as const);
@@ -76,7 +106,7 @@ export function CitiesPage() {
     filters: { stateId: url.values.stateId || undefined, isCustom: url.values.kind ? url.values.kind === 'custom' : undefined },
   });
   const remove = useRemoveCity();
-  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<CityView | 'new' | null>(null);
   const [toRemove, setToRemove] = useState<CityView | null>(null);
 
   async function onRemove() {
@@ -98,27 +128,29 @@ export function CitiesPage() {
   }
 
   const columns: Column<CityView>[] = [
-    { id: 'city', header: 'City', className: 'font-medium', cell: (c) => c.city },
-    { id: 'state', header: 'State / UT', cell: (c) => c.stateName },
-    { id: 'kind', header: 'Source', width: '120px', cell: (c) => (c.isCustom ? <Pill tone="purple">Custom</Pill> : <Pill>Built-in</Pill>) },
+    { id: 'city', header: 'City', width: '200px', className: 'font-medium', cell: (c) => c.city },
+    { id: 'state', header: 'State / UT', width: '200px', cell: (c) => c.stateName },
+    { id: 'pincodes', header: 'Pincodes', className: 'text-sm text-muted tabular-nums', cell: (c) => c.pincodes.join(', ') || '—' },
+    { id: 'kind', header: 'Source', width: '110px', cell: (c) => (c.isCustom ? <Pill tone="purple">Custom</Pill> : <Pill>Built-in</Pill>) },
     {
       id: 'actions',
       header: <span className="sr-only">Actions</span>,
-      width: '56px',
+      width: '88px',
       align: 'right',
-      cell: (c) =>
-        c.isCustom &&
-        canDo('delete') && (
-          <Button variant="ghost" size="sm" icon={Trash2} aria-label={`Remove ${c.city}`} onClick={() => setToRemove(c)} />
-        ),
+      cell: (c) => (
+        <span className="flex justify-end gap-1">
+          {canDo('edit') && <Button variant="ghost" size="sm" icon={Pencil} aria-label={`Edit ${c.city}`} onClick={() => setEditing(c)} />}
+          {c.isCustom && canDo('delete') && <Button variant="ghost" size="sm" icon={Trash2} aria-label={`Remove ${c.city}`} onClick={() => setToRemove(c)} />}
+        </span>
+      ),
     },
   ];
 
   return (
     <div className="flex flex-col gap-3.5 p-6">
       <PageHeader
-        title="City master"
-        description="Cities offered in the party form. Built-in cities can’t be removed; add your own for anywhere missing."
+        title={title}
+        description={description}
         actions={
           <>
             {canDo('export') && (
@@ -127,7 +159,7 @@ export function CitiesPage() {
               </Button>
             )}
             {canDo('edit') && (
-              <Button variant="primary" icon={Plus} onClick={() => setAdding(true)}>
+              <Button variant="primary" icon={Plus} onClick={() => setEditing('new')}>
                 Add city
               </Button>
             )}
@@ -135,7 +167,7 @@ export function CitiesPage() {
         }
       />
       <div className="flex flex-wrap items-center gap-2.5">
-        <Input aria-label="Search cities" icon={Search} placeholder="City name" value={search} onChange={(e) => setSearch(e.target.value)} containerClassName="w-[260px]" />
+        <Input aria-label="Search cities" icon={Search} placeholder="City name or pincode" value={search} onChange={(e) => setSearch(e.target.value)} containerClassName="w-[260px]" />
         <Select aria-label="State" placeholder="All states" options={(states.data ?? []).map((s) => ({ value: s.id, label: s.name }))} value={url.values.stateId} onChange={(e) => url.set({ stateId: e.target.value })} containerClassName="w-[220px]" />
         <Select aria-label="Source" placeholder="Built-in and custom" options={[{ value: 'custom', label: 'Custom only' }, { value: 'builtin', label: 'Built-in only' }]} value={url.values.kind} onChange={(e) => url.set({ kind: e.target.value })} containerClassName="w-[190px]" />
       </div>
@@ -144,14 +176,14 @@ export function CitiesPage() {
         columns={columns}
         rows={list.data?.rows ?? []}
         getRowId={(c) => c.id}
-        minWidth={640}
+        minWidth={760}
         loading={list.isLoading}
         empty={<EmptyState icon={MapPin} title="No cities match" />}
         footer={(list.data?.total ?? 0) > 0 && <Pagination page={url.page} pageSize={PAGE_SIZE} total={list.data!.total} onPageChange={(n) => url.set({ page: n })} />}
       />
-      <AddCityDialog open={adding} onClose={() => setAdding(false)} />
+      <CityDialog open={editing !== null} city={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />
       <ConfirmDialog open={!!toRemove} title={`Remove ${toRemove?.city ?? ''}?`} confirmLabel="Remove" danger busy={remove.isPending} onConfirm={onRemove} onClose={() => setToRemove(null)}>
-        Parties already using this city keep it; it just stops being offered in the list.
+        Parties and vendors already using this city keep it; it just stops being offered in the list.
       </ConfirmDialog>
     </div>
   );

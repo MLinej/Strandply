@@ -121,12 +121,16 @@ const MASTER_CASES: Case[] = [
   { method: 'PATCH', route: `${ST}/products/:id`, path: `${ST}/products/prod-osb-12-8x4`, body: { size: '6x4 ft' }, allowed: PARTY_ROLES, ok: 200 },
   { method: 'DELETE', route: `${ST}/products/:id`, path: `${ST}/products/prod-osb-12-8x4`, allowed: ADMINS, ok: 204 },
   // States and cities
-  { method: 'GET', route: `${ST}/states`, path: `${ST}/states`, allowed: PARTY_ROLES, ok: 200 },
-  { method: 'GET', route: `${ST}/cities/options`, path: `${ST}/cities/options`, allowed: PARTY_ROLES, ok: 200 },
+  // Party and vendor forms: management reaches them through the vendors page.
+  { method: 'GET', route: `${ST}/states`, path: `${ST}/states`, allowed: [...PARTY_ROLES, 'management'], ok: 200 },
+  { method: 'GET', route: `${ST}/cities/options`, path: `${ST}/cities/options`, allowed: [...PARTY_ROLES, 'management'], ok: 200 },
   { method: 'GET', route: `${ST}/cities`, path: `${ST}/cities`, allowed: ADMINS, ok: 200 },
   { method: 'GET', route: `${ST}/cities/export`, path: `${ST}/cities/export`, allowed: ADMINS, ok: 200 },
   { method: 'POST', route: `${ST}/cities`, path: `${ST}/cities`, body: { city: 'Tankara', stateId: 'state-24' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${ST}/cities/:id`, path: `${ST}/cities/city-custom`, body: { pincodes: ['363330', '363331'] }, allowed: ADMINS, ok: 200 },
   { method: 'DELETE', route: `${ST}/cities/:id`, path: `${ST}/cities/city-custom`, allowed: ADMINS, ok: 204 },
+  // Vendor form auto-fill: the vendors page (management has it by default) or a city-master page.
+  { method: 'GET', route: `${ST}/cities/pincode/:pincode`, path: `${ST}/cities/pincode/363641`, allowed: ['superadmin', 'admin', 'management'], ok: 200 },
 ];
 CASES.push(...MASTER_CASES);
 
@@ -204,6 +208,87 @@ CASES.push(
   { method: 'GET', route: `${ST}/badges`, path: `${ST}/badges`, allowed: ALL, ok: 200 },
   { method: 'GET', route: `${ST}/settings/company`, path: `${ST}/settings/company`, allowed: ADMINS, ok: 200 },
   { method: 'PUT', route: `${ST}/settings/company`, path: `${ST}/settings/company`, body: { phone: '02828 123456' }, allowed: ADMINS, ok: 200 },
+);
+
+// Vendors module. Admins have everything; management has the vendors and vendor_reports pages
+// with print and export but no edit, delete or vendor_approve. Dispatch and marketing have none of it.
+const VN = '/api/vendors';
+const VIEWERS: Role[] = ['superadmin', 'admin', 'management'];
+const xlsxFile = (name: string, text: string) => () => {
+  const f = new FormData();
+  f.append('file', new File([text], name, { type: 'text/csv' }));
+  return f;
+};
+CASES.push(
+  // Categories and products: the vendor form reads them, so the vendors page is enough to read.
+  { method: 'GET', route: `${VN}/categories`, path: `${VN}/categories`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/categories/export`, path: `${VN}/categories/export`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${VN}/categories`, path: `${VN}/categories`, body: { name: 'Electrical' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${VN}/categories/:id`, path: `${VN}/categories/vcat-free`, body: { color: 'teal' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${VN}/categories/:id`, path: `${VN}/categories/vcat-free`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${VN}/products`, path: `${VN}/products?categoryId=vcat-resin`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/products/all`, path: `${VN}/products/all`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/products/summary`, path: `${VN}/products/summary`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${VN}/products/export`, path: `${VN}/products/export`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${VN}/products/:id`, path: `${VN}/products/vprod-001`, allowed: VIEWERS, ok: 200 },
+  {
+    method: 'POST',
+    route: `${VN}/products`,
+    path: `${VN}/products`,
+    body: { name: 'Phenolic Film', categoryId: 'vcat-packaging', unit: 'Roll' },
+    allowed: ADMINS,
+    ok: 201,
+  },
+  { method: 'PATCH', route: `${VN}/products/:id`, path: `${VN}/products/vprod-014`, body: { leadTimeDays: 3 }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${VN}/products/:id`, path: `${VN}/products/vprod-014`, allowed: ADMINS, ok: 204 },
+  // T&C master
+  { method: 'GET', route: `${VN}/tnc`, path: `${VN}/tnc?category=Payment`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${VN}/tnc/stats`, path: `${VN}/tnc/stats`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${VN}/tnc/:id`, path: `${VN}/tnc/tnc-warranty`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${VN}/tnc`, path: `${VN}/tnc`, body: { title: 'Force majeure', body: 'Neither party…' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${VN}/tnc/:id`, path: `${VN}/tnc/tnc-warranty`, body: { version: '1.1' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${VN}/tnc/:id`, path: `${VN}/tnc/tnc-warranty`, allowed: ADMINS, ok: 204 },
+  // Reports
+  { method: 'GET', route: `${VN}/reports`, path: `${VN}/reports`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/reports/export`, path: `${VN}/reports/export?format=csv`, allowed: VIEWERS, ok: 200 },
+  // Settings and import
+  { method: 'GET', route: `${VN}/settings/email`, path: `${VN}/settings/email`, allowed: ADMINS, ok: 200 },
+  { method: 'PUT', route: `${VN}/settings/email`, path: `${VN}/settings/email`, body: { replyTo: 'buy@strandply.in' }, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${VN}/import/:kind/template`, path: `${VN}/import/products/template`, allowed: ADMINS, ok: 200 },
+  {
+    method: 'POST',
+    route: `${VN}/import/:kind`,
+    path: `${VN}/import/categories`,
+    form: xlsxFile('categories.csv', 'Name\nElectrical\n'),
+    allowed: ADMINS,
+    ok: 200,
+  },
+  // Vendors
+  { method: 'GET', route: VN, path: `${VN}?status=active`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/stats`, path: `${VN}/stats`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/options`, path: `${VN}/options?status=active,approved`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/compare`, path: `${VN}/compare?ids=ven-act,ven-appr`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/by-product`, path: `${VN}/by-product?q=resin`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/export`, path: `${VN}/export?format=csv`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/print`, path: `${VN}/print?status=active`, allowed: VIEWERS, ok: 200 },
+  {
+    method: 'POST',
+    route: VN,
+    path: VN,
+    body: { name: 'New Timber Co', categoryIds: ['vcat-raw-material'] },
+    allowed: ADMINS,
+    ok: 201,
+  },
+  { method: 'GET', route: `${VN}/:id`, path: `${VN}/ven-act`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/:id/print`, path: `${VN}/ven-act/print`, allowed: VIEWERS, ok: 200 },
+  { method: 'PATCH', route: `${VN}/:id`, path: `${VN}/ven-act`, body: { rating: 4 }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${VN}/:id/submit`, path: `${VN}/ven-inact/submit`, allowed: ADMINS, ok: 200 },
+  // vendor_approve: the legacy "Director only" steps.
+  { method: 'POST', route: `${VN}/:id/approve`, path: `${VN}/ven-pend/approve`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${VN}/:id/activate`, path: `${VN}/ven-appr/activate`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${VN}/:id/blacklist`, path: `${VN}/ven-act/blacklist`, body: { reason: 'Late twice' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${VN}/:id/reinstate`, path: `${VN}/ven-black/reinstate`, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${VN}/:id`, path: `${VN}/ven-pend`, allowed: ADMINS, ok: 204 },
 );
 
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);

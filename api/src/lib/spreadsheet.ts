@@ -29,6 +29,33 @@ export function writeXlsx(sheets: SheetSpec<any>[]): Uint8Array {
   return new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer);
 }
 
+/**
+ * CSV with a BOM (so Excel reads UTF-8) and CRLF line ends. Text starting with = + - @ is prefixed
+ * with ' so a spreadsheet won't run it as a formula.
+ */
+export function writeCsv<T>(columns: Column<T>[], rows: T[]): Uint8Array {
+  const cell = (v: string | number | null | undefined): string => {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'number') return String(v);
+    const safe = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+    return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
+  };
+  const lines = [columns.map((c) => cell(c.header)), ...rows.map((r) => columns.map((c) => cell(c.value(r))))];
+  return new TextEncoder().encode('\uFEFF' + lines.map((l) => l.join(',')).join('\r\n') + '\r\n');
+}
+
+export const CSV_MIME = 'text/csv; charset=utf-8';
+
+/** Sends `bytes` as a download. `baseName` gets "-YYYY-MM-DD.<ext>" appended. */
+export function fileResponse(c: Context, bytes: Uint8Array, baseName: string, date: Date, format: 'xlsx' | 'csv') {
+  const file = `${baseName}-${date.toISOString().slice(0, 10)}.${format}`;
+  return c.body(bytes as Uint8Array<ArrayBuffer>, 200, {
+    'Content-Type': format === 'csv' ? CSV_MIME : XLSX_MIME,
+    'Content-Disposition': `attachment; filename="${file}"`,
+    'Cache-Control': 'no-store',
+  });
+}
+
 /** Sends `bytes` as a download. `baseName` gets "-YYYY-MM-DD.xlsx" appended. */
 export function xlsxResponse(c: Context, bytes: Uint8Array, baseName: string, date: Date) {
   const file = `${baseName}-${date.toISOString().slice(0, 10)}.xlsx`;

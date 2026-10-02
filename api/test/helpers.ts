@@ -4,6 +4,7 @@ import { SESSION_COOKIE } from '../src/auth/session-middleware';
 import type { AppConfig } from '../src/config';
 import { ROLES, type Role } from '../src/domain/access';
 import type { Courier, Party, Product } from '../src/contracts/sampletrack';
+import type { Vendor, VendorCategory } from '../src/contracts/vendors';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -132,6 +133,73 @@ export const courier = (id: string, over: Partial<Courier> = {}): Courier => ({
   ...over,
 });
 
+export const vendor = (id: string, over: Partial<Vendor> = {}): Vendor => ({
+  id,
+  code: `V-${id.toUpperCase()}`,
+  name: `Vendor ${id}`,
+  type: null,
+  yearEstablished: null,
+  categoryIds: ['vcat-raw-material'],
+  productIds: [],
+  contact: null,
+  designation: null,
+  phone: null,
+  email: null,
+  address: null,
+  pincode: null,
+  city: null,
+  state: null,
+  website: null,
+  gst: null,
+  pan: null,
+  msme: null,
+  paymentTerms: null,
+  bank: null,
+  accountNo: null,
+  ifsc: null,
+  rating: null,
+  notes: null,
+  status: 'pending',
+  submittedAt: null,
+  approvedAt: null,
+  approvedBy: null,
+  activatedAt: null,
+  activatedBy: null,
+  blacklistReason: null,
+  blacklistedAt: null,
+  blacklistedBy: null,
+  ...audit,
+  ...over,
+});
+
+/**
+ * Vendors fixtures (besides the reference categories, products and T&C):
+ * one vendor per status; ven-act supplies Wax-Coated Strands and MDI Resin; vcat-free is unused.
+ */
+export function vendorFixtures() {
+  return {
+    vendors: [
+      vendor('ven-pend', { name: 'Pending Timber', status: 'pending', city: 'Morbi', state: 'Gujarat', rating: 3 }),
+      vendor('ven-appr', { name: 'Approved Resins', status: 'approved', categoryIds: ['vcat-resin'], productIds: ['vprod-005'], rating: 4, state: 'Maharashtra', paymentTerms: '30 Days' }),
+      vendor('ven-act', {
+        name: 'Active Strands',
+        status: 'active',
+        categoryIds: ['vcat-raw-material', 'vcat-resin'],
+        productIds: ['vprod-001', 'vprod-005'],
+        rating: 5,
+        city: 'Rajkot',
+        state: 'Gujarat',
+        paymentTerms: '30 Days',
+      }),
+      vendor('ven-inact', { name: 'Inactive Packaging', status: 'inactive', categoryIds: ['vcat-packaging'] }),
+      vendor('ven-black', { name: 'Blacklisted Film', status: 'blacklisted', categoryIds: ['vcat-packaging'], productIds: ['vprod-009'], blacklistReason: 'Bad film', blacklistedAt: T0.toISOString() }),
+    ],
+    extraCategories: [
+      { id: 'vcat-free', name: 'Unused Category', icon: null, color: 'grey', description: null, sortOrder: 9, status: 'active', notes: null, ...audit } satisfies VendorCategory,
+    ],
+  };
+}
+
 /**
  * Masters every test app starts with (besides the reference seed):
  * - p-free / c-free / prod-osb-12-8x4: unreferenced, so they can be deleted
@@ -245,7 +313,7 @@ export function fixtures() {
         ...audit,
       },
     ],
-    extraCities: [{ id: 'city-custom', city: 'Halvad', stateId: 'state-24', isCustom: true, ...audit }],
+    extraCities: [{ id: 'city-custom', city: 'Halvad', stateId: 'state-24', isCustom: true, pincodes: ['363330'], ...audit }],
     extraProducts: [
       {
         id: 'prod-used',
@@ -267,9 +335,12 @@ export function fixtures() {
 export function testData(users: User[]) {
   const seed = buildSeed({ devUsers: false, at: T0.toISOString() });
   const { extraCities, extraProducts, ...f } = fixtures();
+  const { vendors, extraCategories } = vendorFixtures();
   return {
     ...seed,
     ...f,
+    vendors,
+    vnCategories: [...seed.vnCategories, ...extraCategories],
     users,
     counters: seed.counters.map((c) => ({ ...c, lastValue: c.name === 'REQ' ? 2 : 1 })), // fixtures use REQ-0001..2, DSP-0001
     cities: [...seed.cities, ...extraCities],

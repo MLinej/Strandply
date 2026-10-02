@@ -127,6 +127,14 @@ describe('/me ERP permissions for the web shell', () => {
       'samples.tracking',
       'samples.view',
     ]);
-    expect((await me('management')).permissions).toEqual(['notifications.view', 'samples.dashboard', 'samples.reports', 'samples.view']);
+    expect((await me('management')).permissions).toEqual([
+      'notifications.view',
+      'samples.dashboard',
+      'samples.reports',
+      'samples.view',
+      'vendors.directory',
+      'vendors.reports',
+      'vendors.view',
+    ]);
   });
 });

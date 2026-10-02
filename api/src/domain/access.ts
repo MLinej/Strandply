@@ -1,5 +1,6 @@
-// Roles and permission keys for SampleTrack.
-// Defaults follow the legacy ROLE_PERMS (docs/sampletrack-spec.md §2).
+// Roles and permission keys. One matrix per role covers every rebuilt module.
+// SampleTrack defaults follow the legacy ROLE_PERMS (docs/sampletrack-spec.md §2);
+// the vendor_* keys come from the Vendor Portal (docs/vendors-spec.md §2).
 
 export const ROLES = ['superadmin', 'admin', 'dispatch', 'marketing', 'management'] as const;
 export type Role = (typeof ROLES)[number];
@@ -24,11 +25,19 @@ export const PAGE_KEYS = [
   'notifications',
   'users',
   'settings',
+  // Vendors module
+  'vendors',
+  'vendor_reports',
+  'vendor_masters',
+  'vendor_settings',
 ] as const;
 export type PageKey = (typeof PAGE_KEYS)[number];
 
-/** `approve` = approve sample requests (separate from edit, so it can be granted on its own). */
-export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full'] as const;
+/**
+ * `approve` = approve sample requests (separate from edit, so it can be granted on its own).
+ * `vendor_approve` = approve, activate, blacklist and reinstate vendors (the legacy "Director" check).
+ */
+export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve'] as const;
 export type ActionKey = (typeof ACTION_KEYS)[number];
 
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;
@@ -60,7 +69,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionSet> = {
     widgets: ['pending', 'parties'],
   },
   management: {
-    pages: ['dashboard', 'reports', 'notifications'],
+    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports'],
     actions: ['print', 'export'],
     widgets: [...WIDGET_KEYS],
   },

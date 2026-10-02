@@ -106,16 +106,22 @@ export interface StateRepo {
   getByName(name: string): Promise<State | null>;
 }
 
+export type CityPatch = Patch<City, 'city' | 'stateId' | 'pincodes'>;
+
 export interface CityRepo {
   getById(id: string): Promise<City | null>;
-  /** Searches city. Sortable: city (default), createdAt. */
+  /** Searches city; a query of digits matches the start of any pincode instead. Sortable: city (default), createdAt. */
   list(query: ListQuery<CityFilters>): Promise<ListResult<City>>;
   /** Every live city. Small table. */
   listAll(): Promise<City[]>;
   /** Case-insensitive on city. */
   find(city: string, stateId: string): Promise<City | null>;
+  /** The live city that lists `pincode`, if any. */
+  findByPincode(pincode: string): Promise<City | null>;
   /** @throws UniqueViolationError('cities', 'city') */
   create(row: NewRow<City>): Promise<City>;
+  /** @throws UniqueViolationError('cities', 'city') */
+  update(id: string, patch: CityPatch): Promise<City | null>;
   softDelete(id: string, at: string): Promise<boolean>;
 }
 

@@ -236,6 +236,8 @@ export interface City extends Audit {
   city: string;
   stateId: string;
   isCustom: boolean;
+  /** 6-digit pincodes, for the vendor form's pincode → city lookup. A pincode belongs to one city. */
+  pincodes: string[];
 }
 
 export interface CityView {
@@ -244,6 +246,7 @@ export interface CityView {
   stateId: string;
   stateName: string;
   isCustom: boolean;
+  pincodes: string[];
 }
 
 export interface CityFilters {
@@ -827,6 +830,8 @@ export interface NotificationFeedFilters {
 export interface Badges {
   unreadNotifications?: number;
   pendingRequests?: number;
+  /** Vendors waiting for approval (Vendors module). */
+  pendingVendors?: number;
 }
 
 /** Company details (Settings). Printed on labels and slips and used in WhatsApp messages. */

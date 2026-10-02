@@ -109,8 +109,9 @@ describe('Sample dispatch page', () => {
     const router = renderAt('/samples/dispatch?fromRequest=r5');
     const dialog = await screen.findByRole('dialog', { name: 'New dispatch' });
     expect(within(dialog).getByText(/From REQ-0005 \(Approved\)/)).toBeTruthy();
-    expect(within(dialog).getByText('Bengaluru Arch Studio')).toBeTruthy();
-    expect((within(dialog).getByLabelText('Contents') as HTMLInputElement).value).toBe('Hybrid 18mm 2 sheets');
+    // The draft fills the form one render after the dialog opens, so wait for it.
+    expect(await within(dialog).findByText('Bengaluru Arch Studio')).toBeTruthy();
+    await waitFor(() => expect((within(dialog).getByLabelText('Contents') as HTMLInputElement).value).toBe('Hybrid 18mm 2 sheets'));
     await waitFor(() => expect(router.state.location.search).not.toContain('fromRequest'));
   });
 

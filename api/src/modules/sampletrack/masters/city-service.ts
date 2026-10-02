@@ -1,13 +1,15 @@
 import type { City, CityFilters, CityOption, CityView, State } from '../../../contracts/sampletrack';
+import type { PincodeMatch } from '../../../contracts/vendors';
 import { conflict, notFound, validationFailed } from '../../../lib/errors';
 import { isoNow, type Clock } from '../../../lib/clock';
 import { newId } from '../../../lib/crypto';
 import { writeXlsx } from '../../../lib/spreadsheet';
-import { UniqueViolationError, type DataLayer, type ListQuery } from '../../../repos';
+import { UniqueViolationError, type CityPatch, type DataLayer, type ListQuery, type Repos } from '../../../repos';
 import { normName } from '../../../lib/text';
 import type { ActivityService } from '../activity-service';
 import type { Actor } from '../actor';
-import { collectAll } from './common';
+import { changedKeys, collectAll } from './common';
+import type { CityCreate, CityUpdate } from './validation';
 
 export class CityService {
   constructor(
@@ -25,7 +27,7 @@ export class CityService {
   }
 
   private view(c: City, names: Map<string, string>): CityView {
-    return { id: c.id, city: c.city, stateId: c.stateId, stateName: names.get(c.stateId) ?? '', isCustom: c.isCustom };
+    return { id: c.id, city: c.city, stateId: c.stateId, stateName: names.get(c.stateId) ?? '', isCustom: c.isCustom, pincodes: [...c.pincodes] };
   }
 
   /** City master (Settings): built-in and custom cities. */
@@ -61,17 +63,35 @@ export class CityService {
     );
   }
 
-  async add(actor: Actor, input: { city: string; stateId: string }): Promise<CityView> {
+  /** The city and state a pincode belongs to (vendor form auto-fill), or 404. */
+  async lookupPincode(pincode: string): Promise<PincodeMatch> {
+    const city = await this.data.repos.cities.findByPincode(pincode);
+    if (!city) throw notFound('Pincode');
+    const state = await this.data.repos.states.getById(city.stateId);
+    return { pincode, city: city.city, state: state?.name ?? '' };
+  }
+
+  /** 409 pincode_taken when another city already lists one of `pincodes`. */
+  private async assertPincodesFree(tx: Repos, pincodes: string[], exceptId?: string) {
+    for (const p of pincodes) {
+      const owner = await tx.cities.findByPincode(p);
+      if (owner && owner.id !== exceptId) throw conflict('pincode_taken', `Pincode ${p} already belongs to ${owner.city}`);
+    }
+  }
+
+  async add(actor: Actor, input: CityCreate): Promise<CityView> {
     const state = await this.data.repos.states.getById(input.stateId);
     if (!state) throw validationFailed('Invalid input', [{ path: 'stateId', message: 'Unknown state' }]);
     const at = isoNow(this.clock);
     try {
       return await this.data.uow.run(async (tx) => {
+        await this.assertPincodesFree(tx, input.pincodes ?? []);
         const city = await tx.cities.create({
           id: newId(),
           city: input.city.replace(/\s+/g, ' '),
           stateId: state.id,
           isCustom: true,
+          pincodes: input.pincodes ?? [],
           createdBy: actor.id,
           createdAt: at,
           updatedAt: at,
@@ -86,6 +106,41 @@ export class CityService {
       });
     } catch (err) {
       if (err instanceof UniqueViolationError) throw conflict('city_exists', `${input.city}, ${state.name} is already in the city master`);
+      throw err;
+    }
+  }
+
+  /** Pincodes can change on any city; the name and state only on custom ones. */
+  async update(actor: Actor, id: string, input: CityUpdate): Promise<CityView> {
+    try {
+      return await this.data.uow.run(async (tx) => {
+        const before = await tx.cities.getById(id);
+        if (!before) throw notFound('City');
+        if (!before.isCustom && ((input.city && input.city !== before.city) || (input.stateId && input.stateId !== before.stateId))) {
+          throw conflict('builtin_city', 'Only the pincodes of a built-in city can be changed');
+        }
+        if (input.stateId && !(await tx.states.getById(input.stateId))) {
+          throw validationFailed('Invalid input', [{ path: 'stateId', message: 'Unknown state' }]);
+        }
+        const patch: Partial<City> = { ...input, ...(input.city ? { city: input.city.replace(/\s+/g, ' ') } : {}) };
+        const changed = changedKeys(before, patch).filter((k) => k !== 'pincodes' || patch.pincodes!.join() !== before.pincodes.join());
+        const names = await this.stateNames();
+        if (!changed.length) return this.view(before, names);
+        if (input.pincodes) await this.assertPincodesFree(tx, input.pincodes, id);
+        const updated = (await tx.cities.update(id, {
+          ...Object.fromEntries(changed.map((k) => [k, patch[k]])),
+          updatedAt: isoNow(this.clock),
+        } as CityPatch))!;
+        await this.activity.record(tx, actor, {
+          action: 'Edit',
+          entityType: 'city',
+          entityId: id,
+          details: `Updated city ${updated.city}: ${changed.join(', ')}`,
+        });
+        return this.view(updated, names);
+      });
+    } catch (err) {
+      if (err instanceof UniqueViolationError) throw conflict('city_exists', 'That city is already listed for this state');
       throw err;
     }
   }
@@ -118,6 +173,7 @@ export class CityService {
           { header: 'City', value: (c: CityView) => c.city },
           { header: 'State', value: (c: CityView) => c.stateName },
           { header: 'Type', value: (c: CityView) => (c.isCustom ? 'Custom' : 'Built-in') },
+          { header: 'Pincodes', value: (c: CityView) => c.pincodes.join(', ') },
         ],
       },
     ]);

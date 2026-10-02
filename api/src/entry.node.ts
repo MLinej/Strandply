@@ -7,6 +7,7 @@ import { loadConfig } from './config';
 import { createDataLayer } from './container';
 import { withMissingTables, type MemoryData } from './repos/memory';
 import { buildSeed } from './seed';
+import { upgradeSnapshot } from './seed/upgrades';
 
 const env = process.env;
 const isProd = env.NODE_ENV === 'production';
@@ -40,8 +41,8 @@ function saveSnapshot(data: MemoryData) {
 const seed = buildSeed({ devUsers: !isProd }); // DEV ONLY users/demo data are never seeded in production
 const snapshot = loadSnapshot();
 const data = createDataLayer(env, {
-  // An older snapshot may predate some tables; those come from the seed.
-  memoryData: snapshot ? withMissingTables(snapshot, seed) : seed,
+  // An older snapshot is upgraded first; tables it predates then come from the seed.
+  memoryData: snapshot ? withMissingTables(upgradeSnapshot(snapshot, seed, new Date().toISOString()), seed) : seed,
   onMemoryChange: saveSnapshot,
 });
 

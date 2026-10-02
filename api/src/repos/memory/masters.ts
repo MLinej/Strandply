@@ -11,7 +11,7 @@ import type {
   State,
 } from '../../contracts/sampletrack';
 import { BOARD_TYPES } from '../../contracts/sampletrack';
-import type { CityRepo, CourierRepo, PartyRepo, ProductRepo, StateRepo, UsageCount, UsageRepo } from '../masters';
+import type { CityPatch, CityRepo, CourierRepo, PartyRepo, ProductRepo, StateRepo, UsageCount, UsageRepo } from '../masters';
 import { UniqueViolationError, type ListQuery } from '../types';
 import { normName } from '../../lib/text';
 import { SoftTable } from './crud';
@@ -130,6 +130,11 @@ export class MemoryCityRepo extends SoftTable<City> implements CityRepo {
   }
 
   async list(query: ListQuery<CityFilters>) {
+    const q = query.q?.trim() ?? '';
+    if (/^\d+$/.test(q)) {
+      const rows = this.live().filter((c) => c.pincodes.some((p) => p.startsWith(q)));
+      return listRows(rows, { ...query, q: undefined }, { searchFields: [], sortable: ['city', 'createdAt'], defaultSort: 'city' });
+    }
     return listRows(this.live(), query, {
       searchFields: ['city'],
       sortable: ['city', 'createdAt'],
@@ -147,9 +152,24 @@ export class MemoryCityRepo extends SoftTable<City> implements CityRepo {
     return c ? structuredClone(c) : null;
   }
 
+  async findByPincode(pincode: string) {
+    const c = this.live().find((x) => x.pincodes.includes(pincode));
+    return c ? structuredClone(c) : null;
+  }
+
   override async create(row: Omit<City, 'deletedAt'>) {
     if (await this.find(row.city, row.stateId)) throw new UniqueViolationError('cities', 'city');
     return super.create(row);
+  }
+
+  override async update(id: string, patch: CityPatch) {
+    const current = await this.getById(id);
+    if (!current) return null;
+    const city = patch.city ?? current.city;
+    const stateId = patch.stateId ?? current.stateId;
+    const clash = await this.find(city, stateId);
+    if (clash && clash.id !== id) throw new UniqueViolationError('cities', 'city');
+    return super.update(id, patch);
   }
 }
 

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { DEFAULT_SETTINGS } from '../src/seed/settings';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_ROLE_PERMISSIONS, FULL_PERMISSIONS, LOCKED_ROLES, ROLES } from '../src/domain/access';
+import { DEFAULT_ROLE_PERMISSIONS, FULL_PERMISSIONS, LOCKED_ROLES, normalizePermissionSet, ROLES, type PermissionSet } from '../src/domain/access';
 import { makeTestApp, testClock } from './helpers';
 
 const RP = '/api/sampletrack/role-permissions';
@@ -99,10 +99,23 @@ describe('role permissions', () => {
 });
 
 describe('SQL seed stays in sync with the code defaults', () => {
-  it('0004_access_control.sql seeds exactly DEFAULT_ROLE_PERMISSIONS (file is parsed, never executed)', () => {
-    const sql = readFileSync(new URL('../../db/migrations/0004_access_control.sql', import.meta.url), 'utf8');
-    const rows = [...sql.matchAll(/^\s+\('(\w+)', '(\{.*\})', ([01])\)/gm)].map((m) => [m[1], JSON.parse(m[2]!), m[3] === '1']);
-    expect(rows).toEqual(ROLES.map((r) => [r, DEFAULT_ROLE_PERMISSIONS[r], LOCKED_ROLES.includes(r)]));
+  it('0004 seed + the 0005 appends give exactly DEFAULT_ROLE_PERMISSIONS (files are parsed, never executed)', () => {
+    const read = (f: string) => readFileSync(new URL(`../../db/migrations/${f}`, import.meta.url), 'utf8');
+    const rows = [...read('0004_access_control.sql').matchAll(/^\s+\('(\w+)', '(\{.*\})', ([01])\)/gm)].map(
+      (m) => [m[1]!, JSON.parse(m[2]!) as PermissionSet, m[3] === '1'] as const,
+    );
+    // 0005: UPDATE … json_insert(permissions, '$.pages[#]', 'x', …) … WHERE role IN ('a', 'b');
+    for (const stmt of read('0005_vendors.sql').matchAll(/UPDATE st_role_permissions\s+SET permissions = json_insert\(permissions,([\s\S]*?)\)[\s\S]*?WHERE role IN \(([^)]*)\);/g)) {
+      const appends = [...stmt[1]!.matchAll(/'\$\.(pages|actions|widgets)\[#\]', '(\w+)'/g)];
+      const roles = [...stmt[2]!.matchAll(/'(\w+)'/g)].map((m) => m[1]);
+      for (const [role, perms] of rows) {
+        if (!roles.includes(role)) continue;
+        for (const [, list, key] of appends) (perms[list as keyof PermissionSet] as string[]).push(key!);
+      }
+    }
+    expect(rows.map(([r, p, locked]) => [r, normalizePermissionSet(p), locked])).toEqual(
+      ROLES.map((r) => [r, DEFAULT_ROLE_PERMISSIONS[r], LOCKED_ROLES.includes(r)]),
+    );
   });
 });
 

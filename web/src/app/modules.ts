@@ -88,8 +88,15 @@ export const MODULES: ModuleDef[] = [
     icon: Users,
     phase: 2,
     pages: [
-      { slug: 'master', label: 'Vendor master' },
-      { slug: 'portal-access', label: 'Portal access', perm: 'vendors.admin' },
+      { slug: 'directory', label: 'Vendors', perm: 'vendors.directory', built: true },
+      { slug: 'compare', label: 'Compare vendors', perm: 'vendors.directory', built: true },
+      { slug: 'find', label: 'Find by product', perm: 'vendors.directory', built: true },
+      { slug: 'reports', label: 'Vendor reports', perm: 'vendors.reports', built: true },
+      { slug: 'products', label: 'Product master', perm: 'vendors.masters', built: true },
+      { slug: 'categories', label: 'Categories', perm: 'vendors.masters', built: true },
+      { slug: 'cities', label: 'City & pincodes', perm: 'vendors.masters', built: true },
+      { slug: 'tnc', label: 'T&C master', perm: 'vendors.masters', built: true },
+      { slug: 'settings', label: 'Vendor settings', perm: 'vendors.settings', built: true },
     ],
   },
   {
