@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { Check, type LucideIcon } from 'lucide-react';
-import { useCallback, useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode, type Ref } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode, type Ref } from 'react';
+import { createPortal } from 'react-dom';
 
 export interface PopoverTriggerProps {
   ref: Ref<HTMLButtonElement>;
@@ -21,19 +22,57 @@ export interface PopoverProps {
   'aria-label': string;
 }
 
-/** Anchored panel for menus and small dialogs (user menu, notifications). Closes on outside click and Esc. */
+const GAP = 8;
+
+/**
+ * Anchored panel for menus and small dialogs (user menu, notifications, table row menus). Closes on outside click and Esc.
+ * The panel is portalled and fixed-positioned so table cells and scroll containers can't clip it; it opens upwards
+ * when there's more room above than below.
+ */
 export function Popover({ trigger, children, align = 'end', widthClass = 'w-64', role = 'menu', ...rest }: PopoverProps) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<CSSProperties | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+    const place = () => {
+      const b = button.current?.getBoundingClientRect();
+      if (!b) return;
+      const height = panel.current?.offsetHeight ?? 0;
+      const vh = window.innerHeight;
+      const below = vh - b.bottom;
+      const up = height + GAP > below && b.top > below;
+      setPos({
+        top: up ? undefined : b.bottom + GAP,
+        bottom: up ? vh - b.top + GAP : undefined,
+        left: align === 'start' ? b.left : undefined,
+        right: align === 'end' ? document.documentElement.clientWidth - b.right : undefined,
+        maxHeight: (up ? b.top : below) - GAP * 2,
+      });
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [open, align]);
 
   const close = useCallback(() => setOpen(false), []);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (!root.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (!root.current?.contains(t) && !panel.current?.contains(t)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -52,20 +91,23 @@ export function Popover({ trigger, children, align = 'end', widthClass = 'w-64',
   return (
     <div ref={root} className="relative">
       {trigger({ ref: button, onClick: () => setOpen((o) => !o), 'aria-expanded': open, 'aria-haspopup': role, 'aria-controls': id })}
-      {open && (
-        <div
-          id={id}
-          role={role}
-          aria-label={rest['aria-label']}
-          className={clsx(
-            'absolute top-full z-40 mt-2 overflow-hidden rounded-lg border border-border bg-card py-1.5 shadow-overlay',
-            align === 'end' ? 'right-0' : 'left-0',
-            widthClass,
-          )}
-        >
-          {children(close)}
-        </div>
-      )}
+      {open &&
+        createPortal(
+          <div
+            ref={panel}
+            id={id}
+            role={role}
+            aria-label={rest['aria-label']}
+            // React events bubble through portals; keep menu clicks from reaching a clickable table row.
+            onClick={(e) => e.stopPropagation()}
+            style={{ position: 'fixed', ...(pos ?? { top: 0, left: 0, visibility: 'hidden' }) }}
+            className={clsx('z-40 overflow-y-auto rounded-lg border border-border bg-card py-1.5 shadow-overlay', widthClass)}
+          >
+            {children(close)}
+          </div>,
+          // Inside a modal <dialog> the panel must stay in the dialog's top layer.
+          button.current?.closest('dialog') ?? document.body,
+        )}
     </div>
   );
 }

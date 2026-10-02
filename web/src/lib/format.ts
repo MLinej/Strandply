@@ -13,3 +13,24 @@ const dateFmt = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short
 export function formatDate(iso: string) {
   return dateFmt.format(new Date(`${iso}T00:00:00`)).replace(/\bSep\b/, 'Sept');
 }
+
+const shortDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
+
+/** "just now", "12 min ago", "3 h ago", "yesterday", then "22 Sept". */
+export function timeAgo(iso: string, now: Date = new Date()): string {
+  const then = new Date(iso);
+  const mins = Math.round((now.getTime() - then.getTime()) / 60_000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24 && then.getDate() === now.getDate()) return `${hours} h ago`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (then.toDateString() === yesterday.toDateString()) return 'yesterday';
+  return shortDate.format(then).replace(/\bSep\b/, 'Sept');
+}
+
+/** 1234567 → "12,34,567" (Indian grouping, no decimals). */
+export function formatCount(n: number) {
+  return formatAmount(n, { decimals: 0 });
+}

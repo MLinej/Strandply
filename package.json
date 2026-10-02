@@ -2,13 +2,16 @@
   "name": "strandply-erp",
   "private": true,
   "workspaces": [
-    "web"
+    "web",
+    "api"
   ],
   "scripts": {
     "dev:web": "npm run dev -w web",
+    "dev:api": "npm run dev -w api",
     "build": "npm run build -w web",
-    "typecheck": "npm run typecheck -w web",
-    "test": "npm run test -w web"
+    "typecheck": "npm run typecheck -w web && npm run typecheck -w api",
+    "test": "npm run test -w web && npm run test -w api",
+    "test:api": "npm run test -w api"
   },
   "engines": {
     "node": ">=20.19"

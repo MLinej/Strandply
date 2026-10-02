@@ -1,20 +1,33 @@
 import { clsx } from 'clsx';
 import { Bell, BellOff } from 'lucide-react';
-import { useState } from 'react';
 import { Link } from 'react-router';
+import type { NotificationView } from '@contracts/sampletrack';
 import { Popover } from '@/components/ui';
-import { MODULE_BY_KEY } from '../modules';
+import { timeAgo } from '@/lib/format';
+import { useBadges, useMarkAllNotificationsRead, useMarkNotificationsRead, useNotifications } from '@/modules/samples/api/notifications';
 import { useSession } from '../session';
-import { SAMPLE_NOTIFICATIONS } from './notifications';
 
-const DOT = { bad: 'bg-primary', warn: 'bg-amber', info: 'bg-purple' };
+const DOT = { danger: 'bg-primary', warning: 'bg-amber', info: 'bg-purple', success: 'bg-green' };
 
-/** Bell with a red dot while anything is unread (Topbar.dc.html); panel lists items for modules the user can see. */
+function hrefFor(n: NotificationView) {
+  if (n.entityType === 'request') return `/samples/requests?open=${n.entityId}`;
+  if (n.entityType === 'dispatch') return `/samples/tracking?open=${n.entityId}`;
+  return '/';
+}
+
+/** Bell with a red dot while anything is unread (Topbar.dc.html). Live from GET /notifications, polled every 30 s. */
 export function NotificationsMenu() {
-  const { canSeeModule } = useSession();
-  const items = SAMPLE_NOTIFICATIONS.filter((n) => canSeeModule(MODULE_BY_KEY[n.module]));
-  const [read, setRead] = useState<Set<string>>(new Set());
-  const unread = items.filter((n) => !read.has(n.id)).length;
+  const { can } = useSession();
+  if (!can('notifications.view')) return null;
+  return <Bellmenu />;
+}
+
+function Bellmenu() {
+  const unread = useBadges().data?.unreadNotifications ?? 0;
+  const feed = useNotifications({ pageSize: 15 });
+  const markRead = useMarkNotificationsRead();
+  const markAll = useMarkAllNotificationsRead();
+  const items = feed.data?.rows ?? [];
 
   return (
     <Popover
@@ -38,7 +51,11 @@ export function NotificationsMenu() {
           <div className="flex items-center justify-between border-b border-divider px-4 py-3">
             <span className="text-title font-semibold">Notifications</span>
             {unread > 0 && (
-              <button type="button" className="text-sm font-semibold text-muted hover:text-ink" onClick={() => setRead(new Set(items.map((n) => n.id)))}>
+              <button
+                type="button"
+                className="text-sm font-semibold text-muted hover:text-ink"
+                onClick={() => markAll.mutate(items[0]?.createdAt)}
+              >
                 Mark all read
               </button>
             )}
@@ -46,33 +63,30 @@ export function NotificationsMenu() {
           {items.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-6 py-10 text-center text-base text-muted">
               <BellOff size={18} strokeWidth={1.8} aria-hidden />
-              Nothing for your modules right now.
+              {feed.isLoading ? 'Loading…' : 'Nothing new.'}
             </div>
           ) : (
             <ul className="max-h-[420px] overflow-y-auto">
-              {items.map((n) => {
-                const isUnread = !read.has(n.id);
-                return (
-                  <li key={n.id} className="border-b border-divider last:border-b-0">
-                    <Link
-                      to={n.href}
-                      onClick={() => {
-                        setRead((s) => new Set(s).add(n.id));
-                        close();
-                      }}
-                      className="flex gap-2.5 px-4 py-3 hover:bg-page"
-                    >
-                      <span className={clsx('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', isUnread ? DOT[n.tone] : 'bg-transparent')} aria-hidden />
-                      <span className="min-w-0 flex-1">
-                        <span className={clsx('block text-base', isUnread ? 'font-semibold' : 'font-medium text-muted')}>{n.title}</span>
-                        <span className="mt-0.5 block text-caption text-faint">
-                          {n.moduleLabel} · {n.when}
-                        </span>
+              {items.map((n) => (
+                <li key={n.id} className="border-b border-divider last:border-b-0">
+                  <Link
+                    to={hrefFor(n)}
+                    onClick={() => {
+                      if (!n.read) markRead.mutate([n.id]);
+                      close();
+                    }}
+                    className="flex gap-2.5 px-4 py-3 hover:bg-page"
+                  >
+                    <span className={clsx('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-transparent' : DOT[n.type])} aria-hidden />
+                    <span className="min-w-0 flex-1">
+                      <span className={clsx('block text-base', n.read ? 'font-medium text-muted' : 'font-semibold')}>{n.message ?? n.title}</span>
+                      <span className="mt-0.5 block text-caption text-faint">
+                        {n.title} · {timeAgo(n.createdAt)}
                       </span>
-                    </Link>
-                  </li>
-                );
-              })}
+                    </span>
+                  </Link>
+                </li>
+              ))}
             </ul>
           )}
         </>

@@ -1,5 +1,7 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import { DEV_USERS, type SessionUser } from './dev-users';
+import type { PermissionSetView } from '@contracts/session';
+import { api, ApiError } from '@/api/client';
 import { MODULES, modulePerm, pagePerm, type ModuleDef, type PageDef } from './modules';
 
 export type FirmCode = 'llp' | 'osb';
@@ -15,9 +17,53 @@ export function firmScopeLabel(scope: FirmScope) {
   return scope === 'both' ? 'Both firms' : FIRMS[scope].name;
 }
 
+export interface SessionUser {
+  id: string;
+  /** Sign-in code (username). */
+  code: string;
+  name: string;
+  role: string;
+  /** Shown under the name in the sidebar footer. */
+  scopeNote: string;
+  firms: FirmCode[];
+  /** ERP-wide: `*` = everything, else `<module>.view` and page strings such as `samples.requests`. */
+  permissions: string[];
+  /** SampleTrack pages/actions/widgets, for finer UI checks (approve, delete, export, print…). */
+  st: PermissionSetView;
+  /** Only a Super Admin edits role permissions, purges the activity log and manages Super Admin accounts. */
+  isSuperadmin?: boolean;
+}
+
+/** GET /api/me (see api/src/auth/routes.ts). */
+export interface MePayload {
+  user: { id: string; username: string; name: string; department: string | null };
+  role: string;
+  roleLabel: string;
+  isSuperadmin: boolean;
+  permissions: PermissionSetView;
+  erp: { permissions: string[]; firms: FirmCode[] };
+}
+
+export function toSessionUser(me: MePayload): SessionUser {
+  const all = me.erp.permissions.includes('*');
+  return {
+    id: me.user.id,
+    code: me.user.username,
+    name: me.user.name,
+    role: me.roleLabel,
+    scopeNote: all ? 'All modules' : (me.user.department ?? me.roleLabel),
+    firms: me.erp.firms,
+    permissions: me.erp.permissions,
+    st: me.permissions,
+    isSuperadmin: me.isSuperadmin,
+  };
+}
+
 interface Session {
   user: SessionUser;
   can: (perm: string) => boolean;
+  /** SampleTrack action check: edit | delete | approve | print | export | dashboard_full. */
+  canDo: (action: string) => boolean;
   canSeeModule: (mod: ModuleDef) => boolean;
   canSeePage: (mod: ModuleDef, page: PageDef) => boolean;
   /** Modules (with only the pages) this user may open, in sidebar order. */
@@ -28,17 +74,37 @@ interface Session {
   firmOptions: FirmScope[];
   setFirm: (scope: FirmScope) => void;
 
-  /** Dev only, until sign-in exists: preview the app as another user/role. */
-  previewAs: (userId: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
-const SessionContext = createContext<Session | null>(null);
+type AuthState =
+  | { status: 'loading' }
+  | { status: 'anonymous' }
+  /** The API couldn't be reached (not a 401). */
+  | { status: 'error'; retry: () => void }
+  | { status: 'authenticated'; session: Session };
 
-export function useSession() {
-  const s = useContext(SessionContext);
-  if (!s) throw new Error('useSession must be used inside <SessionProvider>');
-  return s;
+interface Auth {
+  state: AuthState;
+  /** Signs in, stores the chosen firm and loads the session. Throws ApiError on failure. */
+  login: (username: string, password: string, firm: FirmCode) => Promise<SessionUser>;
+}
+
+const AuthContext = createContext<Auth | null>(null);
+
+export const ME_KEY = ['me'] as const;
+
+export function useAuth() {
+  const a = useContext(AuthContext);
+  if (!a) throw new Error('useAuth must be used inside <SessionProvider>');
+  return a;
+}
+
+/** The signed-in session. Only valid inside the app shell (behind RequireSession). */
+export function useSession(): Session {
+  const { state } = useAuth();
+  if (state.status !== 'authenticated') throw new Error('useSession needs a signed-in user');
+  return state.session;
 }
 
 /** Current firm scope. Put it in every TanStack Query key for firm-scoped data: ['grns', firm, filters]. */
@@ -47,7 +113,6 @@ export function useFirmScope() {
 }
 
 const FIRM_KEY = (userId: string) => `strandply.firm.${userId}`;
-const USER_KEY = 'strandply.devUser';
 
 function read(key: string) {
   try {
@@ -71,60 +136,108 @@ function optionsFor(user: SessionUser): FirmScope[] {
 function initialFirm(user: SessionUser): FirmScope {
   const saved = read(FIRM_KEY(user.id)) as FirmScope | null;
   const options = optionsFor(user);
-  return saved && options.includes(saved) ? saved : options[0];
+  return saved && options.includes(saved) ? saved : options[0]!;
+}
+
+function dropAllButMe(qc: ReturnType<typeof useQueryClient>) {
+  qc.removeQueries({ predicate: (q) => q.queryKey[0] !== ME_KEY[0] });
+}
+
+/** null = signed out. Other errors propagate (the API is down, etc.). */
+async function fetchMe(signal?: AbortSignal): Promise<MePayload | null> {
+  try {
+    return await api<MePayload>('/me', { signal });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) return null;
+    throw err;
+  }
+}
+
+function buildSession(user: SessionUser, firm: FirmScope, setFirm: (f: FirmScope) => void, logout: () => Promise<void>): Session {
+  const perms = new Set(user.permissions);
+  const can = (perm: string) => perms.has('*') || perms.has(perm);
+  const canSeePage = (mod: ModuleDef, page: PageDef) => can(modulePerm(mod.key)) && can(pagePerm(mod, page));
+  const canSeeModule = (mod: ModuleDef) =>
+    mod.key === 'home' || (can(modulePerm(mod.key)) && (mod.pages.length === 0 || mod.pages.some((p) => canSeePage(mod, p))));
+  const visibleModules = MODULES.filter(canSeeModule).map((m) => ({ ...m, pages: m.pages.filter((p) => canSeePage(m, p)) }));
+  const actions = new Set(user.st.actions);
+  return {
+    user,
+    can,
+    canDo: (action) => perms.has('*') || actions.has(action),
+    canSeeModule,
+    canSeePage,
+    visibleModules,
+    firm,
+    firmOptions: optionsFor(user),
+    setFirm,
+    logout,
+  };
 }
 
 /**
- * Holds the signed-in user and the firm scope. Today the user comes from DEV_USERS.
- * In Phase 0 this reads GET /auth/me instead, and the firm is persisted server-side on the session
- * (POST /auth/firm); the context shape stays the same, so no consumer changes.
+ * Holds the signed-in user (from GET /api/me) and the firm scope.
+ * Tests pass `user` to skip the network. Firm access per user isn't modelled server-side yet,
+ * so the firm choice is kept per user in localStorage.
  */
-export function SessionProvider({ children, initialUserId }: { children: ReactNode; initialUserId?: string }) {
-  const [user, setUser] = useState<SessionUser>(
-    () => DEV_USERS.find((u) => u.id === (initialUserId ?? read(USER_KEY))) ?? DEV_USERS[0],
-  );
-  const [firm, setFirmState] = useState<FirmScope>(() => initialFirm(user));
+export function SessionProvider({ children, user: fixedUser }: { children: ReactNode; user?: SessionUser }) {
+  const qc = useQueryClient();
+  const me = useQuery({
+    queryKey: ME_KEY,
+    queryFn: ({ signal }) => fetchMe(signal),
+    enabled: !fixedUser,
+    retry: false,
+    staleTime: 5 * 60_000,
+    // Picks up permission changes (they apply on the server at once) when the user comes back to the tab.
+    refetchOnWindowFocus: true,
+  });
+
+  const user = useMemo(() => fixedUser ?? (me.data ? toSessionUser(me.data) : null), [fixedUser, me.data]);
+  const [firmByUser, setFirmByUser] = useState<Record<string, FirmScope>>({});
+  const firm = user ? (firmByUser[user.id] ?? initialFirm(user)) : 'both';
 
   const setFirm = useCallback(
     (scope: FirmScope) => {
-      if (!optionsFor(user).includes(scope)) return;
+      if (!user || !optionsFor(user).includes(scope)) return;
       write(FIRM_KEY(user.id), scope);
-      setFirmState(scope);
+      setFirmByUser((m) => ({ ...m, [user.id]: scope }));
     },
     [user],
   );
 
-  const previewAs = useCallback((userId: string) => {
-    const next = DEV_USERS.find((u) => u.id === userId);
-    if (!next) return;
-    write(USER_KEY, next.id);
-    setUser(next);
-    setFirmState(initialFirm(next));
-  }, []);
+  const logout = useCallback(async () => {
+    try {
+      await api<void>('/auth/logout', { method: 'POST' });
+    } catch {
+      /* an expired session is already logged out */
+    }
+    // Mark signed out first (the session observer sees it at once), then drop everyone else's cached data.
+    // Clearing the whole cache first would leave the observer holding the old user.
+    qc.setQueryData(ME_KEY, null);
+    dropAllButMe(qc);
+  }, [qc]);
 
-  const value = useMemo<Session>(() => {
-    const perms = new Set(user.permissions);
-    const can = (perm: string) => perms.has('*') || perms.has(perm);
-    const canSeePage = (mod: ModuleDef, page: PageDef) => can(modulePerm(mod.key)) && can(pagePerm(mod, page));
-    const canSeeModule = (mod: ModuleDef) =>
-      mod.key === 'home' || (can(modulePerm(mod.key)) && (mod.pages.length === 0 || mod.pages.some((p) => canSeePage(mod, p))));
-    const visibleModules = MODULES.filter(canSeeModule).map((m) => ({ ...m, pages: m.pages.filter((p) => canSeePage(m, p)) }));
+  const login = useCallback(
+    async (username: string, password: string, chosenFirm: FirmCode) => {
+      const payload = await api<MePayload>('/auth/login', { method: 'POST', body: { username, password } });
+      const u = toSessionUser(payload);
+      const scope: FirmScope = u.firms.includes(chosenFirm) ? chosenFirm : optionsFor(u)[0]!;
+      write(FIRM_KEY(u.id), scope);
+      setFirmByUser((m) => ({ ...m, [u.id]: scope }));
+      qc.setQueryData(ME_KEY, payload);
+      dropAllButMe(qc); // nothing from a previous user's session survives
+      return u;
+    },
+    [qc],
+  );
 
-    return {
-      user,
-      can,
-      canSeeModule,
-      canSeePage,
-      visibleModules,
-      firm,
-      firmOptions: optionsFor(user),
-      setFirm,
-      previewAs,
-      logout: () => {
-        /* Phase 0: POST /auth/logout, then navigate to /sign-in */
-      },
-    };
-  }, [user, firm, setFirm, previewAs]);
+  const state: AuthState = useMemo(() => {
+    if (user) return { status: 'authenticated', session: buildSession(user, firm, setFirm, logout) };
+    if (!fixedUser && me.isPending) return { status: 'loading' };
+    if (me.isError) return { status: 'error', retry: () => void me.refetch() };
+    return { status: 'anonymous' };
+  }, [user, firm, setFirm, logout, fixedUser, me.isPending, me.isError, me.refetch]);
 
-  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+  const auth = useMemo<Auth>(() => ({ state, login }), [state, login]);
+  return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }

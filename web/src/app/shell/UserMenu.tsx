@@ -1,12 +1,9 @@
 import { ChevronDown, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router';
 import { Avatar, MenuItem, MenuLabel, MenuSeparator, Popover } from '@/components/ui';
-import { DEV_USERS } from '../dev-users';
 import { firmScopeLabel, useSession } from '../session';
 
-export function UserMenu({ onLogout }: { onLogout: () => void }) {
-  const { user, firm, firmOptions, setFirm, previewAs } = useSession();
-  const navigate = useNavigate();
+export function UserMenu({ onLogout }: { onLogout: () => void | Promise<void> }) {
+  const { user, firm, firmOptions, setFirm } = useSession();
 
   return (
     <Popover
@@ -47,26 +44,6 @@ export function UserMenu({ onLogout }: { onLogout: () => void }) {
               {firmScopeLabel(f)}
             </MenuItem>
           ))}
-          {import.meta.env.DEV && (
-            <>
-              <MenuSeparator />
-              <MenuLabel>Preview as · dev only</MenuLabel>
-              {DEV_USERS.map((u) => (
-                <MenuItem
-                  key={u.id}
-                  checked={u.id === user.id}
-                  hint={u.scopeNote}
-                  onClick={() => {
-                    previewAs(u.id);
-                    close();
-                    navigate('/'); // the current page may not exist for the previewed role
-                  }}
-                >
-                  {u.name} · {u.role}
-                </MenuItem>
-              ))}
-            </>
-          )}
           <MenuSeparator />
           <MenuItem
             icon={LogOut}

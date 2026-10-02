@@ -40,6 +40,8 @@ export default {
       chart: {
         bar: token('chart-bar'), // #CBD2DC — neutral bars (current month uses primary)
         faint: token('chart-faint'), // #D0D5DD
+        s1: token('chart-series-1'), // #7C3AED — first series of a two-series chart
+        s2: token('chart-series-2'), // #1BAF7A — second series (needs a table view)
       },
       overlay: 'rgb(var(--ink) / 0.32)',
     },

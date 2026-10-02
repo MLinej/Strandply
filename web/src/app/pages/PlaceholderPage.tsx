@@ -22,7 +22,7 @@ export function PlaceholderPage() {
         </p>
       </div>
       <Card>
-        <EmptyState icon={Hammer} title="Not built yet" description={`${mod.label} is scheduled for Phase ${mod.phase} in PLAN.md.`} />
+        <EmptyState icon={Hammer} title="Not built yet" description={`${mod.label} is step ${mod.phase} of the rebuild (docs/MODULE-ROADMAP.md).`} />
       </Card>
     </div>
   );

@@ -171,17 +171,17 @@ INSERT INTO st_products (id, code, name, board_type, thickness_mm, size, categor
   ('prod-hyb-18-8x4',  'HYB-18-8X4',  'Hybrid 18mm',       'Hybrid',      18, '8x4 ft', 'Premium',  135000, 'Available', 'Hybrid engineered board'),
   ('prod-cv-06-8x4',   'CV-06-8X4',   'Core Veneer 6mm',   'Core Veneer',  6, '8x4 ft', 'Standard',  65000, 'Available', 'Core veneer sheet');
 
--- Values are JSON. These are the legacy S.settings defaults and ROLE_PERMS.
+-- Values are JSON. These are the legacy S.settings defaults. Role permissions go in st_role_permissions (0004).
 INSERT INTO st_settings (key, value) VALUES
   ('company.name',           '"Strandply LLP"'),
   ('company.llpin',          '"AAP-7300"'),
   ('company.address_line',   '"Wankaner, Morbi, Gujarat"'),
   ('company.phone',          '""'),
+  ('company.gst',            '""'),
   ('sheets.spreadsheet_id',  '""'),
   ('sheets.webapp_url',      '""'),
   ('sheets.interval_min',    '0'),
-  ('sheets.last_sync_at',    'null'),
-  ('roles.permissions',      '{"superadmin":{"pages":["dashboard","requests","dispatch","tracking","parties","couriers","products","reports","notifications","users","settings"],"edit":true,"delete":true,"print":true,"export":true,"dashboard_full":true},"admin":{"pages":["dashboard","requests","dispatch","tracking","parties","couriers","products","reports","notifications","users","settings"],"edit":true,"delete":true,"print":true,"export":true,"dashboard_full":true},"dispatch":{"pages":["dashboard","dispatch","tracking","couriers","notifications"],"edit":true,"delete":false,"print":true,"export":false,"dashboard_full":false,"dashboard_widgets":["total","delivered","delayed"]},"marketing":{"pages":["dashboard","requests","tracking","parties","products","notifications"],"edit":true,"delete":false,"print":true,"export":false,"dashboard_full":false,"dashboard_widgets":["pending","parties"]},"management":{"pages":["dashboard","reports","notifications"],"edit":false,"delete":false,"print":true,"export":true,"dashboard_full":false,"dashboard_widgets":["total","pending","delivered","delayed","parties","couriers"]}}');
+  ('sheets.last_sync_at',    'null');
 
 INSERT INTO st_counters (name, last_value) VALUES
   ('REQ', 0),

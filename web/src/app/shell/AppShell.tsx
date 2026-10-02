@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useMatches } from 'react-router';
-import { useToast } from '@/components/ui';
+import { Outlet, useMatches, useNavigate } from 'react-router';
 import { PrimaryScope } from '@/lib/primary-scope';
 import type { RouteHandle } from '../route-handle';
 import { useSession } from '../session';
@@ -22,7 +21,7 @@ function readCollapsed() {
 
 export function AppShell() {
   const { logout } = useSession();
-  const toast = useToast();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -56,9 +55,9 @@ export function AppShell() {
     });
   }
 
-  function onLogout() {
-    logout();
-    toast({ tone: 'info', title: 'Sign-in isn’t built yet', description: 'Log out will end the session once auth lands in Phase 0.' });
+  async function onLogout() {
+    await logout();
+    navigate('/sign-in', { replace: true });
   }
 
   return (

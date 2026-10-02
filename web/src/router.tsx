@@ -4,6 +4,7 @@ import { ModuleIndex, ModuleRoute } from './app/pages/ModuleRoute';
 import { PlaceholderPage } from './app/pages/PlaceholderPage';
 import { NotFound } from './app/pages/StatusPages';
 import type { RouteHandle } from './app/route-handle';
+import { RequireSession } from './app/RequireSession';
 import { AppShell } from './app/shell/AppShell';
 import type { ModulePages } from './modules/types';
 
@@ -46,9 +47,15 @@ function moduleRoute(m: ModuleDef): RouteObject {
 }
 
 export const routes: RouteObject[] = [
+  // Outside the shell, and the only page reachable without a session.
+  { path: '/sign-in', lazy: () => import('./app/pages/SignInPage').then((m) => ({ Component: m.SignInPage })) },
   {
     path: '/',
-    element: <AppShell />,
+    element: (
+      <RequireSession>
+        <AppShell />
+      </RequireSession>
+    ),
     children: [...MODULES.map(moduleRoute), { path: '*', element: <NotFound /> }],
   },
   // Component gallery, outside the shell.

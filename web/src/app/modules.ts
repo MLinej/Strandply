@@ -1,5 +1,8 @@
 import {
   BookOpen,
+  MessageSquareWarning,
+  SlidersHorizontal,
+  Target,
   ChartColumn,
   ClipboardList,
   Factory,
@@ -38,12 +41,17 @@ export type ModuleKey =
   | 'electricity'
   | 'dwpas'
   | 'accounts'
-  | 'reports';
+  | 'reports'
+  | 'complaints'
+  | 'crm'
+  | 'admin';
 
 export interface PageDef {
   slug: string;
   label: string;
   perm?: string;
+  /** Set once the page has a real screen. Built pages are offered in Home's "Go to". */
+  built?: boolean;
 }
 
 export interface ModuleDef {
@@ -52,7 +60,7 @@ export interface ModuleDef {
   /** Name in the app being replaced, so people can find their way. Searchable in Ctrl K. */
   legacyName?: string;
   icon: LucideIcon;
-  /** Build phase from PLAN.md §5, shown on placeholder pages. */
+  /** Position in docs/MODULE-ROADMAP.md (build order), shown on placeholder pages. */
   phase: number;
   /** Empty = a single-page module (no sub-menu). */
   pages: PageDef[];
@@ -65,7 +73,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Purchase',
     legacyName: 'Purchase ERP',
     icon: ShoppingCart,
-    phase: 2,
+    phase: 3,
     pages: [
       { slug: 'dashboard', label: 'Purchase dashboard' },
       { slug: 'requisitions', label: 'Requisitions' },
@@ -78,7 +86,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Vendors',
     legacyName: 'Vendor Portal',
     icon: Users,
-    phase: 1,
+    phase: 2,
     pages: [
       { slug: 'master', label: 'Vendor master' },
       { slug: 'portal-access', label: 'Portal access', perm: 'vendors.admin' },
@@ -89,7 +97,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Stores',
     legacyName: 'Stores (MRN & GRN)',
     icon: Warehouse,
-    phase: 2,
+    phase: 4,
     pages: [
       { slug: 'dashboard', label: 'Stores dashboard' },
       { slug: 'gate-entry', label: 'Gate entry (MRN)' },
@@ -104,7 +112,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Stock (SKU)',
     legacyName: 'Stock Management',
     icon: Package,
-    phase: 4,
+    phase: 5,
     pages: [
       { slug: 'dashboard', label: 'Stock dashboard' },
       { slug: 'finished-stock', label: 'Finished stock' },
@@ -117,7 +125,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Production',
     legacyName: 'Production MIS',
     icon: Factory,
-    phase: 4,
+    phase: 6,
     pages: [
       { slug: 'dashboard', label: 'Production dashboard' },
       { slug: 'shifts', label: 'Shift register' },
@@ -130,7 +138,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Sales',
     legacyName: 'Sales ERP',
     icon: TrendingUp,
-    phase: 5,
+    phase: 7,
     pages: [
       { slug: 'dashboard', label: 'Sales dashboard' },
       { slug: 'orders', label: 'Sales orders' },
@@ -145,10 +153,27 @@ export const MODULES: ModuleDef[] = [
     label: 'Samples',
     legacyName: 'SampleTrack Pro',
     icon: Layers,
-    phase: 6,
+    phase: 1,
     pages: [
-      { slug: 'requests', label: 'Sample requests' },
-      { slug: 'dispatch', label: 'Sample dispatch' },
+      { slug: 'dashboard', label: 'Samples dashboard', perm: 'samples.dashboard', built: true },
+      { slug: 'requests', label: 'Sample requests', perm: 'samples.requests', built: true },
+      { slug: 'dispatch', label: 'Sample dispatch', perm: 'samples.dispatch', built: true },
+      { slug: 'tracking', label: 'Live tracking', perm: 'samples.tracking', built: true },
+      { slug: 'parties', label: 'Parties', perm: 'samples.parties', built: true },
+      { slug: 'couriers', label: 'Couriers', perm: 'samples.couriers', built: true },
+      { slug: 'products', label: 'Sample products', perm: 'samples.products', built: true },
+      { slug: 'reports', label: 'Sample reports', perm: 'samples.reports', built: true },
+    ],
+  },
+  {
+    key: 'crm',
+    label: 'CRM',
+    legacyName: 'Marketing & Sales CRM',
+    icon: Target,
+    phase: 8,
+    pages: [
+      { slug: 'leads', label: 'Leads' },
+      { slug: 'pipeline', label: 'Pipeline' },
     ],
   },
   {
@@ -156,7 +181,7 @@ export const MODULES: ModuleDef[] = [
     label: 'Transport',
     legacyName: 'Transport Module',
     icon: Truck,
-    phase: 6,
+    phase: 9,
     pages: [
       { slug: 'trips', label: 'Trips' },
       { slug: 'vehicles', label: 'Vehicles' },
@@ -164,11 +189,22 @@ export const MODULES: ModuleDef[] = [
     ],
   },
   {
+    key: 'complaints',
+    label: 'Complaints',
+    legacyName: 'Complaint Registration',
+    icon: MessageSquareWarning,
+    phase: 10,
+    pages: [
+      { slug: 'register', label: 'Complaint register' },
+      { slug: 'dashboard', label: 'Complaints dashboard' },
+    ],
+  },
+  {
     key: 'maintenance',
     label: 'Maintenance',
     legacyName: 'Maintenance Tracker',
     icon: Wrench,
-    phase: 9,
+    phase: 12,
     pages: [
       { slug: 'dashboard', label: 'Maintenance dashboard' },
       { slug: 'breakdowns', label: 'Breakdowns' },
@@ -180,19 +216,19 @@ export const MODULES: ModuleDef[] = [
     label: 'Electricity',
     legacyName: 'Electricity & Meter MIS',
     icon: Zap,
-    phase: 4,
+    phase: 11,
     pages: [
       { slug: 'readings', label: 'Meter readings' },
       { slug: 'pgvcl-bills', label: 'PGVCL bills' },
       { slug: 'tariffs', label: 'Tariffs' },
     ],
   },
-  { key: 'dwpas', label: 'DWPAS', icon: ClipboardList, phase: 9, pages: [] },
+  { key: 'dwpas', label: 'DWPAS', icon: ClipboardList, phase: 13, pages: [] },
   {
     key: 'accounts',
     label: 'Accounts',
     icon: BookOpen,
-    phase: 3,
+    phase: 7,
     pages: [
       { slug: 'dashboard', label: 'Accounts dashboard' },
       { slug: 'receipts', label: 'Receipts' },
@@ -207,7 +243,7 @@ export const MODULES: ModuleDef[] = [
     key: 'reports',
     label: 'Reports',
     icon: ChartColumn,
-    phase: 8,
+    phase: 14,
     pages: [
       { slug: 'hub', label: 'Reports hub' },
       { slug: 'daily', label: 'Daily report' },
@@ -215,6 +251,19 @@ export const MODULES: ModuleDef[] = [
       { slug: 'cost-per-board', label: 'Cost per board' },
       { slug: 'purchase-analysis', label: 'Purchase analysis' },
       { slug: 'vendor-ranking', label: 'Vendor ranking' },
+    ],
+  },
+  {
+    key: 'admin',
+    label: 'Admin',
+    icon: SlidersHorizontal,
+    phase: 0,
+    pages: [
+      { slug: 'users', label: 'Users', perm: 'admin.users', built: true },
+      { slug: 'roles', label: 'Roles & permissions', perm: 'admin.users', built: true },
+      { slug: 'activity', label: 'Activity log', perm: 'admin.users', built: true },
+      { slug: 'settings', label: 'Company settings', perm: 'admin.settings', built: true },
+      { slug: 'cities', label: 'City master', perm: 'admin.settings', built: true },
     ],
   },
 ];

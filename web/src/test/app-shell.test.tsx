@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -7,15 +8,19 @@ import { activeModuleKey } from '@/app/shell/Sidebar';
 import { filterEntries } from '@/app/shell/CommandPalette';
 import { ToastProvider } from '@/components/ui';
 import { routes } from '@/router';
+import { testUser } from './fixtures/session-users';
 
 function renderApp(path: string, userId = 'admin') {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <SessionProvider initialUserId={userId}>
-      <ToastProvider>
-        <RouterProvider router={router} />
-      </ToastProvider>
-    </SessionProvider>,
+    <QueryClientProvider client={qc}>
+      <SessionProvider user={testUser(userId)}>
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
+      </SessionProvider>
+    </QueryClientProvider>,
   );
   return router;
 }
@@ -113,7 +118,16 @@ describe('helpers', () => {
     const entries = MODULES.flatMap((m) =>
       m.pages.map((p) => ({ id: p.slug, group: m.label, title: p.label, meta: '', href: '', haystack: `${p.label} ${m.label} ${m.legacyName ?? ''}`.toLowerCase() })),
     );
-    expect(filterEntries(entries, 'sampletrack').map((e) => e.title)).toEqual(['Sample requests', 'Sample dispatch']);
+    expect(filterEntries(entries, 'sampletrack').map((e) => e.title)).toEqual([
+      'Samples dashboard',
+      'Sample requests',
+      'Sample dispatch',
+      'Live tracking',
+      'Parties',
+      'Couriers',
+      'Sample products',
+      'Sample reports',
+    ]);
     expect(filterEntries(entries, 'grn goods').map((e) => e.title)).toEqual(['Goods receipt (GRN)']);
   });
 });

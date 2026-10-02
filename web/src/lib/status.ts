@@ -29,6 +29,24 @@ export const STATUS_TONE = {
   Matched: 'green',
   Complete: 'green',
   Flagged: 'amber',
+  // Samples: requests (Pending → Approved → Dispatched → Delivered) and dispatches
+  Pending: 'amber',
+  Packed: 'neutral',
+  Dispatched: 'purple',
+  'In Transit': 'purple',
+  Delivered: 'green',
+  Delayed: 'red',
+  Returned: 'neutral',
+  Inactive: 'neutral',
+  // Sample request priority
+  Normal: 'neutral',
+  Medium: 'neutral',
+  High: 'amber',
+  Urgent: 'red',
+  // Product stock
+  Available: 'green',
+  Limited: 'amber',
+  'Out of Stock': 'red',
 } as const satisfies Record<string, Tone>;
 
 export type Status = keyof typeof STATUS_TONE;

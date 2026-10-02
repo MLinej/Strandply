@@ -31,6 +31,10 @@
   /* Charts */
   --chart-bar: 203 210 220; /* #CBD2DC */
   --chart-faint: 208 213 221; /* #D0D5DD */
+  /* Two-series categorical pair (validated with the dataviz palette checker: CVD ΔE 28, normal 38).
+     Series 2 is under 3:1 on white, so charts using it also offer a table view. */
+  --chart-series-1: 124 58 237; /* #7C3AED */
+  --chart-series-2: 27 175 122; /* #1BAF7A */
 
   /* Non-colour tokens, mirrored in tailwind.config.ts, for use in plain CSS */
   --radius-control: 8px;

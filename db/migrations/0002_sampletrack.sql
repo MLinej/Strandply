@@ -134,6 +134,8 @@ CREATE TABLE st_requests (
   requested_by_user_id   TEXT REFERENCES users(id),
   remarks                TEXT,
   status                 TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Dispatched', 'Delivered')),
+  approved_by            TEXT REFERENCES users(id),   -- set by Approve; printed on the request slip
+  approved_at            TEXT,
   created_by             TEXT REFERENCES users(id),
   created_at             TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated_at             TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
@@ -254,14 +256,17 @@ CREATE TABLE st_notification_reads (
 CREATE INDEX st_notification_reads_user_idx ON st_notification_reads (user_id);
 
 -- ─────────────────────────────────────────────────────────────
--- Activity log (append-only; updated_at and deleted_at exist only to follow the convention)
+-- Activity log (append-only; a superadmin may purge old entries, a hard delete that is itself logged;
+-- updated_at and deleted_at exist only to follow the convention)
 -- ─────────────────────────────────────────────────────────────
 
 CREATE TABLE st_activity_log (
   id          TEXT PRIMARY KEY,
-  user_id     TEXT REFERENCES users(id),     -- NULL = system
-  action      TEXT NOT NULL,                 -- Create | Edit | Delete | Login | StatusChange | Approve | Import | Restore | ...
-  entity_type TEXT,                          -- party | courier | product | request | dispatch | user | settings | city
+  user_id     TEXT REFERENCES users(id),     -- NULL = system or an unknown username (failed login)
+  user_name   TEXT,                          -- name and role as they were at the time
+  user_role   TEXT,
+  action      TEXT NOT NULL,                 -- Login | LoginFailed | Logout | Create | Edit | Delete | PermissionChange | Purge | Import | Export | StatusChange | Approve | Restore | ...
+  entity_type TEXT,                          -- party | courier | product | city | request | dispatch | user | role_permissions | activity_log | settings
   entity_id   TEXT,
   details     TEXT,
   created_by  TEXT REFERENCES users(id),
@@ -272,6 +277,7 @@ CREATE TABLE st_activity_log (
 CREATE INDEX st_activity_log_created_idx ON st_activity_log (created_at);
 CREATE INDEX st_activity_log_user_idx    ON st_activity_log (user_id);
 CREATE INDEX st_activity_log_entity_idx  ON st_activity_log (entity_type, entity_id);
+CREATE INDEX st_activity_log_action_idx  ON st_activity_log (action);
 
 -- ─────────────────────────────────────────────────────────────
 -- Settings and counters

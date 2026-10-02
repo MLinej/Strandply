@@ -5,7 +5,23 @@ import { Link, NavLink, useLocation } from 'react-router';
 import { Avatar } from '@/components/ui';
 import { modulePath, pagePath, type ModuleDef, type ModuleKey } from '../modules';
 import { useSession } from '../session';
+import { useBadges } from '@/modules/samples/api/notifications';
 import { Logo, LogoMark } from './Logo';
+
+/** Small red-light count pill; on the collapsed rail it floats over the icon. */
+function CountBadge({ count, label, floating }: { count: number; label: string; floating?: boolean }) {
+  return (
+    <span
+      aria-label={label}
+      className={clsx(
+        'inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary-light px-1.5 text-label font-semibold tabular-nums text-primary',
+        floating && 'absolute right-1 top-0.5 h-4 min-w-4 px-1',
+      )}
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
 
 /** Which module the current URL belongs to ("/stores/grn" → "stores", "/" → "home"). */
 export function activeModuleKey(pathname: string, modules: ModuleDef[]): ModuleKey | undefined {
@@ -27,6 +43,12 @@ interface SidebarProps {
  */
 export function Sidebar({ collapsed, onToggle, onLogout }: SidebarProps) {
   const { visibleModules, user } = useSession();
+  const badges = useBadges().data;
+  // Sidebar counts from GET /badges (polled every 30 s). Keyed by module, and by "module/page".
+  const counts: Record<string, number | undefined> = {
+    samples: badges?.pendingRequests,
+    'samples/requests': badges?.pendingRequests,
+  };
   const { pathname } = useLocation();
   const activeKey = activeModuleKey(pathname, visibleModules);
 
@@ -91,6 +113,9 @@ export function Sidebar({ collapsed, onToggle, onLogout }: SidebarProps) {
               />
               <Icon size={17} strokeWidth={1.8} className="shrink-0" aria-hidden />
               {!collapsed && <span className="flex-1 truncate text-left">{m.label}</span>}
+              {counts[m.key] ? (
+                <CountBadge count={counts[m.key]!} label={`${counts[m.key]} pending`} floating={collapsed} />
+              ) : null}
               {!collapsed && hasPages &&
                 (isOpen ? (
                   <ChevronDown size={14} strokeWidth={1.8} className="shrink-0 opacity-70" aria-hidden />
@@ -138,7 +163,8 @@ export function Sidebar({ collapsed, onToggle, onLogout }: SidebarProps) {
                         )
                       }
                     >
-                      {p.label}
+                      <span className="flex-1 truncate">{p.label}</span>
+                      {counts[`${m.key}/${p.slug}`] ? <CountBadge count={counts[`${m.key}/${p.slug}`]!} label={`${counts[`${m.key}/${p.slug}`]} pending`} /> : null}
                     </NavLink>
                   ))}
                 </div>

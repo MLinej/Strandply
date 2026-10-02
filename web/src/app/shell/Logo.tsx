@@ -1,22 +1,9 @@
-/**
- * Stand-in lockup, drawn after the mark in the current app. The mockup uses an uploaded image
- * that isn't in design-reference. Drop the real file in web/public/ and swap this out.
- */
+/** Brand files from the legacy app (legacy/<module>/strandply-*.png), cropped into web/public/brand. */
 export function LogoMark({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden>
-      <path d="M16 4 28 10.5 16 17 4 10.5z" stroke="rgb(var(--primary))" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M4 15.5 16 22l12-6.5" stroke="rgb(var(--muted))" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M4 20.5 16 27l12-6.5" stroke="rgb(var(--ink))" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
-  );
+  return <img src="/brand/strandply-mark.png" width={size} height={size} alt="" aria-hidden className="shrink-0 object-contain" />;
 }
 
-export function Logo() {
-  return (
-    <span className="flex items-center gap-2" aria-label="Strandply">
-      <LogoMark />
-      <span className="text-xl font-bold tracking-tight text-ink">Strandply</span>
-    </span>
-  );
+/** Full lockup: mark + STRANDPLY + "OUT DO THE NEW". `height` is in px; the width follows the image's aspect ratio. */
+export function Logo({ height = 26 }: { height?: number }) {
+  return <img src="/brand/strandply-lockup.png" alt="Strandply" style={{ height }} className="block w-auto max-w-max self-start object-contain" />;
 }
