@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
-import { grn, mrn, purchaseEntry, stockFixtures } from './helpers';
+import { grn, mrn, productionFixtures, purchaseEntry, stockFixtures } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -993,6 +993,46 @@ export function runStockRepoContract(name: string, make: DataLayerFactory) {
       await repos.stockOpening.softDelete('op-1', at(1));
       expect((await repos.stockOpening.listAll()).map((o) => o.id)).toEqual(['op-2']);
       expect((await repos.reclasses.getById('rc-1'))?.strNo).toBe('STR/2026/001');
+    });
+  });
+}
+
+export function runProductionRepoContract(name: string, make: DataLayerFactory) {
+  const strip = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+
+  describe(`repo contract (production): ${name}`, () => {
+    it('documents: number unique; FY / date / workflow filters; search; listAll oldest first', async () => {
+      const { repos } = await make();
+      const hp = productionFixtures().prHotpress[0]!;
+      await repos.prodHotpress.create(strip({ ...hp, id: 'b', docNo: 'HP-0002', date: '2026-03-31', operator: 'Suresh', createdAt: at(1) }));
+      await repos.prodHotpress.create(strip(hp));
+      await expect(repos.prodHotpress.create(strip({ ...hp, id: 'c' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      const ids = async (q: object) => (await repos.prodHotpress.list(q)).rows.map((r) => r.id);
+      expect(await ids({})).toEqual(['hp-1', 'b']);
+      expect(await ids({ filters: { fy: '2025-26' } })).toEqual(['b']);
+      expect(await ids({ filters: { from: '2026-04-01' } })).toEqual(['hp-1']);
+      expect(await ids({ q: 'suresh' })).toEqual(['b']);
+      await repos.prodHotpress.update('hp-1', { wfState: 'review', updatedAt: at(2) });
+      expect(await ids({ filters: { wfState: 'review' } })).toEqual(['hp-1']);
+      expect((await repos.prodHotpress.listAll()).map((r) => r.id)).toEqual(['b', 'hp-1']);
+      await repos.prodHotpress.softDelete('b', at(3));
+      expect(await ids({})).toEqual(['hp-1']);
+    });
+
+    it('matt batches and WIP: status filter, lookup by chipping, adjustments oldest first', async () => {
+      const { repos } = await make();
+      const f = productionFixtures();
+      await repos.mattBatches.create(strip(f.prMatt[0]!));
+      await repos.mattBatches.create(strip({ ...f.prMatt[0]!, id: 'm2', docNo: 'MWB-0002', status: 'closed' as const }));
+      expect((await repos.mattBatches.list({ filters: { status: 'closed' } })).rows.map((r) => r.id)).toEqual(['m2']);
+      await repos.wipBatches.create(strip(f.prWip[0]!));
+      expect((await repos.wipBatches.getByChipping('ch-1'))?.docNo).toBe('WIP-0001');
+      await repos.wipAdjustments.create({ id: 'a2', wipId: 'wip-1', date: '2026-09-25', qty: 5, reason: 'x', createdBy: null, createdAt: at(2), updatedAt: at(2) });
+      await repos.wipAdjustments.create({ id: 'a1', wipId: 'wip-1', date: '2026-09-24', qty: -5, reason: 'y', createdBy: null, createdAt: at(1), updatedAt: at(1) });
+      expect((await repos.wipAdjustments.listAll()).map((a) => a.id)).toEqual(['a1', 'a2']);
     });
   });
 }

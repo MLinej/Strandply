@@ -41,6 +41,10 @@ import { storesRoutes } from './modules/stores/routes';
 import { StockMasterService } from './modules/stock/master-service';
 import { stockRoutes } from './modules/stock/routes';
 import { StockService } from './modules/stock/stock-service';
+import { ProductionDocService } from './modules/production/documents';
+import { MattService, WipService } from './modules/production/matt-wip';
+import { ProductionReportService } from './modules/production/report-service';
+import { productionRoutes } from './modules/production/routes';
 import type { DataLayer } from './repos';
 
 export interface AppDeps {
@@ -62,6 +66,9 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const inventory = new InventoryService(data, activity, clock);
   const mrns = new MrnService(data, activity, company, clock);
   const grns = new GrnService(data, activity, company, clock);
+  const productionDocs = new ProductionDocService(data, activity, clock);
+  const mattBatches = new MattService(data, activity, clock);
+  const wipBatches = new WipService(data, activity, clock);
   return {
     activity,
     permissions: new PermissionService(data, activity, clock, config.permissionCacheMs),
@@ -96,6 +103,10 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     storesReports: new StoresReportService(data, mrns, grns, activity, clock),
     stockMasters: new StockMasterService(data, activity, company, clock),
     stock: new StockService(data, activity, company, clock),
+    productionDocs,
+    mattBatches,
+    wipBatches,
+    productionReports: new ProductionReportService(data, productionDocs, mattBatches, wipBatches, company, activity, clock),
     clock,
   };
 }
@@ -124,6 +135,7 @@ export function createApp(deps: AppDeps) {
   mount('/api/purchase', purchaseRoutes());
   mount('/api/stores', storesRoutes());
   mount('/api/stock', stockRoutes());
+  mount('/api/production', productionRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

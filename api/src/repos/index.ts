@@ -7,6 +7,7 @@ import type { UserRepo } from './users';
 import type { TncRepo, VendorCategoryRepo, VendorProductRepo, VendorRepo } from './vendors';
 import type { ConsumptionRepo, OpeningStockRepo, PurchaseDocumentRepo, PurchaseEntryRepo, PurchaseOrderRepo, PurchaseReturnRepo, PurchaseTypeRepo } from './purchase';
 import type { GrnRepo, MrnRepo } from './stores';
+import type { ChippingRepo, CuttingRepo, HotPressRepo, MattBatchRepo, MdoRepo, PlanRepo, ResinUseRepo, SummaryRepo, WipAdjustmentRepo, WipBatchRepo } from './production';
 import type { ReclassRepo, SkuGroupRepo, StockOpeningRepo, StockSlipRepo } from './stock';
 import type { CounterRepo, DispatchRepo, NotificationRepo, RequestRepo } from './workflow';
 
@@ -22,6 +23,7 @@ export * from './vendors';
 export * from './purchase';
 export * from './stores';
 export * from './stock';
+export * from './production';
 
 /** Every repo the app uses. Routes and services receive this, never a concrete implementation. */
 export interface Repos {
@@ -57,6 +59,16 @@ export interface Repos {
   stockSlips: StockSlipRepo;
   stockOpening: StockOpeningRepo;
   reclasses: ReclassRepo;
+  prodPlans: PlanRepo;
+  prodHotpress: HotPressRepo;
+  prodChipping: ChippingRepo;
+  prodResin: ResinUseRepo;
+  prodCutting: CuttingRepo;
+  prodSummary: SummaryRepo;
+  prodMdo: MdoRepo;
+  mattBatches: MattBatchRepo;
+  wipBatches: WipBatchRepo;
+  wipAdjustments: WipAdjustmentRepo;
 }
 
 /**

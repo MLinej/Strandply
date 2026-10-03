@@ -16,6 +16,7 @@ import type {
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../../contracts/vendors';
 import type { Grn, Mrn } from '../../contracts/stores';
 import type { OpeningEntry, Reclass, SkuGroup, StockSlip } from '../../contracts/stock';
+import type { Chipping, Cutting, HotPress, MattBatch, Mdo, Plan, ResinUse, Summary, WipAdjustment, WipBatch } from '../../contracts/production';
 import type { OpeningStock, PurchaseDocument, PurchaseEntry, PurchaseOrder, PurchaseReturn, PurchaseType } from '../../contracts/purchase';
 import type { ActivityEntry } from '../activity';
 import type { RolePermissionsRow } from '../role-permissions';
@@ -62,6 +63,17 @@ export interface MemoryData {
   skSlips: StockSlip[];
   skOpening: OpeningEntry[];
   skReclass: Reclass[];
+  // Production module
+  prPlans: Plan[];
+  prHotpress: HotPress[];
+  prChipping: Chipping[];
+  prResin: ResinUse[];
+  prCutting: Cutting[];
+  prSummary: Summary[];
+  prMdo: Mdo[];
+  prMatt: MattBatch[];
+  prWip: WipBatch[];
+  prWipAdj: WipAdjustment[];
   /** Data upgrades already applied to this store (see seed/upgrades.ts). The memory twin of a migrations table. */
   upgrades: { name: string; appliedAt: string }[];
 }
@@ -105,6 +117,16 @@ const KEYS: { [K in TableName]: (keyof Row<K> & string) | ((row: Row<K>) => stri
   skSlips: 'id',
   skOpening: 'id',
   skReclass: 'id',
+  prPlans: 'id',
+  prHotpress: 'id',
+  prChipping: 'id',
+  prResin: 'id',
+  prCutting: 'id',
+  prSummary: 'id',
+  prMdo: 'id',
+  prMatt: 'id',
+  prWip: 'id',
+  prWipAdj: 'id',
   upgrades: 'name',
 };
 

@@ -15,7 +15,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
   {
     key: 'pages',
     title: 'Samples & admin pages',
-    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_')),
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -74,10 +74,23 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
     },
   },
   {
+    key: 'pages',
+    title: 'Production pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('production_')),
+    label: {
+      production_dashboard: 'Dashboard, reports, audit',
+      production_planning: 'Planning and production summary',
+      production_press: 'Hot press, board cutting, MDO',
+      production_matt: 'Matt weight',
+      production_materials: 'Chipping, WIP Nilgiri, resin',
+      production_settings: 'Production settings',
+    },
+  },
+  {
     key: 'actions',
     title: 'Actions',
     items: ACTION_KEYS,
-    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors', purchase_approve: 'Approve purchases', stores_review: 'Review GRNs', stores_approve: 'Approve GRNs', stores_account: 'Account GRNs' },
+    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors', purchase_approve: 'Approve purchases', stores_review: 'Review GRNs', stores_approve: 'Approve GRNs', stores_account: 'Account GRNs', production_review: 'Review production', production_approve: 'Approve production' },
   },
   {
     key: 'widgets',

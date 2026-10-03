@@ -442,6 +442,66 @@ CASES.push(
   { method: 'GET', route: `${SK}/audit`, path: `${SK}/audit`, allowed: SK_VIEW, ok: 200 },
 );
 
+// Production module. Admins have everything. Management: production_dashboard (with print and export), which
+// reads every register (for the reports), opens and prints documents, plan-vs-actual and exports, but writes nothing.
+const PR = '/api/production';
+const PR_VIEW: Role[] = ['superadmin', 'admin', 'management'];
+const prKinds: { path: string; id: string; create: object; createOk: number; patch: object; patchOk: number; deleteOk: number; sendOk: number }[] = [
+  { path: 'plans', id: 'pp-1', create: { date: '2026-09-25', shift: 'Day', products: [{ product: 'OSB', size: '8x4', thickness: '12', priority: 'High', targetBoards: 30 }] }, createOk: 201, patch: { remarks: 'x' }, patchOk: 200, deleteOk: 409, sendOk: 200 },
+  { path: 'hotpress', id: 'hp-1', create: { date: '2026-09-25', shift: 'Day', product: 'OSB', size: '8x4', charges: [{ pcs: 30 }] }, createOk: 201, patch: { remarks: 'x' }, patchOk: 200, deleteOk: 409, sendOk: 200 },
+  // hp-1 already has a cutting report, so a new one for it is a 409 once the guard lets the role through.
+  { path: 'cutting', id: 'bc-1', create: { date: '2026-09-25', shift: 'Day', hotpressId: 'hp-1', cutPcs: 10 }, createOk: 409, patch: { cutPcs: 58 }, patchOk: 200, deleteOk: 409, sendOk: 200 },
+  { path: 'chipping', id: 'ch-1', create: { date: '2026-09-25', shift: 'Day', lots: [{ purchaseEntryId: 'pe-1', qty: 100 }] }, createOk: 201, patch: { remarks: 'x' }, patchOk: 200, deleteOk: 409, sendOk: 200 },
+  { path: 'resin', id: 'rc-1', create: { date: '2026-09-25', shift: 'Day', lot: { purchaseEntryId: 'pe-2', qty: 10 } }, createOk: 201, patch: { remarks: 'x' }, patchOk: 200, deleteOk: 409, sendOk: 200 },
+  { path: 'summaries', id: 'ps-1', create: { date: '2026-09-25', product: 'OSB', size: '8x4' }, createOk: 201, patch: { remarks: 'x' }, patchOk: 200, deleteOk: 204, sendOk: 200 },
+  // mdo-1 is approved: locked.
+  { path: 'mdo', id: 'mdo-1', create: { date: '2026-09-25', shift: 'Day', items: [{ boardType: 'OSB', pcs: 5 }] }, createOk: 201, patch: { remarks: 'x' }, patchOk: 409, deleteOk: 409, sendOk: 409 },
+];
+CASES.push(
+  { method: 'GET', route: `${PR}/meta`, path: `${PR}/meta`, allowed: PR_VIEW, ok: 200 },
+  { method: 'PATCH', route: `${PR}/settings`, path: `${PR}/settings`, body: { sizes: ['8x4', '4x4', '6x4', '7x4'] }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PR}/fy/:fy/close`, path: `${PR}/fy/2025-26/close`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PR}/fy/:fy/reopen`, path: `${PR}/fy/2025-26/reopen`, allowed: ADMINS, ok: 409 },
+  { method: 'GET', route: `${PR}/lots`, path: `${PR}/lots?material=nilgiri`, allowed: PR_VIEW, ok: 200 },
+  ...prKinds.flatMap((k) => {
+    const b = `${PR}/${k.path}`;
+    return [
+      { method: 'GET', route: b, path: b, allowed: PR_VIEW, ok: 200 },
+      { method: 'GET', route: `${b}/:id`, path: `${b}/${k.id}`, allowed: PR_VIEW, ok: 200 },
+      { method: 'GET', route: `${b}/:id/print`, path: `${b}/${k.id}/print`, allowed: PR_VIEW, ok: 200 },
+      { method: 'POST', route: b, path: b, body: k.create, allowed: ADMINS, ok: k.createOk },
+      { method: 'PATCH', route: `${b}/:id`, path: `${b}/${k.id}`, body: k.patch, allowed: ADMINS, ok: k.patchOk },
+      { method: 'DELETE', route: `${b}/:id`, path: `${b}/${k.id}`, allowed: ADMINS, ok: k.deleteOk },
+      { method: 'POST', route: `${b}/:id/send`, path: `${b}/${k.id}/send`, body: { note: 'Please check' }, allowed: ADMINS, ok: k.sendOk },
+      // Fixtures are in draft or approved, so review / approve are refused once the guard lets the role through.
+      { method: 'POST', route: `${b}/:id/review`, path: `${b}/${k.id}/review`, body: { decision: 'review' }, allowed: ADMINS, ok: 409 },
+      { method: 'POST', route: `${b}/:id/approve`, path: `${b}/${k.id}/approve`, body: { decision: 'approve' }, allowed: ADMINS, ok: 409 },
+    ];
+  }),
+  { method: 'GET', route: `${PR}/plans/:id/compare`, path: `${PR}/plans/pp-1/compare`, allowed: PR_VIEW, ok: 200 },
+  { method: 'GET', route: `${PR}/summaries/:id/compare`, path: `${PR}/summaries/ps-1/compare`, allowed: PR_VIEW, ok: 200 },
+  // Matt weight
+  { method: 'GET', route: `${PR}/matt`, path: `${PR}/matt?status=open`, allowed: PR_VIEW, ok: 200 },
+  { method: 'GET', route: `${PR}/matt/:id`, path: `${PR}/matt/mb-1`, allowed: PR_VIEW, ok: 200 },
+  { method: 'GET', route: `${PR}/matt/:id/print`, path: `${PR}/matt/mb-1/print`, allowed: PR_VIEW, ok: 200 },
+  { method: 'POST', route: `${PR}/matt`, path: `${PR}/matt`, body: { date: '2026-09-25', shift: 'Day', product: 'OSB', size: '8x4', setpoint: 40 }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${PR}/matt/:id`, path: `${PR}/matt/mb-1`, body: { operator: 'Suresh' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${PR}/matt/:id`, path: `${PR}/matt/mb-1`, allowed: ADMINS, ok: 409 },
+  { method: 'POST', route: `${PR}/matt/:id/close`, path: `${PR}/matt/mb-1/close`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PR}/matt/:id/weights`, path: `${PR}/matt/mb-1/weights`, body: { weight: 42.05 }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${PR}/matt/:id/weights/:n`, path: `${PR}/matt/mb-1/weights/2`, body: { weight: 42 }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${PR}/matt/:id/weights/:n`, path: `${PR}/matt/mb-1/weights/3`, allowed: ADMINS, ok: 200 },
+  // WIP Nilgiri
+  { method: 'GET', route: `${PR}/wip`, path: `${PR}/wip`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PR}/wip/ledger`, path: `${PR}/wip/ledger?wipId=wip-1`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PR}/wip`, path: `${PR}/wip`, body: { chippingId: 'ch-1' }, allowed: ADMINS, ok: 409 },
+  { method: 'POST', route: `${PR}/wip/:id/adjust`, path: `${PR}/wip/wip-1/adjust`, body: { qty: -50, reason: 'Moisture loss' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${PR}/wip/:id`, path: `${PR}/wip/wip-1`, allowed: ADMINS, ok: 409 },
+  { method: 'GET', route: `${PR}/dashboard`, path: `${PR}/dashboard?fy=2026-27`, allowed: PR_VIEW, ok: 200 },
+  { method: 'GET', route: `${PR}/export`, path: `${PR}/export?kind=hotpress`, allowed: PR_VIEW, ok: 200 },
+  { method: 'GET', route: `${PR}/audit`, path: `${PR}/audit`, allowed: PR_VIEW, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

@@ -294,12 +294,12 @@ describe('dev snapshot upgrade (0005)', () => {
 
     const up = upgradeSnapshot(old, seed, T0.toISOString());
     const adminAfter = up.rolePermissions!.find((r) => r.role === 'admin')!.permissions;
-    expect(adminAfter.pages.filter((p) => !p.startsWith('purchase_') && !p.startsWith('stores_') && !p.startsWith('stock_'))).toEqual(['dashboard', 'users', 'vendors', 'vendor_reports', 'vendor_masters', 'vendor_settings']);
-    expect(adminAfter.actions).toEqual(['edit', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account']);
+    expect(adminAfter.pages.filter((p) => !p.startsWith('purchase_') && !p.startsWith('stores_') && !p.startsWith('stock_') && !p.startsWith('production_'))).toEqual(['dashboard', 'users', 'vendors', 'vendor_reports', 'vendor_masters', 'vendor_settings']);
+    expect(adminAfter.actions).toEqual(['edit', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve']);
     expect(up.rolePermissions!.find((r) => r.role === 'dispatch')!.permissions.pages).not.toContain('vendors');
     expect(up.cities!.find((c) => c.id === 'city-morbi')!.pincodes).toEqual(['363641', '363650']);
     expect(up.cities!.some((c) => c.id === 'city-valsad')).toBe(true);
-    expect(up.upgrades!.map((u) => u.name)).toEqual(['0005_vendors', '0006_purchase', '0007_stores', '0008_stock']);
+    expect(up.upgrades!.map((u) => u.name)).toEqual(['0005_vendors', '0006_purchase', '0007_stores', '0008_stock', '0009_production']);
 
     // Running again changes nothing.
     adminAfter.pages = ['dashboard'];

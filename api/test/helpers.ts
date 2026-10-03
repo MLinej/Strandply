@@ -8,6 +8,7 @@ import type { Vendor, VendorCategory } from '../src/contracts/vendors';
 import type { PurchaseEntry, PurchaseOrder, PurchaseReturn } from '../src/contracts/purchase';
 import type { Grn, Mrn } from '../src/contracts/stores';
 import type { OpeningEntry, Reclass, StockSlip } from '../src/contracts/stock';
+import type { Chipping, Cutting, DocBase, HotPress, MattBatch, Mdo, Plan, ResinUse, Summary, WipBatch } from '../src/contracts/production';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -434,6 +435,114 @@ export function stockFixtures() {
 }
 
 /**
+ * Production fixtures (on purchase fixtures pe-1 nilgiri 12 730 kg at net ₹7,500/t, pe-2 resin 18 250 kg at ₹40,000/t):
+ * - hp-1 HP-0001 (2026-09-20): OSB 8x4 12 mm, 2 charges × 30 pcs (08:00–08:40, 08:50–09:30)
+ * - bc-1 BC-0001: 57 cut from hp-1 (3 rejects, 5%)
+ * - ch-1 CHR-0001: 5 000 kg from pe-1 → wip-1 WIP-0001
+ * - rc-1 RC-0001: 500 kg resin from pe-2
+ * - mb-1 MWB-0001: open, setpoint 42 ± 0.5, weights 42.1 (pass), 41.2 (warn), 43.5 (reject)
+ * - pp-1 PPR-0001: 60 boards OSB 8x4, matt 42 kg × 60, resin 4 kg/matt; links hp-1, bc-1, mb-1
+ * - ps-1 PS-0001: links everything, 2 000 kg from wip-1
+ * - mdo-1 MDO-0001: approved (locked)
+ * Every PR-<prefix> counter is at 1.
+ */
+export function productionFixtures() {
+  const doc = (id: string, docNo: string, date: string, over: Partial<DocBase> = {}) => ({ id, docNo, date, wfState: 'draft' as const, wfTrail: [], remarks: null, ...audit, ...over });
+  const hp: HotPress = {
+    ...doc('hp-1', 'HP-0001', '2026-09-20'),
+    shift: 'Day',
+    product: 'OSB',
+    size: '8x4',
+    thickness: '12',
+    operator: 'Ramesh',
+    charges: [
+      { label: 'Charge 1', pcs: 30, load: '08:00', unload: '08:40', remarks: null },
+      { label: 'Charge 2', pcs: 30, load: '08:50', unload: '09:30', remarks: null },
+    ],
+  };
+  const bc: Cutting = { ...doc('bc-1', 'BC-0001', '2026-09-20'), shift: 'Day', hotpressId: 'hp-1', operator: null, cutPcs: 57 };
+  const ch: Chipping = {
+    ...doc('ch-1', 'CHR-0001', '2026-09-21'),
+    shift: 'Day',
+    operator: null,
+    machine: 'Chipper 1',
+    lots: [{ purchaseEntryId: 'pe-1', lotNo: 'N01', qty: 5000, ratePaise: 750000, amountPaise: 3750000 }],
+  };
+  const wip: WipBatch = { id: 'wip-1', docNo: 'WIP-0001', chippingId: 'ch-1', date: '2026-09-21', remarks: null, ...audit };
+  const rc: ResinUse = { ...doc('rc-1', 'RC-0001', '2026-09-21'), shift: 'Day', lot: { purchaseEntryId: 'pe-2', lotNo: 'R01', qty: 500, ratePaise: 4000000, amountPaise: 2000000 }, product: 'OSB', operator: null };
+  const at = (m: number) => new Date(T0.getTime() + m * 60000).toISOString();
+  const mb: MattBatch = {
+    id: 'mb-1',
+    docNo: 'MWB-0001',
+    date: '2026-09-20',
+    shift: 'Day',
+    product: 'OSB',
+    size: '8x4',
+    thickness: '12',
+    operator: null,
+    setpoint: 42,
+    band: 0.5,
+    targetQty: 60,
+    remarks: null,
+    status: 'open',
+    weights: [
+      { n: 1, weight: 42.1, at: at(1) },
+      { n: 2, weight: 41.2, at: at(2) },
+      { n: 3, weight: 43.5, at: at(3) },
+    ],
+    closedAt: null,
+    ...audit,
+  };
+  const pp: Plan = {
+    ...doc('pp-1', 'PPR-0001', '2026-09-19'),
+    shift: 'Day',
+    planOp: 'Planner',
+    products: [{ product: 'OSB', size: '8x4', thickness: '12', priority: 'High', targetBoards: 60 }],
+    mattWtKg: 42,
+    matts: 60,
+    resinPerMattKg: 4,
+    wetWoodAvailKg: 9000,
+    process: { pressTemp: '180' },
+    hotpressId: 'hp-1',
+    mattBatchId: 'mb-1',
+    cuttingId: 'bc-1',
+  };
+  const ps: Summary = {
+    ...doc('ps-1', 'PS-0001', '2026-09-21'),
+    product: 'OSB',
+    size: '8x4',
+    thickness: '12',
+    batch: 'B1',
+    hotpressId: 'hp-1',
+    mattBatchId: 'mb-1',
+    resinIds: ['rc-1'],
+    cuttingId: 'bc-1',
+    planId: 'pp-1',
+    pressPcs: 60,
+    boards: 57,
+    boardRej: 3,
+    mattPcs: 3,
+    mattWtKg: 42.27,
+    mattRej: 1,
+    resinKg: 500,
+    resinPaise: 2000000,
+    dryWoodKg: 2400,
+    wip: [{ wipId: 'wip-1', qty: 2000 }],
+  };
+  const mdo: Mdo = {
+    ...doc('mdo-1', 'MDO-0001', '2026-09-22', { wfState: 'approved' }),
+    shift: 'Day',
+    operator: null,
+    pressStart: '22:00',
+    pressEnd: '02:30',
+    items: [{ boardType: 'OSB', thickness: '12', paper: 'Kraft 120gsm', type: 'BSL', finish: 'Smooth', pcs: 40, cycleTime: '8m' }],
+    paperUsed: 80,
+    paperWastage: 4,
+  };
+  return { prHotpress: [hp], prCutting: [bc], prChipping: [ch], prWip: [wip], prResin: [rc], prMatt: [mb], prPlans: [pp], prSummary: [ps], prMdo: [mdo] };
+}
+
+/**
  * Masters every test app starts with (besides the reference seed):
  * - p-free / c-free / prod-osb-12-8x4: unreferenced, so they can be deleted
  * - p-used / c-used / prod-used: referenced by request REQ-0001 and dispatch DSP-0001 (linked to REQ-0001)
@@ -575,6 +684,7 @@ export function testData(users: User[]) {
     ...purchaseFixtures(),
     ...storesFixtures(),
     ...stockFixtures(),
+    ...productionFixtures(),
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
     users,
@@ -584,6 +694,7 @@ export function testData(users: User[]) {
       { name: 'GRN-2026-27', lastValue: 4, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'ISS-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'STR-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
+      ...['PPR', 'HP', 'BC', 'CHR', 'WIP', 'RC', 'MWB', 'PS', 'MDO'].map((p) => ({ name: `PR-${p}`, lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
     ],
     cities: [...seed.cities, ...extraCities],
     products: [...seed.products, ...extraProducts],

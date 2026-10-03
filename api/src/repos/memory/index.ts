@@ -16,6 +16,8 @@ import { MemoryStore, type MemoryData } from './store';
 import { MemoryUserRepo } from './users';
 import { MemoryConsumptionRepo, MemoryOpeningStockRepo, MemoryPurchaseDocumentRepo, MemoryPurchaseEntryRepo, MemoryPurchaseOrderRepo, MemoryPurchaseReturnRepo, MemoryPurchaseTypeRepo } from './purchase';
 import { MemoryGrnRepo, MemoryMrnRepo } from './stores';
+import { MemoryDocRepo, MemoryMattBatchRepo, MemoryWipAdjustmentRepo, MemoryWipBatchRepo } from './production';
+import type { Chipping, Cutting, HotPress, Mdo, Plan, ResinUse, Summary } from '../../contracts/production';
 import { MemoryReclassRepo, MemorySkuGroupRepo, MemoryStockOpeningRepo, MemoryStockSlipRepo } from './stock';
 import { MemoryTncRepo, MemoryVendorCategoryRepo, MemoryVendorProductRepo, MemoryVendorRepo } from './vendors';
 import { MemoryCounterRepo, MemoryDispatchRepo, MemoryNotificationRepo, MemoryRequestRepo } from './workflow';
@@ -93,6 +95,16 @@ export function createMemoryDataLayer(store: MemoryStore): DataLayer {
     stockSlips: new MemoryStockSlipRepo(store),
     stockOpening: new MemoryStockOpeningRepo(store),
     reclasses: new MemoryReclassRepo(store),
+    prodPlans: new MemoryDocRepo<Plan>(store, 'prPlans', 'production_plans', ['planOp']),
+    prodHotpress: new MemoryDocRepo<HotPress>(store, 'prHotpress', 'hotpress_reports', ['product', 'size', 'operator']),
+    prodChipping: new MemoryDocRepo<Chipping>(store, 'prChipping', 'chipping_reports', ['operator', 'machine']),
+    prodResin: new MemoryDocRepo<ResinUse>(store, 'prResin', 'resin_consumption', ['product', 'operator']),
+    prodCutting: new MemoryDocRepo<Cutting>(store, 'prCutting', 'board_cutting', ['operator']),
+    prodSummary: new MemoryDocRepo<Summary>(store, 'prSummary', 'production_summaries', ['product', 'size', 'batch']),
+    prodMdo: new MemoryDocRepo<Mdo>(store, 'prMdo', 'mdo_reports', ['operator']),
+    mattBatches: new MemoryMattBatchRepo(store),
+    wipBatches: new MemoryWipBatchRepo(store),
+    wipAdjustments: new MemoryWipAdjustmentRepo(store),
   };
   return { repos, uow: new MemoryUnitOfWork(store, repos) };
 }
