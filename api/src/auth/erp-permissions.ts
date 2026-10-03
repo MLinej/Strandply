@@ -28,6 +28,9 @@ export function erpPermissions(role: Role, st: PermissionSet): string[] {
       out.add('admin.settings');
     } else if (page === 'notifications') {
       out.add('notifications.view');
+    } else if (page.startsWith('stock_')) {
+      out.add('stock.view');
+      out.add(`stock.${page.slice('stock_'.length)}`);
     } else if (page.startsWith('stores_')) {
       out.add('stores.view');
       out.add(`stores.${page.slice('stores_'.length)}`);

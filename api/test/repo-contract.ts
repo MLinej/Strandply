@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
-import { grn, mrn, purchaseEntry } from './helpers';
+import { grn, mrn, purchaseEntry, stockFixtures } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -943,6 +943,56 @@ export function runStoresRepoContract(name: string, make: DataLayerFactory) {
       expect(await repos.grns.countByStatus()).toEqual({ draft: 1, reviewed: 0, approved: 2, unaccounted: 1 });
       await repos.grns.softDelete('g1', at(3));
       expect(await repos.grns.getByMrn('m')).toBeNull();
+    });
+  });
+}
+
+export function runStockRepoContract(name: string, make: DataLayerFactory) {
+  const strip = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+  const group = (id: string, prefix: string, sortOrder: number) => ({
+    id, prefix, label: prefix, family: 'OC' as const, dept: 'Stock (GRA)' as const, size: null, grade: null, unit: 'pcs', thicknesses: ['12'], sortOrder, createdBy: null, createdAt: at(0), updatedAt: at(0),
+  });
+
+  describe(`repo contract (stock): ${name}`, () => {
+    it('groups: prefix unique ignoring case; listAll by sortOrder', async () => {
+      const { repos } = await make();
+      await repos.skuGroups.create(group('g2', 'OC-621', 2));
+      await repos.skuGroups.create(group('g1', 'OC-611', 1));
+      await expect(repos.skuGroups.create(group('g3', 'oc-611', 3))).rejects.toBeInstanceOf(UniqueViolationError);
+      expect((await repos.skuGroups.listAll()).map((g) => g.id)).toEqual(['g1', 'g2']);
+      expect((await repos.skuGroups.getByPrefix('oc-621'))?.id).toBe('g2');
+      await repos.skuGroups.softDelete('g1', at(1));
+      expect(await repos.skuGroups.getByPrefix('OC-611')).toBeNull();
+    });
+
+    it('slips: search both SKUs, type / date / sku filters; listAll oldest first; soft delete', async () => {
+      const { repos } = await make();
+      const f = stockFixtures();
+      const s1 = f.skSlips[0]!;
+      await repos.stockSlips.create(strip({ ...s1, id: 'b', date: '2026-09-20', slipNo: 'MRS/2026/001', type: 'SRS' as const }));
+      await repos.stockSlips.create(strip(s1));
+      const ids = async (q: object) => (await repos.stockSlips.list(q)).rows.map((r) => r.id);
+      expect(await ids({ q: 'oc-i0112' })).toEqual(['sl-1', 'b']);
+      expect(await ids({ filters: { type: 'SRS' } })).toEqual(['b']);
+      expect(await ids({ filters: { from: '2026-09-15' } })).toEqual(['b']);
+      expect(await ids({ filters: { sku: 'OC-61112' } })).toEqual(['sl-1', 'b']);
+      expect((await repos.stockSlips.listAll()).map((r) => r.id)).toEqual(['sl-1', 'b']);
+      await repos.stockSlips.softDelete('b', at(2));
+      expect((await repos.stockSlips.listAll()).map((r) => r.id)).toEqual(['sl-1']);
+    });
+
+    it('opening and reclass: listAll oldest first, soft delete', async () => {
+      const { repos } = await make();
+      const f = stockFixtures();
+      for (const o of [...f.skOpening].reverse()) await repos.stockOpening.create(strip(o));
+      await repos.reclasses.create(strip(f.skReclass[0]!));
+      expect((await repos.stockOpening.listAll()).map((o) => o.id)).toEqual(['op-1', 'op-2']);
+      await repos.stockOpening.softDelete('op-1', at(1));
+      expect((await repos.stockOpening.listAll()).map((o) => o.id)).toEqual(['op-2']);
+      expect((await repos.reclasses.getById('rc-1'))?.strNo).toBe('STR/2026/001');
     });
   });
 }

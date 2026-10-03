@@ -7,6 +7,8 @@ export interface SelectOption {
   value: string;
   label: string;
   disabled?: boolean;
+  /** Options with a group are shown under an <optgroup> of that name, in first-seen order. */
+  group?: string;
 }
 
 export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
@@ -52,14 +54,30 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
           {...rest}
         >
           {placeholder !== undefined && <option value="">{placeholder}</option>}
-          {options.map((o) => (
-            <option key={o.value} value={o.value} disabled={o.disabled} className="text-ink">
-              {o.label}
-            </option>
-          ))}
+          {renderOptions(options)}
         </select>
         <ChevronDown size={14} strokeWidth={1.8} className="pointer-events-none absolute right-3 text-muted" aria-hidden />
       </div>
     </Field>
   );
 });
+
+function renderOptions(options: SelectOption[]) {
+  const opt = (o: SelectOption) => (
+    <option key={o.value} value={o.value} disabled={o.disabled} className="text-ink">
+      {o.label}
+    </option>
+  );
+  if (!options.some((o) => o.group)) return options.map(opt);
+  const groups = new Map<string, SelectOption[]>();
+  for (const o of options) groups.set(o.group ?? '', [...(groups.get(o.group ?? '') ?? []), o]);
+  return [...groups].map(([g, os]) =>
+    g ? (
+      <optgroup key={g} label={g}>
+        {os.map(opt)}
+      </optgroup>
+    ) : (
+      os.map(opt)
+    ),
+  );
+}

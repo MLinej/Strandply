@@ -38,6 +38,9 @@ import { GrnService } from './modules/stores/grn-service';
 import { MrnService } from './modules/stores/mrn-service';
 import { StoresReportService } from './modules/stores/report-service';
 import { storesRoutes } from './modules/stores/routes';
+import { StockMasterService } from './modules/stock/master-service';
+import { stockRoutes } from './modules/stock/routes';
+import { StockService } from './modules/stock/stock-service';
 import type { DataLayer } from './repos';
 
 export interface AppDeps {
@@ -91,6 +94,8 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     mrns,
     grns,
     storesReports: new StoresReportService(data, mrns, grns, activity, clock),
+    stockMasters: new StockMasterService(data, activity, company, clock),
+    stock: new StockService(data, activity, company, clock),
     clock,
   };
 }
@@ -118,6 +123,7 @@ export function createApp(deps: AppDeps) {
   mount('/api/vendors', vendorRoutes());
   mount('/api/purchase', purchaseRoutes());
   mount('/api/stores', storesRoutes());
+  mount('/api/stock', stockRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0007` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings).
+- [ ] Apply `0001`–`0008` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -73,6 +73,13 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] `findInvoice` uses `purchaseEntries.list({ q })` and then an exact match ignoring spaces. On D1 add a dedicated lookup (`WHERE replace(lower(invoice_no), ' ', '') = ?`) or a normalised column with an index.
 - [ ] `listPending` feeds the dashboard, pending report and badge (polled every 30 s). Index `sto_mrns_status_idx` covers it; the badge could use a COUNT instead.
 - [ ] Settings `stores.auto_punch_mrn` / `stores.auto_punch_grn` are JSON booleans in `st_settings`.
+
+### Stock module (0008)
+- [ ] Movements are three memory tables with nested `from` / `to` / `item` refs; on D1 they are flat columns (`from_group_id`, `from_thick`, `from_sku`, …) in `sk_slips`, `sk_reclass`, `sk_opening`.
+- [ ] Balances are computed by summing every leg (`allLegs` in `modules/stock/common.ts`). On D1: one `UNION ALL` of the three tables grouped by SKU, or a `sk_balances` table kept in the same batch as each movement. Each check (`ensureAvailable`, `ensureReversible`) must read the balance and write the movement in one batch, or two slips can both pass the check — use a guarded INSERT … SELECT … WHERE balance ≥ qty.
+- [ ] Slip / STR numbers: counters `ISS-YYYY`, `MRS-YYYY`, `STR-YYYY` bumped in the insert batch (`sk_slips_no_uq` / `sk_reclass_no_uq` catch races).
+- [ ] `sk_groups.thicknesses` is a JSON array. The item-in-use checks scan the movement tables by `group_id`; add indexes on `from_group_id` / `to_group_id` / `group_id` if the item master page gets slow.
+- [ ] Ledgers and live stock load every leg. Fine for tens of thousands of movements; past that, move the per-SKU sums and date filters into SQL.
 
 ## Infrastructure services (stubs now)
 - [ ] Google Sheets sync: real `SheetsSyncService` and a cron trigger for `sheets.interval_min`.

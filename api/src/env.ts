@@ -29,6 +29,8 @@ import type { PurchaseReportService } from './modules/purchase/report-service';
 import type { GrnService } from './modules/stores/grn-service';
 import type { MrnService } from './modules/stores/mrn-service';
 import type { StoresReportService } from './modules/stores/report-service';
+import type { StockMasterService } from './modules/stock/master-service';
+import type { StockService } from './modules/stock/stock-service';
 
 export interface AuthContext {
   user: User;
@@ -69,6 +71,8 @@ export interface Services {
   mrns: MrnService;
   grns: GrnService;
   storesReports: StoresReportService;
+  stockMasters: StockMasterService;
+  stock: StockService;
   clock: Clock;
 }
 

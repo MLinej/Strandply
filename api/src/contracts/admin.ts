@@ -31,6 +31,11 @@ export const PAGE_KEYS = [
   'stores_accounting',
   'stores_reports',
   'stores_settings',
+  'stock_dashboard',
+  'stock_slips',
+  'stock_ledger',
+  'stock_reclass',
+  'stock_masters',
 ] as const;
 export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account'] as const;
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;

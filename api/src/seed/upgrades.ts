@@ -83,6 +83,19 @@ UPGRADES.push({
   },
 });
 
+const STOCK_PAGES = ['stock_dashboard', 'stock_slips', 'stock_ledger', 'stock_reclass', 'stock_masters'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0008_stock.sql on an existing database. The new tables come from the seed.
+  name: '0008_stock',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], STOCK_PAGES);
+    grant(data, ['management'], ['stock_dashboard', 'stock_ledger']);
+    // The item master is reference data: take the seed's if the snapshot has none.
+    if (!data.skGroups?.length) data.skGroups = structuredClone(seed.skGroups);
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

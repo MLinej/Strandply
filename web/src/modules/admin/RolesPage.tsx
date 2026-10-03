@@ -15,7 +15,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
   {
     key: 'pages',
     title: 'Samples & admin pages',
-    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_')),
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -59,6 +59,18 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
       stores_accounting: 'Accounting',
       stores_reports: 'Stores reports',
       stores_settings: 'Stores settings',
+    },
+  },
+  {
+    key: 'pages',
+    title: 'Stock pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('stock_')),
+    label: {
+      stock_dashboard: 'Dashboard, audit',
+      stock_slips: 'Stock slips (SIS / SRS)',
+      stock_ledger: 'Live stock and ledgers',
+      stock_reclass: 'Reclassification',
+      stock_masters: 'Item master, opening stock',
     },
   },
   {

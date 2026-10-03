@@ -411,6 +411,37 @@ CASES.push(
   { method: 'GET', route: `${STO}/audit`, path: `${STO}/audit`, allowed: STO_VIEW, ok: 200 },
 );
 
+// Stock module. Admins have everything. Management: stock_dashboard and stock_ledger with print and export.
+const SK = '/api/stock';
+const SK_VIEW: Role[] = ['superadmin', 'admin', 'management'];
+const side = (prefix: string, thick: string | null) => ({ groupId: `skug-${prefix.toLowerCase()}`, thick });
+CASES.push(
+  { method: 'GET', route: `${SK}/meta`, path: `${SK}/meta`, allowed: SK_VIEW, ok: 200 },
+  { method: 'POST', route: `${SK}/items`, path: `${SK}/items`, body: { prefix: 'OC-999', label: 'Test board', family: 'OC', dept: 'Stock (FG)', thicknesses: ['12'] }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SK}/items/:id`, path: `${SK}/items/skug-oc-611`, body: { label: 'OSB-CAL Graded A – full size' }, allowed: ADMINS, ok: 200 },
+  // OC-611 has movements, so allowed roles get 409 (the guard let them through).
+  { method: 'DELETE', route: `${SK}/items/:id`, path: `${SK}/items/skug-oc-611`, allowed: ADMINS, ok: 409 },
+  { method: 'GET', route: `${SK}/balance`, path: `${SK}/balance?sku=OC-61112`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${SK}/slips`, path: `${SK}/slips?type=SIS`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${SK}/slips/:id`, path: `${SK}/slips/sl-1`, allowed: SK_VIEW, ok: 200 },
+  { method: 'GET', route: `${SK}/slips/:id/print`, path: `${SK}/slips/sl-1/print`, allowed: SK_VIEW, ok: 200 },
+  { method: 'POST', route: `${SK}/slips`, path: `${SK}/slips`, body: { type: 'SIS', from: side('OC-611', '12'), to: side('OC-I01', '12'), qty: 5 }, allowed: ADMINS, ok: 201 },
+  { method: 'DELETE', route: `${SK}/slips/:id`, path: `${SK}/slips/sl-1`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${SK}/opening`, path: `${SK}/opening`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SK}/opening`, path: `${SK}/opening`, body: { item: side('RM-11000', null), qty: 250 }, allowed: ADMINS, ok: 201 },
+  { method: 'DELETE', route: `${SK}/opening/:id`, path: `${SK}/opening/op-2`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${SK}/reclass`, path: `${SK}/reclass`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SK}/reclass`, path: `${SK}/reclass`, body: { from: side('OC-611', '12'), to: side('OC-771', '12'), qty: 2, reason: 'Broken corner' }, allowed: ADMINS, ok: 201 },
+  { method: 'DELETE', route: `${SK}/reclass/:id`, path: `${SK}/reclass/rc-1`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${SK}/live`, path: `${SK}/live?family=OC`, allowed: SK_VIEW, ok: 200 },
+  { method: 'GET', route: `${SK}/ledger/sku`, path: `${SK}/ledger/sku?sku=OC-61112`, allowed: SK_VIEW, ok: 200 },
+  { method: 'GET', route: `${SK}/ledger/dept`, path: `${SK}/ledger/dept?from=2026-09-01`, allowed: SK_VIEW, ok: 200 },
+  { method: 'GET', route: `${SK}/movements`, path: `${SK}/movements`, allowed: SK_VIEW, ok: 200 },
+  { method: 'GET', route: `${SK}/export`, path: `${SK}/export?kind=stock`, allowed: SK_VIEW, ok: 200 },
+  { method: 'GET', route: `${SK}/dashboard`, path: `${SK}/dashboard`, allowed: SK_VIEW, ok: 200 },
+  { method: 'GET', route: `${SK}/audit`, path: `${SK}/audit`, allowed: SK_VIEW, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

@@ -128,10 +128,14 @@ export const MODULES: ModuleDef[] = [
     icon: Package,
     phase: 5,
     pages: [
-      { slug: 'dashboard', label: 'Stock dashboard' },
-      { slug: 'finished-stock', label: 'Finished stock' },
-      { slug: 'slips', label: 'Stock slips' },
-      { slug: 'skus', label: 'SKU master' },
+      { slug: 'dashboard', label: 'Stock dashboard', perm: 'stock.dashboard', built: true },
+      { slug: 'slips', label: 'Stock slips (SIS / SRS)', perm: 'stock.slips', built: true },
+      { slug: 'live', label: 'Live stock', perm: 'stock.ledger', built: true },
+      { slug: 'ledger', label: 'Stock ledger', perm: 'stock.ledger', built: true },
+      { slug: 'reclass', label: 'Reclassification', perm: 'stock.reclass', built: true },
+      { slug: 'items', label: 'Item master', perm: 'stock.masters', built: true },
+      { slug: 'opening', label: 'Opening stock', perm: 'stock.masters', built: true },
+      { slug: 'audit', label: 'Audit trail', perm: 'stock.dashboard', built: true },
     ],
   },
   {

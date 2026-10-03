@@ -1,7 +1,8 @@
 // Roles and permission keys. One matrix per role covers every rebuilt module.
 // SampleTrack defaults follow the legacy ROLE_PERMS (docs/sampletrack-spec.md §2);
 // the vendor_* keys come from the Vendor Portal (docs/vendors-spec.md §2), purchase_* from the
-// Purchase ERP (docs/purchase-spec.md §2), stores_* from Stores MRN & GRN (docs/stores-spec.md §2).
+// Purchase ERP (docs/purchase-spec.md §2), stores_* from Stores MRN & GRN (docs/stores-spec.md §2),
+// stock_* from Stock Management (docs/stock-spec.md §2).
 
 export const ROLES = ['superadmin', 'admin', 'dispatch', 'marketing', 'management'] as const;
 export type Role = (typeof ROLES)[number];
@@ -44,6 +45,12 @@ export const PAGE_KEYS = [
   'stores_accounting',
   'stores_reports',
   'stores_settings',
+  // Stock module
+  'stock_dashboard',
+  'stock_slips',
+  'stock_ledger',
+  'stock_reclass',
+  'stock_masters',
 ] as const;
 export type PageKey = (typeof PAGE_KEYS)[number];
 
@@ -86,7 +93,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionSet> = {
     widgets: ['pending', 'parties'],
   },
   management: {
-    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports'],
+    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger'],
     actions: ['print', 'export'],
     widgets: [...WIDGET_KEYS],
   },

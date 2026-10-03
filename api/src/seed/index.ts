@@ -6,6 +6,7 @@ import { DEFAULT_SETTINGS } from './settings';
 import { DEMO_PURCHASE_ENTRIES, DEMO_PURCHASE_ORDERS } from './purchase-demo.dev';
 import { REF_PURCHASE_TYPES } from './purchase';
 import { DEFAULT_STORES_SETTINGS } from './stores';
+import { REF_SKU_GROUPS } from './stock';
 import { UPGRADES } from './upgrades';
 import { DEV_USERS } from './users.dev';
 import {
@@ -64,6 +65,10 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     puDocuments: [],
     stoMrns: [],
     stoGrns: [],
+    skGroups: REF_SKU_GROUPS.map((g) => ({ ...structuredClone(g), ...audit })),
+    skSlips: [],
+    skOpening: [],
+    skReclass: [],
     // A fresh seed already has everything the upgrades add.
     upgrades: UPGRADES.map((u) => ({ name: u.name, appliedAt: at })),
   };

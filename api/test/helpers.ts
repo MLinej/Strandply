@@ -7,6 +7,7 @@ import type { Courier, Party, Product } from '../src/contracts/sampletrack';
 import type { Vendor, VendorCategory } from '../src/contracts/vendors';
 import type { PurchaseEntry, PurchaseOrder, PurchaseReturn } from '../src/contracts/purchase';
 import type { Grn, Mrn } from '../src/contracts/stores';
+import type { OpeningEntry, Reclass, StockSlip } from '../src/contracts/stock';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -385,6 +386,54 @@ export function storesFixtures() {
 }
 
 /**
+ * Stock fixtures (on the seeded item master):
+ * - op-1: opening OC-61112 + 100 (2026-09-01); op-2: opening RM-05000 (resin, fixed code) + 5000
+ * - sl-1 (ISS/2026/001, 2026-09-10): OC-61112 − 30 → OC-I0112 + 30
+ * - rc-1 (STR/2026/001, 2026-09-12): OC-61112 − 10 → OC-62112 + 10
+ * Balances: OC-61112 60, OC-I0112 30, OC-62112 10, RM-05000 5000. Counters ISS-2026 = 1, STR-2026 = 1.
+ */
+export function stockFixtures() {
+  const ref = (prefix: string, thick: string | null) => ({ groupId: `skug-${prefix.toLowerCase()}`, thick, sku: `${prefix}${thick ?? ''}` });
+  const opening: OpeningEntry[] = [
+    { id: 'op-1', date: '2026-09-01', item: ref('OC-611', '12'), qty: 100, note: null, ...audit, createdAt: '2026-09-01T04:00:00.000Z' },
+    { id: 'op-2', date: '2026-09-01', item: ref('RM-05000', null), qty: 5000, note: 'Physical count', ...audit, createdAt: '2026-09-01T04:00:01.000Z' },
+  ];
+  const slips: StockSlip[] = [
+    {
+      id: 'sl-1',
+      type: 'SIS',
+      slipNo: 'ISS/2026/001',
+      date: '2026-09-10',
+      from: ref('OC-611', '12'),
+      to: ref('OC-I01', '12'),
+      qty: 30,
+      batch: 'B-00001',
+      refNo: 'OSB-PR/2026/001',
+      shift: 'Day',
+      remarks: null,
+      ...audit,
+      createdAt: '2026-09-10T04:00:00.000Z',
+    },
+  ];
+  const reclass: Reclass[] = [
+    {
+      id: 'rc-1',
+      strNo: 'STR/2026/001',
+      date: '2026-09-12',
+      scenario: 'Grade A → Grade B',
+      from: ref('OC-611', '12'),
+      to: ref('OC-621', '12'),
+      qty: 10,
+      reason: 'Surface marks',
+      ref: null,
+      ...audit,
+      createdAt: '2026-09-12T04:00:00.000Z',
+    },
+  ];
+  return { skOpening: opening, skSlips: slips, skReclass: reclass };
+}
+
+/**
  * Masters every test app starts with (besides the reference seed):
  * - p-free / c-free / prod-osb-12-8x4: unreferenced, so they can be deleted
  * - p-used / c-used / prod-used: referenced by request REQ-0001 and dispatch DSP-0001 (linked to REQ-0001)
@@ -525,6 +574,7 @@ export function testData(users: User[]) {
     ...f,
     ...purchaseFixtures(),
     ...storesFixtures(),
+    ...stockFixtures(),
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
     users,
@@ -532,6 +582,8 @@ export function testData(users: User[]) {
       ...seed.counters.map((c) => ({ ...c, lastValue: c.name === 'REQ' ? 2 : 1 })), // fixtures use REQ-0001..2, DSP-0001
       { name: 'MRN-2026-27', lastValue: 5, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'GRN-2026-27', lastValue: 4, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
+      { name: 'ISS-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
+      { name: 'STR-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
     ],
     cities: [...seed.cities, ...extraCities],
     products: [...seed.products, ...extraProducts],

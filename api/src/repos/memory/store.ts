@@ -15,6 +15,7 @@ import type {
 } from '../../contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../../contracts/vendors';
 import type { Grn, Mrn } from '../../contracts/stores';
+import type { OpeningEntry, Reclass, SkuGroup, StockSlip } from '../../contracts/stock';
 import type { OpeningStock, PurchaseDocument, PurchaseEntry, PurchaseOrder, PurchaseReturn, PurchaseType } from '../../contracts/purchase';
 import type { ActivityEntry } from '../activity';
 import type { RolePermissionsRow } from '../role-permissions';
@@ -56,6 +57,11 @@ export interface MemoryData {
   // Stores module
   stoMrns: Mrn[];
   stoGrns: Grn[];
+  // Stock module
+  skGroups: SkuGroup[];
+  skSlips: StockSlip[];
+  skOpening: OpeningEntry[];
+  skReclass: Reclass[];
   /** Data upgrades already applied to this store (see seed/upgrades.ts). The memory twin of a migrations table. */
   upgrades: { name: string; appliedAt: string }[];
 }
@@ -95,6 +101,10 @@ const KEYS: { [K in TableName]: (keyof Row<K> & string) | ((row: Row<K>) => stri
   puDocuments: 'id',
   stoMrns: 'id',
   stoGrns: 'id',
+  skGroups: 'id',
+  skSlips: 'id',
+  skOpening: 'id',
+  skReclass: 'id',
   upgrades: 'name',
 };
 
