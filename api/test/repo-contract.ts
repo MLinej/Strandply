@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
-import { grn, mrn, productionFixtures, purchaseEntry, stockFixtures } from './helpers';
+import { grn, mrn, productionFixtures, salesFixtures, purchaseEntry, stockFixtures } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -1033,6 +1033,67 @@ export function runProductionRepoContract(name: string, make: DataLayerFactory) 
       await repos.wipAdjustments.create({ id: 'a2', wipId: 'wip-1', date: '2026-09-25', qty: 5, reason: 'x', createdBy: null, createdAt: at(2), updatedAt: at(2) });
       await repos.wipAdjustments.create({ id: 'a1', wipId: 'wip-1', date: '2026-09-24', qty: -5, reason: 'y', createdBy: null, createdAt: at(1), updatedAt: at(1) });
       expect((await repos.wipAdjustments.listAll()).map((a) => a.id)).toEqual(['a1', 'a2']);
+    });
+  });
+}
+
+export function runSalesRepoContract(name: string, make: DataLayerFactory) {
+  const strip = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+
+  describe(`repo contract (sales): ${name}`, () => {
+    it('parties: name unique (case and spaces ignored); search, state filter, name order; lookup by name', async () => {
+      const { repos } = await make();
+      const f = salesFixtures();
+      for (const c of f.slCustomers) await repos.salesCustomers.create(strip(c));
+      await expect(repos.salesCustomers.create(strip({ ...f.slCustomers[0]!, id: 'dup', name: ' gujarat  traders ' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      expect((await repos.salesCustomers.list({})).rows.map((c) => c.id)).toEqual(['slc-g', 'slc-m', 'slc-x']);
+      expect((await repos.salesCustomers.list({ filters: { state: 'GUJARAT' } })).rows.map((c) => c.id)).toEqual(['slc-g', 'slc-x']);
+      expect((await repos.salesCustomers.list({ q: '27BBBBB' })).rows.map((c) => c.id)).toEqual(['slc-m']);
+      expect((await repos.salesCustomers.getByName('maharashtra   boards'))?.id).toBe('slc-m');
+      await repos.salesCustomers.softDelete('slc-x', at(1));
+      expect((await repos.salesCustomers.listAll()).map((c) => c.id)).toEqual(['slc-g', 'slc-m']);
+    });
+
+    it('documents: number unique; firm / status / date / FY filters; numeric number sort; search by party and PO', async () => {
+      const { repos } = await make();
+      const f = salesFixtures();
+      for (const o of f.slOrders) await repos.salesOrders.create(strip(o));
+      await repos.salesOrders.create(strip({ ...f.slOrders[0]!, id: 'so-10', soNo: 'SO/10/26-27', date: '2026-03-20', firm: 'osb' as const, status: 'cancelled' as const, createdAt: at(1) }));
+      await expect(repos.salesOrders.create(strip({ ...f.slOrders[0]!, id: 'x', soNo: 'so/1/26-27' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      const ids = async (q: object) => (await repos.salesOrders.list(q)).rows.map((r) => r.id);
+      expect(await ids({})).toEqual(['so-2', 'so-1', 'so-10']);
+      expect(await ids({ sort: '-soNo' })).toEqual(['so-10', 'so-2', 'so-1']);
+      expect(await ids({ filters: { firm: 'osb' } })).toEqual(['so-10']);
+      expect(await ids({ filters: { status: 'draft' } })).toEqual(['so-2']);
+      expect(await ids({ filters: { fy: '2025-26' } })).toEqual(['so-10']);
+      expect(await ids({ filters: { from: '2026-09-10', to: '2026-09-30' } })).toEqual(['so-2']);
+      expect(await ids({ q: 'po-77', filters: { firm: 'llp' } })).toEqual(['so-1']);
+      expect(await ids({ filters: { city: 'PUNE' } })).toEqual(['so-2']);
+      expect((await repos.salesOrders.getByNo('SO/2/26-27'))?.id).toBe('so-2');
+
+      for (const i of f.slInvoices) await repos.salesInvoices.create(strip(i));
+      expect((await repos.salesInvoices.list({ filters: { status: 'approved' } })).rows.map((r) => r.id)).toEqual(['inv-2']);
+      expect((await repos.salesInvoices.list({ sort: 'totalPaise' })).rows.map((r) => r.id)).toEqual(['inv-2', 'inv-1']);
+    });
+
+    it('price entries, FG stock and inter-company: create, update, soft delete; inter-company date filter', async () => {
+      const { repos } = await make();
+      const f = salesFixtures();
+      await repos.salesPrices.create(strip(f.slPrices[0]!));
+      await repos.salesPrices.update('pl-1', { ratePaise: 45000, updatedAt: at(1) });
+      expect((await repos.salesPrices.getById('pl-1'))?.ratePaise).toBe(45000);
+      await repos.salesPrices.softDelete('pl-1', at(2));
+      expect(await repos.salesPrices.listAll()).toEqual([]);
+      await repos.fgStock.create(strip(f.slFgStock[0]!));
+      expect((await repos.fgStock.listAll()).length).toBe(1);
+      await repos.intercompany.create(strip(f.slIntercompany[0]!));
+      await repos.intercompany.create(strip({ ...f.slIntercompany[0]!, id: 'ic-2', billingDoc: 'SPL/09/26-27', billingDate: '2026-08-01' }));
+      await expect(repos.intercompany.create(strip({ ...f.slIntercompany[0]!, id: 'ic-3' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      expect((await repos.intercompany.list({ filters: { from: '2026-09-01' } })).rows.map((r) => r.id)).toEqual(['ic-1']);
+      expect((await repos.intercompany.list({})).rows.map((r) => r.id)).toEqual(['ic-1', 'ic-2']);
     });
   });
 }

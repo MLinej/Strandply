@@ -10,13 +10,14 @@ export interface ModalProps {
   description?: ReactNode;
   /** Buttons, right-aligned. One primary at most; the modal is its own primary scope. */
   footer?: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  /** xl: wide document forms with line items (Sales). */
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Set false for forms with unsaved input, so a stray backdrop click doesn't discard work. */
   closeOnBackdrop?: boolean;
   children?: ReactNode;
 }
 
-const WIDTH = { sm: 'w-[400px]', md: 'w-[560px]', lg: 'w-[720px]' };
+const WIDTH = { sm: 'w-[400px]', md: 'w-[560px]', lg: 'w-[720px]', xl: 'w-[1000px]' };
 
 /**
  * Built on native <dialog>: the browser provides the focus trap, the top layer, Esc and inert background.

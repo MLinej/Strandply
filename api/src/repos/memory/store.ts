@@ -17,6 +17,7 @@ import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../../con
 import type { Grn, Mrn } from '../../contracts/stores';
 import type { OpeningEntry, Reclass, SkuGroup, StockSlip } from '../../contracts/stock';
 import type { Chipping, Cutting, HotPress, MattBatch, Mdo, Plan, ResinUse, Summary, WipAdjustment, WipBatch } from '../../contracts/production';
+import type { Customer, FgStock, Intercompany, PriceEntry, Proforma, SalesInvoice, SalesItem, SalesOrder, WeightEntry } from '../../contracts/sales';
 import type { OpeningStock, PurchaseDocument, PurchaseEntry, PurchaseOrder, PurchaseReturn, PurchaseType } from '../../contracts/purchase';
 import type { ActivityEntry } from '../activity';
 import type { RolePermissionsRow } from '../role-permissions';
@@ -74,6 +75,16 @@ export interface MemoryData {
   prMatt: MattBatch[];
   prWip: WipBatch[];
   prWipAdj: WipAdjustment[];
+  // Sales module
+  slCustomers: Customer[];
+  slItems: SalesItem[];
+  slPrices: PriceEntry[];
+  slWeights: WeightEntry[];
+  slProformas: Proforma[];
+  slOrders: SalesOrder[];
+  slInvoices: SalesInvoice[];
+  slFgStock: FgStock[];
+  slIntercompany: Intercompany[];
   /** Data upgrades already applied to this store (see seed/upgrades.ts). The memory twin of a migrations table. */
   upgrades: { name: string; appliedAt: string }[];
 }
@@ -127,6 +138,15 @@ const KEYS: { [K in TableName]: (keyof Row<K> & string) | ((row: Row<K>) => stri
   prMatt: 'id',
   prWip: 'id',
   prWipAdj: 'id',
+  slCustomers: 'id',
+  slItems: 'id',
+  slPrices: 'id',
+  slWeights: 'id',
+  slProformas: 'id',
+  slOrders: 'id',
+  slInvoices: 'id',
+  slFgStock: 'id',
+  slIntercompany: 'id',
   upgrades: 'name',
 };
 

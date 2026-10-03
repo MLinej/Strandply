@@ -45,6 +45,10 @@ import { ProductionDocService } from './modules/production/documents';
 import { MattService, WipService } from './modules/production/matt-wip';
 import { ProductionReportService } from './modules/production/report-service';
 import { productionRoutes } from './modules/production/routes';
+import { SalesDocumentService } from './modules/sales/document-service';
+import { SalesMasterService } from './modules/sales/master-service';
+import { SalesReportService } from './modules/sales/report-service';
+import { salesRoutes } from './modules/sales/routes';
 import type { DataLayer } from './repos';
 
 export interface AppDeps {
@@ -69,6 +73,8 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const productionDocs = new ProductionDocService(data, activity, clock);
   const mattBatches = new MattService(data, activity, clock);
   const wipBatches = new WipService(data, activity, clock);
+  const salesDocs = new SalesDocumentService(data, activity, clock);
+  const salesMasters = new SalesMasterService(data, activity, clock);
   return {
     activity,
     permissions: new PermissionService(data, activity, clock, config.permissionCacheMs),
@@ -107,6 +113,9 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     mattBatches,
     wipBatches,
     productionReports: new ProductionReportService(data, productionDocs, mattBatches, wipBatches, company, activity, clock),
+    salesDocs,
+    salesMasters,
+    salesReports: new SalesReportService(data, salesDocs, salesMasters, company, activity, clock),
     clock,
   };
 }
@@ -136,6 +145,7 @@ export function createApp(deps: AppDeps) {
   mount('/api/stores', storesRoutes());
   mount('/api/stock', stockRoutes());
   mount('/api/production', productionRoutes());
+  mount('/api/sales', salesRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

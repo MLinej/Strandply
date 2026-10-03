@@ -109,6 +109,23 @@ UPGRADES.push({
   },
 });
 
+const SALES_PAGES = ['sales_dashboard', 'sales_masters', 'sales_proforma', 'sales_orders', 'sales_invoices', 'sales_dispatch', 'sales_reports', 'sales_settings'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0010_sales.sql on an existing database. The new tables come from the seed.
+  name: '0010_sales',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], SALES_PAGES, ['sales_approve']);
+    grant(data, ['management'], ['sales_dashboard', 'sales_reports']);
+    const keys = new Set((data.settings ?? []).map((s) => s.key));
+    if (data.settings) data.settings.push(...seed.settings.filter((s) => s.key.startsWith('sales.') && !keys.has(s.key)));
+    // The item master is reference data, and in dev the demo register comes with it: take the seed's when empty.
+    for (const t of ['slItems', 'slCustomers', 'slOrders', 'slInvoices', 'slIntercompany'] as const) if (!data[t]?.length) (data as Record<string, unknown>)[t] = structuredClone(seed[t]);
+    const counters = new Set((data.counters ?? []).map((c) => c.name));
+    if (data.counters) data.counters.push(...seed.counters.filter((c) => c.name.startsWith('SL-') && !counters.has(c.name)));
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

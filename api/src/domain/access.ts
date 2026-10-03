@@ -2,7 +2,8 @@
 // SampleTrack defaults follow the legacy ROLE_PERMS (docs/sampletrack-spec.md §2);
 // the vendor_* keys come from the Vendor Portal (docs/vendors-spec.md §2), purchase_* from the
 // Purchase ERP (docs/purchase-spec.md §2), stores_* from Stores MRN & GRN (docs/stores-spec.md §2),
-// stock_* from Stock Management (docs/stock-spec.md §2), production_* from Production MIS (docs/production-spec.md §2).
+// stock_* from Stock Management (docs/stock-spec.md §2), production_* from Production MIS (docs/production-spec.md §2),
+// sales_* from the Sales ERP (docs/sales-spec.md §2).
 
 export const ROLES = ['superadmin', 'admin', 'dispatch', 'marketing', 'management'] as const;
 export type Role = (typeof ROLES)[number];
@@ -58,6 +59,15 @@ export const PAGE_KEYS = [
   'production_matt',
   'production_materials',
   'production_settings',
+  // Sales module
+  'sales_dashboard',
+  'sales_masters',
+  'sales_proforma',
+  'sales_orders',
+  'sales_invoices',
+  'sales_dispatch',
+  'sales_reports',
+  'sales_settings',
 ] as const;
 export type PageKey = (typeof PAGE_KEYS)[number];
 
@@ -67,8 +77,9 @@ export type PageKey = (typeof PAGE_KEYS)[number];
  * `purchase_approve` = approve purchase entries, POs, returns and opening stock (the legacy PIN approval).
  * `stores_review` / `stores_approve` / `stores_account` = the three Stores sign-offs on a GRN (the legacy
  * Reviewer, Approver and Accountant PINs).
+ * `sales_approve` = approve or reject sales invoices (the legacy invoice approval).
  */
-export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve'] as const;
+export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve', 'sales_approve'] as const;
 export type ActionKey = (typeof ACTION_KEYS)[number];
 
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;
@@ -100,7 +111,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionSet> = {
     widgets: ['pending', 'parties'],
   },
   management: {
-    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard'],
+    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard', 'sales_dashboard', 'sales_reports'],
     actions: ['print', 'export'],
     widgets: [...WIDGET_KEYS],
   },

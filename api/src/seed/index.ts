@@ -8,6 +8,9 @@ import { REF_PURCHASE_TYPES } from './purchase';
 import { DEFAULT_STORES_SETTINGS } from './stores';
 import { REF_SKU_GROUPS } from './stock';
 import { DEFAULT_PRODUCTION_SETTINGS } from './production';
+import { DEFAULT_SALES_SETTINGS } from './sales';
+import { REF_SALES_ITEMS } from './sales-items';
+import { DEMO_CUSTOMERS, DEMO_INTERCOMPANY, DEMO_SALES_COUNTERS, DEMO_SALES_INVOICES, DEMO_SALES_ORDERS, DEMO_SALES_PERSONS } from './sales-demo.dev';
 import { UPGRADES } from './upgrades';
 import { DEV_USERS } from './users.dev';
 import {
@@ -30,6 +33,8 @@ export interface SeedOptions {
 export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptions): MemoryData {
   const audit = { createdBy: null, createdAt: at, updatedAt: at, deletedAt: null };
   const dev = <T>(rows: T[]) => (devUsers ? structuredClone(rows) : []);
+  /** Dev rows stored without audit columns. */
+  const devAudit = <T>(rows: T[]) => (devUsers ? rows.map((r) => ({ ...structuredClone(r), ...audit })) : []);
   return {
     users: dev(DEV_USERS),
     sessions: [],
@@ -48,10 +53,11 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
       { name: 'REQ', lastValue: devUsers ? DEMO_REQUESTS.length : 0, ...audit },
       { name: 'DSP', lastValue: devUsers ? DEMO_DISPATCHES.length : 0, ...audit },
       { ...VENDOR_PRODUCT_COUNTER, ...audit },
+      ...devAudit(DEMO_SALES_COUNTERS),
     ],
     notifications: [],
     dispatchHistory: dev(DEMO_DISPATCH_HISTORY),
-    settings: Object.entries({ ...DEFAULT_SETTINGS, ...DEFAULT_VENDOR_SETTINGS, ...DEFAULT_STORES_SETTINGS, ...DEFAULT_PRODUCTION_SETTINGS }).map(([key, value]) => ({ key, value, ...audit })),
+    settings: Object.entries({ ...DEFAULT_SETTINGS, ...DEFAULT_VENDOR_SETTINGS, ...DEFAULT_STORES_SETTINGS, ...DEFAULT_PRODUCTION_SETTINGS, ...DEFAULT_SALES_SETTINGS, ...(devUsers ? { 'sales.sales_persons': DEMO_SALES_PERSONS } : {}) }).map(([key, value]) => ({ key, value, ...audit })),
     notificationReads: [],
     vnCategories: REF_VENDOR_CATEGORIES.map((c) => ({ ...c, ...audit })),
     vnProducts: REF_VENDOR_PRODUCTS.map((p) => ({ ...p, ...audit })),
@@ -80,6 +86,15 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     prMatt: [],
     prWip: [],
     prWipAdj: [],
+    slCustomers: devAudit(DEMO_CUSTOMERS),
+    slItems: REF_SALES_ITEMS.map((i) => ({ ...i, ...audit })),
+    slPrices: [],
+    slWeights: [],
+    slProformas: [],
+    slOrders: devAudit(DEMO_SALES_ORDERS),
+    slInvoices: devAudit(DEMO_SALES_INVOICES),
+    slFgStock: [],
+    slIntercompany: devAudit(DEMO_INTERCOMPANY),
     // A fresh seed already has everything the upgrades add.
     upgrades: UPGRADES.map((u) => ({ name: u.name, appliedAt: at })),
   };

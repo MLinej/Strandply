@@ -9,6 +9,7 @@ import type { ConsumptionRepo, OpeningStockRepo, PurchaseDocumentRepo, PurchaseE
 import type { GrnRepo, MrnRepo } from './stores';
 import type { ChippingRepo, CuttingRepo, HotPressRepo, MattBatchRepo, MdoRepo, PlanRepo, ResinUseRepo, SummaryRepo, WipAdjustmentRepo, WipBatchRepo } from './production';
 import type { ReclassRepo, SkuGroupRepo, StockOpeningRepo, StockSlipRepo } from './stock';
+import type { CustomerRepo, FgStockRepo, IntercompanyRepo, PriceEntryRepo, ProformaRepo, SalesInvoiceRepo, SalesItemRepo, SalesOrderRepo, WeightEntryRepo } from './sales';
 import type { CounterRepo, DispatchRepo, NotificationRepo, RequestRepo } from './workflow';
 
 export * from './types';
@@ -24,6 +25,7 @@ export * from './purchase';
 export * from './stores';
 export * from './stock';
 export * from './production';
+export * from './sales';
 
 /** Every repo the app uses. Routes and services receive this, never a concrete implementation. */
 export interface Repos {
@@ -69,6 +71,15 @@ export interface Repos {
   mattBatches: MattBatchRepo;
   wipBatches: WipBatchRepo;
   wipAdjustments: WipAdjustmentRepo;
+  salesCustomers: CustomerRepo;
+  salesItems: SalesItemRepo;
+  salesPrices: PriceEntryRepo;
+  salesWeights: WeightEntryRepo;
+  proformas: ProformaRepo;
+  salesOrders: SalesOrderRepo;
+  salesInvoices: SalesInvoiceRepo;
+  fgStock: FgStockRepo;
+  intercompany: IntercompanyRepo;
 }
 
 /**

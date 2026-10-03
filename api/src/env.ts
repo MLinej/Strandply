@@ -34,6 +34,9 @@ import type { StockService } from './modules/stock/stock-service';
 import type { ProductionDocService } from './modules/production/documents';
 import type { MattService, WipService } from './modules/production/matt-wip';
 import type { ProductionReportService } from './modules/production/report-service';
+import type { SalesDocumentService } from './modules/sales/document-service';
+import type { SalesMasterService } from './modules/sales/master-service';
+import type { SalesReportService } from './modules/sales/report-service';
 
 export interface AuthContext {
   user: User;
@@ -80,6 +83,9 @@ export interface Services {
   mattBatches: MattService;
   wipBatches: WipService;
   productionReports: ProductionReportService;
+  salesDocs: SalesDocumentService;
+  salesMasters: SalesMasterService;
+  salesReports: SalesReportService;
   clock: Clock;
 }
 

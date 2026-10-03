@@ -15,7 +15,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
   {
     key: 'pages',
     title: 'Samples & admin pages',
-    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_')),
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_') && !k.startsWith('sales_')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -87,10 +87,25 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
     },
   },
   {
+    key: 'pages',
+    title: 'Sales pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('sales_')),
+    label: {
+      sales_dashboard: 'Dashboard and audit',
+      sales_masters: 'Party, item, price list, weight chart',
+      sales_proforma: 'Proforma invoices',
+      sales_orders: 'Sales orders',
+      sales_invoices: 'Sales invoices, inter-company',
+      sales_dispatch: 'Dispatch register, FG inventory',
+      sales_reports: 'Sales reports',
+      sales_settings: 'Sales settings',
+    },
+  },
+  {
     key: 'actions',
     title: 'Actions',
     items: ACTION_KEYS,
-    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors', purchase_approve: 'Approve purchases', stores_review: 'Review GRNs', stores_approve: 'Approve GRNs', stores_account: 'Account GRNs', production_review: 'Review production', production_approve: 'Approve production' },
+    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors', purchase_approve: 'Approve purchases', stores_review: 'Review GRNs', stores_approve: 'Approve GRNs', stores_account: 'Account GRNs', production_review: 'Review production', production_approve: 'Approve production', sales_approve: 'Approve sales invoices' },
   },
   {
     key: 'widgets',

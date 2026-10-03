@@ -502,6 +502,86 @@ CASES.push(
   { method: 'GET', route: `${PR}/audit`, path: `${PR}/audit`, allowed: PR_VIEW, ok: 200 },
 );
 
+// Sales module. Admins have everything. Management: sales_dashboard and sales_reports (with print and export),
+// so it reads the registers the reports need, but opens no forms and writes nothing.
+const SL = '/api/sales';
+const SL_VIEW: Role[] = ['superadmin', 'admin', 'management'];
+const slLine = { itemId: 'sli-1', pcs: 10, qtySqm: 29.768, ratePaise: 44000 };
+CASES.push(
+  { method: 'GET', route: `${SL}/meta`, path: `${SL}/meta`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/options`, path: `${SL}/options`, allowed: ADMINS, ok: 200 },
+  { method: 'PATCH', route: `${SL}/settings`, path: `${SL}/settings`, body: { brands: ['Strandply', 'Strandply Gold'] }, allowed: ADMINS, ok: 200 },
+  // Party master
+  { method: 'GET', route: `${SL}/customers`, path: `${SL}/customers?state=GUJARAT`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/customers/:id`, path: `${SL}/customers/slc-g`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/customers/:id/ledger`, path: `${SL}/customers/slc-g/ledger`, allowed: SL_VIEW, ok: 200 },
+  { method: 'POST', route: `${SL}/customers`, path: `${SL}/customers`, body: { name: 'NEW PARTY', gstin: '24CCCCC2222C1Z5' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SL}/customers/:id`, path: `${SL}/customers/slc-g`, body: { creditDays: 45 }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${SL}/customers/:id`, path: `${SL}/customers/slc-x`, allowed: ADMINS, ok: 204 },
+  // Items, price list, weight chart
+  { method: 'GET', route: `${SL}/items`, path: `${SL}/items?grade=OSB`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/items`, path: `${SL}/items`, body: { name: 'OSB TEST 1220mm X 2440mm X 6mm', brand: 'Strandply', grade: 'OSB', thic: 6, width: 1220, length: 2440 }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SL}/items/:id`, path: `${SL}/items/sli-2`, body: { defaultRatePaise: 35000 }, allowed: ADMINS, ok: 200 },
+  // sli-1 is on orders.
+  { method: 'DELETE', route: `${SL}/items/:id`, path: `${SL}/items/sli-1`, allowed: ADMINS, ok: 409 },
+  { method: 'GET', route: `${SL}/prices`, path: `${SL}/prices?itemId=sli-1`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/prices`, path: `${SL}/prices`, body: { itemId: 'sli-1', effectiveDate: '2026-10-01', ratePaise: 46000 }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SL}/prices/:id`, path: `${SL}/prices/pl-1`, body: { ratePaise: 44500 }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${SL}/prices/:id`, path: `${SL}/prices/pl-1`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${SL}/weights`, path: `${SL}/weights`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/weights`, path: `${SL}/weights`, body: { itemId: 'sli-1', effectiveDate: '2026-10-01', weightKg: 26 }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SL}/weights/:id`, path: `${SL}/weights/wc-1`, body: { weightKg: 25.5 }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${SL}/weights/:id`, path: `${SL}/weights/wc-1`, allowed: ADMINS, ok: 204 },
+  // Proformas
+  { method: 'GET', route: `${SL}/proformas`, path: `${SL}/proformas?firm=llp`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/proformas/:id`, path: `${SL}/proformas/pi-1`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${SL}/proformas/:id/print`, path: `${SL}/proformas/pi-1/print`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${SL}/proformas/:id/email`, path: `${SL}/proformas/pi-1/email`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/proformas`, path: `${SL}/proformas`, body: { firm: 'llp', date: '2026-10-01', billToId: 'slc-g', lines: [slLine] }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SL}/proformas/:id`, path: `${SL}/proformas/pi-1`, body: { remarks: 'Rate valid 30 days' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/proformas/:id/status`, path: `${SL}/proformas/pi-1/status`, body: { status: 'sent' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/proformas/:id/confirm`, path: `${SL}/proformas/pi-1/confirm`, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${SL}/proformas/:id`, path: `${SL}/proformas/pi-1`, allowed: ADMINS, ok: 204 },
+  // Orders
+  { method: 'GET', route: `${SL}/orders`, path: `${SL}/orders?status=confirmed`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/orders/:id`, path: `${SL}/orders/so-1`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/orders/:id/print`, path: `${SL}/orders/so-1/print`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${SL}/orders/:id/email`, path: `${SL}/orders/so-1/email`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/orders`, path: `${SL}/orders`, body: { firm: 'llp', date: '2026-10-01', billToId: 'slc-m', lines: [slLine] }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SL}/orders/:id`, path: `${SL}/orders/so-1`, body: { edd: '2026-09-12' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/orders/:id/status`, path: `${SL}/orders/so-2/status`, body: { status: 'confirmed' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/orders/:id/dispatch`, path: `${SL}/orders/so-2/dispatch`, body: { date: '2026-09-26', vehicleNo: 'MH12XY9999' }, allowed: ADMINS, ok: 200 },
+  // so-1 has invoices.
+  { method: 'DELETE', route: `${SL}/orders/:id`, path: `${SL}/orders/so-1`, allowed: ADMINS, ok: 409 },
+  // Invoices
+  { method: 'GET', route: `${SL}/invoices`, path: `${SL}/invoices?status=pending`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/invoices/:id`, path: `${SL}/invoices/inv-1`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/invoices/:id/print`, path: `${SL}/invoices/inv-1/print`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${SL}/invoices/:id/email`, path: `${SL}/invoices/inv-1/email`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/invoices`, path: `${SL}/invoices`, body: { soId: 'so-1', date: '2026-10-01', lines: [{ soLine: 0, pcs: 10, qtySqm: 29.768, ratePaise: 44000 }] }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SL}/invoices/:id`, path: `${SL}/invoices/inv-1`, body: { ewayBill: 'EWB-2' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/invoices/:id/approve`, path: `${SL}/invoices/inv-1/approve`, body: { decision: 'approve' }, allowed: ADMINS, ok: 200 },
+  // inv-2 is approved.
+  { method: 'DELETE', route: `${SL}/invoices/:id`, path: `${SL}/invoices/inv-2`, allowed: ADMINS, ok: 409 },
+  // Dispatch register, FG, inter-company
+  { method: 'GET', route: `${SL}/dispatch`, path: `${SL}/dispatch?firm=llp`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${SL}/fg`, path: `${SL}/fg?firm=llp`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${SL}/fg`, path: `${SL}/fg`, body: { firm: 'llp', grade: 'OSB', thic: 9, width: 1220, length: 2440, qtyOnHandSqm: 500 }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SL}/fg/:id`, path: `${SL}/fg/fg-1`, body: { qtyOnHandSqm: 1200 }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${SL}/fg/:id`, path: `${SL}/fg/fg-1`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${SL}/intercompany`, path: `${SL}/intercompany`, allowed: SL_VIEW, ok: 200 },
+  { method: 'POST', route: `${SL}/intercompany`, path: `${SL}/intercompany`, body: { billingDoc: 'SPL/02/26-27', billingDate: '2026-09-06', materialDesc: 'Custom board', pcs: 10, qtySqm: 20, ratePaise: 30000, igstPaise: 108000 }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${SL}/intercompany/:id`, path: `${SL}/intercompany/ic-1`, body: { vehicleNo: 'GJ03AB9999' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${SL}/intercompany/:id`, path: `${SL}/intercompany/ic-1`, allowed: ADMINS, ok: 204 },
+  // Dashboard, reports, exports, audit
+  { method: 'GET', route: `${SL}/dashboard`, path: `${SL}/dashboard?firm=llp`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/reports/:id`, path: `${SL}/reports/pending_orders`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/reports/:id/export`, path: `${SL}/reports/sales_register/export`, allowed: SL_VIEW, ok: 200 },
+  ...['customers', 'items', 'prices', 'weights', 'proformas', 'orders', 'invoices', 'dispatch', 'fg'].map((k) => ({ method: 'GET', route: `${SL}/export/${k}`, path: `${SL}/export/${k}`, allowed: ADMINS, ok: 200 })),
+  { method: 'GET', route: `${SL}/export/intercompany`, path: `${SL}/export/intercompany`, allowed: SL_VIEW, ok: 200 },
+  { method: 'GET', route: `${SL}/audit`, path: `${SL}/audit`, allowed: SL_VIEW, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

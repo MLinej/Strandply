@@ -18,6 +18,8 @@ import { MemoryConsumptionRepo, MemoryOpeningStockRepo, MemoryPurchaseDocumentRe
 import { MemoryGrnRepo, MemoryMrnRepo } from './stores';
 import { MemoryDocRepo, MemoryMattBatchRepo, MemoryWipAdjustmentRepo, MemoryWipBatchRepo } from './production';
 import type { Chipping, Cutting, HotPress, Mdo, Plan, ResinUse, Summary } from '../../contracts/production';
+import { MemoryCustomerRepo, MemoryFgStockRepo, MemoryIntercompanyRepo, MemoryPriceEntryRepo, MemorySalesDocRepo, MemorySalesItemRepo, MemoryWeightEntryRepo } from './sales';
+import type { Proforma, SalesInvoice, SalesOrder } from '../../contracts/sales';
 import { MemoryReclassRepo, MemorySkuGroupRepo, MemoryStockOpeningRepo, MemoryStockSlipRepo } from './stock';
 import { MemoryTncRepo, MemoryVendorCategoryRepo, MemoryVendorProductRepo, MemoryVendorRepo } from './vendors';
 import { MemoryCounterRepo, MemoryDispatchRepo, MemoryNotificationRepo, MemoryRequestRepo } from './workflow';
@@ -105,6 +107,15 @@ export function createMemoryDataLayer(store: MemoryStore): DataLayer {
     mattBatches: new MemoryMattBatchRepo(store),
     wipBatches: new MemoryWipBatchRepo(store),
     wipAdjustments: new MemoryWipAdjustmentRepo(store),
+    salesCustomers: new MemoryCustomerRepo(store),
+    salesItems: new MemorySalesItemRepo(store),
+    salesPrices: new MemoryPriceEntryRepo(store),
+    salesWeights: new MemoryWeightEntryRepo(store),
+    proformas: new MemorySalesDocRepo<Proforma>(store, 'slProformas', 'sales_proformas', 'piNo', 'status', ['poRef', 'soNo']),
+    salesOrders: new MemorySalesDocRepo<SalesOrder>(store, 'slOrders', 'sales_orders', 'soNo', 'status', ['poNo', 'piNo']),
+    salesInvoices: new MemorySalesDocRepo<SalesInvoice>(store, 'slInvoices', 'sales_invoices', 'invNo', 'approval', ['soNo', 'poNo', 'ewayBill']),
+    fgStock: new MemoryFgStockRepo(store),
+    intercompany: new MemoryIntercompanyRepo(store),
   };
   return { repos, uow: new MemoryUnitOfWork(store, repos) };
 }

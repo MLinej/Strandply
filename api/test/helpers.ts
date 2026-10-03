@@ -9,6 +9,7 @@ import type { PurchaseEntry, PurchaseOrder, PurchaseReturn } from '../src/contra
 import type { Grn, Mrn } from '../src/contracts/stores';
 import type { OpeningEntry, Reclass, StockSlip } from '../src/contracts/stock';
 import type { Chipping, Cutting, DocBase, HotPress, MattBatch, Mdo, Plan, ResinUse, Summary, WipBatch } from '../src/contracts/production';
+import { docTotals, EMPTY_DISPATCH, lineAmount, type Customer, type FgStock, type Intercompany, type OrderLine, type Proforma, type SalesInvoice, type SalesOrder } from '../src/contracts/sales';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -549,6 +550,173 @@ export function productionFixtures() {
  * - r2 (REQ-0002): Pending, p-used, a free-text line, no dispatch
  * - city-custom: a custom city ("Halvad", Gujarat)
  */
+/** Sales: two parties (Gujarat, Maharashtra) and an unused one; SO/1 confirmed with invoices SPL/01 (pending) and SPL/02 (approved); SO/2 draft. */
+export function salesFixtures() {
+  const party = (id: string, name: string, gstin: string | null, city: string, state: string, over: Partial<Customer> = {}): Customer => ({
+    id,
+    name,
+    code: null,
+    dealerType: 'Dealer',
+    gstin,
+    pan: null,
+    group: 'SUNDRY DEBTORS',
+    address: null,
+    city,
+    state,
+    country: 'India',
+    pincode: null,
+    contactPerson: null,
+    mobile1: '9800000000',
+    mobile2: null,
+    email: null,
+    creditDays: 30,
+    creditLimitPaise: 50000000,
+    transportPref: null,
+    paymentTerms: '30 Days',
+    taxTypes: { llp: gstin?.startsWith('24') ? 'SG+CG' : 'IGST', osb: gstin?.startsWith('27') ? 'SG+CG' : 'IGST' },
+    active: true,
+    ...audit,
+    ...over,
+  });
+  // sli-1 is the seed's "S-OSB PRELAM + MDO 1220mm X 2440mm X 12mm" (2.9768 sq m a board).
+  const item = { itemId: 'sli-1', itemName: 'S-OSB PRELAM + MDO 1220mm X 2440mm X 12mm', brand: 'Strandply', grade: 'S-OSB', subType: 'PRELAM + MDO', thic: 12, width: 1220, length: 2440, hsn: '441012', sqmFactor: 2.9768 };
+  const free = { itemId: null, itemName: 'Custom board', brand: null, grade: null, subType: null, thic: null, width: null, length: null, hsn: null, sqmFactor: 2 };
+  const line = (base: typeof item | typeof free, pcs: number, qtySqm: number, ratePaise: number, weightKg = 0): OrderLine => ({ ...base, pcs, qtySqm, ratePaise, weightKg, amountPaise: lineAmount(qtySqm, ratePaise) });
+  const g = { billToId: 'slc-g', billTo: 'GUJARAT TRADERS', shipToId: 'slc-g', shipTo: 'GUJARAT TRADERS', state: 'GUJARAT', city: 'RAJKOT' };
+  const soLines = [line(item, 100, 297.68, 44000, 25), line(free, 10, 20, 30000)];
+  const so1: SalesOrder = {
+    id: 'so-1',
+    firm: 'llp',
+    soNo: 'SO/1/26-27',
+    date: '2026-09-01',
+    poNo: 'PO-77',
+    poDate: '2026-08-30',
+    edd: '2026-09-10',
+    ...g,
+    salesPerson: 'VIPUL PANCHAL',
+    paymentTerms: '30 Days',
+    deliveryTerms: 'EX WORKS',
+    taxType: 'SG+CG',
+    lines: soLines,
+    freightPaise: 80000,
+    gstPct: 18,
+    totalPaise: docTotals(soLines, 80000, 'SG+CG', 18).total,
+    status: 'confirmed',
+    remarks: null,
+    piId: null,
+    piNo: null,
+    dispatch: { ...EMPTY_DISPATCH, date: '2026-09-05', vehicleNo: 'GJ03AB1234', transporter: 'VRL Logistics', lrNo: 'LR-9' },
+    ...audit,
+  };
+  const so2Lines = [line(item, 50, 148.84, 45000)];
+  const so2: SalesOrder = {
+    ...so1,
+    id: 'so-2',
+    soNo: 'SO/2/26-27',
+    date: '2026-09-15',
+    poNo: null,
+    poDate: null,
+    edd: '2026-09-25',
+    billToId: 'slc-m',
+    billTo: 'MAHARASHTRA BOARDS',
+    shipToId: 'slc-m',
+    shipTo: 'MAHARASHTRA BOARDS',
+    state: 'MAHARASHTRA',
+    city: 'PUNE',
+    taxType: 'IGST',
+    lines: so2Lines,
+    freightPaise: 0,
+    totalPaise: docTotals(so2Lines, 0, 'IGST', 18).total,
+    status: 'draft',
+    dispatch: { ...EMPTY_DISPATCH },
+  };
+  const invLine = (n: number, pcs: number, qtySqm: number) => {
+    const { pcs: soPcs, qtySqm: soQtySqm, weightKg: _w, amountPaise: _a, ...rest } = soLines[n]!;
+    return { ...rest, soLine: n, soPcs, soQtySqm, pcs, qtySqm, amountPaise: lineAmount(qtySqm, rest.ratePaise) };
+  };
+  const inv = (id: string, invNo: string, lines: SalesInvoice['lines'], over: Partial<SalesInvoice> = {}): SalesInvoice => ({
+    id,
+    firm: 'llp',
+    invNo,
+    date: '2026-09-06',
+    soId: 'so-1',
+    soNo: 'SO/1/26-27',
+    poNo: 'PO-77',
+    ...g,
+    taxType: 'SG+CG',
+    lines,
+    freightPaise: 0,
+    gstPct: 18,
+    totalPaise: docTotals(lines, 0, 'SG+CG', 18).total,
+    irn: null,
+    ewayBill: 'EWB-1',
+    weightTons: null,
+    approval: 'pending',
+    approvalNote: null,
+    approvedBy: null,
+    approvedByName: null,
+    approvedAt: null,
+    remarks: null,
+    ...audit,
+    ...over,
+  });
+  const piLines = [line(item, 20, 59.536, 44000)];
+  const pi: Proforma = {
+    id: 'pi-1',
+    firm: 'llp',
+    piNo: 'PI/001/26-27',
+    date: '2026-09-20',
+    validUntil: '2026-10-20',
+    poRef: 'Verbal',
+    ...g,
+    salesPerson: null,
+    paymentTerms: 'Advance',
+    deliveryTerms: 'EX WORKS',
+    taxType: 'SG+CG',
+    lines: piLines,
+    freightPaise: 0,
+    gstPct: 18,
+    totalPaise: docTotals(piLines, 0, 'SG+CG', 18).total,
+    status: 'draft',
+    soId: null,
+    soNo: null,
+    remarks: null,
+    ...audit,
+  };
+  const fg: FgStock = { id: 'fg-1', firm: 'llp', grade: 'S-OSB', thic: 12, width: 1220, length: 2440, qtyOnHandSqm: 1000, reorderSqm: 900, ...audit };
+  const ic: Intercompany = {
+    id: 'ic-1',
+    billingDoc: 'SPL/01/26-27',
+    billingDate: '2026-09-06',
+    materialDesc: 'S-OSB 1220mm X 2440mm X 12mm (PRELAM + MDO)',
+    grade: 'S-OSB',
+    thic: 12,
+    width: 1220,
+    length: 2440,
+    pcs: 40,
+    qtySqm: 119.072,
+    ratePaise: 44000,
+    materialPaise: 5239168,
+    cgstPaise: 0,
+    sgstPaise: 0,
+    igstPaise: 943050,
+    freightPaise: 0,
+    totalPaise: 6182218,
+    vehicleNo: 'GJ03AB1234',
+    ...audit,
+  };
+  return {
+    slCustomers: [party('slc-g', 'GUJARAT TRADERS', '24AAAAA0000A1Z5', 'RAJKOT', 'GUJARAT'), party('slc-m', 'MAHARASHTRA BOARDS', '27BBBBB1111B1Z5', 'PUNE', 'MAHARASHTRA'), party('slc-x', 'UNUSED PARTY', null, 'SURAT', 'GUJARAT', { creditDays: 0, creditLimitPaise: 0 })],
+    slPrices: [{ id: 'pl-1', itemId: 'sli-1', effectiveDate: '2026-04-01', ratePaise: 44000, ...audit }],
+    slWeights: [{ id: 'wc-1', itemId: 'sli-1', effectiveDate: '2026-04-01', weightKg: 25, ...audit }],
+    slProformas: [pi],
+    slOrders: [so1, so2],
+    slInvoices: [inv('inv-1', 'SPL/01/26-27', [invLine(0, 40, 119.072)]), inv('inv-2', 'SPL/02/26-27', [invLine(1, 10, 20)], { approval: 'approved', approvedBy: 'u-admin', approvedByName: 'Admin User', approvedAt: T0.toISOString() })],
+    slFgStock: [fg],
+    slIntercompany: [ic],
+  };
+}
+
 export function fixtures() {
   return {
     parties: [
@@ -685,6 +853,7 @@ export function testData(users: User[]) {
     ...storesFixtures(),
     ...stockFixtures(),
     ...productionFixtures(),
+    ...salesFixtures(),
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
     users,
@@ -694,6 +863,7 @@ export function testData(users: User[]) {
       { name: 'GRN-2026-27', lastValue: 4, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'ISS-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'STR-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
+      ...[['SL-SO-llp-2026-27', 2], ['SL-INV-llp-2026-27', 2], ['SL-PI-llp-2026-27', 1]].map(([name, lastValue]) => ({ name: name as string, lastValue: lastValue as number, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
       ...['PPR', 'HP', 'BC', 'CHR', 'WIP', 'RC', 'MWB', 'PS', 'MDO'].map((p) => ({ name: `PR-${p}`, lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
     ],
     cities: [...seed.cities, ...extraCities],
