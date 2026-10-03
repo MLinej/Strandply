@@ -11,6 +11,7 @@ import type { ChippingRepo, CuttingRepo, HotPressRepo, MattBatchRepo, MdoRepo, P
 import type { ReclassRepo, SkuGroupRepo, StockOpeningRepo, StockSlipRepo } from './stock';
 import type { CustomerRepo, FgStockRepo, IntercompanyRepo, PriceEntryRepo, ProformaRepo, SalesInvoiceRepo, SalesItemRepo, SalesOrderRepo, WeightEntryRepo } from './sales';
 import type { CampaignRepo, CrmCustomerRepo, CrmProductRepo, CrmTaskRepo, FollowupRepo, LeadRepo, OpportunityRepo, OrderLostRepo, OrderWonRepo, QuotationRepo, SalespersonRepo } from './crm';
+import type { FreightOrderRepo, InquiryRepo, RateComparisonRepo, TransporterRepo, VehicleTypeRepo } from './transport';
 import type { CounterRepo, DispatchRepo, NotificationRepo, RequestRepo } from './workflow';
 
 export * from './types';
@@ -28,6 +29,8 @@ export * from './stock';
 export * from './production';
 export * from './sales';
 export * from './crm';
+export * from './record-table';
+export * from './transport';
 
 /** Every repo the app uses. Routes and services receive this, never a concrete implementation. */
 export interface Repos {
@@ -93,6 +96,11 @@ export interface Repos {
   crmCampaigns: CampaignRepo;
   crmProducts: CrmProductRepo;
   crmSalespersons: SalespersonRepo;
+  trVehicles: VehicleTypeRepo;
+  trTransporters: TransporterRepo;
+  trInquiries: InquiryRepo;
+  trRateCmps: RateComparisonRepo;
+  trOrders: FreightOrderRepo;
 }
 
 /**

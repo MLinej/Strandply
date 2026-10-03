@@ -232,9 +232,15 @@ export const MODULES: ModuleDef[] = [
     icon: Truck,
     phase: 9,
     pages: [
-      { slug: 'trips', label: 'Trips' },
-      { slug: 'vehicles', label: 'Vehicles' },
-      { slug: 'transporters', label: 'Transporters' },
+      { slug: 'dashboard', label: 'Transport dashboard', perm: 'transport.dashboard', built: true },
+      { slug: 'inquiries', label: 'Freight inquiries', perm: 'transport.freight', built: true },
+      { slug: 'rates', label: 'Rate comparison', perm: 'transport.freight', built: true },
+      { slug: 'approvals', label: 'Freight approvals', perm: 'transport.freight', built: true },
+      { slug: 'orders', label: 'Order forms', perm: 'transport.freight', built: true },
+      { slug: 'transporters', label: 'Transporters', perm: 'transport.masters', built: true },
+      { slug: 'vehicles', label: 'Vehicle types', perm: 'transport.masters', built: true },
+      { slug: 'reports', label: 'Freight reports', perm: 'transport.reports', built: true },
+      { slug: 'audit', label: 'Audit trail', perm: 'transport.dashboard', built: true },
     ],
   },
   {

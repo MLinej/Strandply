@@ -21,6 +21,7 @@ import type { Chipping, Cutting, HotPress, Mdo, Plan, ResinUse, Summary } from '
 import { MemoryCustomerRepo, MemoryFgStockRepo, MemoryIntercompanyRepo, MemoryPriceEntryRepo, MemorySalesDocRepo, MemorySalesItemRepo, MemoryWeightEntryRepo } from './sales';
 import type { Proforma, SalesInvoice, SalesOrder } from '../../contracts/sales';
 import { crmRepos } from './crm';
+import { transportRepos } from './transport';
 import { MemoryReclassRepo, MemorySkuGroupRepo, MemoryStockOpeningRepo, MemoryStockSlipRepo } from './stock';
 import { MemoryTncRepo, MemoryVendorCategoryRepo, MemoryVendorProductRepo, MemoryVendorRepo } from './vendors';
 import { MemoryCounterRepo, MemoryDispatchRepo, MemoryNotificationRepo, MemoryRequestRepo } from './workflow';
@@ -118,6 +119,7 @@ export function createMemoryDataLayer(store: MemoryStore): DataLayer {
     fgStock: new MemoryFgStockRepo(store),
     intercompany: new MemoryIntercompanyRepo(store),
     ...crmRepos(store),
+    ...transportRepos(store),
   };
   return { repos, uow: new MemoryUnitOfWork(store, repos) };
 }

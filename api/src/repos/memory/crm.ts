@@ -1,37 +1,8 @@
 import type { Campaign, CrmCustomer, CrmCustomerFilters, FollowupFilters, LeadFilters, CrmProduct, CrmTask, Followup, Lead, Opportunity, OrderLost, OrderWon, Quotation, Salesperson } from '../../contracts/crm';
-import type { CrmTable } from '../crm';
-import type { ListQuery } from '../types';
-import { SoftTable } from './crud';
-import { listRows, type ListSpec } from './list';
-import type { MemoryStore, TableName } from './store';
+import { dateRange, MemoryRecordTable as MemoryCrmTable } from './record-table';
+import type { MemoryStore } from './store';
 
-type Row = { id: string; createdAt: string; updatedAt: string; deletedAt: string | null };
-
-/** One memory table for every CRM record kind; `spec` is how list() searches, filters and sorts. */
-export class MemoryCrmTable<T extends Row, F extends object = Record<string, never>> extends SoftTable<T> implements CrmTable<T, F> {
-  constructor(
-    store: MemoryStore,
-    table: TableName,
-    entity: string,
-    unique: (keyof T & string)[],
-    private readonly spec: ListSpec<T>,
-  ) {
-    super(store, table, entity, unique);
-  }
-
-  async listAll() {
-    return structuredClone(this.live().sort((a, b) => a.createdAt.localeCompare(b.createdAt)));
-  }
-
-  async list(query: ListQuery<F>) {
-    return listRows(this.live(), query, this.spec);
-  }
-}
-
-const range = <T>(field: keyof T) => ({
-  from: (r: T, v: unknown) => String(r[field] ?? '') >= String(v),
-  to: (r: T, v: unknown) => String(r[field] ?? '') <= String(v),
-});
+const range = dateRange;
 
 export function crmRepos(store: MemoryStore) {
   return {

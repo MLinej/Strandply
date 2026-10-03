@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
-import { grn, mrn, productionFixtures, salesFixtures, crmFixtures, purchaseEntry, stockFixtures } from './helpers';
+import { grn, mrn, productionFixtures, salesFixtures, crmFixtures, purchaseEntry, stockFixtures, transportFixtures } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -1131,6 +1131,47 @@ export function runCrmRepoContract(name: string, make: DataLayerFactory) {
       expect(await repos.crmCampaigns.listAll()).toEqual([]);
       await repos.crmCampaigns.create(strip({ ...f.crmCampaigns[0]!, id: 'cp-3' }));
       expect((await repos.crmCampaigns.list({})).total).toBe(1);
+    });
+  });
+}
+
+export function runTransportRepoContract(name: string, make: DataLayerFactory) {
+  const strip = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+
+  describe(`repo contract (transport): ${name}`, () => {
+    it('transporters: unique code and name, vehicle and operating-city filters, name order', async () => {
+      const { repos } = await make();
+      const f = transportFixtures();
+      for (const t of f.trTransporters) await repos.trTransporters.create(strip(t));
+      await repos.trTransporters.update('trt-b', { operatingCities: [{ city: 'Pune', state: null, pincode: null }], updatedAt: at(1) });
+      const ids = async (q: object) => (await repos.trTransporters.list(q)).rows.map((r) => r.id);
+      expect(await ids({})).toEqual(['trt-a', 'trt-b', 'trt-c']);
+      expect(await ids({ filters: { vehicle: 'Open Body' } })).toEqual(['trt-c']);
+      expect(await ids({ filters: { operatesIn: 'PUNE' } })).toEqual(['trt-b']);
+      expect(await ids({ filters: { operatesIn: 'rajkot' } })).toEqual(['trt-c']);
+      expect(await ids({ q: 'TRP-26-002' })).toEqual(['trt-b']);
+      await expect(repos.trTransporters.create(strip({ ...f.trTransporters[0]!, id: 'trt-x', code: 'TRP-26-009', name: ' alpha roadways ' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      await expect(repos.trTransporters.create(strip({ ...f.trTransporters[0]!, id: 'trt-y', code: 'trp-26-001', name: 'Other' }))).rejects.toBeInstanceOf(UniqueViolationError);
+    });
+
+    it('inquiries, comparisons and orders: status and date filters, newest first; soft delete frees the number', async () => {
+      const { repos } = await make();
+      const f = transportFixtures();
+      for (const i of f.trInquiries) await repos.trInquiries.create(strip(i));
+      const ids = async (q: object) => (await repos.trInquiries.list(q)).rows.map((r) => r.id);
+      expect(await ids({ filters: { status: 'open' } })).toEqual(['inq-5', 'inq-1']);
+      expect(await ids({ filters: { from: '2026-09-23', to: '2026-09-24' } })).toEqual(['inq-4', 'inq-3']);
+      for (const rc of f.trRateCmps) await repos.trRateCmps.create(strip(rc));
+      expect((await repos.trRateCmps.list({ filters: { inquiryId: 'inq-2' } })).rows.map((r) => r.id)).toEqual(['rc-2']);
+      expect((await repos.trRateCmps.list({ filters: { status: 'approved' } })).total).toBe(2);
+      await repos.trOrders.create(strip(f.trOrders[0]!));
+      await expect(repos.trOrders.create(strip({ ...f.trOrders[0]!, id: 'sfo-2', orderNo: 'sfo-26-001' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      await repos.trOrders.softDelete('sfo-1', at(1));
+      await repos.trOrders.create(strip({ ...f.trOrders[0]!, id: 'sfo-3' }));
+      expect((await repos.trOrders.list({ filters: { transporterId: 'trt-a' } })).rows.map((r) => r.id)).toEqual(['sfo-3']);
     });
   });
 }

@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0011` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings).
+- [ ] Apply `0001`–`0012` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings; Transport: 6 vehicle types).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -105,6 +105,15 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] Dashboard alerts, the follow-up board, reports, source performance and salesperson figures load whole tables. Fine for thousands of leads; move the counts into SQL past that (indexes on `crm_followups(status, next_follow_up)` and `crm_leads(stage)` exist).
 - [ ] The sidebar badge counts open follow-ups due by today on every `/badges` poll; keep it a single indexed COUNT.
 - [ ] Import the live legacy CRM state (old server `/api/crm/state`: leads, customers, followups, opportunities, quotations, ordersWon, ordersLost, tasks, campaigns, products, salespersons, sources, lostReasons). Legacy ids are random strings; quotation and order numbers keep their QT/ORD values (seed the counters from the highest).
+
+### Transport module (0012)
+- [ ] Numbers: counters `TR-INQ-<fy>`, `TR-RC-<fy>`, `TR-FRA-<fy>`, `TR-SFO-<fy>` and `TR-TRP` bumped in the insert batch (the `*_no_uq` / `tr_transporters_code_uq` indexes catch races).
+- [ ] Transporter vehicles are a JSON array of names; operating cities are the child table `tr_transporter_cities`. Quotes are the child table `tr_quotes` (`line_no` is the index `selected` points at); the approval trail is JSON on `tr_rate_comparisons`.
+- [ ] Steps that touch two rows must each be one batch: save a comparison after rejection (comparison + inquiry back to open), submit / approve / reject (comparison + inquiry status), issue an order (order insert + inquiry ordered + trail), cancel an order (order + inquiry back to approved), rename a vehicle type (type + every transporter carrying the old name).
+- [ ] "One live comparison per inquiry" and "one live order per comparison" are partial unique indexes (`tr_rate_comparisons_inquiry_uq`, `tr_orders_live_uq`); map their violations to the same 409s the services throw.
+- [ ] Past quotes, the dashboard and reports load whole tables. Fine for thousands of inquiries; move them into SQL past that (`tr_inquiries_route_idx` exists for past quotes).
+- [ ] The sidebar badge counts pending comparisons on every `/badges` poll for approvers; keep it a single COUNT on `status`.
+- [ ] Import the live legacy state (old server `/api/transport/state`: TRANSPORTERS, VEHICLES, INQUIRIES, RATE_CMPS, RC_DRAFTS, APPROVALS, ORDERS). Keep the INQ / RC / FRA / SFO / TRP numbers and seed each counter from the highest. Legacy approvals become the comparison's `approval_no`, status and trail; order forms copy the transporter fields they already hold.
 
 ## Infrastructure services (stubs now)
 - [ ] Google Sheets sync: real `SheetsSyncService` and a cron trigger for `sheets.interval_min`.

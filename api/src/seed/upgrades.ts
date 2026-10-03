@@ -145,6 +145,22 @@ UPGRADES.push({
   },
 });
 
+const TRANSPORT_PAGES = ['transport_dashboard', 'transport_freight', 'transport_masters', 'transport_reports'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0012_transport.sql on an existing database. The new tables come from the seed.
+  name: '0012_transport',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], TRANSPORT_PAGES, ['transport_approve']);
+    grant(data, ['dispatch'], ['transport_dashboard', 'transport_freight']);
+    grant(data, ['management'], ['transport_dashboard', 'transport_reports']);
+    // Vehicle types are reference data, and in dev the demo transporters come with them.
+    for (const t of ['trVehicles', 'trTransporters'] as const) if (!data[t]?.length) (data as Record<string, unknown>)[t] = structuredClone(seed[t]);
+    const counters = new Set((data.counters ?? []).map((c) => c.name));
+    if (data.counters) data.counters.push(...seed.counters.filter((c) => c.name.startsWith('TR-') && !counters.has(c.name)));
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

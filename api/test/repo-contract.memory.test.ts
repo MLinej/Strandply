@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyMemoryData, MemoryStore, memoryDataLayerFrom, createMemoryDataLayer } from '../src/repos/memory';
-import { runMasterRepoContract, runRepoContract, runProductionRepoContract, runPurchaseRepoContract, runSalesRepoContract, runCrmRepoContract, runStockRepoContract, runStoresRepoContract, runVendorRepoContract, runWorkflowRepoContract } from './repo-contract';
+import { runMasterRepoContract, runRepoContract, runProductionRepoContract, runPurchaseRepoContract, runSalesRepoContract, runCrmRepoContract, runTransportRepoContract, runStockRepoContract, runStoresRepoContract, runVendorRepoContract, runWorkflowRepoContract } from './repo-contract';
 
 runRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
 runMasterRepoContract('memory', async (seed) => memoryDataLayerFrom({ ...emptyMemoryData(), ...seed }));
@@ -46,3 +46,4 @@ describe('memory backend: snapshot hook', () => {
     expect(dumps).toEqual([1, 3]);
   });
 });
+runTransportRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));

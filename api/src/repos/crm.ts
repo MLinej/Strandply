@@ -1,21 +1,11 @@
 // Repo interfaces for the CRM module. Every read ignores soft-deleted rows. Rows are returned as copies.
 // One shape for every CRM table; list() filters are per table (see repos/memory/crm.ts and db/migrations/0011_crm.sql).
 import type { Campaign, CrmCustomer, CrmCustomerFilters, CrmProduct, CrmTask, Followup, FollowupFilters, Lead, LeadFilters, Opportunity, OrderLost, OrderWon, Quotation, Salesperson } from '../contracts/crm';
-import type { NewRow } from './masters';
-import type { ListQuery, ListResult } from './types';
 
-export type CrmPatch<T> = Partial<Omit<T, 'id' | 'createdBy' | 'createdAt' | 'deletedAt'>> & { updatedAt: string };
+import type { RecordTable } from './record-table';
 
-export interface CrmTable<T, F extends object = Record<string, never>> {
-  getById(id: string): Promise<T | null>;
-  /** Every live row, oldest first. */
-  listAll(): Promise<T[]>;
-  list(query: ListQuery<F>): Promise<ListResult<T>>;
-  /** @throws UniqueViolationError on the table's unique fields (names, numbers) */
-  create(row: NewRow<T>): Promise<T>;
-  update(id: string, patch: CrmPatch<T>): Promise<T | null>;
-  softDelete(id: string, at: string): Promise<boolean>;
-}
+/** CRM tables use the shared record-table shape. */
+export type CrmTable<T, F extends object = Record<string, never>> = RecordTable<T, F>;
 
 /** Searches company, contact, mobile, city. Filters: stage, salesperson, customerType, product, source, converted. Sortable: dateAdded (default -), companyName, nextFollowUpDate. */
 export type LeadRepo = CrmTable<Lead, LeadFilters>;

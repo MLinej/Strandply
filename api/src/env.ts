@@ -40,6 +40,9 @@ import type { SalesReportService } from './modules/sales/report-service';
 import type { CrmRecordService } from './modules/crm/record-service';
 import type { CrmReportService } from './modules/crm/report-service';
 import type { CrmWorkflowService } from './modules/crm/workflow-service';
+import type { FreightService } from './modules/transport/freight-service';
+import type { TransportMasterService } from './modules/transport/master-service';
+import type { TransportReportService } from './modules/transport/report-service';
 
 export interface AuthContext {
   user: User;
@@ -92,6 +95,9 @@ export interface Services {
   crmRecords: CrmRecordService;
   crmFlow: CrmWorkflowService;
   crmReports: CrmReportService;
+  freight: FreightService;
+  transportMasters: TransportMasterService;
+  transportReports: TransportReportService;
   clock: Clock;
 }
 

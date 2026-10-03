@@ -11,6 +11,7 @@ import type { OpeningEntry, Reclass, StockSlip } from '../src/contracts/stock';
 import type { Chipping, Cutting, DocBase, HotPress, MattBatch, Mdo, Plan, ResinUse, Summary, WipBatch } from '../src/contracts/production';
 import { docTotals, EMPTY_DISPATCH, lineAmount, type Customer, type FgStock, type Intercompany, type OrderLine, type Proforma, type SalesInvoice, type SalesOrder } from '../src/contracts/sales';
 import type { Campaign, CrmCustomer, CrmTask, Followup, Lead, Opportunity, OrderLost, OrderWon, Quotation } from '../src/contracts/crm';
+import type { FreightOrder, Inquiry, RateComparison, Transporter } from '../src/contracts/transport';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -758,6 +759,40 @@ export function crmFixtures() {
   };
 }
 
+/** Transporters trt-a/b (quoted) and trt-c (unused); inquiries at each step: inq-1 draft RC, inq-2 pending, inq-3 approved, inq-4 ordered, inq-5 open, inq-6 cancelled. */
+export function transportFixtures() {
+  const tp = (id: string, code: string, name: string, city: string, o: Partial<Transporter> = {}): Transporter => ({
+    id, code, name, contactPerson: 'Ramesh', phone: '9825000001', phone2: null, email: null, address: null, city, state: 'Gujarat', pincode: null, gstin: null, pan: null, tds: false, creditTerms: 'Against Delivery',
+    ifsc: null, bankName: null, bankBranch: null, accountName: null, accountNo: null, vehicles: ['32FT (10T)'], operatingCities: [], rating: 4, active: true, ...audit, ...o,
+  });
+  const place = (city: string) => ({ city, state: 'Gujarat', pincode: null });
+  const inq = (id: string, n: number, status: Inquiry['status'], o: Partial<Inquiry> = {}): Inquiry => ({
+    id, inqNo: `INQ-26-00${n}`, date: '2026-09-2' + n, from: place('Halvad'), to: place('Ahmedabad'), material: 'OSB 18mm', weightMt: 9, vehicle: '32FT (10T)', pickupDate: '2026-10-05',
+    deliveryType: 'Door Delivery', freightPaidBy: 'Strandply', budgetPaise: 2_000_000, remarks: null, status, ...audit, ...o,
+  });
+  const quotes = [
+    { transporterId: 'trt-a', transporterName: 'Alpha Roadways', ratePaise: 1_800_000, transit: '2 Days', mgWeightMt: 9, rating: 4, phone: '9825000001' },
+    { transporterId: 'trt-b', transporterName: 'Bharat Carriers', ratePaise: 1_900_000, transit: '1 Day', mgWeightMt: null, rating: 3, phone: '9825000002' },
+  ];
+  const rc = (id: string, n: number, inquiryId: string, status: RateComparison['status'], o: Partial<RateComparison> = {}): RateComparison => ({
+    id, rcNo: `RC-26-00${n}`, inquiryId, quotes, selected: 0, justification: null, status, approvalNo: status === 'draft' ? null : `FRA-26-00${n - 1}`,
+    trail: status === 'draft' ? [] : [{ action: 'submitted', by: null, byName: 'Dispatch', note: null, at: T0.toISOString() }, ...(status === 'approved' ? [{ action: 'approved' as const, by: null, byName: 'Admin', note: null, at: T0.toISOString() }] : [])],
+    ...audit, ...o,
+  });
+  const order: FreightOrder = {
+    id: 'sfo-1', orderNo: 'SFO-26-001', rcId: 'rc-4', inquiryId: 'inq-4', date: '2026-09-28', transporterId: 'trt-a',
+    transporter: { name: 'Alpha Roadways', contactPerson: 'Ramesh', phone: '9825000001', gstin: null, address: null, city: 'Ahmedabad', state: 'Gujarat', creditTerms: 'Against Delivery' },
+    from: place('Halvad'), to: place('Ahmedabad'), vehicle: '32FT (10T)', material: 'OSB 18mm', weightMt: 9, pickupDate: '2026-10-05', deliveryType: 'Door Delivery', freightPaidBy: 'Strandply',
+    ratePaise: 1_800_000, transit: '2 Days', status: 'issued', deliveredOn: null, remarks: null, ...audit,
+  };
+  return {
+    trTransporters: [tp('trt-a', 'TRP-26-001', 'Alpha Roadways', 'Ahmedabad'), tp('trt-b', 'TRP-26-002', 'Bharat Carriers', 'Surat', { phone: '9825000002', rating: 3 }), tp('trt-c', 'TRP-26-003', 'Chetak Logistics', 'Rajkot', { phone: '9825000003', vehicles: ['Open Body'] })],
+    trInquiries: [inq('inq-1', 1, 'open'), inq('inq-2', 2, 'rate_compared'), inq('inq-3', 3, 'approved'), inq('inq-4', 4, 'ordered'), inq('inq-5', 5, 'open', { to: place('Surat'), vehicle: 'Open Body' }), inq('inq-6', 6, 'cancelled')],
+    trRateCmps: [rc('rc-1', 1, 'inq-1', 'draft'), rc('rc-2', 2, 'inq-2', 'pending'), rc('rc-3', 3, 'inq-3', 'approved'), rc('rc-4', 4, 'inq-4', 'approved')],
+    trOrders: [order],
+  };
+}
+
 export function fixtures() {
   return {
     parties: [
@@ -896,6 +931,7 @@ export function testData(users: User[]) {
     ...productionFixtures(),
     ...salesFixtures(),
     ...crmFixtures(),
+    ...transportFixtures(),
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
     users,
@@ -905,7 +941,7 @@ export function testData(users: User[]) {
       { name: 'GRN-2026-27', lastValue: 4, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'ISS-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'STR-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
-      ...[['SL-SO-llp-2026-27', 2], ['SL-INV-llp-2026-27', 2], ['SL-PI-llp-2026-27', 1], ['CRM-QT-2026-27', 1], ['CRM-ORD-2026-27', 1]].map(([name, lastValue]) => ({ name: name as string, lastValue: lastValue as number, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
+      ...[['SL-SO-llp-2026-27', 2], ['SL-INV-llp-2026-27', 2], ['SL-PI-llp-2026-27', 1], ['CRM-QT-2026-27', 1], ['CRM-ORD-2026-27', 1], ['TR-TRP', 3], ['TR-INQ-2026-27', 6], ['TR-RC-2026-27', 4], ['TR-FRA-2026-27', 3], ['TR-SFO-2026-27', 1]].map(([name, lastValue]) => ({ name: name as string, lastValue: lastValue as number, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
       ...['PPR', 'HP', 'BC', 'CHR', 'WIP', 'RC', 'MWB', 'PS', 'MDO'].map((p) => ({ name: `PR-${p}`, lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
     ],
     cities: [...seed.cities, ...extraCities],

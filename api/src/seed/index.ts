@@ -13,6 +13,7 @@ import { REF_SALES_ITEMS } from './sales-items';
 import { DEMO_CUSTOMERS, DEMO_INTERCOMPANY, DEMO_SALES_COUNTERS, DEMO_SALES_INVOICES, DEMO_SALES_ORDERS, DEMO_SALES_PERSONS } from './sales-demo.dev';
 import { DEFAULT_CRM_SETTINGS, REF_CRM_PRODUCTS, REF_SALESPERSONS } from './crm';
 import { DEMO_CAMPAIGNS, DEMO_CRM_COUNTERS, DEMO_CRM_CUSTOMERS, DEMO_FOLLOWUPS, DEMO_LEADS, DEMO_LOST, DEMO_OPPORTUNITIES, DEMO_QUOTATIONS, DEMO_TASKS, DEMO_WON } from './crm-demo.dev';
+import { DEMO_TRANSPORTERS, REF_VEHICLE_TYPES } from './transport';
 import { UPGRADES } from './upgrades';
 import { DEV_USERS } from './users.dev';
 import {
@@ -57,6 +58,7 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
       { ...VENDOR_PRODUCT_COUNTER, ...audit },
       ...devAudit(DEMO_SALES_COUNTERS),
       ...devAudit(DEMO_CRM_COUNTERS),
+      ...devAudit([{ name: 'TR-TRP', lastValue: DEMO_TRANSPORTERS.length }]),
     ],
     notifications: [],
     dispatchHistory: dev(DEMO_DISPATCH_HISTORY),
@@ -109,6 +111,11 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     crmCampaigns: devAudit(DEMO_CAMPAIGNS),
     crmProducts: REF_CRM_PRODUCTS.map((p) => ({ ...p, ...audit })),
     crmSalespersons: REF_SALESPERSONS.map((p) => ({ ...p, ...audit })),
+    trVehicles: REF_VEHICLE_TYPES.map((v) => ({ ...v, ...audit })),
+    trTransporters: devAudit(DEMO_TRANSPORTERS),
+    trInquiries: [],
+    trRateCmps: [],
+    trOrders: [],
     // A fresh seed already has everything the upgrades add.
     upgrades: UPGRADES.map((u) => ({ name: u.name, appliedAt: at })),
   };

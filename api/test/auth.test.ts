@@ -19,7 +19,7 @@ describe('ERP sign-in and sessions', () => {
       roleLabel: 'Dispatch Dept',
       isSuperadmin: false,
       permissions: {
-        pages: ['dashboard', 'dispatch', 'tracking', 'couriers', 'notifications'],
+        pages: ['dashboard', 'dispatch', 'tracking', 'couriers', 'notifications', 'transport_dashboard', 'transport_freight'],
         actions: ['edit', 'print'],
         widgets: ['total', 'delivered', 'delayed'],
       },
@@ -126,6 +126,9 @@ describe('/me ERP permissions for the web shell', () => {
       'samples.dispatch',
       'samples.tracking',
       'samples.view',
+      'transport.dashboard',
+      'transport.freight',
+      'transport.view',
     ]);
     expect((await me('management')).permissions).toEqual([
       'crm.dashboard',
@@ -149,6 +152,9 @@ describe('/me ERP permissions for the web shell', () => {
       'stores.dashboard',
       'stores.reports',
       'stores.view',
+      'transport.dashboard',
+      'transport.reports',
+      'transport.view',
       'vendors.directory',
       'vendors.reports',
       'vendors.view',

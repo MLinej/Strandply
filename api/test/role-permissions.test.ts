@@ -86,7 +86,7 @@ describe('role permissions', () => {
     const su = await t.login('superadmin');
     await t.request('PUT', `${RP}/dispatch`, {
       cookie: su,
-      body: { pages: ['dashboard', 'dispatch', 'tracking', 'couriers', 'notifications', 'reports'], actions: ['edit'], widgets: ['total'] },
+      body: { pages: ['dashboard', 'dispatch', 'tracking', 'couriers', 'notifications', 'reports', 'transport_dashboard', 'transport_freight'], actions: ['edit'], widgets: ['total'] },
     });
     await t.request('POST', `${RP}/reset`, { cookie: su });
     const { rows } = await t.data.repos.activity.list({ filters: { action: 'PermissionChange' }, sort: 'createdAt' });
@@ -99,13 +99,13 @@ describe('role permissions', () => {
 });
 
 describe('SQL seed stays in sync with the code defaults', () => {
-  it('0004 seed + the 0005–0011 appends give exactly DEFAULT_ROLE_PERMISSIONS (files are parsed, never executed)', () => {
+  it('0004 seed + the 0005–0012 appends give exactly DEFAULT_ROLE_PERMISSIONS (files are parsed, never executed)', () => {
     const read = (f: string) => readFileSync(new URL(`../../db/migrations/${f}`, import.meta.url), 'utf8');
     const rows = [...read('0004_access_control.sql').matchAll(/^\s+\('(\w+)', '(\{.*\})', ([01])\)/gm)].map(
       (m) => [m[1]!, JSON.parse(m[2]!) as PermissionSet, m[3] === '1'] as const,
     );
     // 0005: UPDATE … json_insert(permissions, '$.pages[#]', 'x', …) … WHERE role IN ('a', 'b');
-    for (const stmt of ['0005_vendors.sql', '0006_purchase.sql', '0007_stores.sql', '0008_stock.sql', '0009_production.sql', '0010_sales.sql', '0011_crm.sql'].map(read).join('\n').matchAll(/UPDATE st_role_permissions\s+SET permissions = json_insert\(permissions,([\s\S]*?)\)[\s\S]*?WHERE role IN \(([^)]*)\);/g)) {
+    for (const stmt of ['0005_vendors.sql', '0006_purchase.sql', '0007_stores.sql', '0008_stock.sql', '0009_production.sql', '0010_sales.sql', '0011_crm.sql', '0012_transport.sql'].map(read).join('\n').matchAll(/UPDATE st_role_permissions\s+SET permissions = json_insert\(permissions,([\s\S]*?)\)[\s\S]*?WHERE role IN \(([^)]*)\);/g)) {
       const appends = [...stmt[1]!.matchAll(/'\$\.(pages|actions|widgets)\[#\]', '(\w+)'/g)];
       const roles = [...stmt[2]!.matchAll(/'(\w+)'/g)].map((m) => m[1]);
       for (const [role, perms] of rows) {

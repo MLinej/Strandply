@@ -635,6 +635,51 @@ CASES.push(
   { method: 'GET', route: `${CR}/audit`, path: `${CR}/audit`, allowed: CR_ALL, ok: 200 },
 );
 
+// Transport module. Admins have everything (masters writes, approval, exports). Dispatch runs the freight flow
+// (inquiries, rate comparisons, order forms) with edit and print, no approval, delete or export. Management:
+// dashboard and reports, with export.
+const TR = '/api/transport';
+const TR_ALL: Role[] = ['superadmin', 'admin', 'dispatch', 'management'];
+const TR_WORK: Role[] = ['superadmin', 'admin', 'dispatch'];
+const TR_MGMT: Role[] = ['superadmin', 'admin', 'management'];
+const transportersCsv = () => csv('Name,Mobile,City\nDelta Roadlines,9825099999,Baroda\n');
+CASES.push(
+  { method: 'GET', route: `${TR}/meta`, path: `${TR}/meta`, allowed: TR_ALL, ok: 200 },
+  { method: 'GET', route: `${TR}/vehicles`, path: `${TR}/vehicles`, allowed: TR_ALL, ok: 200 },
+  { method: 'POST', route: `${TR}/vehicles`, path: `${TR}/vehicles`, body: { name: 'Tanker' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${TR}/vehicles/:id`, path: `${TR}/vehicles/trv-lcv`, body: { capacity: '3 Ton' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${TR}/vehicles/:id`, path: `${TR}/vehicles/trv-lcv`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${TR}/transporters`, path: `${TR}/transporters?vehicle=Open%20Body`, allowed: TR_WORK, ok: 200 },
+  { method: 'POST', route: `${TR}/transporters/import`, path: `${TR}/transporters/import`, form: transportersCsv, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${TR}/transporters/:id`, path: `${TR}/transporters/trt-a`, allowed: TR_WORK, ok: 200 },
+  { method: 'POST', route: `${TR}/transporters`, path: `${TR}/transporters`, body: { name: 'Delta Roadlines', phone: '9825099999', city: 'Baroda', vehicles: ['Open Body'] }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${TR}/transporters/:id`, path: `${TR}/transporters/trt-a`, body: { rating: 5 }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${TR}/transporters/:id`, path: `${TR}/transporters/trt-c`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${TR}/inquiries`, path: `${TR}/inquiries?status=open`, allowed: TR_ALL, ok: 200 },
+  { method: 'GET', route: `${TR}/inquiries/:id`, path: `${TR}/inquiries/inq-1`, allowed: TR_ALL, ok: 200 },
+  { method: 'GET', route: `${TR}/inquiries/:id/past-quotes`, path: `${TR}/inquiries/inq-1/past-quotes`, allowed: TR_WORK, ok: 200 },
+  { method: 'POST', route: `${TR}/inquiries`, path: `${TR}/inquiries`, body: { from: { city: 'Halvad' }, to: { city: 'Surat' }, material: 'OSB 12mm', vehicle: '32FT (10T)' }, allowed: TR_WORK, ok: 201 },
+  { method: 'PATCH', route: `${TR}/inquiries/:id`, path: `${TR}/inquiries/inq-1`, body: { remarks: 'Tarpaulin needed' }, allowed: TR_WORK, ok: 200 },
+  { method: 'POST', route: `${TR}/inquiries/:id/cancel`, path: `${TR}/inquiries/inq-5/cancel`, allowed: TR_WORK, ok: 200 },
+  { method: 'POST', route: `${TR}/inquiries/:id/reopen`, path: `${TR}/inquiries/inq-6/reopen`, allowed: TR_WORK, ok: 200 },
+  { method: 'PUT', route: `${TR}/inquiries/:id/rates`, path: `${TR}/inquiries/inq-5/rates`, body: { quotes: [{ transporterId: 'trt-c', ratePaise: 1_500_000 }], selected: 0 }, allowed: TR_WORK, ok: 200 },
+  { method: 'GET', route: `${TR}/rates`, path: `${TR}/rates?status=pending`, allowed: TR_ALL, ok: 200 },
+  { method: 'GET', route: `${TR}/rates/:id`, path: `${TR}/rates/rc-1`, allowed: TR_ALL, ok: 200 },
+  { method: 'POST', route: `${TR}/rates/:id/submit`, path: `${TR}/rates/rc-1/submit`, allowed: TR_WORK, ok: 200 },
+  { method: 'POST', route: `${TR}/rates/:id/decision`, path: `${TR}/rates/rc-2/decision`, body: { decision: 'approve' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${TR}/rates/:id/order`, path: `${TR}/rates/rc-3/order`, allowed: TR_WORK, ok: 201 },
+  { method: 'GET', route: `${TR}/orders`, path: `${TR}/orders?status=issued`, allowed: TR_ALL, ok: 200 },
+  { method: 'GET', route: `${TR}/orders/:id`, path: `${TR}/orders/sfo-1`, allowed: TR_ALL, ok: 200 },
+  { method: 'GET', route: `${TR}/orders/:id/print`, path: `${TR}/orders/sfo-1/print`, allowed: TR_WORK, ok: 200 },
+  { method: 'PATCH', route: `${TR}/orders/:id`, path: `${TR}/orders/sfo-1`, body: { status: 'delivered' }, allowed: TR_WORK, ok: 200 },
+  { method: 'GET', route: `${TR}/dashboard`, path: `${TR}/dashboard`, allowed: TR_ALL, ok: 200 },
+  { method: 'GET', route: `${TR}/reports`, path: `${TR}/reports?from=2026-09-01`, allowed: TR_MGMT, ok: 200 },
+  { method: 'GET', route: `${TR}/export/transporters`, path: `${TR}/export/transporters`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${TR}/export/inquiries`, path: `${TR}/export/inquiries`, allowed: TR_MGMT, ok: 200 },
+  { method: 'GET', route: `${TR}/export/orders`, path: `${TR}/export/orders`, allowed: TR_MGMT, ok: 200 },
+  { method: 'GET', route: `${TR}/audit`, path: `${TR}/audit`, allowed: TR_ALL, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

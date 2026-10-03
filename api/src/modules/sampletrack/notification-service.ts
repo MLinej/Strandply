@@ -82,6 +82,7 @@ export class NotificationService {
       const now = businessToday(this.clock);
       out.dueFollowups = (await this.data.repos.crmFollowups.listAll()).filter((f) => (f.status === 'Pending' || f.status === 'Rescheduled') && (f.nextFollowUpDate ?? f.date) <= now).length;
     }
+    if (perms.pages.includes('transport_freight') && perms.actions.includes('transport_approve')) out.pendingFreight = (await this.data.repos.trRateCmps.listAll()).filter((x) => x.status === 'pending').length;
     return out;
   }
 }

@@ -836,6 +836,8 @@ export interface Badges {
   pendingGrn?: number;
   /** CRM follow-ups overdue or due today. */
   dueFollowups?: number;
+  /** Freight rate comparisons waiting for approval (Transport, approvers only). */
+  pendingFreight?: number;
 }
 
 /** Company details (Settings). Printed on labels and slips and used in WhatsApp messages. */
