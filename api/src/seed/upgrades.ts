@@ -126,6 +126,25 @@ UPGRADES.push({
   },
 });
 
+const CRM_PAGES = ['crm_dashboard', 'crm_leads', 'crm_followups', 'crm_customers', 'crm_pipeline', 'crm_masters', 'crm_reports'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0011_crm.sql on an existing database. The new tables come from the seed.
+  name: '0011_crm',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], CRM_PAGES);
+    grant(data, ['marketing'], ['crm_dashboard', 'crm_leads', 'crm_followups', 'crm_customers', 'crm_pipeline']);
+    grant(data, ['management'], ['crm_dashboard', 'crm_reports']);
+    const keys = new Set((data.settings ?? []).map((s) => s.key));
+    if (data.settings) data.settings.push(...seed.settings.filter((s) => s.key.startsWith('crm.') && !keys.has(s.key)));
+    // Products and salespersons are reference data, and in dev the demo records come with them.
+    for (const t of ['crmProducts', 'crmSalespersons', 'crmLeads', 'crmCustomers', 'crmFollowups', 'crmOpportunities', 'crmQuotations', 'crmWon', 'crmLost', 'crmTasks', 'crmCampaigns'] as const)
+      if (!data[t]?.length) (data as Record<string, unknown>)[t] = structuredClone(seed[t]);
+    const counters = new Set((data.counters ?? []).map((c) => c.name));
+    if (data.counters) data.counters.push(...seed.counters.filter((c) => c.name.startsWith('CRM-') && !counters.has(c.name)));
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

@@ -15,3 +15,4 @@ export { Skeleton, SkeletonText } from './Skeleton';
 export { Popover, MenuItem, MenuLabel, MenuSeparator, type PopoverProps, type MenuItemProps } from './Popover';
 export { SegmentedControl, type SegmentedControlProps } from './SegmentedControl';
 export { Avatar, Kbd, initials } from './Avatar';
+export { Combo, type ComboOption } from './Combo';

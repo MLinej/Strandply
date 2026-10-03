@@ -128,6 +128,9 @@ describe('/me ERP permissions for the web shell', () => {
       'samples.view',
     ]);
     expect((await me('management')).permissions).toEqual([
+      'crm.dashboard',
+      'crm.reports',
+      'crm.view',
       'notifications.view',
       'production.dashboard',
       'production.view',

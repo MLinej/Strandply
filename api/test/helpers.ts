@@ -10,6 +10,7 @@ import type { Grn, Mrn } from '../src/contracts/stores';
 import type { OpeningEntry, Reclass, StockSlip } from '../src/contracts/stock';
 import type { Chipping, Cutting, DocBase, HotPress, MattBatch, Mdo, Plan, ResinUse, Summary, WipBatch } from '../src/contracts/production';
 import { docTotals, EMPTY_DISPATCH, lineAmount, type Customer, type FgStock, type Intercompany, type OrderLine, type Proforma, type SalesInvoice, type SalesOrder } from '../src/contracts/sales';
+import type { Campaign, CrmCustomer, CrmTask, Followup, Lead, Opportunity, OrderLost, OrderWon, Quotation } from '../src/contracts/crm';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -717,6 +718,46 @@ export function salesFixtures() {
   };
 }
 
+/** CRM: two customers; a converted and an open lead; follow-ups overdue (fu-1), due today (fu-2) and done (fu-3); open opportunities op-1 (with quotation qt-1) and op-2; a won and a lost order. Today is 2026-10-01. */
+export function crmFixtures() {
+  const cust = (id: string, companyName: string, mobile: string, city: string, o: Partial<CrmCustomer> = {}): CrmCustomer => ({
+    id, companyName, contactPerson: 'Mehul', contactPerson2: null, designation: null, mobile, mobile2: null, whatsapp: mobile, email: null, website: null, city, state: 'Gujarat', pincode: null, address: null, gstin: null, pan: null,
+    customerType: 'Dealer', estMonthlyReq: null, productsUsed: 'OSB', currentSupplier: null, approxPurchaseValue: null, preferredThickness: null, preferredSize: null, application: null, existingBrand: null, competitorBrand: null,
+    paymentPreference: null, creditRequirement: null, territory: 'Gujarat', leadSource: 'IndiaMART', salesperson: 'Suresh Kumar', status: 'Active', priority: 'Warm', firstContactDate: '2026-09-01', lastContactDate: '2026-09-25', nextFollowUp: '2026-09-28', remarks: null,
+    leadId: null, salesCustomerId: null, ...audit, ...o,
+  });
+  const lead = (id: string, companyName: string, mobile: string, city: string, o: Partial<Lead> = {}): Lead => ({
+    id, dateAdded: '2026-09-01', companyName, contactPerson: null, contactPerson2: null, mobile, mobile2: null, altMobile: null, whatsapp: null, email: null, city, state: 'Gujarat', pincode: null, address: null,
+    customerType: 'Dealer', product: 'OSB', source: 'IndiaMART', campaign: null, salesperson: 'Suresh Kumar', stage: 'New Lead', nextAction: null, nextFollowUpDate: null, remarks: null, dataQuality: 'Good', customerId: null, ...audit, ...o,
+  });
+  const fu = (id: string, customerId: string, date: string, o: Partial<Followup> = {}): Followup => ({
+    id, customerId, date, time: '10:00', type: 'Call', contactPerson: 'Mehul', salesperson: 'Suresh Kumar', discussion: null, customerResponse: null, nextAction: null, nextFollowUpDate: null, status: 'Pending', priority: 'Warm', ...audit, ...o,
+  });
+  const opp = (id: string, customerId: string, o: Partial<Opportunity> = {}): Opportunity => ({
+    id, customerId, product: 'OSB', thickness: '12mm', size: '8x4 ft', quantity: '1 truck', estValuePaise: 5_000_000, expectedClosingDate: '2026-10-15', salesperson: 'Suresh Kumar', stage: 'Negotiation', probability: 50, competitor: null, currentSupplier: null, notes: null, reactivatedFrom: null, ...audit, ...o,
+  });
+  const quote: Quotation = { id: 'qt-1', quoteNo: 'QT/26-27/0001', customerId: 'crc-a', opportunityId: 'op-1', product: 'OSB', quantity: 100, ratePaise: 150_000, gstPct: 18, date: '2026-09-10', validUntil: '2026-10-10', salesperson: 'Suresh Kumar', status: 'Sent', remarks: null, ...audit };
+  const won: OrderWon = { id: 'w-1', orderNo: 'ORD/26-27/0001', opportunityId: null, customerId: 'crc-b', orderDate: '2026-09-20', product: 'MDO Board', quantity: '200 sheets', ratePaise: 240_000, orderValuePaise: 4_800_000, dispatchDate: null, reason: null, remarks: null, salesperson: 'Kaushik Kothari', source: 'Website', leadToOrderDays: 19, ...audit };
+  const lost: OrderLost = { id: 'l-1', opportunityId: null, customerId: 'crc-b', lostDate: '2026-09-15', product: 'OSB', quantity: '1 truck', estValuePaise: 3_000_000, competitor: 'Local OSB', competitorPricePaise: 120_000, ourPricePaise: 135_000, expectedPricePaise: null, lostReason: 'Competitor Lower Price', remarks: null, reactivationDate: '2026-10-01', salesperson: 'Suresh Kumar', reactivatedOppId: null, ...audit };
+  const task: CrmTask = { id: 't-1', type: 'Send Quotation', customerId: 'crc-a', assignedTo: 'Suresh Kumar', dueDate: '2026-09-30', priority: 'Hot', status: 'Pending', remarks: null, ...audit };
+  const campaign: Campaign = { id: 'cp-1', name: 'Expo 2026', platform: 'Exhibition', startDate: '2026-09-01', endDate: '2026-09-30', budgetPaise: 1_000_000, targetAudience: null, product: 'OSB', ...audit };
+  return {
+    crmCustomers: [cust('crc-a', 'Alpha Ply', '9825011111', 'Ahmedabad', { leadId: 'crl-b', priority: 'Hot' }), cust('crc-b', 'Beta Boards', '9825022222', 'Surat', { leadSource: 'Website', salesperson: 'Kaushik Kothari', nextFollowUp: null, lastContactDate: '2026-08-15' })],
+    crmLeads: [lead('crl-a', 'Gamma Interiors', '9825033333', 'Rajkot', { campaign: 'Expo 2026', source: 'Exhibition' }), lead('crl-b', 'Alpha Ply', '9825011111', 'Ahmedabad', { stage: 'Qualified', customerId: 'crc-a' })],
+    crmFollowups: [
+      fu('fu-1', 'crc-a', '2026-09-25', { discussion: 'Rates shared', nextAction: 'Call back', nextFollowUpDate: '2026-09-28' }),
+      fu('fu-2', 'crc-a', '2026-09-29', { type: 'WhatsApp', nextFollowUpDate: '2026-10-01' }),
+      fu('fu-3', 'crc-b', '2026-09-20', { type: 'Meeting', status: 'Completed', salesperson: 'Kaushik Kothari' }),
+    ],
+    crmOpportunities: [opp('op-1', 'crc-a', { estValuePaise: 30_000_000 }), opp('op-2', 'crc-b', { stage: 'Qualification', probability: 25, salesperson: 'Kaushik Kothari' })],
+    crmQuotations: [quote],
+    crmWon: [won],
+    crmLost: [lost],
+    crmTasks: [task],
+    crmCampaigns: [campaign],
+  };
+}
+
 export function fixtures() {
   return {
     parties: [
@@ -854,6 +895,7 @@ export function testData(users: User[]) {
     ...stockFixtures(),
     ...productionFixtures(),
     ...salesFixtures(),
+    ...crmFixtures(),
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
     users,
@@ -863,7 +905,7 @@ export function testData(users: User[]) {
       { name: 'GRN-2026-27', lastValue: 4, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'ISS-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'STR-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
-      ...[['SL-SO-llp-2026-27', 2], ['SL-INV-llp-2026-27', 2], ['SL-PI-llp-2026-27', 1]].map(([name, lastValue]) => ({ name: name as string, lastValue: lastValue as number, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
+      ...[['SL-SO-llp-2026-27', 2], ['SL-INV-llp-2026-27', 2], ['SL-PI-llp-2026-27', 1], ['CRM-QT-2026-27', 1], ['CRM-ORD-2026-27', 1]].map(([name, lastValue]) => ({ name: name as string, lastValue: lastValue as number, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
       ...['PPR', 'HP', 'BC', 'CHR', 'WIP', 'RC', 'MWB', 'PS', 'MDO'].map((p) => ({ name: `PR-${p}`, lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
     ],
     cities: [...seed.cities, ...extraCities],

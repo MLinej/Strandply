@@ -49,6 +49,10 @@ import { SalesDocumentService } from './modules/sales/document-service';
 import { SalesMasterService } from './modules/sales/master-service';
 import { SalesReportService } from './modules/sales/report-service';
 import { salesRoutes } from './modules/sales/routes';
+import { CrmRecordService } from './modules/crm/record-service';
+import { CrmReportService } from './modules/crm/report-service';
+import { crmRoutes } from './modules/crm/routes';
+import { CrmWorkflowService } from './modules/crm/workflow-service';
 import type { DataLayer } from './repos';
 
 export interface AppDeps {
@@ -75,6 +79,8 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const wipBatches = new WipService(data, activity, clock);
   const salesDocs = new SalesDocumentService(data, activity, clock);
   const salesMasters = new SalesMasterService(data, activity, clock);
+  const crmRecords = new CrmRecordService(data, activity, clock);
+  const crmFlow = new CrmWorkflowService(data, crmRecords, activity, clock);
   return {
     activity,
     permissions: new PermissionService(data, activity, clock, config.permissionCacheMs),
@@ -116,6 +122,9 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     salesDocs,
     salesMasters,
     salesReports: new SalesReportService(data, salesDocs, salesMasters, company, activity, clock),
+    crmRecords,
+    crmFlow,
+    crmReports: new CrmReportService(data, crmRecords, company, activity, clock),
     clock,
   };
 }
@@ -146,6 +155,7 @@ export function createApp(deps: AppDeps) {
   mount('/api/stock', stockRoutes());
   mount('/api/production', productionRoutes());
   mount('/api/sales', salesRoutes());
+  mount('/api/crm', crmRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

@@ -37,6 +37,9 @@ import type { ProductionReportService } from './modules/production/report-servic
 import type { SalesDocumentService } from './modules/sales/document-service';
 import type { SalesMasterService } from './modules/sales/master-service';
 import type { SalesReportService } from './modules/sales/report-service';
+import type { CrmRecordService } from './modules/crm/record-service';
+import type { CrmReportService } from './modules/crm/report-service';
+import type { CrmWorkflowService } from './modules/crm/workflow-service';
 
 export interface AuthContext {
   user: User;
@@ -86,6 +89,9 @@ export interface Services {
   salesDocs: SalesDocumentService;
   salesMasters: SalesMasterService;
   salesReports: SalesReportService;
+  crmRecords: CrmRecordService;
+  crmFlow: CrmWorkflowService;
+  crmReports: CrmReportService;
   clock: Clock;
 }
 

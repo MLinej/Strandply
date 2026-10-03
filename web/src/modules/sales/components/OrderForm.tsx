@@ -19,7 +19,7 @@ import { Button, Input, Modal, Select, Textarea, useToast } from '@/components/u
 import { errorMessage, fieldErrors } from '../../samples/ui/errors';
 import { useSalesMeta, useSalesOptions, useSaveDoc } from '../api';
 import { FirmSelect, inr, qtyFmt, rupeesText, toPaise, TotalsBlock, useDefaultFirm } from '../ui';
-import { Combo } from './Combo';
+import { Combo } from '@/components/ui';
 
 type Kind = 'proformas' | 'orders';
 type Doc = ProformaView | SalesOrderView;

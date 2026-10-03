@@ -20,6 +20,7 @@ import { MemoryDocRepo, MemoryMattBatchRepo, MemoryWipAdjustmentRepo, MemoryWipB
 import type { Chipping, Cutting, HotPress, Mdo, Plan, ResinUse, Summary } from '../../contracts/production';
 import { MemoryCustomerRepo, MemoryFgStockRepo, MemoryIntercompanyRepo, MemoryPriceEntryRepo, MemorySalesDocRepo, MemorySalesItemRepo, MemoryWeightEntryRepo } from './sales';
 import type { Proforma, SalesInvoice, SalesOrder } from '../../contracts/sales';
+import { crmRepos } from './crm';
 import { MemoryReclassRepo, MemorySkuGroupRepo, MemoryStockOpeningRepo, MemoryStockSlipRepo } from './stock';
 import { MemoryTncRepo, MemoryVendorCategoryRepo, MemoryVendorProductRepo, MemoryVendorRepo } from './vendors';
 import { MemoryCounterRepo, MemoryDispatchRepo, MemoryNotificationRepo, MemoryRequestRepo } from './workflow';
@@ -116,6 +117,7 @@ export function createMemoryDataLayer(store: MemoryStore): DataLayer {
     salesInvoices: new MemorySalesDocRepo<SalesInvoice>(store, 'slInvoices', 'sales_invoices', 'invNo', 'approval', ['soNo', 'poNo', 'ewayBill']),
     fgStock: new MemoryFgStockRepo(store),
     intercompany: new MemoryIntercompanyRepo(store),
+    ...crmRepos(store),
   };
   return { repos, uow: new MemoryUnitOfWork(store, repos) };
 }

@@ -11,6 +11,8 @@ import { DEFAULT_PRODUCTION_SETTINGS } from './production';
 import { DEFAULT_SALES_SETTINGS } from './sales';
 import { REF_SALES_ITEMS } from './sales-items';
 import { DEMO_CUSTOMERS, DEMO_INTERCOMPANY, DEMO_SALES_COUNTERS, DEMO_SALES_INVOICES, DEMO_SALES_ORDERS, DEMO_SALES_PERSONS } from './sales-demo.dev';
+import { DEFAULT_CRM_SETTINGS, REF_CRM_PRODUCTS, REF_SALESPERSONS } from './crm';
+import { DEMO_CAMPAIGNS, DEMO_CRM_COUNTERS, DEMO_CRM_CUSTOMERS, DEMO_FOLLOWUPS, DEMO_LEADS, DEMO_LOST, DEMO_OPPORTUNITIES, DEMO_QUOTATIONS, DEMO_TASKS, DEMO_WON } from './crm-demo.dev';
 import { UPGRADES } from './upgrades';
 import { DEV_USERS } from './users.dev';
 import {
@@ -54,10 +56,11 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
       { name: 'DSP', lastValue: devUsers ? DEMO_DISPATCHES.length : 0, ...audit },
       { ...VENDOR_PRODUCT_COUNTER, ...audit },
       ...devAudit(DEMO_SALES_COUNTERS),
+      ...devAudit(DEMO_CRM_COUNTERS),
     ],
     notifications: [],
     dispatchHistory: dev(DEMO_DISPATCH_HISTORY),
-    settings: Object.entries({ ...DEFAULT_SETTINGS, ...DEFAULT_VENDOR_SETTINGS, ...DEFAULT_STORES_SETTINGS, ...DEFAULT_PRODUCTION_SETTINGS, ...DEFAULT_SALES_SETTINGS, ...(devUsers ? { 'sales.sales_persons': DEMO_SALES_PERSONS } : {}) }).map(([key, value]) => ({ key, value, ...audit })),
+    settings: Object.entries({ ...DEFAULT_SETTINGS, ...DEFAULT_VENDOR_SETTINGS, ...DEFAULT_STORES_SETTINGS, ...DEFAULT_PRODUCTION_SETTINGS, ...DEFAULT_SALES_SETTINGS, ...DEFAULT_CRM_SETTINGS, ...(devUsers ? { 'sales.sales_persons': DEMO_SALES_PERSONS } : {}) }).map(([key, value]) => ({ key, value, ...audit })),
     notificationReads: [],
     vnCategories: REF_VENDOR_CATEGORIES.map((c) => ({ ...c, ...audit })),
     vnProducts: REF_VENDOR_PRODUCTS.map((p) => ({ ...p, ...audit })),
@@ -95,6 +98,17 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     slInvoices: devAudit(DEMO_SALES_INVOICES),
     slFgStock: [],
     slIntercompany: devAudit(DEMO_INTERCOMPANY),
+    crmLeads: devAudit(DEMO_LEADS),
+    crmCustomers: devAudit(DEMO_CRM_CUSTOMERS),
+    crmFollowups: devAudit(DEMO_FOLLOWUPS),
+    crmOpportunities: devAudit(DEMO_OPPORTUNITIES),
+    crmQuotations: devAudit(DEMO_QUOTATIONS),
+    crmWon: devAudit(DEMO_WON),
+    crmLost: devAudit(DEMO_LOST),
+    crmTasks: devAudit(DEMO_TASKS),
+    crmCampaigns: devAudit(DEMO_CAMPAIGNS),
+    crmProducts: REF_CRM_PRODUCTS.map((p) => ({ ...p, ...audit })),
+    crmSalespersons: REF_SALESPERSONS.map((p) => ({ ...p, ...audit })),
     // A fresh seed already has everything the upgrades add.
     upgrades: UPGRADES.map((u) => ({ name: u.name, appliedAt: at })),
   };

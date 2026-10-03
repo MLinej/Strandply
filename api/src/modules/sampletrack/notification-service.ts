@@ -1,3 +1,4 @@
+import { businessToday } from '../../lib/dates';
 import type { Badges, Notification, NotificationFeedFilters, NotificationType } from '../../contracts/sampletrack';
 import type { PermissionSet } from '../../domain/access';
 import { isoNow, type Clock } from '../../lib/clock';
@@ -77,6 +78,10 @@ export class NotificationService {
     if (perms.pages.includes('requests')) out.pendingRequests = (await this.data.repos.requests.countByStatus({})).Pending;
     if (perms.pages.includes('vendors')) out.pendingVendors = (await this.data.repos.vendors.countByStatus()).pending;
     if (perms.pages.includes('stores_grn')) out.pendingGrn = (await this.data.repos.mrns.listPending()).length;
+    if (perms.pages.includes('crm_followups')) {
+      const now = businessToday(this.clock);
+      out.dueFollowups = (await this.data.repos.crmFollowups.listAll()).filter((f) => (f.status === 'Pending' || f.status === 'Rescheduled') && (f.nextFollowUpDate ?? f.date) <= now).length;
+    }
     return out;
   }
 }

@@ -5,7 +5,7 @@ import { formatDate } from '@/lib/format';
 import { errorMessage, fieldErrors } from '../../samples/ui/errors';
 import { useDocList, useDocOne, useFirmFilter, useSalesMeta, useSalesOptions, useSaveDoc } from '../api';
 import { inr, qtyFmt, rupeesText, sqmFmt, toPaise, TotalsBlock } from '../ui';
-import { Combo } from './Combo';
+import { Combo } from '@/components/ui';
 
 type Line = { soLine: number; pcs: string; sqm: string; rate: string };
 interface Form {

@@ -15,7 +15,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
   {
     key: 'pages',
     title: 'Samples & admin pages',
-    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_') && !k.startsWith('sales_')),
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_') && !k.startsWith('sales_') && !k.startsWith('crm_')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -99,6 +99,20 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
       sales_dispatch: 'Dispatch register, FG inventory',
       sales_reports: 'Sales reports',
       sales_settings: 'Sales settings',
+    },
+  },
+  {
+    key: 'pages',
+    title: 'CRM pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('crm_')),
+    label: {
+      crm_dashboard: 'Dashboard and audit',
+      crm_leads: 'Raw leads, lead management, import',
+      crm_followups: 'Follow-ups, tasks',
+      crm_customers: 'Customers and 360° view',
+      crm_pipeline: 'Opportunities, quotations, orders won and lost',
+      crm_masters: 'Sources, campaigns, products, salespersons, settings',
+      crm_reports: 'CRM reports',
     },
   },
   {

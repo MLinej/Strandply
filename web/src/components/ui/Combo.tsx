@@ -1,7 +1,7 @@
 import { clsx } from 'clsx';
 import { Search, X } from 'lucide-react';
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
-import { controlBoxClass, Field } from '@/components/ui/Field';
+import { controlBoxClass, Field } from './Field';
 
 export interface ComboOption {
   id: string;

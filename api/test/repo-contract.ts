@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
-import { grn, mrn, productionFixtures, salesFixtures, purchaseEntry, stockFixtures } from './helpers';
+import { grn, mrn, productionFixtures, salesFixtures, crmFixtures, purchaseEntry, stockFixtures } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -1094,6 +1094,43 @@ export function runSalesRepoContract(name: string, make: DataLayerFactory) {
       await expect(repos.intercompany.create(strip({ ...f.slIntercompany[0]!, id: 'ic-3' }))).rejects.toBeInstanceOf(UniqueViolationError);
       expect((await repos.intercompany.list({ filters: { from: '2026-09-01' } })).rows.map((r) => r.id)).toEqual(['ic-1']);
       expect((await repos.intercompany.list({})).rows.map((r) => r.id)).toEqual(['ic-1', 'ic-2']);
+    });
+  });
+}
+
+export function runCrmRepoContract(name: string, make: DataLayerFactory) {
+  const strip = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+
+  describe(`repo contract (crm): ${name}`, () => {
+    it('leads: search, stage and converted filters, newest first; follow-ups by date range and customer', async () => {
+      const { repos } = await make();
+      const f = crmFixtures();
+      for (const l of f.crmLeads) await repos.crmLeads.create(strip(l));
+      await repos.crmLeads.create(strip({ ...f.crmLeads[0]!, id: 'crl-c', dateAdded: '2026-09-20', companyName: 'Zeta Panels', mobile: '9000000000', createdAt: at(1) }));
+      const ids = async (q: object) => (await repos.crmLeads.list(q)).rows.map((r) => r.id);
+      expect(await ids({})).toEqual(['crl-c', 'crl-b', 'crl-a']); // same date: later-inserted first
+      expect(await ids({ filters: { converted: true } })).toEqual(['crl-b']);
+      expect(await ids({ filters: { stage: 'Qualified' } })).toEqual(['crl-b']);
+      expect(await ids({ q: 'zeta' })).toEqual(['crl-c']);
+      for (const x of f.crmFollowups) await repos.crmFollowups.create(strip(x));
+      expect((await repos.crmFollowups.list({ filters: { from: '2026-09-21', customerId: 'crc-a' } })).rows.map((r) => r.id)).toEqual(['fu-2', 'fu-1']);
+      expect((await repos.crmFollowups.list({ filters: { status: 'Completed' } })).rows.map((r) => r.id)).toEqual(['fu-3']);
+    });
+
+    it('unique quotation and order numbers and master names; soft delete hides rows', async () => {
+      const { repos } = await make();
+      const f = crmFixtures();
+      await repos.crmQuotations.create(strip(f.crmQuotations[0]!));
+      await expect(repos.crmQuotations.create(strip({ ...f.crmQuotations[0]!, id: 'qt-2', quoteNo: 'qt/26-27/0001' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      await repos.crmCampaigns.create(strip(f.crmCampaigns[0]!));
+      await expect(repos.crmCampaigns.create(strip({ ...f.crmCampaigns[0]!, id: 'cp-2', name: ' expo 2026 ' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      await repos.crmCampaigns.softDelete('cp-1', at(1));
+      expect(await repos.crmCampaigns.listAll()).toEqual([]);
+      await repos.crmCampaigns.create(strip({ ...f.crmCampaigns[0]!, id: 'cp-3' }));
+      expect((await repos.crmCampaigns.list({})).total).toBe(1);
     });
   });
 }

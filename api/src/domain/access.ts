@@ -3,7 +3,7 @@
 // the vendor_* keys come from the Vendor Portal (docs/vendors-spec.md §2), purchase_* from the
 // Purchase ERP (docs/purchase-spec.md §2), stores_* from Stores MRN & GRN (docs/stores-spec.md §2),
 // stock_* from Stock Management (docs/stock-spec.md §2), production_* from Production MIS (docs/production-spec.md §2),
-// sales_* from the Sales ERP (docs/sales-spec.md §2).
+// sales_* from the Sales ERP (docs/sales-spec.md §2), crm_* from the Marketing & Sales CRM (docs/crm-spec.md §2).
 
 export const ROLES = ['superadmin', 'admin', 'dispatch', 'marketing', 'management'] as const;
 export type Role = (typeof ROLES)[number];
@@ -68,6 +68,14 @@ export const PAGE_KEYS = [
   'sales_dispatch',
   'sales_reports',
   'sales_settings',
+  // CRM module
+  'crm_dashboard',
+  'crm_leads',
+  'crm_followups',
+  'crm_customers',
+  'crm_pipeline',
+  'crm_masters',
+  'crm_reports',
 ] as const;
 export type PageKey = (typeof PAGE_KEYS)[number];
 
@@ -106,12 +114,12 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionSet> = {
     widgets: ['total', 'delivered', 'delayed'],
   },
   marketing: {
-    pages: ['dashboard', 'requests', 'tracking', 'parties', 'products', 'notifications'],
+    pages: ['dashboard', 'requests', 'tracking', 'parties', 'products', 'notifications', 'crm_dashboard', 'crm_leads', 'crm_followups', 'crm_customers', 'crm_pipeline'],
     actions: ['edit', 'print'],
     widgets: ['pending', 'parties'],
   },
   management: {
-    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard', 'sales_dashboard', 'sales_reports'],
+    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard', 'sales_dashboard', 'sales_reports', 'crm_dashboard', 'crm_reports'],
     actions: ['print', 'export'],
     widgets: [...WIDGET_KEYS],
   },

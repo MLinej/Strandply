@@ -582,6 +582,59 @@ CASES.push(
   { method: 'GET', route: `${SL}/audit`, path: `${SL}/audit`, allowed: SL_VIEW, ok: 200 },
 );
 
+// CRM module. Admins have everything. Marketing works the pipeline (dashboard, leads, follow-ups, customers,
+// opportunities, quotations) with edit and print but no delete or export. Management: dashboard and reports.
+const CR = '/api/crm';
+const CR_ALL: Role[] = ['superadmin', 'admin', 'marketing', 'management'];
+const CR_WORK: Role[] = ['superadmin', 'admin', 'marketing'];
+const CR_MGMT: Role[] = ['superadmin', 'admin', 'management'];
+const leadsCsv = () => csv('Company Name,Mobile,City\nDelta Traders,9825099999,Baroda\n');
+const crKinds: { path: string; id: string; read: Role[]; write: Role[]; create?: object; patch: object; deleteId: string; deleteOk: number }[] = [
+  { path: 'leads', id: 'crl-a', read: CR_ALL, write: CR_WORK, create: { companyName: 'Delta Traders', mobile: '9825099999', city: 'Baroda' }, patch: { stage: 'Contacted' }, deleteId: 'crl-a', deleteOk: 204 },
+  { path: 'customers', id: 'crc-a', read: CR_ALL, write: CR_WORK, create: { companyName: 'Epsilon Ply', mobile: '9825088888' }, patch: { priority: 'Cold' }, deleteId: 'crc-b', deleteOk: 409 },
+  { path: 'followups', id: 'fu-1', read: CR_ALL, write: CR_WORK, create: { customerId: 'crc-a', discussion: 'Asked for samples' }, patch: { status: 'Completed' }, deleteId: 'fu-3', deleteOk: 204 },
+  { path: 'tasks', id: 't-1', read: CR_ALL, write: CR_WORK, create: { type: 'Site Visit', dueDate: '2026-10-05' }, patch: { status: 'Completed' }, deleteId: 't-1', deleteOk: 204 },
+  { path: 'opportunities', id: 'op-1', read: CR_ALL, write: CR_WORK, create: { customerId: 'crc-b', product: 'S-OSB' }, patch: { probability: 70 }, deleteId: 'op-2', deleteOk: 204 },
+  { path: 'quotations', id: 'qt-1', read: CR_ALL, write: CR_WORK, create: { customerId: 'crc-a', product: 'OSB', quantity: 50, ratePaise: 150000 }, patch: { status: 'Negotiation' }, deleteId: 'qt-1', deleteOk: 204 },
+  { path: 'won', id: 'w-1', read: CR_ALL, write: CR_WORK, patch: { dispatchDate: '2026-10-05' }, deleteId: 'w-1', deleteOk: 204 },
+  { path: 'lost', id: 'l-1', read: CR_ALL, write: CR_WORK, patch: { remarks: 'Price gap 10%' }, deleteId: 'l-1', deleteOk: 204 },
+  { path: 'campaigns', id: 'cp-1', read: CR_ALL, write: ADMINS, create: { name: 'Diwali Offer' }, patch: { budgetPaise: 2000000 }, deleteId: 'cp-1', deleteOk: 204 },
+  { path: 'products', id: 'crp-osb', read: CR_ALL, write: ADMINS, create: { name: 'Plywood' }, patch: { moq: '1 truck' }, deleteId: 'crp-other', deleteOk: 204 },
+  { path: 'salespersons', id: 'crs-suresh', read: CR_ALL, write: ADMINS, create: { name: 'Nita Shah' }, patch: { territory: 'Saurashtra' }, deleteId: 'crs-kaushik', deleteOk: 204 },
+];
+CASES.push(
+  { method: 'GET', route: `${CR}/meta`, path: `${CR}/meta`, allowed: CR_ALL, ok: 200 },
+  { method: 'PATCH', route: `${CR}/settings`, path: `${CR}/settings`, body: { sources: ['Website', 'Referral'] }, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${CR}/leads/duplicates`, path: `${CR}/leads/duplicates?mobile=9825011111`, allowed: CR_WORK, ok: 200 },
+  { method: 'POST', route: `${CR}/leads/import`, path: `${CR}/leads/import`, form: leadsCsv, allowed: CR_WORK, ok: 200 },
+  { method: 'GET', route: `${CR}/leads/stages`, path: `${CR}/leads/stages`, allowed: CR_ALL, ok: 200 },
+  { method: 'GET', route: `${CR}/followups/board`, path: `${CR}/followups/board`, allowed: CR_ALL, ok: 200 },
+  { method: 'GET', route: `${CR}/salespersons/stats`, path: `${CR}/salespersons/stats`, allowed: CR_MGMT, ok: 200 },
+  { method: 'GET', route: `${CR}/sources`, path: `${CR}/sources`, allowed: CR_MGMT, ok: 200 },
+  ...crKinds.flatMap((k) => {
+    const b = `${CR}/${k.path}`;
+    const deleters = k.write.filter((r) => ADMINS.includes(r));
+    return [
+      { method: 'GET', route: b, path: b, allowed: k.read, ok: 200 },
+      { method: 'GET', route: `${b}/:id`, path: `${b}/${k.id}`, allowed: k.read, ok: 200 },
+      ...(k.create ? [{ method: 'POST', route: b, path: b, body: k.create, allowed: k.write, ok: 201 }] : []),
+      { method: 'PATCH', route: `${b}/:id`, path: `${b}/${k.id}`, body: k.patch, allowed: k.write, ok: 200 },
+      { method: 'DELETE', route: `${b}/:id`, path: `${b}/${k.deleteId}`, allowed: deleters, ok: k.deleteOk },
+    ];
+  }),
+  { method: 'POST', route: `${CR}/leads/:id/convert`, path: `${CR}/leads/crl-a/convert`, allowed: CR_WORK, ok: 201 },
+  { method: 'GET', route: `${CR}/customers/:id/360`, path: `${CR}/customers/crc-a/360`, allowed: CR_ALL, ok: 200 },
+  { method: 'POST', route: `${CR}/opportunities/:id/won`, path: `${CR}/opportunities/op-1/won`, body: { orderValuePaise: 30000000 }, allowed: CR_WORK, ok: 201 },
+  { method: 'POST', route: `${CR}/opportunities/:id/lost`, path: `${CR}/opportunities/op-2/lost`, body: { lostReason: 'Price Too High' }, allowed: CR_WORK, ok: 201 },
+  { method: 'POST', route: `${CR}/lost/:id/reactivate`, path: `${CR}/lost/l-1/reactivate`, allowed: CR_WORK, ok: 201 },
+  { method: 'GET', route: `${CR}/quotations/:id/print`, path: `${CR}/quotations/qt-1/print`, allowed: CR_WORK, ok: 200 },
+  { method: 'GET', route: `${CR}/dashboard`, path: `${CR}/dashboard`, allowed: CR_ALL, ok: 200 },
+  { method: 'GET', route: `${CR}/reports`, path: `${CR}/reports?from=2026-09-01`, allowed: CR_MGMT, ok: 200 },
+  ...['leads', 'customers', 'followups', 'opportunities', 'won', 'lost'].map((k) => ({ method: 'GET', route: `${CR}/export/${k}`, path: `${CR}/export/${k}`, allowed: CR_MGMT, ok: 200 })),
+  { method: 'GET', route: `${CR}/export/quotations`, path: `${CR}/export/quotations`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${CR}/audit`, path: `${CR}/audit`, allowed: CR_ALL, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

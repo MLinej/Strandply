@@ -50,6 +50,13 @@ export const PAGE_KEYS = [
   'sales_dispatch',
   'sales_reports',
   'sales_settings',
+  'crm_dashboard',
+  'crm_leads',
+  'crm_followups',
+  'crm_customers',
+  'crm_pipeline',
+  'crm_masters',
+  'crm_reports',
 ] as const;
 export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve', 'sales_approve'] as const;
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;

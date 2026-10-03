@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0010` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings).
+- [ ] Apply `0001`–`0011` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -97,6 +97,14 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] Order progress, the order lock once invoiced, FG reserved quantities, the dashboard, reports and the register KPI summaries load every order / invoice. That's fine for thousands; past that, move the sums into SQL (index `sl_invoices_so_idx` exists for per-order sums).
 - [ ] Party / item delete checks scan document lines for the id; add indexes on `sl_*_lines(item_id)` and `bill_to_id` / `ship_to_id` if they get slow.
 - [ ] Import the live legacy data (it lived in browser storage: `spl_customers`, `spl_so_llp`, `spl_inv_llp`, `spl_intercompany`, `spl_items_llp`, `spl_price_list_llp`, `spl_weight_chart_llp`, `spl_pi`, `spl_fg_stock`). The one-off conversion that built the dev seed shows the mapping: rows grouped by number, statuses mapped, invoices linked to orders by the number in "2A".
+
+### CRM module (0011)
+- [ ] Numbers: counters `CRM-QT-<fy>` and `CRM-ORD-<fy>` bumped in the insert batch (`crm_quotations_no_uq` / `crm_orders_won_no_uq` catch races).
+- [ ] Workflow steps that touch two rows must each be one batch: convert lead (customer insert + lead update), mark won / lost (order insert + opportunity update), reactivate (opportunity insert + lost update), follow-up save (follow-up + the customer's last contact / next follow-up), deleting a won / lost order (soft delete + reopen the opportunity).
+- [ ] Follow-up city filter maps the city to customer ids (`customerIds`); in SQL it's a join on `crm_customers.city`.
+- [ ] Dashboard alerts, the follow-up board, reports, source performance and salesperson figures load whole tables. Fine for thousands of leads; move the counts into SQL past that (indexes on `crm_followups(status, next_follow_up)` and `crm_leads(stage)` exist).
+- [ ] The sidebar badge counts open follow-ups due by today on every `/badges` poll; keep it a single indexed COUNT.
+- [ ] Import the live legacy CRM state (old server `/api/crm/state`: leads, customers, followups, opportunities, quotations, ordersWon, ordersLost, tasks, campaigns, products, salespersons, sources, lostReasons). Legacy ids are random strings; quotation and order numbers keep their QT/ORD values (seed the counters from the highest).
 
 ## Infrastructure services (stubs now)
 - [ ] Google Sheets sync: real `SheetsSyncService` and a cron trigger for `sheets.interval_min`.

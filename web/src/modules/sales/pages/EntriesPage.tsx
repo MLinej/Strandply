@@ -10,7 +10,7 @@ import { useUrlState } from '../../samples/ui/list-state';
 import { PageHeader } from '../../samples/ui/PageHeader';
 import { RowMenu, runAndClose } from '../../samples/ui/RowMenu';
 import { exportSales, useDeleteRecord, useEntries, useSalesMeta, useSalesOptions, useSaveEntry, type EntryKind, type PriceRow, type WeightRow } from '../api';
-import { Combo } from '../components/Combo';
+import { Combo } from '@/components/ui';
 import { inr, qtyFmt, rupeesText, toPaise } from '../ui';
 
 type Row = PriceRow | WeightRow;
