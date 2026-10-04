@@ -45,6 +45,8 @@ import type { TransportMasterService } from './modules/transport/master-service'
 import type { TransportReportService } from './modules/transport/report-service';
 import type { MaintenanceReportService } from './modules/maintenance/report-service';
 import type { WorkOrderService } from './modules/maintenance/work-order-service';
+import type { ElectricityService } from './modules/electricity/electricity-service';
+import type { ElectricityReportService } from './modules/electricity/report-service';
 
 export interface AuthContext {
   user: User;
@@ -102,6 +104,8 @@ export interface Services {
   transportReports: TransportReportService;
   workOrders: WorkOrderService;
   maintenanceReports: MaintenanceReportService;
+  electricity: ElectricityService;
+  electricityReports: ElectricityReportService;
   clock: Clock;
 }
 

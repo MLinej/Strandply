@@ -65,6 +65,11 @@ export const PAGE_KEYS = [
   'maintenance_orders',
   'maintenance_masters',
   'maintenance_reports',
+  'electricity_dashboard',
+  'electricity_readings',
+  'electricity_reports',
+  'electricity_bills',
+  'electricity_settings',
 ] as const;
 export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve', 'sales_approve', 'transport_approve'] as const;
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;

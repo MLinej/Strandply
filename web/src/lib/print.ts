@@ -1,9 +1,10 @@
 import type { PageSpec } from '@contracts/sampletrack';
 
-/** A5 landscape (courier label) and A4 portrait (request slip), matching the API's page specs. */
+/** A5 landscape (courier label), A4 portrait (request slip) and A4 landscape (wide registers), matching the API's page specs. */
 export const PAGES = {
   courierLabel: { size: 'A5', orientation: 'landscape', widthMm: 210, heightMm: 148 },
   requestSlip: { size: 'A4', orientation: 'portrait', widthMm: 210, heightMm: 297 },
+  register: { size: 'A4', orientation: 'landscape', widthMm: 297, heightMm: 210 },
 } satisfies Record<string, PageSpec>;
 
 /**

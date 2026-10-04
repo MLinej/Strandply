@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
-import { grn, mrn, productionFixtures, salesFixtures, crmFixtures, purchaseEntry, stockFixtures, transportFixtures, maintenanceFixtures } from './helpers';
+import { grn, mrn, productionFixtures, salesFixtures, crmFixtures, purchaseEntry, stockFixtures, transportFixtures, maintenanceFixtures, electricityFixtures } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -1205,6 +1205,37 @@ export function runMaintenanceRepoContract(name: string, make: DataLayerFactory)
       await repos.mtAreas.softDelete('a1', at(1));
       await repos.mtAreas.create({ ...row, id: 'a3' });
       expect((await repos.mtAreas.listAll()).map((a) => a.id)).toEqual(['a3']);
+    });
+  });
+}
+
+export function runElectricityRepoContract(name: string, make: DataLayerFactory) {
+  const strip = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+
+  describe(`repo contract (electricity): ${name}`, () => {
+    it('readings: unique date + time, newest first by date and time, shift and date filters', async () => {
+      const { repos } = await make();
+      for (const r of electricityFixtures().elReadings) await repos.elReadings.create(strip(r));
+      const ids = async (q: object) => (await repos.elReadings.list(q)).rows.map((r) => r.id);
+      expect(await ids({ pageSize: 3 })).toEqual(['elm-7', 'elm-6', 'elm-5']);
+      expect(await ids({ sort: 'at', pageSize: 2 })).toEqual(['elm-1', 'elm-2']);
+      expect(await ids({ filters: { shift: 'AM', from: '2026-09-30' } })).toEqual(['elm-6', 'elm-5']);
+      await expect(repos.elReadings.create(strip({ ...electricityFixtures().elReadings[0]!, id: 'elm-x' }))).rejects.toBeInstanceOf(UniqueViolationError);
+    });
+
+    it('bills: unique bill date, newest first; rates list by effective date', async () => {
+      const { repos } = await make();
+      for (const b of electricityFixtures().elBills) await repos.elBills.create(strip(b));
+      expect((await repos.elBills.list({})).rows.map((b) => b.id)).toEqual(['elb-2', 'elb-1']);
+      expect((await repos.elBills.list({ filters: { from: '2026-09-01' } })).rows.map((b) => b.id)).toEqual(['elb-2']);
+      await expect(repos.elBills.create(strip({ ...electricityFixtures().elBills[0]!, id: 'elb-x' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      const rate = { kind: 'mf' as const, value: 30, createdBy: null, createdAt: at(0), updatedAt: at(0) };
+      await repos.elRates.create({ ...rate, id: 'r2', effectiveFrom: '2026-09-30' });
+      await repos.elRates.create({ ...rate, id: 'r1', effectiveFrom: '2025-04-01' });
+      expect((await repos.elRates.list({ filters: { kind: 'mf' } })).rows.map((r) => r.id)).toEqual(['r1', 'r2']);
     });
   });
 }

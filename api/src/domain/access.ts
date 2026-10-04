@@ -5,7 +5,7 @@
 // stock_* from Stock Management (docs/stock-spec.md §2), production_* from Production MIS (docs/production-spec.md §2),
 // sales_* from the Sales ERP (docs/sales-spec.md §2), crm_* from the Marketing & Sales CRM (docs/crm-spec.md §2),
 // transport_* from the Transport Module (docs/transport-spec.md §2), maintenance_* from the Maintenance Work Tracker
-// (docs/maintenance-spec.md §2).
+// (docs/maintenance-spec.md §2), electricity_* from the Electricity & Meter MIS (docs/electricity-spec.md §2).
 
 export const ROLES = ['superadmin', 'admin', 'dispatch', 'marketing', 'management'] as const;
 export type Role = (typeof ROLES)[number];
@@ -88,6 +88,12 @@ export const PAGE_KEYS = [
   'maintenance_orders',
   'maintenance_masters',
   'maintenance_reports',
+  // Electricity module
+  'electricity_dashboard',
+  'electricity_readings',
+  'electricity_reports',
+  'electricity_bills',
+  'electricity_settings',
 ] as const;
 export type PageKey = (typeof PAGE_KEYS)[number];
 
@@ -132,7 +138,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionSet> = {
     widgets: ['pending', 'parties'],
   },
   management: {
-    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard', 'sales_dashboard', 'sales_reports', 'crm_dashboard', 'crm_reports', 'transport_dashboard', 'transport_reports', 'maintenance_dashboard', 'maintenance_reports'],
+    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard', 'sales_dashboard', 'sales_reports', 'crm_dashboard', 'crm_reports', 'transport_dashboard', 'transport_reports', 'maintenance_dashboard', 'maintenance_reports', 'electricity_dashboard', 'electricity_reports', 'electricity_bills'],
     actions: ['print', 'export'],
     widgets: [...WIDGET_KEYS],
   },

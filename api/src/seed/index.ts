@@ -15,6 +15,8 @@ import { DEFAULT_CRM_SETTINGS, REF_CRM_PRODUCTS, REF_SALESPERSONS } from './crm'
 import { DEMO_CAMPAIGNS, DEMO_CRM_COUNTERS, DEMO_CRM_CUSTOMERS, DEMO_FOLLOWUPS, DEMO_LEADS, DEMO_LOST, DEMO_OPPORTUNITIES, DEMO_QUOTATIONS, DEMO_TASKS, DEMO_WON } from './crm-demo.dev';
 import { DEMO_TRANSPORTERS, REF_VEHICLE_TYPES } from './transport';
 import { DEMO_WORK_ORDERS, REF_MT_AREAS } from './maintenance';
+import { DEMO_BILLS, DEMO_READINGS, REF_EL_RATES } from './electricity';
+import { DEFAULT_ELECTRICITY_SETTINGS } from '../contracts/electricity';
 import { UPGRADES } from './upgrades';
 import { DEV_USERS } from './users.dev';
 import {
@@ -64,7 +66,7 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     ],
     notifications: [],
     dispatchHistory: dev(DEMO_DISPATCH_HISTORY),
-    settings: Object.entries({ ...DEFAULT_SETTINGS, ...DEFAULT_VENDOR_SETTINGS, ...DEFAULT_STORES_SETTINGS, ...DEFAULT_PRODUCTION_SETTINGS, ...DEFAULT_SALES_SETTINGS, ...DEFAULT_CRM_SETTINGS, ...(devUsers ? { 'sales.sales_persons': DEMO_SALES_PERSONS } : {}) }).map(([key, value]) => ({ key, value, ...audit })),
+    settings: Object.entries({ ...DEFAULT_SETTINGS, ...DEFAULT_VENDOR_SETTINGS, ...DEFAULT_STORES_SETTINGS, ...DEFAULT_PRODUCTION_SETTINGS, ...DEFAULT_SALES_SETTINGS, ...DEFAULT_CRM_SETTINGS, ...DEFAULT_ELECTRICITY_SETTINGS, ...(devUsers ? { 'sales.sales_persons': DEMO_SALES_PERSONS } : {}) }).map(([key, value]) => ({ key, value, ...audit })),
     notificationReads: [],
     vnCategories: REF_VENDOR_CATEGORIES.map((c) => ({ ...c, ...audit })),
     vnProducts: REF_VENDOR_PRODUCTS.map((p) => ({ ...p, ...audit })),
@@ -121,6 +123,9 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     mtAreas: REF_MT_AREAS.map((a) => ({ ...a, ...audit })),
     // Demo work orders keep their own raised times (the timeline and reports depend on them).
     mtWorkOrders: devUsers ? DEMO_WORK_ORDERS.map((w) => ({ ...audit, ...structuredClone(w), updatedAt: w.createdAt })) : [],
+    elRates: REF_EL_RATES.map((r) => ({ ...r, ...audit })),
+    elReadings: devAudit(DEMO_READINGS),
+    elBills: devAudit(DEMO_BILLS),
     // A fresh seed already has everything the upgrades add.
     upgrades: UPGRADES.map((u) => ({ name: u.name, appliedAt: at })),
   };

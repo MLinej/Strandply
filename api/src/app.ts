@@ -59,6 +59,9 @@ import { TransportReportService } from './modules/transport/report-service';
 import { transportRoutes } from './modules/transport/routes';
 import { MaintenanceReportService } from './modules/maintenance/report-service';
 import { maintenanceRoutes } from './modules/maintenance/routes';
+import { ElectricityService } from './modules/electricity/electricity-service';
+import { ElectricityReportService } from './modules/electricity/report-service';
+import { electricityRoutes } from './modules/electricity/routes';
 import { WorkOrderService } from './modules/maintenance/work-order-service';
 import type { DataLayer } from './repos';
 
@@ -87,6 +90,7 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const salesDocs = new SalesDocumentService(data, activity, clock);
   const salesMasters = new SalesMasterService(data, activity, clock);
   const workOrders = new WorkOrderService(data, activity, clock);
+  const electricity = new ElectricityService(data, blobs, activity, clock);
   const crmRecords = new CrmRecordService(data, activity, clock);
   const crmFlow = new CrmWorkflowService(data, crmRecords, activity, clock);
   const freight = new FreightService(data, activity, clock);
@@ -139,6 +143,8 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     transportReports: new TransportReportService(data, freight, company, activity, clock),
     workOrders,
     maintenanceReports: new MaintenanceReportService(data, workOrders, company, activity, clock),
+    electricity,
+    electricityReports: new ElectricityReportService(data, electricity, activity, clock),
     clock,
   };
 }
@@ -172,6 +178,7 @@ export function createApp(deps: AppDeps) {
   mount('/api/crm', crmRoutes());
   mount('/api/transport', transportRoutes());
   mount('/api/maintenance', maintenanceRoutes());
+  mount('/api/electricity', electricityRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

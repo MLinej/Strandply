@@ -176,6 +176,21 @@ UPGRADES.push({
   },
 });
 
+const ELECTRICITY_PAGES = ['electricity_dashboard', 'electricity_readings', 'electricity_reports', 'electricity_bills', 'electricity_settings'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0014_electricity.sql on an existing database. The new tables come from the seed.
+  name: '0014_electricity',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], ELECTRICITY_PAGES);
+    grant(data, ['management'], ['electricity_dashboard', 'electricity_reports', 'electricity_bills']);
+    const keys = new Set((data.settings ?? []).map((s) => s.key));
+    if (data.settings) data.settings.push(...seed.settings.filter((s) => s.key.startsWith('electricity.') && !keys.has(s.key)));
+    // The rate histories start from the legacy defaults, and in dev the demo readings and bills come with them.
+    for (const t of ['elRates', 'elReadings', 'elBills'] as const) if (!data[t]?.length) (data as Record<string, unknown>)[t] = structuredClone(seed[t]);
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

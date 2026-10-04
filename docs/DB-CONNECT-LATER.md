@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0013` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings; Transport: 6 vehicle types; Maintenance: 8 areas).
+- [ ] Apply `0001`–`0014` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings; Transport: 6 vehicle types; Maintenance: 8 areas; Electricity: 4 rate entries, 1 setting).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -122,6 +122,13 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] Overdue is `status <> 'Completed' AND due_date < :today` (index `mt_work_orders_open_idx`); the sidebar badge runs it on every `/badges` poll for users with the work-orders page.
 - [ ] The dashboard and reports load every work order. Fine for thousands; move them into SQL past that.
 - [ ] Import the live legacy data (old server `/api/maintenance/work-orders`, `/areas`, `/timeline`: `due_date`, `created_at`, timeline `entry_type` / `entry_text` / `entry_by`). Legacy ids were random `WO-XXXXXX`: number them `WO-<yy>-nnnn` by created date and keep the old id in the first timeline entry's text.
+
+### Electricity module (0014)
+- [ ] Bill charges are columns (`*_paise`) in D1 and one `charges` object in the contract; map both ways in the D1 repo. The invoice is four `invoice_*` columns ↔ `invoice: StoredFile | null`.
+- [ ] `el_rates (kind, effective_from)` is unique in SQL; the memory repo leaves it to the service. Map the violation to the same 409.
+- [ ] The costing (`modules/electricity/calc.ts`) loads every reading and rate. Fine for years of twice-daily readings (≈ 730 a year); keep it in TypeScript rather than SQL so the legacy rules stay in one place.
+- [ ] Invoice bytes go to R2 under `electricity/<billId>/<id>`; a retention job should remove replaced or removed invoices (the service only drops the link).
+- [ ] Import the live legacy data (old server `/api/electricity/config`: config + mfHistory / fcHistory / erHistory / frHistory; `/readings`; `/bills` with `pdf_data` base64 → blob store). Rates in rupees × 100 → paise; drop the stored `kwh_diff` / `kwh_mf` (recalculated); readings with the same date and time keep the later one.
 
 ## Infrastructure services (stubs now)
 - [ ] Google Sheets sync: real `SheetsSyncService` and a cron trigger for `sheets.interval_min`.

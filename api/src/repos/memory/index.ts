@@ -23,6 +23,7 @@ import type { Proforma, SalesInvoice, SalesOrder } from '../../contracts/sales';
 import { crmRepos } from './crm';
 import { transportRepos } from './transport';
 import { maintenanceRepos } from './maintenance';
+import { electricityRepos } from './electricity';
 import { MemoryReclassRepo, MemorySkuGroupRepo, MemoryStockOpeningRepo, MemoryStockSlipRepo } from './stock';
 import { MemoryTncRepo, MemoryVendorCategoryRepo, MemoryVendorProductRepo, MemoryVendorRepo } from './vendors';
 import { MemoryCounterRepo, MemoryDispatchRepo, MemoryNotificationRepo, MemoryRequestRepo } from './workflow';
@@ -122,6 +123,7 @@ export function createMemoryDataLayer(store: MemoryStore): DataLayer {
     ...crmRepos(store),
     ...transportRepos(store),
     ...maintenanceRepos(store),
+    ...electricityRepos(store),
   };
   return { repos, uow: new MemoryUnitOfWork(store, repos) };
 }

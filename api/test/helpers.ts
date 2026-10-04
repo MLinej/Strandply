@@ -13,6 +13,7 @@ import { docTotals, EMPTY_DISPATCH, lineAmount, type Customer, type FgStock, typ
 import type { Campaign, CrmCustomer, CrmTask, Followup, Lead, Opportunity, OrderLost, OrderWon, Quotation } from '../src/contracts/crm';
 import type { FreightOrder, Inquiry, RateComparison, Transporter } from '../src/contracts/transport';
 import type { WorkOrder } from '../src/contracts/maintenance';
+import type { BillCharge, ElBill, ElRate, ElReading } from '../src/contracts/electricity';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -810,6 +811,32 @@ export function maintenanceFixtures() {
   };
 }
 
+/**
+ * Readings 28–30 Sept (30 Sept has two AM readings; its PM PF is in the penalty band), the seeded rates plus MF 40 from
+ * 30 Sept, and bills for 31 Aug and 30 Sept.
+ */
+export function electricityFixtures() {
+  const r = (id: string, date: string, time: string, kwh: number, pf: number | null = null): ElReading => ({ id, date, shift: Number(time.slice(0, 2)) < 12 ? 'AM' : 'PM', time, at: `${date}T${time}`, kwh, pf, nightKwh: null, remarks: null, ...audit });
+  const charges = (c: Partial<Record<BillCharge, number>>) => ({ demand: null, energy: null, fuelSurcharge: null, pfRebate: null, nightRebate: null, ehvRebate: null, timeOfUse: null, gt: null, totalConsumption: null, electricityDuty: null, meterCharges: null, tcs: null, ...c });
+  const bill = (id: string, billDate: string, kwhReading: number, kvarhReading: number, totalPayablePaise: number, o: Partial<ElBill> = {}): ElBill => ({
+    id, billDate, dueDate: null, paidDate: null, advancePaymentPaise: null, kwhReading, kvarhReading, pf: 0.96, nightUnits: null, charges: charges({ demand: 100_000 }), netPayablePaise: null, totalPayablePaise, remarks: null, invoice: null, ...audit, ...o,
+  });
+  const mf2: ElRate = { id: 'elr-mf2', kind: 'mf', value: 40, effectiveFrom: '2026-09-30', ...audit };
+  return {
+    extraRates: [mf2],
+    elReadings: [
+      r('elm-1', '2026-09-28', '06:00', 1000),
+      r('elm-2', '2026-09-28', '18:00', 1010),
+      r('elm-3', '2026-09-29', '06:00', 1030),
+      r('elm-4', '2026-09-29', '18:00', 1045, 0.96),
+      r('elm-5', '2026-09-30', '06:00', 1060, 0.97),
+      r('elm-6', '2026-09-30', '10:00', 1062),
+      r('elm-7', '2026-09-30', '18:00', 1080, 0.84),
+    ],
+    elBills: [bill('elb-1', '2026-08-31', 900, 300, 50_000_000, { paidDate: '2026-09-10' }), bill('elb-2', '2026-09-30', 1080, 350, 60_000_000, { pf: 0.94 })],
+  };
+}
+
 export function fixtures() {
   return {
     parties: [
@@ -950,6 +977,9 @@ export function testData(users: User[]) {
     ...crmFixtures(),
     ...transportFixtures(),
     ...maintenanceFixtures(),
+    elReadings: electricityFixtures().elReadings,
+    elBills: electricityFixtures().elBills,
+    elRates: [...seed.elRates, ...electricityFixtures().extraRates],
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
     users,

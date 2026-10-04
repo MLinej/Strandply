@@ -703,6 +703,40 @@ CASES.push(
   { method: 'GET', route: `${MT}/audit`, path: `${MT}/audit`, allowed: MT_ALL, ok: 200 },
 );
 
+// Electricity module. Admins have everything. Management: dashboard, reports and bills (read, export). Others: nothing.
+const EL = '/api/electricity';
+const EL_ALL: Role[] = ['superadmin', 'admin', 'management'];
+const invoicePdf = () => {
+  const f = new FormData();
+  f.append('file', new File([new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31])], 'invoice.pdf', { type: 'application/pdf' }));
+  return f;
+};
+CASES.push(
+  { method: 'GET', route: `${EL}/meta`, path: `${EL}/meta`, allowed: EL_ALL, ok: 200 },
+  { method: 'GET', route: `${EL}/settings`, path: `${EL}/settings`, allowed: EL_ALL, ok: 200 },
+  { method: 'PATCH', route: `${EL}/settings/meter`, path: `${EL}/settings/meter`, body: { meterNo: 'HT-1001' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${EL}/rates`, path: `${EL}/rates`, body: { kind: 'energy', value: 450, effectiveFrom: '2026-10-01' }, allowed: ADMINS, ok: 201 },
+  { method: 'DELETE', route: `${EL}/rates/:id`, path: `${EL}/rates/elr-mf2`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${EL}/readings`, path: `${EL}/readings?shift=AM`, allowed: EL_ALL, ok: 200 },
+  { method: 'GET', route: `${EL}/readings/preview`, path: `${EL}/readings/preview?date=2026-10-01&time=06:00&kwh=1100`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${EL}/readings`, path: `${EL}/readings`, body: { date: '2026-10-01', shift: 'AM', time: '06:00', kwh: 1100 }, allowed: ADMINS, ok: 201 },
+  { method: 'DELETE', route: `${EL}/readings/:id`, path: `${EL}/readings/elm-7`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${EL}/daily`, path: `${EL}/daily?from=2026-09-01`, allowed: EL_ALL, ok: 200 },
+  { method: 'GET', route: `${EL}/dashboard`, path: `${EL}/dashboard?from=2026-09-01`, allowed: EL_ALL, ok: 200 },
+  { method: 'GET', route: `${EL}/bills`, path: `${EL}/bills`, allowed: EL_ALL, ok: 200 },
+  { method: 'GET', route: `${EL}/bills/:id`, path: `${EL}/bills/elb-2`, allowed: EL_ALL, ok: 200 },
+  { method: 'POST', route: `${EL}/bills`, path: `${EL}/bills`, body: { billDate: '2026-10-31', kwhReading: 1300, totalPayablePaise: 70_000_000 }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${EL}/bills/:id`, path: `${EL}/bills/elb-2`, body: { paidDate: '2026-10-01' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${EL}/bills/:id`, path: `${EL}/bills/elb-1`, allowed: ADMINS, ok: 204 },
+  { method: 'POST', route: `${EL}/bills/:id/invoice`, path: `${EL}/bills/elb-2/invoice`, form: invoicePdf, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${EL}/bills/:id/invoice`, path: `${EL}/bills/elb-2/invoice`, allowed: EL_ALL, ok: 404 },
+  { method: 'DELETE', route: `${EL}/bills/:id/invoice`, path: `${EL}/bills/elb-2/invoice`, allowed: ADMINS, ok: 404 },
+  { method: 'GET', route: `${EL}/export/readings`, path: `${EL}/export/readings`, allowed: EL_ALL, ok: 200 },
+  { method: 'GET', route: `${EL}/export/daily`, path: `${EL}/export/daily`, allowed: EL_ALL, ok: 200 },
+  { method: 'GET', route: `${EL}/export/bills`, path: `${EL}/export/bills`, allowed: EL_ALL, ok: 200 },
+  { method: 'GET', route: `${EL}/audit`, path: `${EL}/audit`, allowed: EL_ALL, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {
