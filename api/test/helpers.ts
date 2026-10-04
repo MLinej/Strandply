@@ -12,6 +12,7 @@ import type { Chipping, Cutting, DocBase, HotPress, MattBatch, Mdo, Plan, ResinU
 import { docTotals, EMPTY_DISPATCH, lineAmount, type Customer, type FgStock, type Intercompany, type OrderLine, type Proforma, type SalesInvoice, type SalesOrder } from '../src/contracts/sales';
 import type { Campaign, CrmCustomer, CrmTask, Followup, Lead, Opportunity, OrderLost, OrderWon, Quotation } from '../src/contracts/crm';
 import type { FreightOrder, Inquiry, RateComparison, Transporter } from '../src/contracts/transport';
+import type { WorkOrder } from '../src/contracts/maintenance';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -793,6 +794,22 @@ export function transportFixtures() {
   };
 }
 
+/** Work orders on the seeded areas: wo-a Critical and overdue, wo-b in progress, wo-c completed early, wo-d on hold. Today is 2026-10-01. */
+export function maintenanceFixtures() {
+  const wo = (id: string, n: number, title: string, o: Partial<WorkOrder>): WorkOrder => ({
+    id, woNo: `WO-26-000${n}`, title, category: 'Mechanical', area: 'Press Shop', priority: 'High', status: 'Open', assignee: 'Raj Kumar', description: null, notes: null, dueDate: '2026-10-05', completedOn: null,
+    timeline: [{ id: `${id}-t1`, type: 'created', text: 'Work order created.', by: null, byName: 'Admin User', at: o.createdAt ?? T0.toISOString() }], ...audit, ...o,
+  });
+  return {
+    mtWorkOrders: [
+      wo('wo-a', 1, 'Hydraulic press oil leak', { category: 'Hydraulic', priority: 'Critical', dueDate: '2026-09-28', createdAt: '2026-09-25T04:00:00.000Z' }),
+      wo('wo-b', 2, 'Conveyor bearing noise', { area: 'Assembly Line A', status: 'In Progress', assignee: 'Priya Nair', createdAt: '2026-09-26T04:00:00.000Z' }),
+      wo('wo-c', 3, 'Fire exit door hinge', { category: 'Civil', area: 'Warehouse', priority: 'Low', status: 'Completed', assignee: 'Arjun Singh', dueDate: '2026-09-23', completedOn: '2026-09-22', createdAt: '2026-09-20T04:00:00.000Z' }),
+      wo('wo-d', 4, 'Compressor pressure drop', { category: 'Pneumatic', area: 'Utility Block', priority: 'Medium', status: 'On Hold', assignee: 'Meena Das', dueDate: '2026-10-09', createdAt: '2026-09-22T04:00:00.000Z' }),
+    ],
+  };
+}
+
 export function fixtures() {
   return {
     parties: [
@@ -932,6 +949,7 @@ export function testData(users: User[]) {
     ...salesFixtures(),
     ...crmFixtures(),
     ...transportFixtures(),
+    ...maintenanceFixtures(),
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
     users,
@@ -941,7 +959,7 @@ export function testData(users: User[]) {
       { name: 'GRN-2026-27', lastValue: 4, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'ISS-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'STR-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
-      ...[['SL-SO-llp-2026-27', 2], ['SL-INV-llp-2026-27', 2], ['SL-PI-llp-2026-27', 1], ['CRM-QT-2026-27', 1], ['CRM-ORD-2026-27', 1], ['TR-TRP', 3], ['TR-INQ-2026-27', 6], ['TR-RC-2026-27', 4], ['TR-FRA-2026-27', 3], ['TR-SFO-2026-27', 1]].map(([name, lastValue]) => ({ name: name as string, lastValue: lastValue as number, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
+      ...[['SL-SO-llp-2026-27', 2], ['SL-INV-llp-2026-27', 2], ['SL-PI-llp-2026-27', 1], ['CRM-QT-2026-27', 1], ['CRM-ORD-2026-27', 1], ['TR-TRP', 3], ['TR-INQ-2026-27', 6], ['TR-RC-2026-27', 4], ['TR-FRA-2026-27', 3], ['TR-SFO-2026-27', 1], ['MT-WO-2026-27', 4]].map(([name, lastValue]) => ({ name: name as string, lastValue: lastValue as number, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
       ...['PPR', 'HP', 'BC', 'CHR', 'WIP', 'RC', 'MWB', 'PS', 'MDO'].map((p) => ({ name: `PR-${p}`, lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
     ],
     cities: [...seed.cities, ...extraCities],

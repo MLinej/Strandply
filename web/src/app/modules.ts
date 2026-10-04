@@ -261,9 +261,11 @@ export const MODULES: ModuleDef[] = [
     icon: Wrench,
     phase: 12,
     pages: [
-      { slug: 'dashboard', label: 'Maintenance dashboard' },
-      { slug: 'breakdowns', label: 'Breakdowns' },
-      { slug: 'schedule', label: 'Preventive schedule' },
+      { slug: 'dashboard', label: 'Maintenance dashboard', perm: 'maintenance.dashboard', built: true },
+      { slug: 'work-orders', label: 'Work orders', perm: 'maintenance.orders', built: true },
+      { slug: 'areas', label: 'Plant areas', perm: 'maintenance.masters', built: true },
+      { slug: 'reports', label: 'Maintenance reports', perm: 'maintenance.reports', built: true },
+      { slug: 'audit', label: 'Audit trail', perm: 'maintenance.dashboard', built: true },
     ],
   },
   {

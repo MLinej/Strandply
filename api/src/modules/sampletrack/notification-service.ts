@@ -1,3 +1,4 @@
+import { isOverdue } from '../../contracts/maintenance';
 import { businessToday } from '../../lib/dates';
 import type { Badges, Notification, NotificationFeedFilters, NotificationType } from '../../contracts/sampletrack';
 import type { PermissionSet } from '../../domain/access';
@@ -83,6 +84,7 @@ export class NotificationService {
       out.dueFollowups = (await this.data.repos.crmFollowups.listAll()).filter((f) => (f.status === 'Pending' || f.status === 'Rescheduled') && (f.nextFollowUpDate ?? f.date) <= now).length;
     }
     if (perms.pages.includes('transport_freight') && perms.actions.includes('transport_approve')) out.pendingFreight = (await this.data.repos.trRateCmps.listAll()).filter((x) => x.status === 'pending').length;
+    if (perms.pages.includes('maintenance_orders')) out.overdueWorkOrders = (await this.data.repos.mtWorkOrders.listAll()).filter((w) => isOverdue(w, businessToday(this.clock))).length;
     return out;
   }
 }

@@ -20,6 +20,7 @@ import type { Chipping, Cutting, HotPress, MattBatch, Mdo, Plan, ResinUse, Summa
 import type { Customer, FgStock, Intercompany, PriceEntry, Proforma, SalesInvoice, SalesItem, SalesOrder, WeightEntry } from '../../contracts/sales';
 import type { Campaign, CrmCustomer, CrmProduct, CrmTask, Followup, Lead, Opportunity, OrderLost, OrderWon, Quotation, Salesperson } from '../../contracts/crm';
 import type { FreightOrder, Inquiry, RateComparison, Transporter, VehicleType } from '../../contracts/transport';
+import type { MtArea, WorkOrder } from '../../contracts/maintenance';
 import type { OpeningStock, PurchaseDocument, PurchaseEntry, PurchaseOrder, PurchaseReturn, PurchaseType } from '../../contracts/purchase';
 import type { ActivityEntry } from '../activity';
 import type { RolePermissionsRow } from '../role-permissions';
@@ -105,6 +106,8 @@ export interface MemoryData {
   trInquiries: Inquiry[];
   trRateCmps: RateComparison[];
   trOrders: FreightOrder[];
+  mtAreas: MtArea[];
+  mtWorkOrders: WorkOrder[];
   /** Data upgrades already applied to this store (see seed/upgrades.ts). The memory twin of a migrations table. */
   upgrades: { name: string; appliedAt: string }[];
 }
@@ -183,6 +186,8 @@ const KEYS: { [K in TableName]: (keyof Row<K> & string) | ((row: Row<K>) => stri
   trInquiries: 'id',
   trRateCmps: 'id',
   trOrders: 'id',
+  mtAreas: 'id',
+  mtWorkOrders: 'id',
   upgrades: 'name',
 };
 

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
-import { grn, mrn, productionFixtures, salesFixtures, crmFixtures, purchaseEntry, stockFixtures, transportFixtures } from './helpers';
+import { grn, mrn, productionFixtures, salesFixtures, crmFixtures, purchaseEntry, stockFixtures, transportFixtures, maintenanceFixtures } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -1172,6 +1172,39 @@ export function runTransportRepoContract(name: string, make: DataLayerFactory) {
       await repos.trOrders.softDelete('sfo-1', at(1));
       await repos.trOrders.create(strip({ ...f.trOrders[0]!, id: 'sfo-3' }));
       expect((await repos.trOrders.list({ filters: { transporterId: 'trt-a' } })).rows.map((r) => r.id)).toEqual(['sfo-3']);
+    });
+  });
+}
+
+export function runMaintenanceRepoContract(name: string, make: DataLayerFactory) {
+  const strip = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+
+  describe(`repo contract (maintenance): ${name}`, () => {
+    it('work orders: unique number, newest first, status / area / overdue-as-of / raised-date filters, search', async () => {
+      const { repos } = await make();
+      for (const w of maintenanceFixtures().mtWorkOrders) await repos.mtWorkOrders.create(strip(w));
+      const ids = async (q: object) => (await repos.mtWorkOrders.list(q)).rows.map((r) => r.id);
+      expect(await ids({})).toEqual(['wo-b', 'wo-a', 'wo-d', 'wo-c']);
+      expect(await ids({ sort: 'dueDate' })).toEqual(['wo-c', 'wo-a', 'wo-b', 'wo-d']);
+      expect(await ids({ filters: { overdueAsOf: '2026-10-06' } })).toEqual(['wo-b', 'wo-a']);
+      expect(await ids({ filters: { status: 'On Hold' } })).toEqual(['wo-d']);
+      expect(await ids({ filters: { area: 'Warehouse' } })).toEqual(['wo-c']);
+      expect(await ids({ filters: { from: '2026-09-25' } })).toEqual(['wo-b', 'wo-a']);
+      expect(await ids({ q: 'meena' })).toEqual(['wo-d']);
+      await expect(repos.mtWorkOrders.create(strip({ ...maintenanceFixtures().mtWorkOrders[0]!, id: 'wo-x', woNo: 'wo-26-0001' }))).rejects.toBeInstanceOf(UniqueViolationError);
+    });
+
+    it('areas: unique names (trimmed, any case); soft delete frees the name', async () => {
+      const { repos } = await make();
+      const row = { id: 'a1', name: 'Press Shop', active: true, createdBy: null, createdAt: at(0), updatedAt: at(0) };
+      await repos.mtAreas.create(row);
+      await expect(repos.mtAreas.create({ ...row, id: 'a2', name: ' press shop ' })).rejects.toBeInstanceOf(UniqueViolationError);
+      await repos.mtAreas.softDelete('a1', at(1));
+      await repos.mtAreas.create({ ...row, id: 'a3' });
+      expect((await repos.mtAreas.listAll()).map((a) => a.id)).toEqual(['a3']);
     });
   });
 }

@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0012` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings; Transport: 6 vehicle types).
+- [ ] Apply `0001`–`0013` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings; Transport: 6 vehicle types; Maintenance: 8 areas).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -114,6 +114,14 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] Past quotes, the dashboard and reports load whole tables. Fine for thousands of inquiries; move them into SQL past that (`tr_inquiries_route_idx` exists for past quotes).
 - [ ] The sidebar badge counts pending comparisons on every `/badges` poll for approvers; keep it a single COUNT on `status`.
 - [ ] Import the live legacy state (old server `/api/transport/state`: TRANSPORTERS, VEHICLES, INQUIRIES, RATE_CMPS, RC_DRAFTS, APPROVALS, ORDERS). Keep the INQ / RC / FRA / SFO / TRP numbers and seed each counter from the highest. Legacy approvals become the comparison's `approval_no`, status and trail; order forms copy the transporter fields they already hold.
+
+### Maintenance module (0013)
+- [ ] Numbers: counter `MT-WO-<fy>` bumped in the insert batch (`mt_work_orders_no_uq` catches races).
+- [ ] The timeline is the child table `mt_timeline` (append-only); every work-order write that adds entries inserts them in the same batch as the work-order update.
+- [ ] Renaming an area updates `mt_work_orders.area` for its work orders in the same batch.
+- [ ] Overdue is `status <> 'Completed' AND due_date < :today` (index `mt_work_orders_open_idx`); the sidebar badge runs it on every `/badges` poll for users with the work-orders page.
+- [ ] The dashboard and reports load every work order. Fine for thousands; move them into SQL past that.
+- [ ] Import the live legacy data (old server `/api/maintenance/work-orders`, `/areas`, `/timeline`: `due_date`, `created_at`, timeline `entry_type` / `entry_text` / `entry_by`). Legacy ids were random `WO-XXXXXX`: number them `WO-<yy>-nnnn` by created date and keep the old id in the first timeline entry's text.
 
 ## Infrastructure services (stubs now)
 - [ ] Google Sheets sync: real `SheetsSyncService` and a cron trigger for `sheets.interval_min`.

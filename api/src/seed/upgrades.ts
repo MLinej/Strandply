@@ -161,6 +161,21 @@ UPGRADES.push({
   },
 });
 
+const MAINTENANCE_PAGES = ['maintenance_dashboard', 'maintenance_orders', 'maintenance_masters', 'maintenance_reports'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0013_maintenance.sql on an existing database. The new tables come from the seed.
+  name: '0013_maintenance',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], MAINTENANCE_PAGES);
+    grant(data, ['management'], ['maintenance_dashboard', 'maintenance_reports']);
+    // Areas are reference data, and in dev the demo work orders come with them.
+    for (const t of ['mtAreas', 'mtWorkOrders'] as const) if (!data[t]?.length) (data as Record<string, unknown>)[t] = structuredClone(seed[t]);
+    const counters = new Set((data.counters ?? []).map((c) => c.name));
+    if (data.counters) data.counters.push(...seed.counters.filter((c) => c.name.startsWith('MT-') && !counters.has(c.name)));
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

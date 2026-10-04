@@ -838,6 +838,8 @@ export interface Badges {
   dueFollowups?: number;
   /** Freight rate comparisons waiting for approval (Transport, approvers only). */
   pendingFreight?: number;
+  /** Work orders past their due date and not completed (Maintenance). */
+  overdueWorkOrders?: number;
 }
 
 /** Company details (Settings). Printed on labels and slips and used in WhatsApp messages. */

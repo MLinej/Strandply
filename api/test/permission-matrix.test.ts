@@ -680,6 +680,29 @@ CASES.push(
   { method: 'GET', route: `${TR}/audit`, path: `${TR}/audit`, allowed: TR_ALL, ok: 200 },
 );
 
+// Maintenance module. Admins have everything. Management: dashboard and reports (with export). Others: nothing.
+const MT = '/api/maintenance';
+const MT_ALL: Role[] = ['superadmin', 'admin', 'management'];
+CASES.push(
+  { method: 'GET', route: `${MT}/meta`, path: `${MT}/meta`, allowed: MT_ALL, ok: 200 },
+  { method: 'GET', route: `${MT}/areas`, path: `${MT}/areas`, allowed: MT_ALL, ok: 200 },
+  { method: 'POST', route: `${MT}/areas`, path: `${MT}/areas`, body: { name: 'CNC Machine Shop' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${MT}/areas/:id`, path: `${MT}/areas/mta-4`, body: { name: 'Boiler House' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${MT}/areas/:id`, path: `${MT}/areas/mta-4`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${MT}/work-orders`, path: `${MT}/work-orders?overdue=true`, allowed: MT_ALL, ok: 200 },
+  { method: 'GET', route: `${MT}/work-orders/:id`, path: `${MT}/work-orders/wo-a`, allowed: MT_ALL, ok: 200 },
+  { method: 'GET', route: `${MT}/work-orders/:id/print`, path: `${MT}/work-orders/wo-a/print`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${MT}/work-orders`, path: `${MT}/work-orders`, body: { title: 'Boiler feed pump seal', area: 'Boiler Room', assignee: 'Raj Kumar', dueDate: '2026-10-03' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${MT}/work-orders/:id`, path: `${MT}/work-orders/wo-a`, body: { priority: 'High' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${MT}/work-orders/:id/status`, path: `${MT}/work-orders/wo-a/status`, body: { status: 'In Progress' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${MT}/work-orders/:id/notes`, path: `${MT}/work-orders/wo-a/notes`, body: { text: 'Seal ordered' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${MT}/work-orders/:id`, path: `${MT}/work-orders/wo-c`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${MT}/dashboard`, path: `${MT}/dashboard`, allowed: MT_ALL, ok: 200 },
+  { method: 'GET', route: `${MT}/reports`, path: `${MT}/reports?from=2026-09-01`, allowed: MT_ALL, ok: 200 },
+  { method: 'GET', route: `${MT}/export/work-orders`, path: `${MT}/export/work-orders`, allowed: MT_ALL, ok: 200 },
+  { method: 'GET', route: `${MT}/audit`, path: `${MT}/audit`, allowed: MT_ALL, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

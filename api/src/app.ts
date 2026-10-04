@@ -57,6 +57,9 @@ import { FreightService } from './modules/transport/freight-service';
 import { TransportMasterService } from './modules/transport/master-service';
 import { TransportReportService } from './modules/transport/report-service';
 import { transportRoutes } from './modules/transport/routes';
+import { MaintenanceReportService } from './modules/maintenance/report-service';
+import { maintenanceRoutes } from './modules/maintenance/routes';
+import { WorkOrderService } from './modules/maintenance/work-order-service';
 import type { DataLayer } from './repos';
 
 export interface AppDeps {
@@ -83,6 +86,7 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const wipBatches = new WipService(data, activity, clock);
   const salesDocs = new SalesDocumentService(data, activity, clock);
   const salesMasters = new SalesMasterService(data, activity, clock);
+  const workOrders = new WorkOrderService(data, activity, clock);
   const crmRecords = new CrmRecordService(data, activity, clock);
   const crmFlow = new CrmWorkflowService(data, crmRecords, activity, clock);
   const freight = new FreightService(data, activity, clock);
@@ -133,6 +137,8 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     freight,
     transportMasters: new TransportMasterService(data, activity, clock),
     transportReports: new TransportReportService(data, freight, company, activity, clock),
+    workOrders,
+    maintenanceReports: new MaintenanceReportService(data, workOrders, company, activity, clock),
     clock,
   };
 }
@@ -165,6 +171,7 @@ export function createApp(deps: AppDeps) {
   mount('/api/sales', salesRoutes());
   mount('/api/crm', crmRoutes());
   mount('/api/transport', transportRoutes());
+  mount('/api/maintenance', maintenanceRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

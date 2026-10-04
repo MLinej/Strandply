@@ -14,6 +14,7 @@ import { DEMO_CUSTOMERS, DEMO_INTERCOMPANY, DEMO_SALES_COUNTERS, DEMO_SALES_INVO
 import { DEFAULT_CRM_SETTINGS, REF_CRM_PRODUCTS, REF_SALESPERSONS } from './crm';
 import { DEMO_CAMPAIGNS, DEMO_CRM_COUNTERS, DEMO_CRM_CUSTOMERS, DEMO_FOLLOWUPS, DEMO_LEADS, DEMO_LOST, DEMO_OPPORTUNITIES, DEMO_QUOTATIONS, DEMO_TASKS, DEMO_WON } from './crm-demo.dev';
 import { DEMO_TRANSPORTERS, REF_VEHICLE_TYPES } from './transport';
+import { DEMO_WORK_ORDERS, REF_MT_AREAS } from './maintenance';
 import { UPGRADES } from './upgrades';
 import { DEV_USERS } from './users.dev';
 import {
@@ -59,6 +60,7 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
       ...devAudit(DEMO_SALES_COUNTERS),
       ...devAudit(DEMO_CRM_COUNTERS),
       ...devAudit([{ name: 'TR-TRP', lastValue: DEMO_TRANSPORTERS.length }]),
+      ...devAudit([{ name: 'MT-WO-2026-27', lastValue: DEMO_WORK_ORDERS.length }]),
     ],
     notifications: [],
     dispatchHistory: dev(DEMO_DISPATCH_HISTORY),
@@ -116,6 +118,9 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     trInquiries: [],
     trRateCmps: [],
     trOrders: [],
+    mtAreas: REF_MT_AREAS.map((a) => ({ ...a, ...audit })),
+    // Demo work orders keep their own raised times (the timeline and reports depend on them).
+    mtWorkOrders: devUsers ? DEMO_WORK_ORDERS.map((w) => ({ ...audit, ...structuredClone(w), updatedAt: w.createdAt })) : [],
     // A fresh seed already has everything the upgrades add.
     upgrades: UPGRADES.map((u) => ({ name: u.name, appliedAt: at })),
   };

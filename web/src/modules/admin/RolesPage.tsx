@@ -15,7 +15,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
   {
     key: 'pages',
     title: 'Samples & admin pages',
-    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_') && !k.startsWith('sales_') && !k.startsWith('crm_') && !k.startsWith('transport_')),
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_') && !k.startsWith('sales_') && !k.startsWith('crm_') && !k.startsWith('transport_') && !k.startsWith('maintenance_')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -124,6 +124,17 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
       transport_freight: 'Inquiries, rate comparisons, order forms',
       transport_masters: 'Transporters, vehicle types',
       transport_reports: 'Freight reports',
+    },
+  },
+  {
+    key: 'pages',
+    title: 'Maintenance pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('maintenance_')),
+    label: {
+      maintenance_dashboard: 'Dashboard and audit',
+      maintenance_orders: 'Work orders: raise, update, notes, print',
+      maintenance_masters: 'Plant areas',
+      maintenance_reports: 'Maintenance reports',
     },
   },
   {

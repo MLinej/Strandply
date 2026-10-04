@@ -61,6 +61,10 @@ export const PAGE_KEYS = [
   'transport_freight',
   'transport_masters',
   'transport_reports',
+  'maintenance_dashboard',
+  'maintenance_orders',
+  'maintenance_masters',
+  'maintenance_reports',
 ] as const;
 export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve', 'sales_approve', 'transport_approve'] as const;
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;

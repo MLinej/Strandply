@@ -43,6 +43,8 @@ import type { CrmWorkflowService } from './modules/crm/workflow-service';
 import type { FreightService } from './modules/transport/freight-service';
 import type { TransportMasterService } from './modules/transport/master-service';
 import type { TransportReportService } from './modules/transport/report-service';
+import type { MaintenanceReportService } from './modules/maintenance/report-service';
+import type { WorkOrderService } from './modules/maintenance/work-order-service';
 
 export interface AuthContext {
   user: User;
@@ -98,6 +100,8 @@ export interface Services {
   freight: FreightService;
   transportMasters: TransportMasterService;
   transportReports: TransportReportService;
+  workOrders: WorkOrderService;
+  maintenanceReports: MaintenanceReportService;
   clock: Clock;
 }
 
