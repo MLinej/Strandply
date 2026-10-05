@@ -22,6 +22,8 @@ import type { Campaign, CrmCustomer, CrmProduct, CrmTask, Followup, Lead, Opport
 import type { FreightOrder, Inquiry, RateComparison, Transporter, VehicleType } from '../../contracts/transport';
 import type { MtArea, WorkOrder } from '../../contracts/maintenance';
 import type { ElBill, ElRate, ElReading } from '../../contracts/electricity';
+import type { Complaint, CpRecipient } from '../../contracts/complaints';
+import type { DwDepartment, DwEmployee, DwPlan } from '../../contracts/dwpas';
 import type { OpeningStock, PurchaseDocument, PurchaseEntry, PurchaseOrder, PurchaseReturn, PurchaseType } from '../../contracts/purchase';
 import type { ActivityEntry } from '../activity';
 import type { RolePermissionsRow } from '../role-permissions';
@@ -112,6 +114,11 @@ export interface MemoryData {
   elRates: ElRate[];
   elReadings: ElReading[];
   elBills: ElBill[];
+  complaints: Complaint[];
+  cpRecipients: CpRecipient[];
+  dwDepartments: DwDepartment[];
+  dwEmployees: DwEmployee[];
+  dwPlans: DwPlan[];
   /** Data upgrades already applied to this store (see seed/upgrades.ts). The memory twin of a migrations table. */
   upgrades: { name: string; appliedAt: string }[];
 }
@@ -195,6 +202,11 @@ const KEYS: { [K in TableName]: (keyof Row<K> & string) | ((row: Row<K>) => stri
   elRates: 'id',
   elReadings: 'id',
   elBills: 'id',
+  complaints: 'id',
+  cpRecipients: 'id',
+  dwDepartments: 'id',
+  dwEmployees: 'id',
+  dwPlans: 'id',
   upgrades: 'name',
 };
 

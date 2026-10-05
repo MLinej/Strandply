@@ -840,6 +840,10 @@ export interface Badges {
   pendingFreight?: number;
   /** Work orders past their due date and not completed (Maintenance). */
   overdueWorkOrders?: number;
+  /** Complaints still Open (not yet taken up). */
+  openComplaints?: number;
+  /** Work plans submitted and waiting for approval (DWPAS, approvers only). */
+  pendingPlans?: number;
 }
 
 /** Company details (Settings). Printed on labels and slips and used in WhatsApp messages. */

@@ -15,7 +15,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
   {
     key: 'pages',
     title: 'Samples & admin pages',
-    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_') && !k.startsWith('sales_') && !k.startsWith('crm_') && !k.startsWith('transport_') && !k.startsWith('maintenance_') && !k.startsWith('electricity_')),
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_') && !k.startsWith('sales_') && !k.startsWith('crm_') && !k.startsWith('transport_') && !k.startsWith('maintenance_') && !k.startsWith('electricity_') && !k.startsWith('complaints_') && !k.startsWith('dwpas_')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -150,10 +150,32 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
     },
   },
   {
+    key: 'pages',
+    title: 'Complaints pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('complaints_')),
+    label: {
+      complaints_dashboard: 'Dashboard and audit',
+      complaints_register: 'Register, raise and follow complaints',
+      complaints_reports: 'Complaint reports',
+      complaints_masters: 'Notification recipients',
+    },
+  },
+  {
+    key: 'pages',
+    title: 'DWPAS pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('dwpas_')),
+    label: {
+      dwpas_dashboard: 'Today’s plan and audit',
+      dwpas_plans: 'Plan entry, register, achievement',
+      dwpas_reports: 'Variance analysis, HR manpower',
+      dwpas_masters: 'Departments, employees',
+    },
+  },
+  {
     key: 'actions',
     title: 'Actions',
     items: ACTION_KEYS,
-    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors', purchase_approve: 'Approve purchases', stores_review: 'Review GRNs', stores_approve: 'Approve GRNs', stores_account: 'Account GRNs', production_review: 'Review production', production_approve: 'Approve production', sales_approve: 'Approve sales invoices', transport_approve: 'Approve freight' },
+    label: { edit: 'Add and edit', delete: 'Delete', approve: 'Approve requests', print: 'Print', export: 'Export', dashboard_full: 'Full dashboard', vendor_approve: 'Approve vendors', purchase_approve: 'Approve purchases', stores_review: 'Review GRNs', stores_approve: 'Approve GRNs', stores_account: 'Account GRNs', production_review: 'Review production', production_approve: 'Approve production', sales_approve: 'Approve sales invoices', transport_approve: 'Approve freight', dwpas_approve: 'Approve work plans' },
   },
   {
     key: 'widgets',

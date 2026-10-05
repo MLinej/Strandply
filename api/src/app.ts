@@ -62,6 +62,12 @@ import { maintenanceRoutes } from './modules/maintenance/routes';
 import { ElectricityService } from './modules/electricity/electricity-service';
 import { ElectricityReportService } from './modules/electricity/report-service';
 import { electricityRoutes } from './modules/electricity/routes';
+import { ComplaintService } from './modules/complaints/complaint-service';
+import { ComplaintReportService } from './modules/complaints/report-service';
+import { complaintsRoutes } from './modules/complaints/routes';
+import { DwpasService } from './modules/dwpas/dwpas-service';
+import { DwpasReportService } from './modules/dwpas/report-service';
+import { dwpasRoutes } from './modules/dwpas/routes';
 import { WorkOrderService } from './modules/maintenance/work-order-service';
 import type { DataLayer } from './repos';
 
@@ -91,6 +97,8 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const salesMasters = new SalesMasterService(data, activity, clock);
   const workOrders = new WorkOrderService(data, activity, clock);
   const electricity = new ElectricityService(data, blobs, activity, clock);
+  const complaints = new ComplaintService(data, blobs, activity, clock);
+  const dwpas = new DwpasService(data, activity, clock);
   const crmRecords = new CrmRecordService(data, activity, clock);
   const crmFlow = new CrmWorkflowService(data, crmRecords, activity, clock);
   const freight = new FreightService(data, activity, clock);
@@ -145,6 +153,10 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     maintenanceReports: new MaintenanceReportService(data, workOrders, company, activity, clock),
     electricity,
     electricityReports: new ElectricityReportService(data, electricity, activity, clock),
+    complaints,
+    complaintReports: new ComplaintReportService(data, complaints, company, activity, clock),
+    dwpas,
+    dwpasReports: new DwpasReportService(data, dwpas, company, activity, clock),
     clock,
   };
 }
@@ -179,6 +191,8 @@ export function createApp(deps: AppDeps) {
   mount('/api/transport', transportRoutes());
   mount('/api/maintenance', maintenanceRoutes());
   mount('/api/electricity', electricityRoutes());
+  mount('/api/complaints', complaintsRoutes());
+  mount('/api/dwpas', dwpasRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

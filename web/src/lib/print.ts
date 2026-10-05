@@ -54,12 +54,20 @@ export function printHtml(opts: PrintOptions): Promise<void> {
     win.document.write(printDocumentHtml(opts));
     win.document.close();
     win.addEventListener('afterprint', done, { once: true });
+    // Images (complaint photos) must load before the dialog snapshots the page; give up after 5 s.
+    const images = [...win.document.images].filter((img) => !img.complete);
+    const loaded = Promise.race([Promise.all(images.map((img) => new Promise((ok) => {
+            img.addEventListener('load', ok, { once: true });
+            img.addEventListener('error', ok, { once: true });
+          }))), new Promise((ok) => setTimeout(ok, 5000))]);
     // Wait one frame so fonts and layout settle before the dialog opens.
-    requestAnimationFrame(() => {
-      win.focus();
-      win.print();
-      // Some browsers never fire afterprint for iframes; clean up anyway.
-      setTimeout(done, 60_000);
-    });
+    void loaded.then(() =>
+      requestAnimationFrame(() => {
+        win.focus();
+        win.print();
+        // Some browsers never fire afterprint for iframes; clean up anyway.
+        setTimeout(done, 60_000);
+      }),
+    );
   });
 }

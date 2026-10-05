@@ -47,6 +47,10 @@ import type { MaintenanceReportService } from './modules/maintenance/report-serv
 import type { WorkOrderService } from './modules/maintenance/work-order-service';
 import type { ElectricityService } from './modules/electricity/electricity-service';
 import type { ElectricityReportService } from './modules/electricity/report-service';
+import type { ComplaintService } from './modules/complaints/complaint-service';
+import type { ComplaintReportService } from './modules/complaints/report-service';
+import type { DwpasService } from './modules/dwpas/dwpas-service';
+import type { DwpasReportService } from './modules/dwpas/report-service';
 
 export interface AuthContext {
   user: User;
@@ -106,6 +110,10 @@ export interface Services {
   maintenanceReports: MaintenanceReportService;
   electricity: ElectricityService;
   electricityReports: ElectricityReportService;
+  complaints: ComplaintService;
+  complaintReports: ComplaintReportService;
+  dwpas: DwpasService;
+  dwpasReports: DwpasReportService;
   clock: Clock;
 }
 

@@ -16,6 +16,8 @@ import { DEMO_CAMPAIGNS, DEMO_CRM_COUNTERS, DEMO_CRM_CUSTOMERS, DEMO_FOLLOWUPS, 
 import { DEMO_TRANSPORTERS, REF_VEHICLE_TYPES } from './transport';
 import { DEMO_WORK_ORDERS, REF_MT_AREAS } from './maintenance';
 import { DEMO_BILLS, DEMO_READINGS, REF_EL_RATES } from './electricity';
+import { DEMO_COMPLAINTS, REF_CP_RECIPIENTS } from './complaints';
+import { DEMO_PLANS, REF_DW_DEPARTMENTS, REF_DW_EMPLOYEES } from './dwpas';
 import { DEFAULT_ELECTRICITY_SETTINGS } from '../contracts/electricity';
 import { UPGRADES } from './upgrades';
 import { DEV_USERS } from './users.dev';
@@ -63,6 +65,7 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
       ...devAudit(DEMO_CRM_COUNTERS),
       ...devAudit([{ name: 'TR-TRP', lastValue: DEMO_TRANSPORTERS.length }]),
       ...devAudit([{ name: 'MT-WO-2026-27', lastValue: DEMO_WORK_ORDERS.length }]),
+      ...devAudit([{ name: 'CP-2026-27', lastValue: DEMO_COMPLAINTS.length }]),
     ],
     notifications: [],
     dispatchHistory: dev(DEMO_DISPATCH_HISTORY),
@@ -126,6 +129,11 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     elRates: REF_EL_RATES.map((r) => ({ ...r, ...audit })),
     elReadings: devAudit(DEMO_READINGS),
     elBills: devAudit(DEMO_BILLS),
+    cpRecipients: REF_CP_RECIPIENTS.map((r) => ({ ...r, ...audit })),
+    complaints: devUsers ? DEMO_COMPLAINTS.map((c) => ({ ...audit, ...structuredClone(c), updatedAt: c.createdAt })) : [],
+    dwDepartments: REF_DW_DEPARTMENTS.map((d) => ({ ...d, ...audit })),
+    dwEmployees: REF_DW_EMPLOYEES.map((e) => ({ ...e, ...audit })),
+    dwPlans: devAudit(DEMO_PLANS),
     // A fresh seed already has everything the upgrades add.
     upgrades: UPGRADES.map((u) => ({ name: u.name, appliedAt: at })),
   };

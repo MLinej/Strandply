@@ -191,6 +191,35 @@ UPGRADES.push({
   },
 });
 
+const COMPLAINTS_PAGES = ['complaints_dashboard', 'complaints_register', 'complaints_reports', 'complaints_masters'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0015_complaints.sql on an existing database. The new tables come from the seed.
+  name: '0015_complaints',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], COMPLAINTS_PAGES);
+    grant(data, ['marketing'], ['complaints_dashboard', 'complaints_register']);
+    grant(data, ['management'], ['complaints_dashboard', 'complaints_register', 'complaints_reports']);
+    // Recipients are reference data, and in dev the demo complaints come with them.
+    for (const t of ['cpRecipients', 'complaints'] as const) if (!data[t]?.length) (data as Record<string, unknown>)[t] = structuredClone(seed[t]);
+    const counters = new Set((data.counters ?? []).map((c) => c.name));
+    if (data.counters) data.counters.push(...seed.counters.filter((c) => c.name.startsWith('CP-') && !counters.has(c.name)));
+  },
+});
+
+const DWPAS_PAGES = ['dwpas_dashboard', 'dwpas_plans', 'dwpas_reports', 'dwpas_masters'] as const;
+
+UPGRADES.push({
+  // Same as db/migrations/0016_dwpas.sql on an existing database. The new tables come from the seed.
+  name: '0016_dwpas',
+  apply(data, seed) {
+    grant(data, ['superadmin', 'admin'], DWPAS_PAGES, ['dwpas_approve']);
+    grant(data, ['management'], ['dwpas_dashboard', 'dwpas_plans', 'dwpas_reports']);
+    // Departments and employees are the legacy defaults, and in dev the demo plans come with them.
+    for (const t of ['dwDepartments', 'dwEmployees', 'dwPlans'] as const) if (!data[t]?.length) (data as Record<string, unknown>)[t] = structuredClone(seed[t]);
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

@@ -58,6 +58,10 @@ export function Sidebar({ collapsed, onToggle, onLogout }: SidebarProps) {
     'transport/approvals': badges?.pendingFreight,
     maintenance: badges?.overdueWorkOrders,
     'maintenance/work-orders': badges?.overdueWorkOrders,
+    complaints: badges?.openComplaints,
+    'complaints/register': badges?.openComplaints,
+    dwpas: badges?.pendingPlans,
+    'dwpas/register': badges?.pendingPlans,
   };
   const { pathname } = useLocation();
   const activeKey = activeModuleKey(pathname, visibleModules);

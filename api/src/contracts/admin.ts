@@ -70,8 +70,16 @@ export const PAGE_KEYS = [
   'electricity_reports',
   'electricity_bills',
   'electricity_settings',
+  'complaints_dashboard',
+  'complaints_register',
+  'complaints_reports',
+  'complaints_masters',
+  'dwpas_dashboard',
+  'dwpas_plans',
+  'dwpas_reports',
+  'dwpas_masters',
 ] as const;
-export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve', 'sales_approve', 'transport_approve'] as const;
+export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve', 'sales_approve', 'transport_approve', 'dwpas_approve'] as const;
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;
 
 export interface PublicUser {

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Courier, Dispatch, Party, Product, SampleRequest, SampleRequestItem, State } from '../src/contracts/sampletrack';
 import type { TncClause, Vendor, VendorCategory, VendorProduct } from '../src/contracts/vendors';
 import type { PurchaseDocument, PurchaseOrder } from '../src/contracts/purchase';
-import { grn, mrn, productionFixtures, salesFixtures, crmFixtures, purchaseEntry, stockFixtures, transportFixtures, maintenanceFixtures, electricityFixtures } from './helpers';
+import { grn, mrn, productionFixtures, salesFixtures, crmFixtures, purchaseEntry, stockFixtures, transportFixtures, maintenanceFixtures, electricityFixtures, complaintFixtures, dwpasFixtures } from './helpers';
 import { DEFAULT_ROLE_PERMISSIONS } from '../src/domain/access';
 import { UniqueViolationError, type ActivityEntry, type DataLayer, type NewUser, type Session } from '../src/repos';
 
@@ -1236,6 +1236,68 @@ export function runElectricityRepoContract(name: string, make: DataLayerFactory)
       await repos.elRates.create({ ...rate, id: 'r2', effectiveFrom: '2026-09-30' });
       await repos.elRates.create({ ...rate, id: 'r1', effectiveFrom: '2025-04-01' });
       expect((await repos.elRates.list({ filters: { kind: 'mf' } })).rows.map((r) => r.id)).toEqual(['r1', 'r2']);
+    });
+  });
+}
+
+export function runComplaintsRepoContract(name: string, make: DataLayerFactory) {
+  const strip = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+
+  describe(`repo contract (complaints): ${name}`, () => {
+    it('complaints: unique number, newest first, status / open / date / customer filters, search', async () => {
+      const { repos } = await make();
+      for (const c of complaintFixtures().complaints) await repos.complaints.create(strip(c));
+      const ids = async (q: object) => (await repos.complaints.list(q)).rows.map((r) => r.id);
+      expect(await ids({})).toEqual(['cmp-c', 'cmp-b', 'cmp-a', 'cmp-d']);
+      expect(await ids({ filters: { open: false } })).toEqual(['cmp-a', 'cmp-d']);
+      expect(await ids({ filters: { status: 'In Progress' } })).toEqual(['cmp-b']);
+      expect(await ids({ filters: { customerName: 'Patel Plywood', to: '2026-09-01' } })).toEqual(['cmp-d']);
+      expect(await ids({ q: 'kaushik' })).toEqual(['cmp-b', 'cmp-d']);
+      await expect(repos.complaints.create(strip({ ...complaintFixtures().complaints[0]!, id: 'cmp-x', complaintNo: 'cmp/26-27/0001' }))).rejects.toBeInstanceOf(UniqueViolationError);
+    });
+
+    it('recipients: unique names, name order', async () => {
+      const { repos } = await make();
+      for (const r of complaintFixtures().cpRecipients) await repos.cpRecipients.create(strip(r));
+      expect((await repos.cpRecipients.list({})).rows.map((r) => r.id)).toEqual(['cpr-jimit', 'cpr-old', 'cpr-sinha']);
+      await expect(repos.cpRecipients.create(strip({ ...complaintFixtures().cpRecipients[0]!, id: 'x', name: 'JIMIT MEHTA' }))).rejects.toBeInstanceOf(UniqueViolationError);
+    });
+  });
+}
+
+export function runDwpasRepoContract(name: string, make: DataLayerFactory) {
+  const strip = <T extends { deletedAt: string | null }>(r: T) => {
+    const { deletedAt: _d, ...rest } = r;
+    return rest;
+  };
+
+  describe(`repo contract (dwpas): ${name}`, () => {
+    it('plans: one per date, newest first, status and date filters', async () => {
+      const { repos } = await make();
+      for (const p of dwpasFixtures().dwPlans) await repos.dwPlans.create(strip(p));
+      const ids = async (q: object) => (await repos.dwPlans.list(q)).rows.map((r) => r.id);
+      expect(await ids({})).toEqual(['dwp-c', 'dwp-b', 'dwp-a']);
+      expect(await ids({ filters: { status: 'Submitted' } })).toEqual(['dwp-b']);
+      expect(await ids({ filters: { from: '2026-09-30', to: '2026-10-01' } })).toEqual(['dwp-b']);
+      await expect(repos.dwPlans.create(strip({ ...dwpasFixtures().dwPlans[0]!, id: 'dwp-x' }))).rejects.toBeInstanceOf(UniqueViolationError);
+      await repos.dwPlans.softDelete('dwp-a', at(1));
+      await repos.dwPlans.create(strip({ ...dwpasFixtures().dwPlans[0]!, id: 'dwp-y' }));
+      expect(await ids({ filters: { status: 'Approved' } })).toEqual(['dwp-y']);
+    });
+
+    it('departments and employees: unique names, name order', async () => {
+      const { repos } = await make();
+      const d = { code: null, head: 'H', description: null, active: true, createdBy: null, createdAt: at(0), updatedAt: at(0) };
+      await repos.dwDepartments.create({ ...d, id: 'd2', name: 'Peeling' });
+      await repos.dwDepartments.create({ ...d, id: 'd1', name: 'Dryer' });
+      expect((await repos.dwDepartments.list({})).rows.map((r) => r.id)).toEqual(['d1', 'd2']);
+      await expect(repos.dwDepartments.create({ ...d, id: 'd3', name: 'PEELING' })).rejects.toBeInstanceOf(UniqueViolationError);
+      const e = { code: null, department: null, designation: null, type: 'Skilled' as const, active: true, createdBy: null, createdAt: at(0), updatedAt: at(0) };
+      await repos.dwEmployees.create({ ...e, id: 'e1', name: 'Rahul' });
+      await expect(repos.dwEmployees.create({ ...e, id: 'e2', name: ' rahul ' })).rejects.toBeInstanceOf(UniqueViolationError);
     });
   });
 }

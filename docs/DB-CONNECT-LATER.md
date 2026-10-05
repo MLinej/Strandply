@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0014` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings; Transport: 6 vehicle types; Maintenance: 8 areas; Electricity: 4 rate entries, 1 setting).
+- [ ] Apply `0001`–`0016` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings; Transport: 6 vehicle types; Maintenance: 8 areas; Electricity: 4 rate entries, 1 setting; Complaints: 2 recipients; DWPAS: 12 departments, 7 employees).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -129,6 +129,20 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] The costing (`modules/electricity/calc.ts`) loads every reading and rate. Fine for years of twice-daily readings (≈ 730 a year); keep it in TypeScript rather than SQL so the legacy rules stay in one place.
 - [ ] Invoice bytes go to R2 under `electricity/<billId>/<id>`; a retention job should remove replaced or removed invoices (the service only drops the link).
 - [ ] Import the live legacy data (old server `/api/electricity/config`: config + mfHistory / fcHistory / erHistory / frHistory; `/readings`; `/bills` with `pdf_data` base64 → blob store). Rates in rupees × 100 → paise; drop the stored `kwh_diff` / `kwh_mf` (recalculated); readings with the same date and time keep the later one.
+
+### Complaints module (0015)
+- [ ] Numbers: counter `CP-<fy>` bumped in the insert batch (`complaints_no_uq` catches races).
+- [ ] The timeline is `cp_events` (append-only); photos and comment files are `cp_files` (`event_id` NULL for the complaint's photos). Every write that adds entries or files inserts them in the same batch as the complaint update. Removing a photo sets `removed_at`.
+- [ ] File bytes go to R2 under `complaints/<complaint id>/<file id>`; uploads are written before the batch and deleted if it fails (as the memory version does). A retention job should drop removed photos and files of deleted complaints.
+- [ ] The register, dashboard and reports load whole tables; fine for thousands of complaints. The badge is a COUNT on `status = 'Open'` (index `complaints_status_idx`).
+- [ ] Import legacy complaints from the browsers that hold them (`localStorage['spl_complaint_records']`, `_recipients`, `_seq`): a one-off export page in the old app, then an import. Dates are DD-MM-YYYY; photos and comment media are base64 data URLs → blob store; `comments[]` → `cp_events`; keep the CMP numbers and seed the counters from the highest per FY.
+
+### DWPAS (0016)
+- [ ] Plan lines are the child table `dw_plan_lines` (`line_no` is the order achievement is entered in); the trail is JSON on `dw_plans`. Saving a plan replaces its lines in one batch with the header update.
+- [ ] "One plan per date" is `dw_plans_date_uq`; map its violation to a 409. Employee codes are unique only when set (`dw_employees_code_uq`).
+- [ ] Renaming a department updates `dw_employees.department` in the same batch.
+- [ ] The variance report and export load plans in the range; fine for years of daily plans. The badge is a COUNT on `status = 'Submitted'`.
+- [ ] Import the live legacy plans (old server `/api/dwpas/plans`: `plan_date`, `plan_type`, `prepared_by`, `status`, `lines` JSON with `dept`, `qty`, `actualQty`…; `/departments`, `/employees`). Drop lines without a department, map `dept` → `department`, and take the head from the line or the master.
 
 ## Infrastructure services (stubs now)
 - [ ] Google Sheets sync: real `SheetsSyncService` and a cron trigger for `sheets.interval_min`.

@@ -737,6 +737,72 @@ CASES.push(
   { method: 'GET', route: `${EL}/audit`, path: `${EL}/audit`, allowed: EL_ALL, ok: 200 },
 );
 
+// Complaints module. Admins have everything. Marketing (salesmen) raise and follow complaints with edit and print.
+// Management: dashboard, register (read) and reports, with export. Dispatch: nothing.
+const CP = '/api/complaints';
+const CP_ALL: Role[] = ['superadmin', 'admin', 'marketing', 'management'];
+const CP_WORK: Role[] = ['superadmin', 'admin', 'marketing'];
+const CP_MGMT: Role[] = ['superadmin', 'admin', 'management'];
+const jpg = () => {
+  const f = new FormData();
+  f.append('file', new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0x10])], 'damage.jpg', { type: 'image/jpeg' }));
+  f.append('text', 'Photo from site');
+  return f;
+};
+CASES.push(
+  { method: 'GET', route: `${CP}/meta`, path: `${CP}/meta`, allowed: CP_ALL, ok: 200 },
+  { method: 'GET', route: `${CP}/party-invoices`, path: `${CP}/party-invoices?customerId=slc-g`, allowed: CP_ALL, ok: 200 },
+  { method: 'GET', route: `${CP}/recipients`, path: `${CP}/recipients`, allowed: CP_ALL, ok: 200 },
+  { method: 'POST', route: `${CP}/recipients`, path: `${CP}/recipients`, body: { name: 'Q A Head', email: 'qa@strandply.in' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${CP}/recipients/:id`, path: `${CP}/recipients/cpr-sinha`, body: { email: 'pk@strandply.in' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${CP}/recipients/:id`, path: `${CP}/recipients/cpr-old`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${CP}/complaints`, path: `${CP}/complaints?open=true`, allowed: CP_ALL, ok: 200 },
+  { method: 'GET', route: `${CP}/complaints/:id`, path: `${CP}/complaints/cmp-a`, allowed: CP_ALL, ok: 200 },
+  { method: 'GET', route: `${CP}/complaints/:id/print`, path: `${CP}/complaints/cmp-a/print`, allowed: CP_ALL, ok: 200 },
+  { method: 'POST', route: `${CP}/complaints`, path: `${CP}/complaints`, body: { salesman: 'Suresh Kumar', customerName: 'New Party', material: 'Plywood', category: 'Other', description: 'x', recipientId: 'cpr-jimit' }, allowed: CP_WORK, ok: 201 },
+  { method: 'PATCH', route: `${CP}/complaints/:id`, path: `${CP}/complaints/cmp-c`, body: { priority: 'High' }, allowed: CP_WORK, ok: 200 },
+  { method: 'POST', route: `${CP}/complaints/:id/status`, path: `${CP}/complaints/cmp-c/status`, body: { status: 'In Progress' }, allowed: CP_WORK, ok: 200 },
+  { method: 'POST', route: `${CP}/complaints/:id/photos`, path: `${CP}/complaints/cmp-c/photos`, form: jpg, allowed: CP_WORK, ok: 200 },
+  { method: 'DELETE', route: `${CP}/complaints/:id/photos/:fileId`, path: `${CP}/complaints/cmp-c/photos/nope`, allowed: CP_WORK, ok: 404 },
+  { method: 'POST', route: `${CP}/complaints/:id/comments`, path: `${CP}/complaints/cmp-c/comments`, form: jpg, allowed: CP_WORK, ok: 200 },
+  { method: 'GET', route: `${CP}/complaints/:id/files/:fileId`, path: `${CP}/complaints/cmp-c/files/nope`, allowed: CP_ALL, ok: 404 },
+  { method: 'DELETE', route: `${CP}/complaints/:id`, path: `${CP}/complaints/cmp-d`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${CP}/dashboard`, path: `${CP}/dashboard`, allowed: CP_ALL, ok: 200 },
+  { method: 'GET', route: `${CP}/reports`, path: `${CP}/reports?fy=2026-27`, allowed: CP_MGMT, ok: 200 },
+  { method: 'GET', route: `${CP}/export`, path: `${CP}/export`, allowed: CP_MGMT, ok: 200 },
+  { method: 'GET', route: `${CP}/audit`, path: `${CP}/audit`, allowed: CP_ALL, ok: 200 },
+);
+
+// DWPAS. Admins have everything, including dwpas_approve. Management: dashboard, plans (read, print, export) and
+// reports. Others: nothing.
+const DW = '/api/dwpas';
+const DW_ALL: Role[] = ['superadmin', 'admin', 'management'];
+CASES.push(
+  { method: 'GET', route: `${DW}/meta`, path: `${DW}/meta`, allowed: DW_ALL, ok: 200 },
+  { method: 'GET', route: `${DW}/departments`, path: `${DW}/departments`, allowed: DW_ALL, ok: 200 },
+  { method: 'POST', route: `${DW}/departments`, path: `${DW}/departments`, body: { name: 'Packing', head: 'Packing Head' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${DW}/departments/:id`, path: `${DW}/departments/dwd-12`, body: { head: 'QC Manager' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${DW}/departments/:id`, path: `${DW}/departments/dwd-8`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${DW}/employees`, path: `${DW}/employees`, allowed: DW_ALL, ok: 200 },
+  { method: 'POST', route: `${DW}/employees`, path: `${DW}/employees`, body: { name: 'Asha Patel', type: 'Unskilled' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${DW}/employees/:id`, path: `${DW}/employees/dwe-4`, body: { designation: 'Yard Supervisor' }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${DW}/employees/:id`, path: `${DW}/employees/dwe-4`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${DW}/plans`, path: `${DW}/plans?status=Submitted`, allowed: DW_ALL, ok: 200 },
+  { method: 'GET', route: `${DW}/plans/by-date/:date`, path: `${DW}/plans/by-date/2026-09-29`, allowed: DW_ALL, ok: 200 },
+  { method: 'GET', route: `${DW}/plans/:id/print`, path: `${DW}/plans/dwp-a/print?kind=achievement`, allowed: DW_ALL, ok: 200 },
+  { method: 'PUT', route: `${DW}/plans`, path: `${DW}/plans`, body: { date: '2026-10-05', lines: [{ department: 'Peeling', work: 'Peel logs' }] }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${DW}/plans/:id/submit`, path: `${DW}/plans/dwp-c/submit`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${DW}/plans/:id/approve`, path: `${DW}/plans/dwp-b/approve`, body: {}, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${DW}/plans/:id/reopen`, path: `${DW}/plans/dwp-a/reopen`, body: {}, allowed: ADMINS, ok: 200 },
+  { method: 'PUT', route: `${DW}/plans/:id/achievement`, path: `${DW}/plans/dwp-b/achievement`, body: { lines: [{ actualQty: 1100 }, { actualQty: 3 }] }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${DW}/plans/:id`, path: `${DW}/plans/dwp-c`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${DW}/dashboard`, path: `${DW}/dashboard?date=2026-09-29`, allowed: DW_ALL, ok: 200 },
+  { method: 'GET', route: `${DW}/manpower`, path: `${DW}/manpower`, allowed: DW_ALL, ok: 200 },
+  { method: 'GET', route: `${DW}/variance`, path: `${DW}/variance?from=2026-09-01`, allowed: DW_ALL, ok: 200 },
+  { method: 'GET', route: `${DW}/export`, path: `${DW}/export`, allowed: DW_ALL, ok: 200 },
+  { method: 'GET', route: `${DW}/audit`, path: `${DW}/audit`, allowed: DW_ALL, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

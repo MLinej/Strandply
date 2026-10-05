@@ -131,9 +131,17 @@ describe('/me ERP permissions for the web shell', () => {
       'transport.view',
     ]);
     expect((await me('management')).permissions).toEqual([
+      'complaints.dashboard',
+      'complaints.register',
+      'complaints.reports',
+      'complaints.view',
       'crm.dashboard',
       'crm.reports',
       'crm.view',
+      'dwpas.dashboard',
+      'dwpas.plans',
+      'dwpas.reports',
+      'dwpas.view',
       'electricity.bills',
       'electricity.dashboard',
       'electricity.reports',

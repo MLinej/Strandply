@@ -5,7 +5,8 @@
 // stock_* from Stock Management (docs/stock-spec.md §2), production_* from Production MIS (docs/production-spec.md §2),
 // sales_* from the Sales ERP (docs/sales-spec.md §2), crm_* from the Marketing & Sales CRM (docs/crm-spec.md §2),
 // transport_* from the Transport Module (docs/transport-spec.md §2), maintenance_* from the Maintenance Work Tracker
-// (docs/maintenance-spec.md §2), electricity_* from the Electricity & Meter MIS (docs/electricity-spec.md §2).
+// (docs/maintenance-spec.md §2), electricity_* from the Electricity & Meter MIS (docs/electricity-spec.md §2),
+// complaints_* from Complaint Registration (docs/complaints-spec.md §2), dwpas_* from DWPAS (docs/dwpas-spec.md §2).
 
 export const ROLES = ['superadmin', 'admin', 'dispatch', 'marketing', 'management'] as const;
 export type Role = (typeof ROLES)[number];
@@ -94,6 +95,16 @@ export const PAGE_KEYS = [
   'electricity_reports',
   'electricity_bills',
   'electricity_settings',
+  // Complaints module
+  'complaints_dashboard',
+  'complaints_register',
+  'complaints_reports',
+  'complaints_masters',
+  // DWPAS module
+  'dwpas_dashboard',
+  'dwpas_plans',
+  'dwpas_reports',
+  'dwpas_masters',
 ] as const;
 export type PageKey = (typeof PAGE_KEYS)[number];
 
@@ -105,8 +116,9 @@ export type PageKey = (typeof PAGE_KEYS)[number];
  * Reviewer, Approver and Accountant PINs).
  * `sales_approve` = approve or reject sales invoices (the legacy invoice approval).
  * `transport_approve` = approve or reject freight (the legacy Accounts approval of a rate comparison).
+ * `dwpas_approve` = approve or reopen a day's work plan (the legacy dept head / production head steps).
  */
-export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve', 'sales_approve', 'transport_approve'] as const;
+export const ACTION_KEYS = ['edit', 'delete', 'approve', 'print', 'export', 'dashboard_full', 'vendor_approve', 'purchase_approve', 'stores_review', 'stores_approve', 'stores_account', 'production_review', 'production_approve', 'sales_approve', 'transport_approve', 'dwpas_approve'] as const;
 export type ActionKey = (typeof ACTION_KEYS)[number];
 
 export const WIDGET_KEYS = ['total', 'pending', 'delivered', 'delayed', 'parties', 'couriers'] as const;
@@ -133,12 +145,12 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionSet> = {
     widgets: ['total', 'delivered', 'delayed'],
   },
   marketing: {
-    pages: ['dashboard', 'requests', 'tracking', 'parties', 'products', 'notifications', 'crm_dashboard', 'crm_leads', 'crm_followups', 'crm_customers', 'crm_pipeline'],
+    pages: ['dashboard', 'requests', 'tracking', 'parties', 'products', 'notifications', 'crm_dashboard', 'crm_leads', 'crm_followups', 'crm_customers', 'crm_pipeline', 'complaints_dashboard', 'complaints_register'],
     actions: ['edit', 'print'],
     widgets: ['pending', 'parties'],
   },
   management: {
-    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard', 'sales_dashboard', 'sales_reports', 'crm_dashboard', 'crm_reports', 'transport_dashboard', 'transport_reports', 'maintenance_dashboard', 'maintenance_reports', 'electricity_dashboard', 'electricity_reports', 'electricity_bills'],
+    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard', 'sales_dashboard', 'sales_reports', 'crm_dashboard', 'crm_reports', 'transport_dashboard', 'transport_reports', 'maintenance_dashboard', 'maintenance_reports', 'electricity_dashboard', 'electricity_reports', 'electricity_bills', 'complaints_dashboard', 'complaints_register', 'complaints_reports', 'dwpas_dashboard', 'dwpas_plans', 'dwpas_reports'],
     actions: ['print', 'export'],
     widgets: [...WIDGET_KEYS],
   },

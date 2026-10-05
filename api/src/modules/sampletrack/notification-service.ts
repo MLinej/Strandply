@@ -85,6 +85,8 @@ export class NotificationService {
     }
     if (perms.pages.includes('transport_freight') && perms.actions.includes('transport_approve')) out.pendingFreight = (await this.data.repos.trRateCmps.listAll()).filter((x) => x.status === 'pending').length;
     if (perms.pages.includes('maintenance_orders')) out.overdueWorkOrders = (await this.data.repos.mtWorkOrders.listAll()).filter((w) => isOverdue(w, businessToday(this.clock))).length;
+    if (perms.pages.includes('complaints_register')) out.openComplaints = (await this.data.repos.complaints.listAll()).filter((c) => c.status === 'Open').length;
+    if (perms.pages.includes('dwpas_plans') && perms.actions.includes('dwpas_approve')) out.pendingPlans = (await this.data.repos.dwPlans.listAll()).filter((p) => p.status === 'Submitted').length;
     return out;
   }
 }

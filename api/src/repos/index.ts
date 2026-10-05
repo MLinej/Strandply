@@ -14,6 +14,8 @@ import type { CampaignRepo, CrmCustomerRepo, CrmProductRepo, CrmTaskRepo, Follow
 import type { FreightOrderRepo, InquiryRepo, RateComparisonRepo, TransporterRepo, VehicleTypeRepo } from './transport';
 import type { MtAreaRepo, WorkOrderRepo } from './maintenance';
 import type { ElBillRepo, ElRateRepo, ElReadingRepo } from './electricity';
+import type { ComplaintRepo, CpRecipientRepo } from './complaints';
+import type { DwDepartmentRepo, DwEmployeeRepo, DwPlanRepo } from './dwpas';
 import type { CounterRepo, DispatchRepo, NotificationRepo, RequestRepo } from './workflow';
 
 export * from './types';
@@ -35,6 +37,8 @@ export * from './record-table';
 export * from './transport';
 export * from './maintenance';
 export * from './electricity';
+export * from './complaints';
+export * from './dwpas';
 
 /** Every repo the app uses. Routes and services receive this, never a concrete implementation. */
 export interface Repos {
@@ -110,6 +114,11 @@ export interface Repos {
   elRates: ElRateRepo;
   elReadings: ElReadingRepo;
   elBills: ElBillRepo;
+  complaints: ComplaintRepo;
+  cpRecipients: CpRecipientRepo;
+  dwDepartments: DwDepartmentRepo;
+  dwEmployees: DwEmployeeRepo;
+  dwPlans: DwPlanRepo;
 }
 
 /**

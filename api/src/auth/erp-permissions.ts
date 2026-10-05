@@ -28,6 +28,12 @@ export function erpPermissions(role: Role, st: PermissionSet): string[] {
       out.add('admin.settings');
     } else if (page === 'notifications') {
       out.add('notifications.view');
+    } else if (page.startsWith('dwpas_')) {
+      out.add('dwpas.view');
+      out.add(`dwpas.${page.slice('dwpas_'.length)}`);
+    } else if (page.startsWith('complaints_')) {
+      out.add('complaints.view');
+      out.add(`complaints.${page.slice('complaints_'.length)}`);
     } else if (page.startsWith('electricity_')) {
       out.add('electricity.view');
       out.add(`electricity.${page.slice('electricity_'.length)}`);

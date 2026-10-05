@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { emptyMemoryData, MemoryStore, memoryDataLayerFrom, createMemoryDataLayer } from '../src/repos/memory';
-import { runMasterRepoContract, runRepoContract, runProductionRepoContract, runPurchaseRepoContract, runSalesRepoContract, runCrmRepoContract, runTransportRepoContract, runMaintenanceRepoContract, runElectricityRepoContract, runStockRepoContract, runStoresRepoContract, runVendorRepoContract, runWorkflowRepoContract } from './repo-contract';
+import { runMasterRepoContract, runRepoContract, runProductionRepoContract, runPurchaseRepoContract, runSalesRepoContract, runCrmRepoContract, runTransportRepoContract, runMaintenanceRepoContract, runElectricityRepoContract, runComplaintsRepoContract, runDwpasRepoContract, runStockRepoContract, runStoresRepoContract, runVendorRepoContract, runWorkflowRepoContract } from './repo-contract';
 
 runRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
 runMasterRepoContract('memory', async (seed) => memoryDataLayerFrom({ ...emptyMemoryData(), ...seed }));
@@ -49,3 +49,5 @@ describe('memory backend: snapshot hook', () => {
 runTransportRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
 runMaintenanceRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
 runElectricityRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
+runComplaintsRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));
+runDwpasRepoContract('memory', async () => memoryDataLayerFrom(emptyMemoryData()));

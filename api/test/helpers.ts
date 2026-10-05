@@ -14,6 +14,8 @@ import type { Campaign, CrmCustomer, CrmTask, Followup, Lead, Opportunity, Order
 import type { FreightOrder, Inquiry, RateComparison, Transporter } from '../src/contracts/transport';
 import type { WorkOrder } from '../src/contracts/maintenance';
 import type { BillCharge, ElBill, ElRate, ElReading } from '../src/contracts/electricity';
+import type { Complaint, CpRecipient } from '../src/contracts/complaints';
+import type { DwPlan, PlanLine } from '../src/contracts/dwpas';
 import type { DataLayer, User } from '../src/repos';
 import { memoryDataLayerFrom } from '../src/repos/memory';
 import { buildSeed } from '../src/seed';
@@ -837,6 +839,51 @@ export function electricityFixtures() {
   };
 }
 
+/**
+ * Complaints: cmp-a resolved in 4 days (GUJARAT TRADERS, on invoice inv-1), cmp-b in progress and cmp-c open (the
+ * only Open one), cmp-d closed last FY. Recipients: Jimit with an email, P K Sinha without, Old Reviewer inactive.
+ */
+export function complaintFixtures() {
+  const c = (id: string, n: string, date: string, o: Partial<Complaint>): Complaint => ({
+    id, complaintNo: n, date, salesman: 'Suresh Kumar', customerId: null, customerName: 'GUJARAT TRADERS', customerPhone: null, customerLocation: 'Rajkot', invoiceId: null, invoiceNo: null,
+    material: 'OSB Board', category: 'Quality Issue', priority: 'Medium', description: 'Edges broken', recipientName: 'Jimit Mehta', recipientEmail: 'jimit@strandply.in', status: 'Open', resolvedOn: null, photos: [],
+    timeline: [{ id: `${id}-e1`, type: 'created', text: 'Complaint registered · notified Jimit Mehta (jimit@strandply.in)', by: null, byName: 'Suresh Kumar', at: `${date}T05:00:00.000Z`, files: [] }],
+    ...audit, createdAt: `${date}T05:00:00.000Z`, ...o,
+  });
+  const r = (id: string, name: string, email: string | null, active = true): CpRecipient => ({ id, name, role: null, email, active, ...audit });
+  return {
+    cpRecipients: [r('cpr-jimit', 'Jimit Mehta', 'jimit@strandply.in'), r('cpr-sinha', 'P K Sinha', null), r('cpr-old', 'Old Reviewer', 'old@strandply.in', false)],
+    complaints: [
+      c('cmp-a', 'CMP/26-27/0001', '2026-09-10', { customerId: 'slc-g', invoiceId: 'inv-1', invoiceNo: 'SPL/01/26-27', category: 'Damage in Transit', priority: 'High', status: 'Resolved', resolvedOn: '2026-09-14' }),
+      c('cmp-b', 'CMP/26-27/0002', '2026-09-20', { salesman: 'Kaushik Kothari', customerName: 'Patel Plywood', customerLocation: 'Surat', material: 'Plywood', priority: 'Critical', status: 'In Progress' }),
+      c('cmp-c', 'CMP/26-27/0003', '2026-09-28', { customerId: 'slc-g', category: 'Quantity Shortage' }),
+      c('cmp-d', 'CMP/25-26/0001', '2026-03-15', { salesman: 'Kaushik Kothari', customerName: 'Patel Plywood', material: 'Plywood', priority: 'Low', status: 'Closed', resolvedOn: '2026-03-20' }),
+    ],
+  };
+}
+
+/**
+ * Work plans: dwp-a (29 Sept) approved with achievement (Peeling 96% green, Dryer 85% amber, Hot Press 75% red);
+ * dwp-b (30 Sept) submitted, nothing recorded; dwp-c (2 Oct, after "today") a draft. Departments and employees: the seed.
+ */
+export function dwpasFixtures() {
+  const l = (department: string, head: string, work: string, qty: number, skilled: number, unskilled: number, o: Partial<PlanLine> = {}): PlanLine => ({
+    department, head, work, qty, unit: 'Sheets', skilled, unskilled, machine: null, priority: 'High', operator: null, actualQty: null, actualSkilled: null, actualUnskilled: null, reason: null, headRemarks: null, ...o,
+  });
+  const p = (id: string, date: string, status: DwPlan['status'], lines: PlanLine[]): DwPlan => ({ id, date, type: 'Regular Day', preparedBy: 'P K Sinha', remarks: null, status, lines, trail: [], ...audit });
+  return {
+    dwPlans: [
+      p('dwp-a', '2026-09-29', 'Approved', [
+        l('Peeling', 'Rajesh Patel', 'Peel core veneer', 1000, 6, 8, { actualQty: 960, actualSkilled: 6, actualUnskilled: 7 }),
+        l('Dryer', 'Mahesh Joshi', 'Dry core veneer', 1000, 3, 4, { priority: 'Medium', actualQty: 850, actualSkilled: 3, actualUnskilled: 4, reason: 'Boiler pressure low' }),
+        l('Hot Press', 'Vikram Sharma', 'Press 18 mm OSB', 400, 5, 6, { unit: 'Boards', actualQty: 300, actualSkilled: 4, actualUnskilled: 6, reason: 'Platen heater fault' }),
+      ]),
+      p('dwp-b', '2026-09-30', 'Submitted', [l('Peeling', 'Rajesh Patel', 'Peel core veneer', 1200, 6, 8), l('Dispatch', 'Dispatch Manager', 'Load trucks', 3, 1, 6, { unit: 'Trips', priority: 'Low' })]),
+      p('dwp-c', '2026-10-02', 'Draft', [l('Hot Press', 'Vikram Sharma', 'Press 12 mm OSB', 500, 5, 6, { unit: 'Boards' })]),
+    ],
+  };
+}
+
 export function fixtures() {
   return {
     parties: [
@@ -979,6 +1026,8 @@ export function testData(users: User[]) {
     ...maintenanceFixtures(),
     elReadings: electricityFixtures().elReadings,
     elBills: electricityFixtures().elBills,
+    ...complaintFixtures(),
+    ...dwpasFixtures(),
     elRates: [...seed.elRates, ...electricityFixtures().extraRates],
     vendors,
     vnCategories: [...seed.vnCategories, ...extraCategories],
@@ -989,7 +1038,7 @@ export function testData(users: User[]) {
       { name: 'GRN-2026-27', lastValue: 4, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'ISS-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
       { name: 'STR-2026', lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null },
-      ...[['SL-SO-llp-2026-27', 2], ['SL-INV-llp-2026-27', 2], ['SL-PI-llp-2026-27', 1], ['CRM-QT-2026-27', 1], ['CRM-ORD-2026-27', 1], ['TR-TRP', 3], ['TR-INQ-2026-27', 6], ['TR-RC-2026-27', 4], ['TR-FRA-2026-27', 3], ['TR-SFO-2026-27', 1], ['MT-WO-2026-27', 4]].map(([name, lastValue]) => ({ name: name as string, lastValue: lastValue as number, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
+      ...[['SL-SO-llp-2026-27', 2], ['SL-INV-llp-2026-27', 2], ['SL-PI-llp-2026-27', 1], ['CRM-QT-2026-27', 1], ['CRM-ORD-2026-27', 1], ['TR-TRP', 3], ['TR-INQ-2026-27', 6], ['TR-RC-2026-27', 4], ['TR-FRA-2026-27', 3], ['TR-SFO-2026-27', 1], ['MT-WO-2026-27', 4], ['CP-2026-27', 3], ['CP-2025-26', 1]].map(([name, lastValue]) => ({ name: name as string, lastValue: lastValue as number, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
       ...['PPR', 'HP', 'BC', 'CHR', 'WIP', 'RC', 'MWB', 'PS', 'MDO'].map((p) => ({ name: `PR-${p}`, lastValue: 1, createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null })),
     ],
     cities: [...seed.cities, ...extraCities],
