@@ -51,6 +51,7 @@ import type { ComplaintService } from './modules/complaints/complaint-service';
 import type { ComplaintReportService } from './modules/complaints/report-service';
 import type { DwpasService } from './modules/dwpas/dwpas-service';
 import type { DwpasReportService } from './modules/dwpas/report-service';
+import type { HubService } from './modules/hub/hub-service';
 
 export interface AuthContext {
   user: User;
@@ -114,6 +115,7 @@ export interface Services {
   complaintReports: ComplaintReportService;
   dwpas: DwpasService;
   dwpasReports: DwpasReportService;
+  hub: HubService;
   clock: Clock;
 }
 

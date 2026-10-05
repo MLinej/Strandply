@@ -6,7 +6,8 @@
 // sales_* from the Sales ERP (docs/sales-spec.md §2), crm_* from the Marketing & Sales CRM (docs/crm-spec.md §2),
 // transport_* from the Transport Module (docs/transport-spec.md §2), maintenance_* from the Maintenance Work Tracker
 // (docs/maintenance-spec.md §2), electricity_* from the Electricity & Meter MIS (docs/electricity-spec.md §2),
-// complaints_* from Complaint Registration (docs/complaints-spec.md §2), dwpas_* from DWPAS (docs/dwpas-spec.md §2).
+// complaints_* from Complaint Registration (docs/complaints-spec.md §2), dwpas_* from DWPAS (docs/dwpas-spec.md §2),
+// hub_* from the Reports Hub (docs/hub-spec.md §2).
 
 export const ROLES = ['superadmin', 'admin', 'dispatch', 'marketing', 'management'] as const;
 export type Role = (typeof ROLES)[number];
@@ -105,6 +106,11 @@ export const PAGE_KEYS = [
   'dwpas_plans',
   'dwpas_reports',
   'dwpas_masters',
+  // Reports Hub
+  'hub_dashboard',
+  'hub_modules',
+  'hub_periodic',
+  'hub_sources',
 ] as const;
 export type PageKey = (typeof PAGE_KEYS)[number];
 
@@ -150,7 +156,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, PermissionSet> = {
     widgets: ['pending', 'parties'],
   },
   management: {
-    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard', 'sales_dashboard', 'sales_reports', 'crm_dashboard', 'crm_reports', 'transport_dashboard', 'transport_reports', 'maintenance_dashboard', 'maintenance_reports', 'electricity_dashboard', 'electricity_reports', 'electricity_bills', 'complaints_dashboard', 'complaints_register', 'complaints_reports', 'dwpas_dashboard', 'dwpas_plans', 'dwpas_reports'],
+    pages: ['dashboard', 'reports', 'notifications', 'vendors', 'vendor_reports', 'purchase_dashboard', 'purchase_inventory', 'stores_dashboard', 'stores_reports', 'stock_dashboard', 'stock_ledger', 'production_dashboard', 'sales_dashboard', 'sales_reports', 'crm_dashboard', 'crm_reports', 'transport_dashboard', 'transport_reports', 'maintenance_dashboard', 'maintenance_reports', 'electricity_dashboard', 'electricity_reports', 'electricity_bills', 'complaints_dashboard', 'complaints_register', 'complaints_reports', 'dwpas_dashboard', 'dwpas_plans', 'dwpas_reports', 'hub_dashboard', 'hub_modules', 'hub_periodic'],
     actions: ['print', 'export'],
     widgets: [...WIDGET_KEYS],
   },

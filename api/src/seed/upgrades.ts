@@ -220,6 +220,15 @@ UPGRADES.push({
   },
 });
 
+UPGRADES.push({
+  // Same as db/migrations/0017_hub.sql on an existing database: only role permissions.
+  name: '0017_hub',
+  apply(data) {
+    grant(data, ['superadmin', 'admin'], ['hub_dashboard', 'hub_modules', 'hub_periodic', 'hub_sources']);
+    grant(data, ['management'], ['hub_dashboard', 'hub_modules', 'hub_periodic']);
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

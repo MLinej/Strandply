@@ -803,6 +803,18 @@ CASES.push(
   { method: 'GET', route: `${DW}/audit`, path: `${DW}/audit`, allowed: DW_ALL, ok: 200 },
 );
 
+// Reports Hub (read-only). Admins and management see everything; data sources is for admins.
+const HB = '/api/hub';
+const HB_ALL: Role[] = ['superadmin', 'admin', 'management'];
+CASES.push(
+  { method: 'GET', route: `${HB}/years`, path: `${HB}/years`, allowed: HB_ALL, ok: 200 },
+  { method: 'GET', route: `${HB}/overview`, path: `${HB}/overview`, allowed: HB_ALL, ok: 200 },
+  ...['purchase', 'production', 'stock', 'electricity', 'sales', 'maintenance', 'analytics'].map((k) => ({ method: 'GET', route: `${HB}/${k}`, path: `${HB}/${k}`, allowed: HB_ALL, ok: 200 })),
+  { method: 'GET', route: `${HB}/period`, path: `${HB}/period?from=2026-09-30&to=2026-09-30`, allowed: HB_ALL, ok: 200 },
+  { method: 'GET', route: `${HB}/export`, path: `${HB}/export?fy=2026-27`, allowed: HB_ALL, ok: 200 },
+  { method: 'GET', route: `${HB}/sources`, path: `${HB}/sources`, allowed: ADMINS, ok: 200 },
+);
+
 const PUBLIC_ROUTES = new Set(['POST /api/auth/login']);
 
 describe('permission matrix: default role permissions × every endpoint', () => {

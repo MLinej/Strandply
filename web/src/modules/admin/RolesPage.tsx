@@ -15,7 +15,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
   {
     key: 'pages',
     title: 'Samples & admin pages',
-    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_') && !k.startsWith('sales_') && !k.startsWith('crm_') && !k.startsWith('transport_') && !k.startsWith('maintenance_') && !k.startsWith('electricity_') && !k.startsWith('complaints_') && !k.startsWith('dwpas_')),
+    items: PAGE_KEYS.filter((k) => !k.startsWith('vendor') && !k.startsWith('purchase_') && !k.startsWith('stores_') && !k.startsWith('stock_') && !k.startsWith('production_') && !k.startsWith('sales_') && !k.startsWith('crm_') && !k.startsWith('transport_') && !k.startsWith('maintenance_') && !k.startsWith('electricity_') && !k.startsWith('complaints_') && !k.startsWith('dwpas_') && !k.startsWith('hub_')),
     label: {
       dashboard: 'Dashboard',
       requests: 'Sample requests',
@@ -169,6 +169,17 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
       dwpas_plans: 'Plan entry, register, achievement',
       dwpas_reports: 'Variance analysis, HR manpower',
       dwpas_masters: 'Departments, employees',
+    },
+  },
+  {
+    key: 'pages',
+    title: 'Reports Hub pages',
+    items: PAGE_KEYS.filter((k) => k.startsWith('hub_')),
+    label: {
+      hub_dashboard: 'Hub dashboard (all modules)',
+      hub_modules: 'Purchase, production, stock, electricity, sales, maintenance, cost per board',
+      hub_periodic: 'Daily, monthly and financial year reports',
+      hub_sources: 'Data sources',
     },
   },
   {

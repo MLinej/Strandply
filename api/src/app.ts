@@ -68,6 +68,8 @@ import { complaintsRoutes } from './modules/complaints/routes';
 import { DwpasService } from './modules/dwpas/dwpas-service';
 import { DwpasReportService } from './modules/dwpas/report-service';
 import { dwpasRoutes } from './modules/dwpas/routes';
+import { HubService } from './modules/hub/hub-service';
+import { hubRoutes } from './modules/hub/routes';
 import { WorkOrderService } from './modules/maintenance/work-order-service';
 import type { DataLayer } from './repos';
 
@@ -99,6 +101,8 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const electricity = new ElectricityService(data, blobs, activity, clock);
   const complaints = new ComplaintService(data, blobs, activity, clock);
   const dwpas = new DwpasService(data, activity, clock);
+  const stock = new StockService(data, activity, company, clock);
+  const electricityReports = new ElectricityReportService(data, electricity, activity, clock);
   const crmRecords = new CrmRecordService(data, activity, clock);
   const crmFlow = new CrmWorkflowService(data, crmRecords, activity, clock);
   const freight = new FreightService(data, activity, clock);
@@ -135,7 +139,7 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     grns,
     storesReports: new StoresReportService(data, mrns, grns, activity, clock),
     stockMasters: new StockMasterService(data, activity, company, clock),
-    stock: new StockService(data, activity, company, clock),
+    stock,
     productionDocs,
     mattBatches,
     wipBatches,
@@ -152,11 +156,12 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
     workOrders,
     maintenanceReports: new MaintenanceReportService(data, workOrders, company, activity, clock),
     electricity,
-    electricityReports: new ElectricityReportService(data, electricity, activity, clock),
+    electricityReports,
     complaints,
     complaintReports: new ComplaintReportService(data, complaints, company, activity, clock),
     dwpas,
     dwpasReports: new DwpasReportService(data, dwpas, company, activity, clock),
+    hub: new HubService(data, electricityReports, inventory, stock, activity, clock),
     clock,
   };
 }
@@ -193,6 +198,7 @@ export function createApp(deps: AppDeps) {
   mount('/api/electricity', electricityRoutes());
   mount('/api/complaints', complaintsRoutes());
   mount('/api/dwpas', dwpasRoutes());
+  mount('/api/hub', hubRoutes());
 
   app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404));
   app.onError((err, c) => {

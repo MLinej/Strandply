@@ -29,7 +29,7 @@ export const TEST_USERS = [] = [
     role: 'Accountant',
     scopeNote: 'Accounts, sales, reports',
     firms: ['llp'] as FirmCode[],
-    permissions: ['accounts.view', 'accounts.gst', 'sales.view', 'sales.invoices', 'sales.reports', 'vendors.view', 'vendors.directory', 'reports.view'],
+    permissions: ['accounts.view', 'accounts.gst', 'sales.view', 'sales.invoices', 'sales.reports', 'vendors.view', 'vendors.directory', 'reports.view', 'reports.dashboard', 'reports.periodic'],
     st: { pages: [], actions: [], widgets: [] },
   },
 ] satisfies SessionUser[];

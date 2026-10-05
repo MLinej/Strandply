@@ -28,6 +28,10 @@ export function erpPermissions(role: Role, st: PermissionSet): string[] {
       out.add('admin.settings');
     } else if (page === 'notifications') {
       out.add('notifications.view');
+    } else if (page.startsWith('hub_')) {
+      // The Reports Hub is the web shell's "reports" module.
+      out.add('reports.view');
+      out.add(`reports.${page.slice('hub_'.length)}`);
     } else if (page.startsWith('dwpas_')) {
       out.add('dwpas.view');
       out.add(`dwpas.${page.slice('dwpas_'.length)}`);
