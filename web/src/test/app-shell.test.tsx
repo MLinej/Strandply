@@ -83,7 +83,7 @@ describe('app shell', () => {
   it('expands another module’s sub-menu on click', async () => {
     renderApp('/');
     await screen.findByRole('heading', { level: 1 });
-    // Scoped to the sidebar: Home's "Go to" list also links built pages such as Purchase orders.
+    // Scoped to the sidebar.
     const nav = within(screen.getByRole('navigation', { name: 'Modules' }));
     expect(nav.queryByRole('link', { name: 'Purchase orders' })).toBeNull();
     fireEvent.click(nav.getByRole('button', { name: /Purchase/ }));

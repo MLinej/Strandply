@@ -175,7 +175,7 @@ export function SummaryForm({ open, doc, onClose, onSaved }: FormProps<SummaryVi
         <fieldset className="grid gap-3 sm:grid-cols-2 [&>*]:min-w-0">
           <legend className="mb-2 text-label font-semibold uppercase tracking-label text-faint">Linked documents</legend>
           <Select label="Production plan" placeholder="None" options={plans.map((p) => ({ value: p.id, label: `${p.docNo} · ${formatDate(p.date)} · ${p.shift} · ${p.calc.totalBoards} boards` }))} value={f.planId} onChange={(e) => set({ planId: e.target.value })} />
-          <Select label="Hot press" placeholder="None" options={hps.map((h) => ({ value: h.id, label: `${h.docNo} · ${formatDate(h.date)} · ${h.product} · ${h.calc.totalBoards} boards` }))} value={f.hotpressId} onChange={(e) => pickHotpress(e.target.value)} error={errors.hotpressId} />
+          <Select label="Hot press" placeholder="None" options={hps.filter((h) => !h.summaryId || h.summaryId === doc?.id || h.id === f.hotpressId).map((h) => ({ value: h.id, label: `${h.docNo} · ${formatDate(h.date)} · ${h.product} · ${h.calc.totalBoards} boards` }))} value={f.hotpressId} onChange={(e) => pickHotpress(e.target.value)} error={errors.hotpressId} />
           <Select label="Board cutting" placeholder="None" options={cuts.map((b) => ({ value: b.id, label: `${b.docNo} · ${formatDate(b.date)} · cut ${b.cutPcs}` }))} value={f.cuttingId} onChange={(e) => pickCutting(e.target.value)} />
           <Select label="Matt batch" placeholder="None" options={matts.map((m) => ({ value: m.id, label: `${m.docNo} · ${formatDate(m.date)} · ${m.stats.count} matts` }))} value={f.mattBatchId} onChange={(e) => pickMatt(e.target.value)} />
           <div className="sm:col-span-2">

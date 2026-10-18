@@ -60,11 +60,11 @@ describe('purchase entries', () => {
 
   it('checks fields, the PO’s material and species only on Nilgiri', async () => {
     const { call } = await admin();
-    const bad = await call('POST', '/entries', { material: 'resin', date: '2026-02-30', vendorName: '', invoiceNo: '', taxType: 'GST', invQty: 0, splQty: -1, ratePaise: 0 });
+    const bad = await call('POST', '/entries', { material: 'kraft', date: '2026-02-30', vendorName: '', invoiceNo: '', taxType: 'GST', invQty: 0, splQty: -1, ratePaise: 0 });
     expect(bad.status).toBe(422);
     const paths = (await bad.json()).error.details.map((d: { path: string }) => d.path).sort();
     expect(paths).toEqual(['date', 'invQty', 'invoiceNo', 'ratePaise', 'splQty', 'taxType', 'vendorName']);
-    const wrongPo = await call('POST', '/entries', { material: 'resin', date: '2026-09-30', vendorName: 'X', invoiceNo: 'X/1', taxType: 'SG+CG', invQty: 1, splQty: 1, ratePaise: 100, poId: 'po-used', species: 'Eucalyptus' });
+    const wrongPo = await call('POST', '/entries', { material: 'kraft', date: '2026-09-30', vendorName: 'X', invoiceNo: 'X/1', taxType: 'SG+CG', invQty: 1, splQty: 1, ratePaise: 100, poId: 'po-used', species: 'Eucalyptus' });
     expect((await wrongPo.json()).error.details).toEqual([
       { path: 'poId', message: 'PO PO-USED is for Nilgiri Wood' },
       { path: 'species', message: 'Only Nilgiri wood has a species' },
@@ -132,24 +132,28 @@ describe('debit / credit notes', () => {
 });
 
 describe('purchase orders', () => {
-  it('received, balance and progress come from posted entries against the PO', async () => {
+  it('received, balance and progress come from posted entries against the PO, less returns from those lots', async () => {
     const { call } = await admin();
     const po = await (await call('GET', '/pos/po-used')).json();
-    expect(po).toMatchObject({ receivedQty: 12730, balanceQty: 287270, pctComplete: 4, progress: 'Partial', valuePaise: 231000000 });
+    // pe-1 brought 12 730 kg; ret-1 sent 1 000 kg of it back.
+    expect(po).toMatchObject({ receivedQty: 11730, balanceQty: 288270, pctComplete: 4, progress: 'Partial', valuePaise: 231000000 });
+    // Saved before lines existed: one line of its material, GST at 18%.
+    expect(po.lines).toEqual([{ itemId: null, itemName: 'Nilgiri Wood', hsn: null, qty: 300000, ratePaise: 770000, amountPaise: 231000000 }]);
+    expect(po.totals).toMatchObject({ itemsPaise: 231000000, cgst: 20790000, sgst: 20790000, total: 272580000 });
     const { stats } = await (await call('GET', '/pos')).json();
     expect(stats).toMatchObject({ total: 2, open: 1, partial: 1, closed: 0 });
     const opts = await (await call('GET', '/pos/options?material=nilgiri')).json();
-    expect(opts).toEqual([{ id: 'po-used', poNo: 'PO-USED', vendorId: null, vendorName: 'TM Nilgiri Supplier', ratePaise: 770000, balanceQty: 287270 }]);
+    expect(opts).toEqual([{ id: 'po-used', poNo: 'PO-USED', vendorId: null, vendorName: 'TM Nilgiri Supplier', ratePaise: 770000, balanceQty: 288270 }]);
   });
 
   it('numbers itself PO-YY-NNN when left blank; numbers are unique; approve; edits need re-approval', async () => {
     const { call } = await admin();
-    const body = { date: '2026-09-30', material: 'kraft', vendorName: 'V.K.Industrioes', qty: 5000, ratePaise: 3200, tncIds: ['tnc-po-weight'] };
+    const body = { date: '2026-09-30', material: 'kraft', vendorName: 'V.K.Industrioes', lines: [{ itemName: 'Kraft Paper 50 GSM', qty: 5000, ratePaise: 3200 }], tncIds: ['tnc-po-weight'] };
     const po = await (await call('POST', '/pos', body)).json();
-    expect(po).toMatchObject({ poNo: 'PO-26-001', status: 'pending', valuePaise: 16000000 });
+    expect(po).toMatchObject({ poNo: 'PO-26-001', status: 'pending', valuePaise: 16000000, qty: 5000, ratePaise: 3200, createdByName: 'Admin User' });
     expect((await call('POST', '/pos', { ...body, poNo: 'po-26-001' })).status).toBe(409);
     await call('POST', `/pos/${po.id}/approve`);
-    expect(await (await call('PATCH', `/pos/${po.id}`, { qty: 6000 })).json()).toMatchObject({ status: 'pending', qty: 6000 });
+    expect(await (await call('PATCH', `/pos/${po.id}`, { lines: [{ itemName: 'Kraft Paper 50 GSM', qty: 6000, ratePaise: 3200 }] })).json()).toMatchObject({ status: 'pending', qty: 6000 });
     const print = await (await call('GET', `/pos/${po.id}/print`)).json();
     expect(print.tnc.map((t: { title: string }) => t.title)).toEqual(['Weight Variation']);
   });
@@ -159,6 +163,72 @@ describe('purchase orders', () => {
     expect((await call('DELETE', '/pos/po-used')).status).toBe(409);
     expect((await (await call('PATCH', '/pos/po-used', { material: 'resin' })).json()).error.code).toBe('po_in_use');
     expect((await call('DELETE', '/pos/po-free')).status).toBe(204);
+  });
+});
+
+describe('change requests (Oct 2026)', () => {
+  it('resin is entered invoice-wise: several products, totals and the average rate from the lines', async () => {
+    const { call } = await admin();
+    const lines = [
+      { itemId: 'vprod-mdi', itemName: 'MDI Resin', hsn: '3909', invQty: 1000, splQty: 990, ratePaise: 4000000 },
+      { itemName: 'Wax Emulsion', invQty: 500, splQty: 500, ratePaise: 6000000 },
+    ];
+    const e = await (await call('POST', '/entries', { material: 'resin', date: '2026-09-30', vendorName: 'V.K.Industrioes', invoiceNo: 'VK/200', taxType: 'SG+CG', lines })).json();
+    // 1 000 kg @ ₹40,000/t + 500 kg @ ₹60,000/t = ₹70,000 for 1 500 kg → ₹46,666.67/t on average.
+    expect(e).toMatchObject({ invQty: 1500, splQty: 1490, ratePaise: 4666667, itemName: 'MDI Resin + 1 more', raiseNotes: true, calc: { invoice: { basic: 7000000 }, spl: { basic: 6960000 }, qtyNote: { type: 'dn', qty: 10, basic: 40000 } } });
+    expect(e.lines).toHaveLength(2);
+    expect(await (await call('POST', '/entries', { material: 'resin', date: '2026-09-30', vendorName: 'V', invoiceNo: 'V/1', taxType: 'SG+CG', invQty: 1, ratePaise: 1 })).json()).toMatchObject({ error: { details: [{ path: 'lines', message: 'Add at least one item' }] } });
+  });
+
+  it('resin and kraft notes are optional per entry; without them what is owed is the invoice', async () => {
+    const { call } = await admin();
+    const resin = await (await call('POST', '/entries', { material: 'resin', date: '2026-09-30', vendorName: 'V', invoiceNo: 'V/2', taxType: 'SG+CG', raiseNotes: false, rateDiffPaise: 5000, lines: [{ itemName: 'MDI Resin', invQty: 1000, splQty: 900, ratePaise: 4000000 }] })).json();
+    // No weighbridge reconciliation: our quantity is the invoice's and there's no qty or rate note.
+    expect(resin).toMatchObject({ splQty: 1000, raiseNotes: false, calc: { qtyNote: null, rateNote: null, payable: 4720000 } });
+    const kraft = await (await call('POST', '/entries', { material: 'kraft', date: '2026-09-30', vendorName: 'V', invoiceNo: 'V/3', taxType: 'SG+CG', raiseNotes: false, invQty: 100, splQty: 98, ratePaise: 5000 })).json();
+    expect(kraft).toMatchObject({ splQty: 98, calc: { qtyNote: null, payable: 590000 } });
+    const notes = await (await call('GET', '/notes')).json();
+    expect(notes.rows.map((r: { entryId: string }) => r.entryId)).not.toContain(kraft.id);
+  });
+
+  it('veneers are billed as invoiced: no notes ever, even if asked', async () => {
+    const { call } = await admin();
+    const core = await (await call('POST', '/entries', { material: 'core', date: '2026-09-30', vendorName: 'V', invoiceNo: 'V/4', taxType: 'SG+CG', raiseNotes: true, rateDiffPaise: 100, lines: [{ itemName: 'Core Veneer 1.5 mm', invQty: 3000, splQty: 2900, ratePaise: 2500 }] })).json();
+    expect(core).toMatchObject({ raiseNotes: false, splQty: 3000, calc: { qtyNote: null, rateNote: null, payable: 8850000 } });
+  });
+
+  it('Nilgiri stock is kept per product picked on the entry', async () => {
+    const { call } = await admin();
+    await call('POST', '/entries', { material: 'nilgiri', date: '2026-09-30', vendorName: 'W', invoiceNo: 'W/1', taxType: 'SG+CG', species: 'Subabul', itemName: 'Nilgiri Logs 6 ft', invQty: 1000, ratePaise: 700000 });
+    const v = await (await call('GET', '/inventory?fy=2026-27')).json();
+    expect(v.rows.find((r: { key: string }) => r.key === 'nilgiri::Nilgiri Logs 6 ft')).toMatchObject({ species: 'Nilgiri Logs 6 ft', purchQty: 1000 });
+    expect(v.rows.some((r: { key: string }) => r.key === 'nilgiri::Subabul')).toBe(false);
+  });
+
+  it('returns come off their lot: net quantity on the entry, and no more than the lot holds', async () => {
+    const { call } = await admin();
+    expect(await (await call('GET', '/entries/pe-1')).json()).toMatchObject({ splQty: 12730, returnedQty: 1000, netQty: 11730 });
+    const over = await call('POST', '/returns', { date: '2026-09-28', material: 'nilgiri', entryId: 'pe-1', qty: 11731, ratePaise: 770000 });
+    expect((await over.json()).error.details).toEqual([{ path: 'qty', message: 'Lot N01 has 11730 left to return' }]);
+  });
+
+  it('PO: review then approve, recorded for the Generated / Reviewed / Approved signatures', async () => {
+    const { call } = await admin();
+    const po = await (await call('POST', '/pos', { date: '2026-09-30', material: 'resin', vendorName: 'V.K.Industrioes', taxType: 'IGST', gstPct: 18, freightPaise: 500000, lines: [{ itemName: 'MDI Resin', qty: 1000, ratePaise: 4000000 }, { itemName: 'Wax', qty: 500, ratePaise: 6000000 }] })).json();
+    expect(po.totals).toEqual({ itemsPaise: 7000000, freightPaise: 500000, taxablePaise: 7500000, cgst: 0, sgst: 0, igst: 1350000, total: 8850000 });
+    const reviewed = await (await call('POST', `/pos/${po.id}/review`)).json();
+    expect(reviewed).toMatchObject({ status: 'reviewed', reviewedByName: 'Admin User' });
+    expect((await call('POST', `/pos/${po.id}/review`)).status).toBe(409);
+    expect(await (await call('POST', `/pos/${po.id}/approve`)).json()).toMatchObject({ status: 'approved', reviewedByName: 'Admin User', approvedByName: 'Admin User' });
+    // An edit clears both sign-offs.
+    expect(await (await call('PATCH', `/pos/${po.id}`, { freightPaise: 0 })).json()).toMatchObject({ status: 'pending', reviewedBy: null, approvedBy: null });
+  });
+
+  it('product master for the item pickers', async () => {
+    const { call } = await admin();
+    const rows = await (await call('GET', '/products')).json();
+    expect(rows.length).toBeGreaterThan(0);
+    expect(Object.keys(rows[0]).sort()).toEqual(['categoryName', 'code', 'gstRate', 'hsn', 'id', 'name', 'unit']);
   });
 });
 
@@ -182,10 +252,9 @@ describe('inventory', () => {
     expect(euc).toMatchObject({ openQty: 5000, openPaise: 3500000, purchQty: 12730, purchPaise: 9802100, returnQty: 1000, returnPaise: 770000, consumeQty: 4000, closingQty: 12730 });
     expect(euc.avgRatePaise).toBe(Math.round((3500000 + 9802100 - 770000) / 16.73));
     expect(euc.closingPaise).toBe(3500000 + 9802100 - 770000 - euc.consumePaise);
+    // Nilgiri rows are the products (or, for older entries, species) in use; no empty rows from the species master.
     expect(v.rows.map((r: { key: string }) => r.key)).toEqual([
       'nilgiri::Eucalyptus',
-      'nilgiri::Subabul',
-      'nilgiri::Other',
       'resin',
       'kraft',
       'firewood',

@@ -36,10 +36,16 @@ const mrn: MrnView = {
   vendorId: null,
   vendorName: 'TM Nilgiri Supplier',
   invoiceNo: 'GT/1/26-27',
+  challanDate: null,
+  poNo: null,
+  timeOut: null,
+  transporter: null,
+  lrNo: null,
+  ewayBill: null,
   remarks: null,
   items: [
-    { id: 'i1', material: 'nilgiri', approxQty: 12000, unit: 'Kg', packages: null, remarks: null },
-    { id: 'i2', material: 'resin', approxQty: 500, unit: 'Kg', packages: '2 drums', remarks: null },
+    { id: 'i1', itemId: null, itemName: null, material: 'nilgiri', approxQty: 12000, challanQty: null, unit: 'Kg', packages: null, condition: null, remarks: null },
+    { id: 'i2', itemId: null, itemName: null, material: 'resin', approxQty: 500, challanQty: 500, unit: 'Kg', packages: '2 drums', condition: 'Sealed', remarks: null },
   ],
   status: 'pending_grn',
   grnId: null,
@@ -60,8 +66,9 @@ const grn = (over: Partial<GrnView> = {}): GrnView => ({
   vendorName: 'V.K.Industrioes',
   invoiceNo: 'VK/9',
   purchaseEntryId: null,
-  items: [{ id: 'gi', mrnItemId: 'x', material: 'resin', approxQty: 500, actualQty: 480, unit: 'Kg', quality: 'short', qualityRemarks: null }],
+  items: [{ id: 'gi', mrnItemId: 'x', itemId: null, itemName: null, material: 'resin', approxQty: 500, actualQty: 480, rejectedQty: 0, unit: 'Kg', quality: 'short', qualityRemarks: null }],
   receivedByName: 'Keeper',
+  location: null,
   remarks: null,
   status: 'draft',
   reviewedBy: null,
@@ -104,6 +111,7 @@ function fakeApi(grns: GrnView[] = [grn()]) {
     if (url.startsWith('/api/stores/mrns/m1') && method === 'GET') return json(mrn);
     if (url.startsWith('/api/stores/mrns')) return json({ rows: [mrn], total: 1 });
     if (url.startsWith('/api/stores/vendor-options')) return json([]);
+    if (url === '/api/stores/products') return json([{ id: 'vprod-mdi', name: 'MDI Resin', unit: 'KG', categoryName: 'Resin' }]);
     if (url.startsWith('/api/stores/grns/invoice-link')) return json({ match: null });
     if (/\/api\/stores\/grns\/g1\/(review|approve)$/.test(url)) return json(grn({ status: url.endsWith('review') ? 'reviewed' : 'approved' }));
     if (url === '/api/stores/grns/g1/account' && method === 'POST') return json(grn({ status: 'approved', accounted: true, voucherNo: 'PV/1' }));
@@ -175,7 +183,7 @@ describe('Gate entry register', () => {
     const dialog = await screen.findByRole('dialog', { name: 'New gate entry (MRN)' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save gate entry' }));
     expect(await within(dialog).findByText('Vehicle number is required')).toBeTruthy();
-    expect(within(dialog).getByText('Add at least one material')).toBeTruthy();
+    expect(within(dialog).getByText('Add at least one product')).toBeTruthy();
     expect(writes(fetchFn)).toHaveLength(0);
     // Fixing a field clears its message.
     fireEvent.change(within(dialog).getByLabelText('Vehicle no.'), { target: { value: 'gj01' } });

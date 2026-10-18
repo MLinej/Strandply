@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 import { z } from 'zod';
-import { DOCUMENT_TYPES, ENTRY_STATUSES, isFy, MATERIAL_IDS, NOTE_KINDS, NOTE_STATUSES, type NoteKind } from '../../contracts/purchase';
+import { DOCUMENT_TYPES, ENTRY_STATUSES, isFy, MATERIAL_IDS, NOTE_KINDS, NOTE_STATUSES, PO_STATUSES, type NoteKind } from '../../contracts/purchase';
 import { policy, requireAuthContext } from '../../auth/guards';
 import { SecureRouter } from '../../auth/secure-router';
 import type { PageKey } from '../../domain/access';
@@ -80,6 +80,9 @@ export function purchaseRoutes(): SecureRouter {
     return c.json(await s(c).purchaseMasters.vendorOptions(q));
   });
 
+  // Product master (Vendors → products) for the entry and PO item pickers.
+  r.get('/products', policy.anyPage(['purchase_entries', 'purchase_orders']), async (c) => c.json(await s(c).purchaseMasters.productOptions()));
+
   // ── Entries ────────────────────────────────────────────────────────
   r.get('/entries', policy.page('purchase_entries'), async (c) => c.json(await s(c).purchaseEntries.list(toListQuery(parseQuery(c, entryQuery)))));
   r.get('/entries/stats', policy.page('purchase_entries'), async (c) => c.json(await s(c).purchaseEntries.stats(noPaging(toListQuery(parseQuery(c, entryQuery))))));
@@ -129,7 +132,7 @@ export function purchaseRoutes(): SecureRouter {
   r.get('/pos', policy.page('purchase_orders'), async (c) => {
     const q = parseQuery(
       c,
-      z.object({ ...paging, material, progress: z.enum(['Open', 'Partial', 'Closed']).optional(), status: z.enum(['pending', 'approved']).optional(), fy }),
+      z.object({ ...paging, material, progress: z.enum(['Open', 'Partial', 'Closed']).optional(), status: z.enum(PO_STATUSES).optional(), fy }),
     );
     return c.json(await s(c).purchaseOrders.list(toListQuery(q)));
   });
@@ -147,6 +150,7 @@ export function purchaseRoutes(): SecureRouter {
   r.get('/pos/:id/print', policy.page('purchase_orders', 'print'), async (c) => c.json(await s(c).purchaseOrders.printPayload(actor(c), idParam(c))));
   r.post('/pos', policy.page('purchase_orders', 'edit'), async (c) => c.json(await s(c).purchaseOrders.create(actor(c), await parseJson(c, poCreateBody)), 201));
   r.patch('/pos/:id', policy.page('purchase_orders', 'edit'), async (c) => c.json(await s(c).purchaseOrders.update(actor(c), idParam(c), await parseJson(c, poUpdateBody))));
+  r.post('/pos/:id/review', policy.page('purchase_orders', 'edit'), async (c) => c.json(await s(c).purchaseOrders.review(actor(c), idParam(c))));
   r.post('/pos/:id/approve', policy.page('purchase_orders', 'purchase_approve'), async (c) => c.json(await s(c).purchaseOrders.approve(actor(c), idParam(c))));
   r.delete('/pos/:id', policy.page('purchase_orders', 'delete'), async (c) => {
     await s(c).purchaseOrders.remove(actor(c), idParam(c));

@@ -267,7 +267,7 @@ export const MODULES: ModuleDef[] = [
     pages: [
       { slug: 'dashboard', label: 'Maintenance dashboard', perm: 'maintenance.dashboard', built: true },
       { slug: 'work-orders', label: 'Work orders', perm: 'maintenance.orders', built: true },
-      { slug: 'areas', label: 'Plant areas', perm: 'maintenance.masters', built: true },
+      { slug: 'areas', label: 'Areas & technicians', perm: 'maintenance.masters', built: true },
       { slug: 'reports', label: 'Maintenance reports', perm: 'maintenance.reports', built: true },
       { slug: 'audit', label: 'Audit trail', perm: 'maintenance.dashboard', built: true },
     ],

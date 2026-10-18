@@ -13,6 +13,7 @@ describe('company settings', () => {
       city: 'Wankaner, Morbi, Gujarat',
       phone: null,
       gst: null,
+      email: null, pan: null, stateCode: null, bankName: null, bankAccountNo: null, bankIfsc: null,
     });
   });
 
@@ -25,7 +26,8 @@ describe('company settings', () => {
         body: { name: 'Strandply LLP', phone: ' +91 2828 223344 ', gst: '24aaafs1234a1z5', llpin: 'aap-7300' },
       })
     ).json();
-    expect(saved).toEqual({ name: 'Strandply LLP', llpin: 'AAP-7300', city: 'Wankaner, Morbi, Gujarat', phone: '+91 2828 223344', gst: '24AAAFS1234A1Z5' });
+    // The state code comes from the GSTIN until it is set.
+    expect(saved).toEqual({ name: 'Strandply LLP', llpin: 'AAP-7300', city: 'Wankaner, Morbi, Gujarat', phone: '+91 2828 223344', gst: '24AAAFS1234A1Z5', email: null, pan: null, stateCode: '24', bankName: null, bankAccountNo: null, bankIfsc: null });
     const log = await t.data.repos.activity.list({ filters: { entityType: 'settings' } });
     expect(log.rows.map((r) => r.details)).toEqual(['Updated company settings: phone, GST']);
 
@@ -36,10 +38,10 @@ describe('company settings', () => {
     expect((await t.data.repos.activity.list({ filters: { entityType: 'settings' } })).total).toBe(2);
   });
 
-  it('validates name, LLPIN, GST and phone', async () => {
+  it('validates name, LLPIN, GST, phone, e-mail, PAN, state code and bank details', async () => {
     const t = await makeTestApp();
     const cookie = await t.login('superadmin');
-    for (const body of [{ name: '' }, { llpin: 'AAP7300' }, { gst: '24AAAFS1234A1Z' }, { phone: 'call me' }]) {
+    for (const body of [{ name: '' }, { llpin: 'AAP7300' }, { gst: '24AAAFS1234A1Z' }, { phone: 'call me' }, { email: 'x@' }, { pan: 'ABC' }, { stateCode: '2' }, { bankAccountNo: '12a' }, { bankIfsc: 'SBIN1234567' }]) {
       expect((await t.request('PUT', C, { cookie, body })).status, JSON.stringify(body)).toBe(422);
     }
   });
@@ -51,7 +53,7 @@ describe('company settings', () => {
       cookie: admin,
       body: { name: 'Strandply Industries LLP', city: 'Morbi, Gujarat', phone: '02822 111222', gst: '24AAAFS1234A1Z5' },
     });
-    const expected = { name: 'Strandply Industries LLP', city: 'Morbi, Gujarat', phone: '02822 111222', llpin: 'AAP-7300', gst: '24AAAFS1234A1Z5' };
+    const expected = { name: 'Strandply Industries LLP', city: 'Morbi, Gujarat', phone: '02822 111222', llpin: 'AAP-7300', gst: '24AAAFS1234A1Z5', email: null, pan: null, stateCode: '24', bankName: null, bankAccountNo: null, bankIfsc: null };
     expect((await (await t.request('GET', `${ST}/dispatches/d1/label`, { cookie: admin })).json()).from).toEqual(expected);
     expect((await (await t.request('GET', `${ST}/requests/r2/slip`, { cookie: admin })).json()).company).toEqual(expected);
     expect((await (await t.request('GET', `${ST}/reports/pending/print`, { cookie: admin })).json()).company).toEqual(expected);

@@ -6,7 +6,6 @@ import { Link } from 'react-router';
 import type { ListResult, NotificationView } from '@contracts/sampletrack';
 import { api } from '@/api/client';
 import { FirmSwitcher } from '@/app/FirmSwitcher';
-import { pagePath } from '@/app/modules';
 import { useSession } from '@/app/session';
 import { Card, EmptyState, KpiTile, Pill, Skeleton } from '@/components/ui';
 import { timeAgo } from '@/lib/format';
@@ -158,24 +157,6 @@ function AlertsCard() {
   );
 }
 
-/** Shortcuts to the built pages this user can open. */
-function GoToCard() {
-  const { visibleModules } = useSession();
-  const pages = visibleModules.flatMap((m) => m.pages.filter((p) => p.built).map((p) => ({ ...p, href: pagePath(m.key, p.slug) })));
-  if (pages.length === 0) return null;
-  return (
-    <Card title="Go to">
-      <div className="flex flex-wrap gap-2">
-        {pages.map((p) => (
-          <Link key={p.href} to={p.href} className="rounded border border-border px-3 py-1.5 text-base font-medium text-ink hover:bg-page">
-            {p.label}
-          </Link>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
 /** Home — my work list (design-reference PDF p.2). */
 export function HomePage() {
   const { user } = useSession();
@@ -212,7 +193,6 @@ export function HomePage() {
         <PendingCard items={pending} loading={loading} />
         <div className="flex flex-col gap-4">
           <AlertsCard />
-          <GoToCard />
         </div>
       </div>
 

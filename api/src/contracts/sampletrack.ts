@@ -562,11 +562,19 @@ export interface Setting {
 /** The company details printed on labels, slips and share messages. */
 export interface CompanyBlock {
   name: string;
-  /** The "City / State" line, e.g. "Wankaner, Morbi, Gujarat". */
+  /** The address line, e.g. "Survey No. 112, Lakhdhirpur Road, Morbi, Gujarat 363642". */
   city: string;
   phone: string | null;
   llpin: string | null;
   gst: string | null;
+  email?: string | null;
+  pan?: string | null;
+  /** GST state code, e.g. "24". */
+  stateCode?: string | null;
+  /** Printed on tax invoices. */
+  bankName?: string | null;
+  bankAccountNo?: string | null;
+  bankIfsc?: string | null;
 }
 
 // ── Print and share payloads ─────────────────────────────────────────
@@ -850,8 +858,14 @@ export interface Badges {
 export interface CompanySettings {
   name: string;
   llpin: string | null;
-  /** The "City / State" line, e.g. "Wankaner, Morbi, Gujarat". */
+  /** The address line, e.g. "Survey No. 112, Lakhdhirpur Road, Morbi, Gujarat 363642". */
   city: string | null;
   phone: string | null;
   gst: string | null;
+  email: string | null;
+  pan: string | null;
+  stateCode: string | null;
+  bankName: string | null;
+  bankAccountNo: string | null;
+  bankIfsc: string | null;
 }

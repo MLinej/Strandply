@@ -26,6 +26,7 @@ import type {
   PurchaseEntryView,
   PurchaseMeta,
   PurchaseOrderView,
+  PurchaseProductOption,
   PurchaseReports,
   PurchaseReturnView,
   PurchaseType,
@@ -58,6 +59,7 @@ export const puKeys = {
   documents: (q: object) => ['pu', 'documents', q] as const,
   audit: (q: object) => ['pu', 'audit', q] as const,
   vendors: (q: string) => ['pu', 'vendor-options', q] as const,
+  products: ['pu', 'products'] as const,
 };
 
 /** Anything recorded in Purchase can move every figure, so writes refresh the whole module. */
@@ -90,6 +92,11 @@ export function usePurchaseVendors(q: string) {
     queryFn: ({ signal }) => api<PurchaseVendorOption[]>(`${PU}/vendor-options`, { query: { q }, signal }),
     placeholderData: keepPreviousData,
   });
+}
+
+/** The product master, for the entry and PO item pickers. */
+export function usePurchaseProducts({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({ queryKey: puKeys.products, queryFn: ({ signal }) => api<PurchaseProductOption[]>(`${PU}/products`, { signal }), enabled, staleTime: 60_000 });
 }
 
 // ── Entries ──────────────────────────────────────────────────────────
@@ -126,7 +133,8 @@ export interface DuplicateEntryDetails {
 }
 export const duplicateEntryOf = (err: unknown) => (isApiError(err, 'possible_duplicate') ? (err.details as DuplicateEntryDetails) : null);
 
-export type EntryBody = Omit<EntryInput, 'lotNo'> & { lotNo?: string | null; post?: boolean };
+/** Itemized materials send `lines` and leave invQty / splQty / ratePaise to the server. */
+export type EntryBody = Omit<EntryInput, 'lotNo' | 'invQty' | 'splQty' | 'ratePaise'> & { lotNo?: string | null; post?: boolean; invQty?: number; splQty?: number; ratePaise?: number };
 
 export function useSaveEntry() {
   const invalidate = useInvalidateAll();
@@ -206,6 +214,11 @@ export function useSavePo() {
       id ? api<PurchaseOrderView>(`${PU}/pos/${id}`, { method: 'PATCH', body: input }) : api<PurchaseOrderView>(`${PU}/pos`, { method: 'POST', body: input }),
     onSuccess: invalidate,
   });
+}
+
+export function useReviewPo() {
+  const invalidate = useInvalidateAll();
+  return useMutation({ mutationFn: (id: string) => api<PurchaseOrderView>(`${PU}/pos/${id}/review`, { method: 'POST' }), onSuccess: invalidate });
 }
 
 export function useApprovePo() {

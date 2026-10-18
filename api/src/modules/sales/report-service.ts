@@ -747,8 +747,11 @@ export class SalesReportService {
       doc.billToId ? this.data.repos.salesCustomers.getById(doc.billToId) : null,
       doc.shipToId ? this.data.repos.salesCustomers.getById(doc.shipToId) : null,
     ]);
+    // An invoice prints its order's dispatch details (vehicle, transporter, LR).
+    const soId = kind === 'invoice' ? (doc as SalesInvoiceView).soId : kind === 'order' ? (doc as SalesOrderView).id : null;
+    const dispatch = soId ? ((await this.data.repos.salesOrders.getById(soId))?.dispatch ?? null) : null;
     await this.data.uow.run((tx) => this.activity.record(tx, actor, { action: 'Print', entityType: `sales_${kind}`, entityId: id, details: `Printed ${no}` }));
-    return { company, doc, billParty, shipParty, generatedAt: isoNow(this.clock) };
+    return { company, doc, billParty, shipParty, dispatch, generatedAt: isoNow(this.clock) };
   }
 
   /** Subject and body from the Sales settings template, and the default recipients (legacy openSendEmailModal). */

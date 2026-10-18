@@ -9,7 +9,7 @@ import { errorMessage, fieldErrors } from '../../samples/ui/errors';
 import { useUrlState } from '../../samples/ui/list-state';
 import { PageHeader } from '../../samples/ui/PageHeader';
 import { rupeesToPaise, useApproveReturn, useDeleteReturn, useEntries, usePurchaseMeta, useReturns, useSaveReturn } from '../api';
-import { EntryStatusPill, inr, materialLabel, qtyWithUnit } from '../ui';
+import { EntryStatusPill, inr, materialLabel, qtyFmt, qtyWithUnit } from '../ui';
 
 const PAGE_SIZE = 20;
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
@@ -32,6 +32,7 @@ function ReturnForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   }, [open]);
   const set = <K extends keyof Form>(k: K) => (v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
   const mat = MATERIAL_BY_ID[f.material];
+  const picked = entries.find((x) => x.id === f.entryId);
 
   function pickEntry(id: string) {
     const e = entries.find((x) => x.id === id);
@@ -42,6 +43,7 @@ function ReturnForm({ open, onClose }: { open: boolean; onClose: () => void }) {
     e.preventDefault();
     const local: Record<string, string> = {};
     if (!(Number(f.qty) > 0)) local.qty = 'Enter the quantity returned';
+    else if (picked && Number(f.qty) > picked.netQty) local.qty = `Lot ${picked.lotNo} has ${qtyFmt(picked.netQty)} ${mat.unit} left`;
     if (!f.entryId && !f.vendorName.trim()) local.vendorName = 'Vendor is required';
     if (Object.keys(local).length) return setErrors(local);
     try {
@@ -71,7 +73,7 @@ function ReturnForm({ open, onClose }: { open: boolean; onClose: () => void }) {
       size="lg"
       closeOnBackdrop={false}
       title="Purchase return"
-      description="Material sent back to the vendor. It comes off stock as soon as it’s saved."
+      description="Material sent back to the vendor. It comes off stock, and off its lot, as soon as it’s saved."
       footer={
         <>
           <Button onClick={onClose}>Cancel</Button>
@@ -85,16 +87,17 @@ function ReturnForm({ open, onClose }: { open: boolean; onClose: () => void }) {
         <Select label="Material" options={MATERIALS.map((m) => ({ value: m.id, label: m.label }))} value={f.material} onChange={(e) => setF({ ...blank(), date: f.date, material: e.target.value as MaterialId })} />
         <Input label="Return date" type="date" value={f.date} onChange={(e) => set('date')(e.target.value)} error={errors.date} />
         <Select
-          label="Original entry"
-          placeholder="Not linked"
-          options={entries.map((e) => ({ value: e.id, label: `${e.lotNo} · ${e.invoiceNo} · ${e.vendorName.slice(0, 20)}` }))}
+          label="Lot"
+          placeholder="Not linked to a lot"
+          options={entries.filter((e) => e.netQty > 0 || e.id === f.entryId).map((e) => ({ value: e.id, label: `${e.lotNo} · ${e.invoiceNo} · ${e.vendorName.slice(0, 20)} · ${qtyFmt(e.netQty)} ${mat.unit} left` }))}
+          hint={picked ? `Comes off lot ${picked.lotNo}: ${qtyFmt(picked.netQty)} ${mat.unit} left of ${qtyFmt(picked.splQty)}` : 'Pick the lot so its quantity is reduced.'}
           value={f.entryId}
           onChange={(e) => pickEntry(e.target.value)}
           error={errors.entryId ?? errors.material}
         />
         <Input label="Vendor" value={f.vendorName} onChange={(e) => set('vendorName')(e.target.value)} error={errors.vendorName} containerClassName="sm:col-span-2" />
         <Input label="Original invoice no." value={f.originalInvoiceNo} onChange={(e) => set('originalInvoiceNo')(e.target.value)} />
-        {f.material === 'nilgiri' && <Select label="Species" placeholder="Select species" options={species.map((t) => ({ value: t.name, label: t.name }))} value={f.species} onChange={(e) => set('species')(e.target.value)} />}
+        {f.material === 'nilgiri' && !f.entryId && <Select label="Species" placeholder="Select species" options={species.map((t) => ({ value: t.name, label: t.name }))} value={f.species} onChange={(e) => set('species')(e.target.value)} />}
         <Input label="Quantity returned" inputMode="decimal" suffix={mat.unit} value={f.qty} onChange={(e) => set('qty')(e.target.value)} error={errors.qty} />
         <Input label={`Rate per ${rateUnitOf(mat)}`} inputMode="decimal" suffix="₹" value={f.rate} onChange={(e) => set('rate')(e.target.value)} error={errors.ratePaise} />
         <Textarea label="Reason" rows={2} placeholder="Quality rejection, excess supply…" value={f.reason} onChange={(e) => set('reason')(e.target.value)} containerClassName="sm:col-span-3" />

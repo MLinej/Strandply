@@ -1,7 +1,9 @@
 import {
+  averageRate,
   MATERIAL_BY_ID,
   MATERIALS,
   fyOf,
+  type EntryLine,
   type EntryFilters,
   type EntryStats,
   type NoteFilters,
@@ -26,6 +28,42 @@ import { calcOf, entryViews, fyRange, isPosted, materialLabel } from './common';
 import type { EntryCreate, EntryUpdate } from './validation';
 
 const rupees = (p: number) => Math.round(p) / 100;
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+type QtyFields = Pick<PurchaseEntry, 'lines' | 'raiseNotes' | 'invQty' | 'splQty' | 'ratePaise' | 'itemId' | 'itemName' | 'hsn'>;
+
+/**
+ * Applies the material's rules: itemized materials take their quantities, rate and headline item from the invoice
+ * lines; notes are forced on or off unless the material leaves it to the entry. `legacyOk` lets an itemized entry
+ * saved before lines existed be edited without adding them.
+ */
+type LineIn = { itemId?: string | null; itemName: string; hsn?: string | null; invQty: number; splQty?: number; ratePaise: number };
+function applyMaterialRules(material: PurchaseEntry['material'], f: Omit<Partial<QtyFields>, 'lines'> & { lines?: LineIn[] }, legacyOk: boolean): Partial<QtyFields> {
+  const def = MATERIAL_BY_ID[material];
+  const raiseNotes = def.notes === 'always' ? true : def.notes === 'none' ? false : (f.raiseNotes ?? true);
+  const given = f.lines ?? [];
+  if (!def.itemized) {
+    if (given.length) throw validationFailed('Invalid input', [{ path: 'lines', message: `${def.label} is entered as one item, not invoice lines` }]);
+    for (const k of ['invQty', 'ratePaise'] as const) if (!legacyOk && f[k] === undefined) throw validationFailed('Invalid input', [{ path: k, message: k === 'invQty' ? 'Invoice quantity is required' : 'Rate is required' }]);
+    return { ...f, lines: [], raiseNotes, ...(f.invQty !== undefined && f.splQty === undefined && !legacyOk ? { splQty: f.invQty } : {}) };
+  }
+  if (!given.length) {
+    if (legacyOk) return { ...f, lines: undefined, raiseNotes };
+    throw validationFailed('Invalid input', [{ path: 'lines', message: 'Add at least one item' }]);
+  }
+  // Without notes nothing is weighed again: our quantity is the invoice's.
+  const lines: EntryLine[] = given.map((l) => ({ itemId: l.itemId ?? null, itemName: l.itemName, hsn: l.hsn ?? null, invQty: l.invQty, splQty: raiseNotes ? (l.splQty ?? l.invQty) : l.invQty, ratePaise: l.ratePaise }));
+  return {
+    lines,
+    raiseNotes,
+    invQty: round3(lines.reduce((s, l) => s + l.invQty, 0)),
+    splQty: round3(lines.reduce((s, l) => s + l.splQty, 0)),
+    ratePaise: averageRate(material, lines),
+    itemId: lines[0]!.itemId,
+    itemName: lines.length === 1 ? lines[0]!.itemName : `${lines[0]!.itemName} + ${lines.length - 1} more`,
+    hsn: lines[0]!.hsn,
+  };
+}
 const label = (e: Pick<PurchaseEntry, 'material' | 'lotNo' | 'invoiceNo' | 'vendorName'>) => `${materialLabel(e.material)} ${e.lotNo} (${e.invoiceNo}, ${e.vendorName})`;
 
 export interface EntryPrintPayload {
@@ -118,7 +156,9 @@ export class PurchaseEntryService {
   async create(actor: Actor, input: EntryCreate, { force = false } = {}): Promise<PurchaseEntryView> {
     const at = isoNow(this.clock);
     const entry = await this.data.uow.run(async (tx) => {
-      const { post, ...fields } = input;
+      const { post, ...raw } = input;
+      const q = applyMaterialRules(raw.material, raw, false) as QtyFields;
+      const fields = { ...raw, ...q };
       await this.checkRefs(tx, { material: fields.material, poId: fields.poId ?? null, species: fields.species ?? null, veneerType: fields.veneerType ?? null });
       if (!force) await this.assertNoDuplicate(tx, fields.vendorName, fields.invoiceNo);
       const e = await tx.purchaseEntries.create({
@@ -152,6 +192,8 @@ export class PurchaseEntryService {
         species: fields.species ?? null,
         veneerType: fields.veneerType ?? null,
         altQtyPcs: fields.altQtyPcs ?? null,
+        lines: fields.lines,
+        raiseNotes: fields.raiseNotes,
         invQty: fields.invQty,
         splQty: fields.splQty,
         ratePaise: fields.ratePaise,
@@ -182,7 +224,9 @@ export class PurchaseEntryService {
     const entry = await this.data.uow.run(async (tx) => {
       const before = await tx.purchaseEntries.getById(id);
       if (!before) throw notFound('Purchase entry');
-      const { post, ...fields } = input;
+      const { post, ...raw } = input;
+      const q = applyMaterialRules(raw.material ?? before.material, { ...raw, lines: raw.lines ?? (before.lines?.length ? before.lines : undefined), raiseNotes: raw.raiseNotes ?? before.raiseNotes }, true);
+      const fields = { ...raw, ...Object.fromEntries(Object.entries(q).filter(([, v]) => v !== undefined)) };
       const merged = { ...before, ...Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined)) } as PurchaseEntry;
       if (fields.lotNo === null) merged.lotNo = before.lotNo;
       await this.checkRefs(tx, merged);

@@ -104,6 +104,7 @@ const vendorFields = {
   msme: optionalText(40),
   paymentTerms: nullableBlank(z.enum(PAYMENT_TERMS)),
   bank: optionalText(120),
+  branch: optionalText(160),
   accountNo: nullableBlank(z.string().trim().regex(/^[0-9]{6,20}$/, 'Account number is 6 to 20 digits')),
   ifsc: upperCode(IFSC, 'IFSC is 4 letters, 0, then 6 letters or digits'),
   rating: nullableBlank(z.coerce.number().int().min(1, 'Rating is 1 to 5').max(5, 'Rating is 1 to 5')),

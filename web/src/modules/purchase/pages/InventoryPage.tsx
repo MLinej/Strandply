@@ -2,30 +2,31 @@ import { CheckCircle2, Download, Lock, PackageOpen, Unlock } from 'lucide-react'
 import { useEffect, useState } from 'react';
 import { amountFor, fyEnd, MATERIAL_BY_ID, MATERIALS, prevFy, rateUnitOf, type InventoryView, type LedgerRow, type MaterialId } from '@contracts/purchase';
 import { useSession } from '@/app/session';
-import { Button, Card, Input, KpiTile, Modal, Pill, Skeleton, useToast } from '@/components/ui';
+import { Button, Card, Combo, Input, KpiTile, Modal, Pill, Skeleton, useToast } from '@/components/ui';
 import { formatDate } from '@/lib/format';
 import { errorMessage } from '../../samples/ui/errors';
 import { useUrlState } from '../../samples/ui/list-state';
 import { PageHeader } from '../../samples/ui/PageHeader';
-import { exportInventory, rupeesToPaise, useInventory, useOpeningApproval, usePurchaseMeta, useSaveOpening, useSetConsumption } from '../api';
+import { exportInventory, rupeesToPaise, useInventory, useOpeningApproval, usePurchaseProducts, useSaveOpening, useSetConsumption } from '../api';
 import { FySelect, inr, inrShort, materialLabel, qtyFmt, qtyWithUnit, useFy } from '../ui';
 
 const rowLabel = (r: { material: MaterialId; species: string | null }) => `${materialLabel(r.material)}${r.species ? ` — ${r.species}` : ''}`;
 
 type Line = { material: MaterialId; species: string | null; qty: string; rate: string; remarks: string };
 
-/** Opening stock per FY (legacy openingStockModal): Nilgiri per species, others per material. */
+/** Opening stock per FY (legacy openingStockModal): Nilgiri per product, others per material. */
 function OpeningDialog({ fy, view, open, onClose }: { fy: string; view: InventoryView; open: boolean; onClose: () => void }) {
   const toast = useToast();
   const save = useSaveOpening();
-  const species = (usePurchaseMeta().data?.types ?? []).filter((t) => t.kind === 'nilgiri_species').map((t) => t.name);
+  const products = usePurchaseProducts({ enabled: open }).data ?? [];
   const [asOn, setAsOn] = useState('');
   const [lines, setLines] = useState<Line[]>([]);
   useEffect(() => {
     if (!open) return;
     setAsOn(view.opening.asOnDate || fyEnd(prevFy(fy)));
     type Key = { material: MaterialId; species: string | null };
-    const nilgiriSpecies = [...new Set([...species, ...view.opening.items.filter((i) => i.material === 'nilgiri').map((i) => i.species ?? 'Unspecified')])];
+    // Nilgiri: the products in this FY's ledger and opening; more can be added below.
+    const nilgiriSpecies = [...new Set([...view.rows.filter((r) => r.material === 'nilgiri').map((r) => r.species ?? 'Unspecified'), ...view.opening.items.filter((i) => i.material === 'nilgiri').map((i) => i.species ?? 'Unspecified')])];
     const keys = MATERIALS.flatMap((m): Key[] => (m.id === 'nilgiri' ? nilgiriSpecies.map((s) => ({ material: m.id, species: s })) : [{ material: m.id, species: null }]));
     setLines(
       keys.map((k) => {
@@ -114,6 +115,23 @@ function OpeningDialog({ fy, view, open, onClose }: { fy: string; view: Inventor
               </tr>
             </tfoot>
           </table>
+        </div>
+        <div className="w-[320px]">
+          <Combo
+            label="Add a Nilgiri product"
+            value={null}
+            options={products.filter((p) => !lines.some((l) => l.material === 'nilgiri' && l.species === p.name)).map((p) => ({ id: p.id, label: p.name, hint: p.categoryName }))}
+            onChange={(id) => {
+              const p = products.find((x) => x.id === id);
+              if (!p) return;
+              setLines((x) => {
+                const at = x.findIndex((l) => l.material !== 'nilgiri');
+                const row: Line = { material: 'nilgiri', species: p.name, qty: '', rate: '', remarks: '' };
+                return at < 0 ? [...x, row] : [...x.slice(0, at), row, ...x.slice(at)];
+              });
+            }}
+            placeholder="Search the product master"
+          />
         </div>
       </div>
     </Modal>

@@ -76,9 +76,10 @@ export const amountFor = (kg: number, ratePaisePerTon: number) => Math.round((kg
  * (nilgiri) or resin consumption has used. `exceptDocId` leaves out one document's own use, for edits.
  */
 export async function lotOptions(repos: Repos, material: Extract<MaterialId, 'nilgiri' | 'resin'>, exceptDocId?: string): Promise<LotOption[]> {
-  const [all, used] = await Promise.all([repos.purchaseEntries.listBetween('0000-01-01', '9999-12-31'), lotUse(repos, material, exceptDocId)]);
+  const [all, used, returns] = await Promise.all([repos.purchaseEntries.listBetween('0000-01-01', '9999-12-31'), lotUse(repos, material, exceptDocId), repos.purchaseReturns.listBetween('0000-01-01', '9999-12-31')]);
   return all.filter((e) => e.material === material && e.status !== 'draft').map((e) => {
     const usedKg = round3(used.get(e.id) ?? 0);
+    const returnedKg = round3(returns.filter((r) => r.entryId === e.id).reduce((s, r) => s + r.qty, 0));
     return {
       purchaseEntryId: e.id,
       lotNo: e.lotNo,
@@ -86,8 +87,9 @@ export async function lotOptions(repos: Repos, material: Extract<MaterialId, 'ni
       vendorName: e.vendorName,
       invoiceNo: e.invoiceNo,
       receivedKg: e.splQty,
+      returnedKg,
       usedKg,
-      availKg: round3(e.splQty - usedKg),
+      availKg: round3(e.splQty - returnedKg - usedKg),
       netRatePaise: netRate(e.ratePaise, e.rateDiffPaise),
       invoiceRatePaise: e.ratePaise,
       rateDiffPaise: e.rateDiffPaise,

@@ -1,4 +1,4 @@
-import { storeMaterialLabel, type Mrn, type MrnFilters, type MrnItem, type MrnView, type StoresVendorOption } from '../../contracts/stores';
+import { storeItemLabel, type Mrn, type MrnFilters, type MrnItem, type MrnView, type StoreProductOption, type StoresVendorOption } from '../../contracts/stores';
 import type { CompanyBlock } from '../../contracts/sampletrack';
 import { isoNow, type Clock } from '../../lib/clock';
 import { newId } from '../../lib/crypto';
@@ -11,7 +11,7 @@ import type { ActivityService } from '../sampletrack/activity-service';
 import type { Actor } from '../sampletrack/actor';
 import { collectAll } from '../sampletrack/masters/common';
 import type { CompanyService } from '../sampletrack/settings/company-service';
-import { businessTime, daysSince, nextDocNo, readSettings } from './common';
+import { businessTime, daysSince, nextDocNo, productLine, readSettings } from './common';
 import type { MrnCreate, MrnUpdate } from './validation';
 
 export interface MrnPrintPayload {
@@ -21,9 +21,9 @@ export interface MrnPrintPayload {
 }
 
 /** "Nilgiri Wood, Resin +1 more" (legacy mrnItemsSummary). */
-export const itemsSummary = (items: { material: string }[]) => {
+export const itemsSummary = (items: { material: string; itemName?: string | null }[]) => {
   if (!items.length) return '—';
-  const names = items.map((i) => storeMaterialLabel(i.material));
+  const names = items.map(storeItemLabel);
   return names.length <= 2 ? names.join(', ') : `${names.slice(0, 2).join(', ')} +${names.length - 2} more`;
 };
 
@@ -69,6 +69,13 @@ export class MrnService {
       .map((v) => ({ id: v.id, code: v.code, name: v.name, city: v.city }));
   }
 
+  /** Every product in the product master, by name. */
+  async productOptions(): Promise<StoreProductOption[]> {
+    const [products, cats] = await Promise.all([this.data.repos.vendorProducts.listAll(), this.data.repos.vendorCategories.listAll()]);
+    const catName = new Map(cats.map((c) => [c.id, c.name]));
+    return products.map((p) => ({ id: p.id, name: p.name, unit: p.unit, categoryName: catName.get(p.categoryId) ?? '' })).sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+  }
+
   /** Date and time: the server clock while auto-punch is on, else what Security typed (both required). */
   private async stamp(tx: Repos, input: { date?: string; time?: string }) {
     if ((await readSettings(tx)).autoPunchMrn) return { date: businessToday(this.clock), time: businessTime(this.clock) };
@@ -85,16 +92,28 @@ export class MrnService {
     return { vendorId: v.id, vendorName: v.name };
   }
 
-  private items(input: MrnCreate['items'], before: MrnItem[] = []): MrnItem[] {
+  /** Lines name a product from the product master (its material group follows); older clients may send just a material. */
+  private async items(tx: Repos, input: MrnCreate['items'], before: MrnItem[] = []): Promise<MrnItem[]> {
     const known = new Set(before.map((i) => i.id));
-    return input.map((it) => ({
-      id: it.id && known.has(it.id) ? it.id : newId(),
-      material: it.material,
-      approxQty: it.approxQty,
-      unit: it.unit,
-      packages: it.packages ?? null,
-      remarks: it.remarks ?? null,
-    }));
+    const out: MrnItem[] = [];
+    for (const [idx, it] of input.entries()) {
+      const prev = it.id ? before.find((b) => b.id === it.id) : undefined;
+      const product = it.itemId ? await productLine(tx, it.itemId, `items.${idx}.itemId`) : prev?.itemId && !it.material ? { itemId: prev.itemId, itemName: prev.itemName, material: prev.material } : null;
+      if (!product && !it.material) throw validationFailed('Invalid input', [{ path: `items.${idx}.itemId`, message: 'Pick a product' }]);
+      out.push({
+        id: it.id && known.has(it.id) ? it.id : newId(),
+        itemId: product?.itemId ?? null,
+        itemName: product?.itemName ?? null,
+        material: product?.material ?? it.material!,
+        approxQty: it.approxQty,
+        challanQty: it.challanQty ?? null,
+        unit: it.unit,
+        packages: it.packages ?? null,
+        condition: it.condition ?? null,
+        remarks: it.remarks ?? null,
+      });
+    }
+    return out;
   }
 
   async create(actor: Actor, input: MrnCreate): Promise<MrnView> {
@@ -113,8 +132,14 @@ export class MrnService {
         driverPhone: input.driverPhone ?? null,
         ...(await this.vendor(tx, input.vendorId, input.vendorName)),
         invoiceNo: input.invoiceNo ?? null,
+        challanDate: input.challanDate ?? null,
+        poNo: input.poNo ?? null,
+        timeOut: input.timeOut ?? null,
+        transporter: input.transporter ?? null,
+        lrNo: input.lrNo ?? null,
+        ewayBill: input.ewayBill ?? null,
         remarks: input.remarks ?? null,
-        items: this.items(input.items),
+        items: await this.items(tx, input.items),
         status: 'pending_grn',
         grnId: null,
         grnNo: null,
@@ -145,9 +170,9 @@ export class MrnService {
         if (input.date) patch.date = input.date;
         if (input.time) patch.time = input.time;
       }
-      for (const k of ['vehicleNo', 'securityName', 'driverName', 'driverPhone', 'invoiceNo', 'remarks'] as const) if (input[k] !== undefined) (patch as Record<string, unknown>)[k] = input[k];
+      for (const k of ['vehicleNo', 'securityName', 'driverName', 'driverPhone', 'invoiceNo', 'challanDate', 'poNo', 'timeOut', 'transporter', 'lrNo', 'ewayBill', 'remarks'] as const) if (input[k] !== undefined) (patch as Record<string, unknown>)[k] = input[k];
       if (input.vendorName !== undefined || input.vendorId !== undefined) Object.assign(patch, await this.vendor(tx, input.vendorId, input.vendorName ?? before.vendorName));
-      if (input.items) patch.items = this.items(input.items, before.items);
+      if (input.items) patch.items = await this.items(tx, input.items, before.items);
       const updated = (await tx.mrns.update(id, patch))!;
       await this.activity.record(tx, actor, { action: 'Edit', entityType: 'stores_mrn', entityId: id, details: `Edited gate entry ${before.mrnNo}` });
       return updated;
@@ -188,7 +213,7 @@ export class MrnService {
           { header: 'Vehicle No', value: (r: R) => r.m.vehicleNo },
           { header: 'Vendor', value: (r: R) => r.m.vendorName },
           { header: 'Invoice / Challan', value: (r: R) => r.m.invoiceNo },
-          { header: 'Material', value: (r: R) => storeMaterialLabel(r.it.material) },
+          { header: 'Product', value: (r: R) => storeItemLabel(r.it) },
           { header: 'Approx Qty', value: (r: R) => r.it.approxQty },
           { header: 'Unit', value: (r: R) => r.it.unit },
           { header: 'Packages', value: (r: R) => r.it.packages },

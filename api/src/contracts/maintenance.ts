@@ -21,6 +21,27 @@ export interface MtArea extends Audit {
   active: boolean;
 }
 
+/** Technicians offered in "Assigned to" (master, added to from the form or the masters page). */
+export interface MtAssignee extends Audit {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
+export const MAX_WO_PHOTOS = 10;
+export const MAX_WO_PHOTO_BYTES = 8 * 1024 * 1024;
+
+/** A photo on a work order. Bytes live in the blob store under maintenance/<woId>/<id>. */
+export interface WoPhoto {
+  id: string;
+  name: string;
+  mime: string;
+  sizeBytes: number;
+  uploadedAt: string;
+  uploadedBy: string | null;
+  uploadedByName: string;
+}
+
 export const TIMELINE_TYPES = ['created', 'assigned', 'status', 'edited', 'note'] as const;
 export type TimelineType = (typeof TIMELINE_TYPES)[number];
 export interface TimelineEntry {
@@ -40,6 +61,9 @@ export interface WorkOrder extends Audit {
   category: MtCategory;
   /** Area name. */
   area: string;
+  /** Machine / equipment and station within the area (printed on the job card). */
+  equipment: string | null;
+  station: string | null;
   priority: MtPriority;
   status: MtStatus;
   /** Technician, as typed. */
@@ -51,6 +75,8 @@ export interface WorkOrder extends Audit {
   completedOn: string | null;
   /** Oldest first. */
   timeline: TimelineEntry[];
+  /** Photos of the fault / the repair, oldest first. */
+  photos: WoPhoto[];
 }
 
 export interface WorkOrderFilters {
@@ -76,7 +102,10 @@ export interface Named {
 
 export interface MaintenanceMeta {
   areas: string[];
+  /** Everyone on work orders or in the master (the register filter). */
   assignees: string[];
+  /** Active names in the assignee master (the form's dropdown). */
+  technicians: string[];
   today: string;
 }
 

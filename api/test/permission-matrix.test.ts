@@ -213,6 +213,12 @@ CASES.push(
 // Vendors module. Admins have everything; management has the vendors and vendor_reports pages
 // with print and export but no edit, delete or vendor_approve. Dispatch and marketing have none of it.
 const VN = '/api/vendors';
+const vendorDoc = () => {
+  const f = new FormData();
+  f.append('type', 'Cancelled cheque');
+  f.append('file', new File([new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31])], 'cheque.pdf', { type: 'application/pdf' }));
+  return f;
+};
 const VIEWERS: Role[] = ['superadmin', 'admin', 'management'];
 const xlsxFile = (name: string, text: string) => () => {
   const f = new FormData();
@@ -281,6 +287,10 @@ CASES.push(
   },
   { method: 'GET', route: `${VN}/:id`, path: `${VN}/ven-act`, allowed: VIEWERS, ok: 200 },
   { method: 'GET', route: `${VN}/:id/print`, path: `${VN}/ven-act/print`, allowed: VIEWERS, ok: 200 },
+  { method: 'GET', route: `${VN}/next-code`, path: `${VN}/next-code`, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${VN}/:id/documents`, path: `${VN}/ven-act/documents`, form: vendorDoc, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${VN}/:id/documents/:docId`, path: `${VN}/ven-act/documents/nope`, allowed: ADMINS, ok: 404 },
+  { method: 'GET', route: `${VN}/:id/documents/:docId`, path: `${VN}/ven-act/documents/nope`, allowed: VIEWERS, ok: 404 },
   { method: 'PATCH', route: `${VN}/:id`, path: `${VN}/ven-act`, body: { rating: 4 }, allowed: ADMINS, ok: 200 },
   { method: 'POST', route: `${VN}/:id/submit`, path: `${VN}/ven-inact/submit`, allowed: ADMINS, ok: 200 },
   // vendor_approve: the legacy "Director only" steps.
@@ -301,12 +311,13 @@ const pdf = () => {
   f.append('type', 'Invoice');
   return f;
 };
-const newEntry = { material: 'resin', date: '2026-09-25', vendorName: 'V.K.Industrioes', invoiceNo: 'VK/99', taxType: 'SG+CG', invQty: 1000, splQty: 1000, ratePaise: 4000000 };
+const newEntry = { material: 'resin', date: '2026-09-25', vendorName: 'V.K.Industrioes', invoiceNo: 'VK/99', taxType: 'SG+CG', lines: [{ itemName: 'MDI Resin', invQty: 1000, splQty: 1000, ratePaise: 4000000 }] };
 CASES.push(
   { method: 'GET', route: `${PU}/meta`, path: `${PU}/meta`, allowed: PU_VIEW, ok: 200 },
   { method: 'POST', route: `${PU}/types`, path: `${PU}/types`, body: { kind: 'nilgiri_species', name: 'Casuarina' }, allowed: ADMINS, ok: 201 },
   { method: 'DELETE', route: `${PU}/types/:id`, path: `${PU}/types/ptype-nilgiri-other`, allowed: ADMINS, ok: 204 },
   { method: 'GET', route: `${PU}/vendor-options`, path: `${PU}/vendor-options?q=active`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${PU}/products`, path: `${PU}/products`, allowed: ADMINS, ok: 200 },
   // Entries
   { method: 'GET', route: `${PU}/entries`, path: `${PU}/entries?material=nilgiri&fy=2026-27`, allowed: ADMINS, ok: 200 },
   { method: 'GET', route: `${PU}/entries/stats`, path: `${PU}/entries/stats?month=2026-09`, allowed: ADMINS, ok: 200 },
@@ -332,11 +343,12 @@ CASES.push(
     method: 'POST',
     route: `${PU}/pos`,
     path: `${PU}/pos`,
-    body: { date: '2026-09-30', material: 'kraft', vendorName: 'V.K.Industrioes', qty: 5000, ratePaise: 3200 },
+    body: { date: '2026-09-30', material: 'kraft', vendorName: 'V.K.Industrioes', lines: [{ itemName: 'Kraft Paper', qty: 5000, ratePaise: 3200 }] },
     allowed: ADMINS,
     ok: 201,
   },
   { method: 'PATCH', route: `${PU}/pos/:id`, path: `${PU}/pos/po-free`, body: { remarks: 'Urgent' }, allowed: ADMINS, ok: 200 },
+  { method: 'POST', route: `${PU}/pos/:id/review`, path: `${PU}/pos/po-free/review`, allowed: ADMINS, ok: 200 },
   { method: 'POST', route: `${PU}/pos/:id/approve`, path: `${PU}/pos/po-free/approve`, allowed: ADMINS, ok: 200 },
   { method: 'DELETE', route: `${PU}/pos/:id`, path: `${PU}/pos/po-free`, allowed: ADMINS, ok: 204 },
   // Returns
@@ -381,6 +393,7 @@ CASES.push(
   { method: 'GET', route: `${STO}/meta`, path: `${STO}/meta`, allowed: STO_VIEW, ok: 200 },
   { method: 'PATCH', route: `${STO}/settings`, path: `${STO}/settings`, body: { autoPunchGrn: false }, allowed: ADMINS, ok: 200 },
   { method: 'GET', route: `${STO}/vendor-options`, path: `${STO}/vendor-options?q=a`, allowed: ADMINS, ok: 200 },
+  { method: 'GET', route: `${STO}/products`, path: `${STO}/products`, allowed: ADMINS, ok: 200 },
   // MRN
   { method: 'GET', route: `${STO}/mrns`, path: `${STO}/mrns?status=pending_grn`, allowed: ADMINS, ok: 200 },
   { method: 'GET', route: `${STO}/mrns/export`, path: `${STO}/mrns/export`, allowed: ADMINS, ok: 200 },
@@ -683,12 +696,24 @@ CASES.push(
 // Maintenance module. Admins have everything. Management: dashboard and reports (with export). Others: nothing.
 const MT = '/api/maintenance';
 const MT_ALL: Role[] = ['superadmin', 'admin', 'management'];
+const woPhoto = () => {
+  const f = new FormData();
+  f.append('file', new File([new Uint8Array([0xff, 0xd8, 0xff, 0xe0])], 'leak.jpg', { type: 'image/jpeg' }));
+  return f;
+};
 CASES.push(
   { method: 'GET', route: `${MT}/meta`, path: `${MT}/meta`, allowed: MT_ALL, ok: 200 },
   { method: 'GET', route: `${MT}/areas`, path: `${MT}/areas`, allowed: MT_ALL, ok: 200 },
   { method: 'POST', route: `${MT}/areas`, path: `${MT}/areas`, body: { name: 'CNC Machine Shop' }, allowed: ADMINS, ok: 201 },
   { method: 'PATCH', route: `${MT}/areas/:id`, path: `${MT}/areas/mta-4`, body: { name: 'Boiler House' }, allowed: ADMINS, ok: 200 },
   { method: 'DELETE', route: `${MT}/areas/:id`, path: `${MT}/areas/mta-4`, allowed: ADMINS, ok: 204 },
+  { method: 'GET', route: `${MT}/assignees`, path: `${MT}/assignees`, allowed: MT_ALL, ok: 200 },
+  { method: 'POST', route: `${MT}/assignees`, path: `${MT}/assignees`, body: { name: 'Mahesh Patel' }, allowed: ADMINS, ok: 201 },
+  { method: 'PATCH', route: `${MT}/assignees/:id`, path: `${MT}/assignees/mtp-priya`, body: { active: false }, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${MT}/assignees/:id`, path: `${MT}/assignees/mtp-priya`, allowed: ADMINS, ok: 204 },
+  { method: 'POST', route: `${MT}/work-orders/:id/photos`, path: `${MT}/work-orders/wo-a/photos`, form: woPhoto, allowed: ADMINS, ok: 200 },
+  { method: 'DELETE', route: `${MT}/work-orders/:id/photos/:photoId`, path: `${MT}/work-orders/wo-a/photos/nope`, allowed: ADMINS, ok: 404 },
+  { method: 'GET', route: `${MT}/work-orders/:id/photos/:photoId`, path: `${MT}/work-orders/wo-a/photos/nope`, allowed: MT_ALL, ok: 404 },
   { method: 'GET', route: `${MT}/work-orders`, path: `${MT}/work-orders?overdue=true`, allowed: MT_ALL, ok: 200 },
   { method: 'GET', route: `${MT}/work-orders/:id`, path: `${MT}/work-orders/wo-a`, allowed: MT_ALL, ok: 200 },
   { method: 'GET', route: `${MT}/work-orders/:id/print`, path: `${MT}/work-orders/wo-a/print`, allowed: ADMINS, ok: 200 },

@@ -3,7 +3,7 @@ import { MATERIAL_BY_ID, rateUnitOf, type EntryCalc, type MaterialId, type NoteC
 import { inr, qtyFmt } from '../ui';
 
 /**
- * Amount breakup (legacy slip table): A invoice weight, B Strandply weight, C quantity note,
+ * Amount breakup (legacy slip table): A invoice weight (or quantity), B Strandply weight (or quantity), C quantity note,
  * D rate-difference note, then what is owed.
  */
 export function CalcTable({
@@ -24,6 +24,8 @@ export function CalcTable({
   calc: EntryCalc;
 }) {
   const unit = MATERIAL_BY_ID[material].unit;
+  // Only weighed materials (Kg) talk about weight; Kraft and veneers are counted.
+  const measure = unit === 'Kg' ? 'weight' : 'quantity';
   const igst = taxType === 'IGST';
   const tax = (t: TaxSplit, sign = '') => (
     <>
@@ -64,14 +66,14 @@ export function CalcTable({
         <tbody>
           <tr className="border-t border-divider">
             <td className="px-2 py-1.5 text-faint">A</td>
-            <td className="px-2 py-1.5 font-medium">Invoice weight</td>
+            <td className="px-2 py-1.5 font-medium">Invoice {measure}</td>
             <td className="px-2 py-1.5 text-right tabular-nums">{qtyFmt(invQty)}</td>
             <td className="px-2 py-1.5 text-right tabular-nums">{inr(ratePaise)}</td>
             {tax(calc.invoice)}
           </tr>
           <tr className="border-t border-divider">
             <td className="px-2 py-1.5 text-faint">B</td>
-            <td className="px-2 py-1.5 font-medium">Strandply weight</td>
+            <td className="px-2 py-1.5 font-medium">Strandply {measure}</td>
             <td className="px-2 py-1.5 text-right tabular-nums">{qtyFmt(splQty)}</td>
             <td className="px-2 py-1.5 text-right tabular-nums">{inr(ratePaise)}</td>
             {tax(calc.spl)}

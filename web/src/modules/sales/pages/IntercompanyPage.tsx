@@ -10,7 +10,7 @@ import { useSearchParam, useUrlState } from '../../samples/ui/list-state';
 import { PageHeader } from '../../samples/ui/PageHeader';
 import { RowMenu, runAndClose } from '../../samples/ui/RowMenu';
 import { exportSales, useDeleteRecord, useIntercompany, useSalesMeta, useSaveIntercompany } from '../api';
-import { inr, lakh, qtyFmt, rupeesText, sqmFmt, toPaise } from '../ui';
+import { inr, lakh, rupeesText, sqmFmt, toPaise } from '../ui';
 
 const PAGE_SIZE = 20;
 const FIELDS = ['billingDoc', 'billingDate', 'materialDesc', 'grade', 'thic', 'width', 'length', 'pcs', 'qtySqm', 'rate', 'cgst', 'sgst', 'igst', 'freight', 'vehicleNo'] as const;
@@ -203,7 +203,7 @@ export function IntercompanyPage() {
       />
       <div className="grid gap-3 sm:grid-cols-4">
         <KpiTile label="Transfers" value={String(k?.count ?? 0)} meta="Inter-company billing documents" />
-        <KpiTile label="Quantity" value={`${qtyFmt(Math.round(k?.qtySqm ?? 0))} sq m`} meta="LLP → OSB" />
+        <KpiTile label="Quantity" value={`${sqmFmt(k?.qtySqm ?? 0)} sq m`} meta="LLP → OSB" />
         <KpiTile label="Value" value={lakh(k?.totalPaise ?? 0)} meta={`${lakh(k?.taxPaise ?? 0)} tax`} />
         <KpiTile label="Reconciliation" value={`${k?.matched ?? 0} / ${k?.count ?? 0}`} meta={unmatched ? `${unmatched} without a matching LLP invoice` : 'All matched'} />
       </div>

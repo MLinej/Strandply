@@ -7,6 +7,8 @@ const date = z.string().trim().refine(isIsoDate, 'Use a date like 2026-04-01');
 const required = (label: string, max: number) => z.string().trim().min(1, `${label} is required`).max(max);
 
 export const areaCreateBody = z.object({ name: required('Area', 80), active: z.boolean().default(true) });
+export const assigneeCreateBody = z.object({ name: required('Name', 80), active: z.boolean().default(true) });
+export const assigneeUpdateBody = z.object({ name: required('Name', 80), active: z.boolean() }).partial();
 export const areaUpdateBody = z.object({ name: required('Area', 80), active: z.boolean() }).partial();
 
 // The legacy form required title, assignee and due date.
@@ -14,6 +16,8 @@ const workOrderFields = {
   title: required('Title', 160),
   category: z.enum(MT_CATEGORIES),
   area: required('Plant area', 80),
+  equipment: optionalText(120),
+  station: optionalText(80),
   priority: z.enum(MT_PRIORITIES),
   status: z.enum(MT_STATUSES),
   assignee: required('Assigned to', 80),

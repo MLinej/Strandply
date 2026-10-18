@@ -139,8 +139,11 @@ const hotpress: KindSpec<HotPress, HotPressView> = {
   },
   toInput: strip,
   async views(repos, rows) {
-    const [who, cuts] = await Promise.all([withNames(repos, rows), repos.prodCutting.listAll()]);
-    return rows.map((r) => ({ ...r, ...who(r), calc: calcHotPress(r.charges), cuttingNo: cuts.find((c) => c.hotpressId === r.id)?.docNo ?? null }));
+    const [who, cuts, sums] = await Promise.all([withNames(repos, rows), repos.prodCutting.listAll(), repos.prodSummary.listAll()]);
+    return rows.map((r) => {
+      const sum = sums.find((x) => x.hotpressId === r.id);
+      return { ...r, ...who(r), calc: calcHotPress(r.charges), cuttingNo: cuts.find((c) => c.hotpressId === r.id)?.docNo ?? null, summaryId: sum?.id ?? null, summaryNo: sum?.docNo ?? null };
+    });
   },
   async usedBy(tx, d) {
     const [cuts, sums, plans] = await Promise.all([tx.prodCutting.listAll(), tx.prodSummary.listAll(), tx.prodPlans.listAll()]);
@@ -221,6 +224,10 @@ const summary: KindSpec<Summary, SummaryView> = {
   repo: (r) => r.prodSummary,
   async build(tx, i, before) {
     await ref(tx.prodHotpress, i.hotpressId, 'hotpressId', 'hot press report');
+    if (i.hotpressId) {
+      const other = (await tx.prodSummary.listAll()).find((x) => x.hotpressId === i.hotpressId && x.id !== before?.id);
+      if (other) throw conflict('hotpress_used', `That hot press report is already used in production summary ${other.docNo}`);
+    }
     await ref(tx.prodCutting, i.cuttingId, 'cuttingId', 'board cutting report');
     await ref(tx.prodPlans, i.planId, 'planId', 'production plan');
     if (i.mattBatchId && !(await tx.mattBatches.getById(i.mattBatchId))) throw badRef('mattBatchId', 'Unknown matt batch');
@@ -233,7 +240,6 @@ const summary: KindSpec<Summary, SummaryView> = {
       if (wip.findIndex((x) => x.wipId === w.wipId) !== n) throw badRef(`wip.${n}.wipId`, 'The same WIP batch is listed twice');
     });
     // WIP may go negative (chipped weight is theoretical, legacy allows it), so no stock check here.
-    void before;
     return {
       date: i.date,
       remarks: i.remarks ?? null,

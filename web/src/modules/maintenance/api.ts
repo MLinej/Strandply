@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ActivityEntryView } from '@contracts/admin';
 import type { ListQuery, ListResult } from '@contracts/common';
-import type { MaintenanceDashboard, MaintenanceMeta, MaintenanceReports, MtArea, MtStatus, WorkOrder } from '@contracts/maintenance';
+import type { MaintenanceDashboard, MaintenanceMeta, MaintenanceReports, MtArea, MtAssignee, MtStatus, WorkOrder } from '@contracts/maintenance';
 import type { CompanyBlock } from '@contracts/sampletrack';
 import { api, downloadFile } from '@/api/client';
 import { stKeys } from '../samples/api/keys';
@@ -44,6 +44,38 @@ export function useDeleteArea() {
   const invalidate = useInvalidateAll();
   return useMutation({ mutationFn: (id: string) => api<void>(`${MT}/areas/${id}`, { method: 'DELETE' }), onSuccess: invalidate });
 }
+
+export function useAssignees() {
+  return useQuery({ queryKey: mtKeys.other('assignees'), queryFn: ({ signal }) => api<MtAssignee[]>(`${MT}/assignees`, { signal }) });
+}
+export function useSaveAssignee() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ id, input }: { id?: string | null; input: Input }) => (id ? api<MtAssignee>(`${MT}/assignees/${id}`, { method: 'PATCH', body: input }) : api<MtAssignee>(`${MT}/assignees`, { method: 'POST', body: input })),
+    onSuccess: invalidate,
+  });
+}
+export function useDeleteAssignee() {
+  const invalidate = useInvalidateAll();
+  return useMutation({ mutationFn: (id: string) => api<void>(`${MT}/assignees/${id}`, { method: 'DELETE' }), onSuccess: invalidate });
+}
+
+export function useAddPhotos() {
+  const invalidate = useInvalidateAll();
+  return useMutation({
+    mutationFn: ({ id, files }: { id: string; files: File[] }) => {
+      const form = new FormData();
+      for (const f of files) form.append('file', f);
+      return api<WorkOrder>(`${MT}/work-orders/${id}/photos`, { method: 'POST', form });
+    },
+    onSuccess: invalidate,
+  });
+}
+export function useRemovePhoto() {
+  const invalidate = useInvalidateAll();
+  return useMutation({ mutationFn: ({ id, photoId }: { id: string; photoId: string }) => api<WorkOrder>(`${MT}/work-orders/${id}/photos/${photoId}`, { method: 'DELETE' }), onSuccess: invalidate });
+}
+export const photoUrl = (woId: string, photoId: string) => `/api${MT}/work-orders/${woId}/photos/${photoId}`;
 
 export function useWorkOrders(query: ListQuery<object>) {
   return useQuery({ queryKey: mtKeys.list(query), queryFn: ({ signal }) => api<ListResult<WorkOrder>>(`${MT}/work-orders`, { query, signal }), placeholderData: keepPreviousData });

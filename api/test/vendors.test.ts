@@ -82,6 +82,48 @@ async function t_force(call: (m: string, p: string, b?: unknown) => Promise<Resp
   return call('POST', '?force=true', { name: 'Active Strands', categoryIds: ['vcat-resin'] });
 }
 
+describe('vendors: next code, branch and documents', () => {
+  const PDF = [0x25, 0x50, 0x44, 0x46, 0x2d, 0x31];
+  const fileForm = (type: string | null, files: [number[], string][]) => {
+    const f = new FormData();
+    if (type) f.append('type', type);
+    for (const [bytes, name] of files) f.append('file', new File([new Uint8Array(bytes)], name));
+    return f;
+  };
+
+  it('previews the next code without using it up', async () => {
+    const { call } = await admin();
+    expect(await (await call('GET', '/next-code')).json()).toEqual({ code: 'SPL-VEN-26-001' });
+    expect(await (await call('GET', '/next-code')).json()).toEqual({ code: 'SPL-VEN-26-001' });
+    const v = await (await call('POST', '', { name: 'Coded Co', categoryIds: ['vcat-resin'], branch: 'Valsad Main', bank: 'State Bank of India' })).json();
+    expect(v).toMatchObject({ code: 'SPL-VEN-26-001', branch: 'Valsad Main', documents: [] });
+    expect(await (await call('GET', '/next-code')).json()).toEqual({ code: 'SPL-VEN-26-002' });
+  });
+
+  it('documents: typed, PDF or image only, served back and removable', async () => {
+    const { t, cookie } = await admin();
+    const post = (f: FormData) => t.request('POST', `${VN}/ven-act/documents`, { cookie, form: f });
+    expect((await post(fileForm(null, [[PDF, 'gst.pdf']]))).status).toBe(422);
+    expect((await post(fileForm('GSTIN certificate', [[[1, 2, 3], 'gst.pdf']]))).status).toBe(422);
+    const v = await (await post(fileForm('Cancelled cheque', [[PDF, 'cheque.pdf'], [[0xff, 0xd8, 0xff], 'cheque.jpg']]))).json();
+    expect(v.documents.map((d: { type: string; name: string; mime: string }) => [d.type, d.name, d.mime])).toEqual([
+      ['Cancelled cheque', 'cheque.pdf', 'application/pdf'],
+      ['Cancelled cheque', 'cheque.jpg', 'image/jpeg'],
+    ]);
+    const file = await t.request('GET', `${VN}/ven-act/documents/${v.documents[0].id}`, { cookie });
+    expect(file.headers.get('content-type')).toBe('application/pdf');
+    const after = await (await t.request('DELETE', `${VN}/ven-act/documents/${v.documents[0].id}`, { cookie })).json();
+    expect(after.documents).toHaveLength(1);
+    expect((await t.request('GET', `${VN}/ven-act/documents/${v.documents[0].id}`, { cookie })).status).toBe(404);
+  });
+
+  it('find by product carries the vendor phone', async () => {
+    const { call } = await admin();
+    const rows = await (await call('GET', '/by-product?q=mdi')).json();
+    expect(Object.keys(rows[0].vendor)).toContain('phone');
+  });
+});
+
 describe('vendors: workflow (legacy approveV / activateV / openBL / reinstateV)', () => {
   it('pending → approved → active, recording who and when', async () => {
     const { call } = await admin();
@@ -299,7 +341,7 @@ describe('dev snapshot upgrade (0005)', () => {
     expect(up.rolePermissions!.find((r) => r.role === 'dispatch')!.permissions.pages).not.toContain('vendors');
     expect(up.cities!.find((c) => c.id === 'city-morbi')!.pincodes).toEqual(['363641', '363650']);
     expect(up.cities!.some((c) => c.id === 'city-valsad')).toBe(true);
-    expect(up.upgrades!.map((u) => u.name)).toEqual(['0005_vendors', '0006_purchase', '0007_stores', '0008_stock', '0009_production', '0010_sales', '0011_crm', '0012_transport', '0013_maintenance', '0014_electricity', '0015_complaints', '0016_dwpas', '0017_hub']);
+    expect(up.upgrades!.map((u) => u.name)).toEqual(['0005_vendors', '0006_purchase', '0007_stores', '0008_stock', '0009_production', '0010_sales', '0011_crm', '0012_transport', '0013_maintenance', '0014_electricity', '0015_complaints', '0016_dwpas', '0017_hub', '0018_change_requests']);
 
     // Running again changes nothing.
     adminAfter.pages = ['dashboard'];

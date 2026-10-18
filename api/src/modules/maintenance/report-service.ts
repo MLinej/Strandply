@@ -35,8 +35,14 @@ export class MaintenanceReportService {
   private today = () => businessToday(this.clock);
 
   async meta(): Promise<MaintenanceMeta> {
-    const [areas, wos] = await Promise.all([this.workOrders.areas(), this.data.repos.mtWorkOrders.listAll()]);
-    return { areas: areas.filter((a) => a.active).map((a) => a.name), assignees: [...new Set(wos.map((w) => w.assignee))].sort((a, b) => a.localeCompare(b)), today: this.today() };
+    const [areas, wos, people] = await Promise.all([this.workOrders.areas(), this.data.repos.mtWorkOrders.listAll(), this.workOrders.assignees()]);
+    const technicians = people.filter((p) => p.active).map((p) => p.name);
+    return {
+      areas: areas.filter((a) => a.active).map((a) => a.name),
+      assignees: [...new Set([...wos.map((w) => w.assignee), ...technicians])].sort((a, b) => a.localeCompare(b)),
+      technicians,
+      today: this.today(),
+    };
   }
 
   async dashboard(): Promise<MaintenanceDashboard> {

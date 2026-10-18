@@ -1,18 +1,13 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import type { CSSProperties, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { DOC_KINDS, mattStatus, PLAN_SECTIONS, type DocKind, type MattBatchView, type WfStep } from '@contracts/production';
 import type { CompanyBlock } from '@contracts/sampletrack';
-import { formatDate } from '@/lib/format';
+import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
 import { PAGES, printHtml } from '@/lib/print';
-import { fetchDocPrint, fetchMattPrint, type CompareRow, type ViewByKind } from './api';
-import { inr, kg, mins, perKg, qtyFmt, stamp, wfLabel } from './ui';
+import { amountInWords, Box, DocHeader, DocTable, Grid, KIT_CSS, KV, MUTED, Pill, RED, Sheet, Signatures, Tile, WriteBlank, type Signer } from '@/lib/print-kit';
+import { fetchDocPrint, fetchMattPrint, type CompareRow, type PrintPayload, type ViewByKind } from './api';
+import { inr, kg, mins, perKg, qtyFmt, wfLabel } from './ui';
 
-// Inline styles only: these render in a bare iframe without the app's CSS.
-const INK = '#172033';
-const MUTED = '#667085';
-const FAINT = '#98A2B3';
-const RED = '#D71920';
-const LINE = '#E6E8EC';
 
 type Cell = string | number | null | undefined;
 interface Table {
@@ -177,99 +172,6 @@ function sections<K extends DocKind>(kind: K, doc: ViewByKind[K]): Sections {
   return { fields: [], tables: [] };
 }
 
-const th: CSSProperties = { padding: '1.3mm 1.8mm', background: '#F8F9FA', fontWeight: 700, fontSize: 8, textTransform: 'uppercase', color: MUTED, borderBottom: `1px solid ${LINE}`, textAlign: 'left' };
-const td: CSSProperties = { padding: '1.3mm 1.8mm', borderBottom: `1px solid ${LINE}`, textAlign: 'left', verticalAlign: 'top' };
-
-function TableBlock({ t }: { t: Table }) {
-  const al = (i: number): CSSProperties => (t.numeric?.includes(i) ? { textAlign: 'right', whiteSpace: 'nowrap' } : {});
-  return (
-    <div style={{ marginBottom: '4mm', breakInside: 'avoid-page' }}>
-      {t.title && <div style={{ fontWeight: 700, fontSize: 10, margin: '0 0 1.2mm' }}>{t.title}</div>}
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            {t.head.map((h, i) => (
-              <th key={h} style={{ ...th, ...al(i) }}>
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {t.rows.map((r, ri) => (
-            <tr key={ri}>
-              {r.map((c, i) => (
-                <td key={i} style={{ ...td, ...al(i) }}>
-                  {v(c)}
-                </td>
-              ))}
-            </tr>
-          ))}
-          {t.foot && (
-            <tr>
-              {t.foot.map((c, i) => (
-                <td key={i} style={{ ...td, ...al(i), fontWeight: 700, background: '#F8F9FA' }}>
-                  {c ?? ''}
-                </td>
-              ))}
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function Page({ company, title, no, sub, children, trail, generatedAt }: { company: CompanyBlock; title: string; no: string; sub: string; children: ReactNode; trail?: WfStep[]; generatedAt: string }) {
-  const last = (a: WfStep['action']) => [...(trail ?? [])].reverse().find((s) => s.action === a);
-  const sig = (role: string, s?: WfStep) => (
-    <div style={{ flex: 1, fontSize: 8.5 }}>
-      <div style={{ minHeight: '8mm', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        {s && <div style={{ fontWeight: 700 }}>{s.byName}</div>}
-        {s && <div style={{ color: FAINT, fontSize: 7.5 }}>{stamp(s.at)}</div>}
-      </div>
-      <div style={{ borderTop: `1px solid ${INK}`, paddingTop: '1mm', color: MUTED }}>{role}</div>
-    </div>
-  );
-  return (
-    <div style={{ fontFamily: 'Inter, Arial, sans-serif', fontSize: 9.5, color: INK }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: `2.5px solid ${RED}`, paddingBottom: '2mm', marginBottom: '3mm' }}>
-        <div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: RED }}>{company.name}</div>
-          <div style={{ fontSize: 9, color: MUTED }}>{[company.city, company.gst && `GSTIN ${company.gst}`, company.llpin && `LLPIN ${company.llpin}`].filter(Boolean).join(' · ')}</div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10.5, fontWeight: 700, color: RED, textTransform: 'uppercase', letterSpacing: 0.6 }}>{title}</div>
-          <div style={{ fontSize: 13, fontWeight: 800 }}>{no}</div>
-          <div style={{ fontSize: 8.5, color: FAINT }}>{sub}</div>
-        </div>
-      </div>
-      {children}
-      {trail && (
-        <div style={{ display: 'flex', gap: '8mm', marginTop: '8mm' }}>
-          {sig('Prepared by', trail.find((s) => s.action === 'send'))}
-          {sig('Reviewed by', last('review'))}
-          {sig('Approved by', last('approve'))}
-        </div>
-      )}
-      <div style={{ marginTop: '4mm', textAlign: 'center', color: FAINT, fontSize: 7.5 }}>Generated {stamp(generatedAt)}</div>
-    </div>
-  );
-}
-
-function Fields({ fields }: { fields: [string, Cell][] }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2mm 5mm', marginBottom: '4mm' }}>
-      {fields.map(([k, x]) => (
-        <div key={k}>
-          <div style={{ fontSize: 7.5, color: FAINT, textTransform: 'uppercase', letterSpacing: 0.4 }}>{k}</div>
-          <div style={{ fontWeight: 600 }}>{v(x)}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 const compareTable = (rows: CompareRow[]): Table => ({
   title: 'Plan vs actual',
   head: ['Metric', 'Plan', 'Actual', 'Variance', 'Status'],
@@ -277,61 +179,205 @@ const compareTable = (rows: CompareRow[]): Table => ({
   rows: rows.map((r) => [r.metric, r.plan === null ? '—' : qtyFmt(r.plan), r.actual === null ? '—' : qtyFmt(r.actual), r.variance === null ? '—' : `${r.variance > 0 ? '+' : ''}${qtyFmt(r.variance)}`, r.status]),
 });
 
-const A4 = { page: PAGES.requestSlip, marginMm: 12, css: 'html, body { width: auto; min-height: 0; }' };
+const DOC_TITLE: Partial<Record<DocKind, string>> = { chipping: 'Chipping report' };
+const A4_PAGE_H = 297 - 24 - 2;
+const footerLine = (company: CompanyBlock, what: string, generatedAt: string) => `${company.name} — Production · ${what} · Generated ${formatDateTime(generatedAt)} · Page 1 of 1`;
+const WF_TONE = { draft: 'neutral', review: 'amber', reviewed: 'purple', approved: 'green' } as const;
+
+/** Prepared / reviewed / approved from the workflow trail, after the machine operator. */
+function wfSigners(trail: WfStep[], operator: string | null): Signer[] {
+  const last = (a: WfStep['action']) => [...trail].reverse().find((x) => x.action === a);
+  const sent = trail.find((x) => x.action === 'send');
+  return [
+    { role: 'Machine operator', name: operator },
+    { role: 'Prepared by', name: sent?.byName, at: sent?.at },
+    { role: 'Reviewed by', name: last('review')?.byName, at: last('review')?.at },
+    { role: 'Approved by', name: last('approve')?.byName, at: last('approve')?.at },
+  ];
+}
+
+/** Title block on the right: document no., date and status pill. */
+const headRight = (no: string, date: string, status: ReactNode) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2.5mm', marginTop: 4 }}>
+    <strong style={{ fontSize: 12 }}>{no}</strong>
+    <span style={{ color: MUTED }}>{date}</span>
+    {status}
+  </div>
+);
+
+const toKitTable = (t: Table) => (
+  <DocTable
+    label={t.title}
+    cols={t.head.map((h, i) => ({ header: h, align: t.numeric?.includes(i) ? 'right' : 'left' }))}
+    rows={t.rows.map((r) => r.map((c) => v(c)))}
+    foot={t.foot?.map((c) => (c === null || c === undefined ? '' : String(c)))}
+  />
+);
+
+/** Chipping report: details, figure tiles, lots with supplier, product and share, amount in words. */
+export function ChippingDocument({ data }: { data: PrintPayload<ViewByKind['chipping']> & { lots?: Record<string, { vendorName: string; product: string | null }> } }) {
+  const c = data.doc;
+  const lots = data.lots ?? {};
+  return (
+    <Sheet minHeightMm={A4_PAGE_H} bottom={<Signatures signers={wfSigners(c.wfTrail, c.operator)} />} footer={footerLine(data.company, 'Chipping', data.generatedAt)}>
+      <DocHeader company={data.company} title="Chipping report" right={headRight(c.docNo, d(c.date), <Pill tone={WF_TONE[c.wfState]}>{wfLabel(c.wfState)}</Pill>)} />
+      <Grid cols="1fr 1fr">
+        <Box title="Report details">
+          <KV rows={[['Report no.', c.docNo, true], ['Date', d(c.date)], ['Shift', c.shift, true], ['Status', wfLabel(c.wfState)]]} />
+        </Box>
+        <Box title="Machine & output">
+          <KV rows={[['Machine', c.machine ?? <WriteBlank />], ['Operator', c.operator ?? <WriteBlank />], ['Output WIP batch', c.wipNo, true], ['Lots consumed', String(c.lots.length)]]} />
+        </Box>
+      </Grid>
+      <Grid cols="1fr 1fr 1fr">
+        <Tile label="Total chipped" value={kg(c.totalKg)} />
+        <Tile label="Material value" value={`Rs. ${formatAmount(c.totalPaise / 100)}`} />
+        <Tile label="Average rate" value={`Rs. ${formatAmount(c.avgRatePaise / 100_000)} / kg`} />
+      </Grid>
+      <DocTable
+        label="Lots consumed"
+        cols={[{ header: '#', width: '7mm' }, { header: 'Lot', width: '16mm' }, { header: 'Supplier' }, { header: 'Product' }, { header: 'Qty (kg)', align: 'right', width: '20mm' }, { header: 'Share', width: '26mm' }, { header: 'Rate (Rs./kg)', align: 'right', width: '24mm' }, { header: 'Amount (Rs.)', align: 'right', width: '28mm' }]}
+        rows={c.lots.map((l, i) => {
+          const share = c.totalKg ? (l.qty / c.totalKg) * 100 : 0;
+          return [
+            i + 1,
+            <strong key="l">{l.lotNo}</strong>,
+            lots[l.purchaseEntryId]?.vendorName ?? '—',
+            lots[l.purchaseEntryId]?.product ?? '—',
+            qtyFmt(l.qty),
+            <span key="s">
+              {share.toFixed(1)}%
+              <span style={{ display: 'block', height: '1.2mm', background: '#E6E8EC', borderRadius: 2, marginTop: '0.8mm', width: '20mm' }}>
+                <span style={{ display: 'block', height: '100%', width: `${share}%`, background: '#667085', borderRadius: 2 }} />
+              </span>
+            </span>,
+            formatAmount(l.ratePaise / 100_000),
+            formatAmount(l.amountPaise / 100),
+          ];
+        })}
+        foot={['', 'Total', '', '', qtyFmt(c.totalKg), '100%', `${formatAmount(c.avgRatePaise / 100_000)} avg.`, formatAmount(c.totalPaise / 100)]}
+      />
+      <Box style={{ marginBottom: '4mm' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '6mm' }}>
+          <div>
+            <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.8, color: MUTED }}>AMOUNT IN WORDS</div>
+            <div style={{ fontWeight: 700 }}>{amountInWords(c.totalPaise)}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.8, color: MUTED }}>AVERAGE RATE</div>
+            <div>
+              Rs. {formatAmount(c.totalPaise / 100)} ÷ {qtyFmt(c.totalKg)} kg = <strong>Rs. {formatAmount(c.avgRatePaise / 100_000)} / kg</strong>
+            </div>
+          </div>
+        </div>
+      </Box>
+      <Box title="Remarks">
+        <div style={{ minHeight: '6mm' }}>{c.remarks}</div>
+      </Box>
+    </Sheet>
+  );
+}
+
+/** Any other production document: details card, its tables, plan vs actual, the sign-off row. */
+function GenericDocument<K extends DocKind>({ kind, data }: { kind: K; data: PrintPayload<ViewByKind[K]> }) {
+  const doc = data.doc as ViewByKind[K] & { docNo: string; date: string; wfState: ViewByKind['plan']['wfState']; wfTrail: WfStep[]; remarks: string | null; operator?: string | null };
+  const s = sections(kind, doc);
+  const tables = [...s.tables, ...(data.compare.length ? [compareTable(data.compare)] : [])];
+  const half = Math.ceil(s.fields.length / 2);
+  const kv = (fs: [string, Cell][]) => fs.map(([k, x]) => [k, v(x)] as [string, ReactNode]);
+  return (
+    <Sheet minHeightMm={A4_PAGE_H} bottom={<Signatures signers={wfSigners(doc.wfTrail, doc.operator ?? null)} />} footer={footerLine(data.company, DOC_KINDS[kind].label, data.generatedAt)}>
+      <DocHeader company={data.company} title={DOC_TITLE[kind] ?? DOC_KINDS[kind].label} right={headRight(doc.docNo, d(doc.date), <Pill tone={WF_TONE[doc.wfState]}>{wfLabel(doc.wfState)}</Pill>)} />
+      <Grid cols="1fr 1fr">
+        <Box title="Report details">
+          <KV rows={[['Report no.', doc.docNo, true], ['Date', d(doc.date)], ...kv(s.fields.slice(0, Math.max(0, half - 2)))]} />
+        </Box>
+        <Box title="Details">
+          <KV rows={kv(s.fields.slice(Math.max(0, half - 2)))} />
+        </Box>
+      </Grid>
+      {tables.map((t, i) => (
+        <div key={i}>{toKitTable(t)}</div>
+      ))}
+      <Box title="Remarks">
+        <div style={{ minHeight: '6mm' }}>{doc.remarks}</div>
+      </Box>
+    </Sheet>
+  );
+}
+
+const A4 = { page: PAGES.requestSlip, marginMm: 12, css: KIT_CSS };
 
 export async function printDoc<K extends DocKind>(kind: K, id: string) {
   const data = await fetchDocPrint(kind, id);
-  const doc = data.doc as ViewByKind[K] & { docNo: string; date: string; wfState: ViewByKind['plan']['wfState']; wfTrail: WfStep[]; remarks: string | null };
-  const s = sections(kind, doc);
-  const tables = [...s.tables, ...(data.compare.length ? [compareTable(data.compare)] : [])];
-  await printHtml({
-    ...A4,
-    title: doc.docNo,
-    bodyHtml: renderToStaticMarkup(
-      <Page company={data.company} title={DOC_KINDS[kind].label} no={doc.docNo} sub={`${d(doc.date)} · ${wfLabel(doc.wfState)}`} trail={doc.wfTrail} generatedAt={data.generatedAt}>
-        <Fields fields={[...s.fields, ...(doc.remarks ? ([['Remarks', doc.remarks]] as [string, Cell][]) : [])]} />
-        {tables.map((t, i) => (
-          <TableBlock key={i} t={t} />
-        ))}
-      </Page>,
-    ),
-  });
+  const no = (data.doc as { docNo: string }).docNo;
+  const body = kind === 'chipping' ? <ChippingDocument data={data as unknown as PrintPayload<ViewByKind['chipping']>} /> : <GenericDocument kind={kind} data={data} />;
+  await printHtml({ ...A4, title: no, bodyHtml: renderToStaticMarkup(body) });
 }
 
-/** Matt weight shift report (legacy mattDlPDF / weight-system report). */
-export async function printMatt(id: string) {
-  const { company, doc: b, generatedAt } = await fetchMattPrint(id);
+const STATUS_TONE = { pass: 'green', warn: 'amber', fail: 'red' } as const;
+const STATUS_LABEL = { pass: 'Pass', warn: 'Warn', fail: 'Reject' } as const;
+const kg1 = (n: number) => `${qtyFmt(Math.round(n * 1000) / 1000)} kg`;
+const signed = (n: number, digits = 3) => `${n > 0 ? '+' : ''}${n.toFixed(digits)}`;
+const shortStamp = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }).format(new Date(iso));
+const shortTime = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }).format(new Date(iso));
+
+/** Matt weight report: batch and setpoint, figure tiles, each matt with its deviation and status. */
+export function MattDocument({ data }: { data: PrintPayload<MattBatchView> }) {
+  const b = data.doc;
   const st = b.stats;
-  await printHtml({
-    ...A4,
-    title: b.docNo,
-    bodyHtml: renderToStaticMarkup(
-      <Page company={company} title="Matt weight report" no={b.docNo} sub={`${d(b.date)} · ${b.shift} · ${b.status === 'open' ? 'Open' : 'Closed'}`} generatedAt={generatedAt}>
-        <Fields
-          fields={[
-            ['Product', `${b.product} · ${b.size}${b.thickness ? ` · ${b.thickness} mm` : ''}`],
-            ['Setpoint', `${b.setpoint} kg ± ${b.band}`],
-            ['Operator', b.operator],
-            ['Matts', `${st.count}${b.targetQty ? ` of ${b.targetQty}` : ''}`],
-            ['Average', kg(st.avg)],
-            ['Min / max', `${st.min} / ${st.max} kg`],
-            ['Std deviation', kg(st.stdDev)],
-            ['Pass / warn / reject', `${st.pass} / ${st.warn} / ${st.fail}`],
-            ['Pass rate', `${st.passRate}%`],
-          ]}
-        />
-        <TableBlock
-          t={{
-            head: ['#', 'Weight (kg)', 'Deviation', 'Status', 'Time'],
-            numeric: [1, 2],
-            rows: b.weights.map((w) => {
-              const dev = Math.round((w.weight - b.setpoint) * 1000) / 1000;
-              return [w.n, w.weight.toFixed(3), `${dev > 0 ? '+' : ''}${dev.toFixed(3)}`, { pass: 'Pass', warn: 'Warn', fail: 'Reject' }[mattStatus(w.weight, b.setpoint, b.band)], stamp(w.at)];
-            }),
-          }}
-        />
-      </Page>,
-    ),
-  });
+  const n = b.weights.length;
+  const over = st.total - b.setpoint * n;
+  const avgDev = n ? st.avg - b.setpoint : 0;
+  const times = b.weights.map((w) => w.at).sort();
+  return (
+    <Sheet
+      minHeightMm={A4_PAGE_H}
+      bottom={<Signatures signers={[{ role: 'Machine operator', name: b.operator }, { role: 'Prepared by', name: b.createdByName, at: b.createdAt }, { role: 'Reviewed by' }, { role: 'Approved by' }]} />}
+      footer={footerLine(data.company, 'Matt weight', data.generatedAt)}
+    >
+      <DocHeader company={data.company} title="Matt weight report" right={headRight(b.docNo, d(b.date), <Pill tone={b.status === 'open' ? 'amber' : 'neutral'}>{b.status === 'open' ? 'Open' : 'Closed'}</Pill>)} />
+      <Grid cols="1fr 1fr">
+        <Box title="Batch details">
+          <KV rows={[['Batch no.', b.docNo, true], ['Date', d(b.date)], ['Shift', b.shift, true], ['Status', b.status === 'open' ? 'Open' : 'Closed']]} />
+        </Box>
+        <Box title="Product & setpoint">
+          <KV rows={[['Product', `${b.product} · ${b.size}${b.thickness ? ` · ${b.thickness} mm` : ''}`, true], ['Setpoint', `${b.setpoint} kg ± ${b.band} kg`, true], ['Operator', b.operator ?? <WriteBlank />], ['Matts weighed', `${st.count}${b.targetQty ? ` of ${b.targetQty}` : ''}`]]} />
+        </Box>
+      </Grid>
+      <Grid cols="repeat(5, 1fr)" gap="3mm">
+        <Tile label="Total weight" value={kg1(st.total)} sub={`${over >= 0 ? '+' : '−'}${qtyFmt(Math.abs(Math.round(over * 1000) / 1000))} kg ${over >= 0 ? 'over' : 'under'} setpoint`} />
+        <Tile label="Average weight" value={kg1(st.avg)} sub={`${avgDev >= 0 ? '+' : '−'}${qtyFmt(Math.abs(Math.round(avgDev * 1000) / 1000))} kg per matt`} />
+        <Tile label="Min / max" value={`${qtyFmt(st.min)} / ${qtyFmt(st.max)} kg`} sub={`Range ${qtyFmt(Math.round((st.max - st.min) * 1000) / 1000)} kg`} />
+        <Tile label="Std deviation" value={kg1(st.stdDev)} sub={`Across ${st.count} matts`} />
+        <Tile label="Pass rate" value={`${st.passRate}%`} sub={`${st.pass} pass · ${st.warn} warn · ${st.fail} rej.`} alert={st.passRate < 80} />
+      </Grid>
+      <DocTable
+        label="Matt readings"
+        cols={[{ header: '#', width: '10mm' }, { header: 'Weight (kg)', align: 'right' }, { header: 'Setpoint (kg)', align: 'right' }, { header: 'Deviation (kg)', align: 'right' }, { header: 'Status', width: '22mm' }, { header: 'Date & time' }]}
+        rows={b.weights.map((w) => {
+          const dev = Math.round((w.weight - b.setpoint) * 1000) / 1000;
+          const status = mattStatus(w.weight, b.setpoint, b.band);
+          return [
+            w.n,
+            <strong key="w">{w.weight.toFixed(3)}</strong>,
+            <span key="s" style={{ color: MUTED }}>{b.setpoint.toFixed(3)}</span>,
+            <span key="d" style={{ color: status === 'fail' ? RED : undefined }}>{signed(dev)}</span>,
+            <Pill key="p" tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Pill>,
+            shortStamp(w.at),
+          ];
+        })}
+        foot={['Avg.', st.avg.toFixed(3), b.setpoint.toFixed(3), signed(Math.round(avgDev * 1000) / 1000), `${st.pass} / ${st.warn} / ${st.fail}`, times.length ? `${shortTime(times[0]!)} – ${shortTime(times.at(-1)!)}` : '']}
+      />
+      <Box title="Remarks">
+        <div style={{ minHeight: '6mm' }}>{b.remarks}</div>
+      </Box>
+    </Sheet>
+  );
+}
+
+export async function printMatt(id: string) {
+  const data = await fetchMattPrint(id);
+  await printHtml({ ...A4, title: data.doc.docNo, bodyHtml: renderToStaticMarkup(<MattDocument data={data} />) });
 }
 export type { MattBatchView };

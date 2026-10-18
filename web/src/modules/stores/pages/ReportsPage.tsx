@@ -1,12 +1,12 @@
 import { Download, FileClock, Search } from 'lucide-react';
-import { STORE_MATERIALS, type GrnView, type PendingReportRow, type StoreMaterial } from '@contracts/stores';
+import { STORE_MATERIALS, storeItemLabel, type GrnView, type PendingReportRow, type StoreMaterial } from '@contracts/stores';
 import { useSession } from '@/app/session';
 import { Button, DataTable, EmptyState, Input, KpiTile, Select, Tabs, useToast, type Column } from '@/components/ui';
 import { errorMessage } from '../../samples/ui/errors';
 import { useDebounced, useUrlState } from '../../samples/ui/list-state';
 import { PageHeader } from '../../samples/ui/PageHeader';
 import { exportAccounting, exportPending, useAccounting, usePendingReport } from '../api';
-import { AccountedPill, dateTime, DaysPill, itemsSummary, materialLabel, qtyFmt, stamp } from '../ui';
+import { AccountedPill, dateTime, DaysPill, itemsSummary, qtyFmt, stamp } from '../ui';
 
 type Tab = 'pending' | 'accounting';
 
@@ -23,7 +23,7 @@ function PendingTab() {
     { id: 'gate', header: 'Gate entry', width: '160px', cell: (r) => dateTime(r.date, r.time) },
     { id: 'vendor', header: 'Vendor', cell: (r) => <span className="block truncate">{r.vendorName}</span> },
     { id: 'vehicle', header: 'Vehicle', width: '120px', className: 'tabular-nums', cell: (r) => r.vehicleNo },
-    { id: 'material', header: 'Material', width: '130px', cell: (r) => materialLabel(r.material) },
+    { id: 'material', header: 'Product', width: '160px', cell: (r) => storeItemLabel(r) },
     { id: 'qty', header: 'Approx qty', width: '120px', align: 'right', className: 'tabular-nums', cell: (r) => `${qtyFmt(r.approxQty)} ${r.unit}` },
     { id: 'guard', header: 'Security', width: '130px', cell: (r) => r.securityName },
     { id: 'days', header: 'Waiting', width: '100px', cell: (r) => <DaysPill days={r.daysPending} /> },

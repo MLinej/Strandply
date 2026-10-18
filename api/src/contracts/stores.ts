@@ -16,6 +16,32 @@ export type StoreMaterial = (typeof STORE_MATERIALS)[number]['id'];
 export const STORE_MATERIAL_IDS = STORE_MATERIALS.map((m) => m.id) as [StoreMaterial, ...StoreMaterial[]];
 export const storeMaterialLabel = (id: string) => STORE_MATERIALS.find((m) => m.id === id)?.label ?? id;
 
+/** A line's name: the product picked from the product master, or (older lines) its material. */
+export const storeItemLabel = (it: { material: string; itemName?: string | null }) => it.itemName || storeMaterialLabel(it.material);
+
+/**
+ * The material group a product belongs to, from its name and category (so gate and receiving reports by
+ * material still work once lines name products). Anything unrecognised is "other".
+ */
+export function materialForProduct(name: string, categoryName = ''): StoreMaterial {
+  const t = `${name} ${categoryName}`.toLowerCase();
+  if (/nilgiri|eucalyptus|log|strand/.test(t)) return 'nilgiri';
+  if (/resin|mdi|adhesive|glue/.test(t)) return 'resin';
+  if (/kraft/.test(t)) return 'kraft';
+  if (/fire\s?wood|fuel wood/.test(t)) return 'firewood';
+  if (/face/.test(t) && /veneer/.test(t)) return 'face';
+  if (/core/.test(t) && /veneer/.test(t)) return 'core';
+  return 'other';
+}
+
+/** Product master row for the gate and receiving forms. */
+export interface StoreProductOption {
+  id: string;
+  name: string;
+  unit: string;
+  categoryName: string;
+}
+
 export const STORE_UNITS = ['Kg', 'MT', 'Nos', 'Sheets', 'Bundle', 'Litre', 'Roll'] as const;
 export type StoreUnit = (typeof STORE_UNITS)[number];
 
@@ -38,6 +64,14 @@ export function worstQuality(items: { quality: QualityStatus }[]): QualityStatus
   return worst;
 }
 
+/** Condition of a line as seen at the gate. */
+export const GATE_CONDITIONS = ['Sealed', 'Good', 'Damaged', 'Leaking', 'Wet'] as const;
+export type GateCondition = (typeof GATE_CONDITIONS)[number];
+
+/** A GRN line's QC result from its rejected quantity. */
+export const qcOf = (it: { actualQty: number; rejectedQty?: number }): 'Passed' | 'Partly rejected' | 'Rejected' =>
+  !it.rejectedQty ? 'Passed' : it.rejectedQty >= it.actualQty ? 'Rejected' : 'Partly rejected';
+
 export const MRN_STATUSES = ['pending_grn', 'grn_created'] as const;
 export type MrnStatus = (typeof MRN_STATUSES)[number];
 export const GRN_STATUSES = ['draft', 'reviewed', 'approved'] as const;
@@ -45,10 +79,18 @@ export type GrnStatus = (typeof GRN_STATUSES)[number];
 
 export interface MrnItem {
   id: string;
+  /** Product master (Vendors → products) line; null on lines saved before products were picked. */
+  itemId: string | null;
+  itemName: string | null;
+  /** From the product (materialForProduct), or picked on older lines. */
   material: StoreMaterial;
+  /** Counted at the gate. */
   approxQty: number;
+  /** As per the challan / invoice, when it says. */
+  challanQty: number | null;
   unit: StoreUnit;
   packages: string | null;
+  condition: GateCondition | null;
   remarks: string | null;
 }
 
@@ -70,6 +112,14 @@ export interface Mrn {
   vendorName: string;
   /** Invoice / challan number, if the driver has it at the gate. */
   invoiceNo: string | null;
+  challanDate: string | null;
+  /** Purchase order the delivery is against (typed, as on the challan). */
+  poNo: string | null;
+  /** HH:MM the vehicle left the gate. */
+  timeOut: string | null;
+  transporter: string | null;
+  lrNo: string | null;
+  ewayBill: string | null;
   remarks: string | null;
   items: MrnItem[];
   status: MrnStatus;
@@ -85,10 +135,14 @@ export interface GrnItem {
   id: string;
   /** The MRN line it receives; null for an unlisted / extra item found on unloading. */
   mrnItemId: string | null;
+  itemId: string | null;
+  itemName: string | null;
   material: StoreMaterial;
   /** From the MRN (0 for unlisted items). */
   approxQty: number;
   actualQty: number;
+  /** Of actualQty, rejected at QC (accepted = actual − rejected). */
+  rejectedQty: number;
   unit: StoreUnit;
   quality: QualityStatus;
   qualityRemarks: string | null;
@@ -109,6 +163,8 @@ export interface Grn {
   /** The Purchase entry with this invoice number, found when the GRN was saved. */
   purchaseEntryId: string | null;
   items: GrnItem[];
+  /** Store / location it went into, e.g. "Main Stores · Maintenance spares". */
+  location: string | null;
   receivedByName: string;
   remarks: string | null;
   status: GrnStatus;
@@ -216,6 +272,7 @@ export interface PendingReportRow {
   vehicleNo: string;
   securityName: string;
   material: StoreMaterial;
+  itemName: string | null;
   approxQty: number;
   unit: StoreUnit;
   daysPending: number;

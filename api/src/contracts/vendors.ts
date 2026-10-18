@@ -37,6 +37,11 @@ export type CategoryColor = (typeof CATEGORY_COLORS)[number];
 export const MASTER_STATUSES = ['active', 'inactive'] as const;
 export type MasterStatus = (typeof MASTER_STATUSES)[number];
 
+/** Supporting documents kept on a vendor (GST certificate, bank proof, Udyam…). */
+export const VENDOR_DOC_TYPES = ['GSTIN certificate', 'Bank details', 'Cancelled cheque', 'Udyam certificate', 'PAN card', 'Other'] as const;
+export type VendorDocType = (typeof VENDOR_DOC_TYPES)[number];
+export const MAX_VENDOR_DOC_BYTES = 10 * 1024 * 1024;
+
 export const TNC_CATEGORIES = ['Payment', 'Delivery', 'Quality', 'Legal', 'Warranty', 'General'] as const;
 export type TncCategory = (typeof TNC_CATEGORIES)[number];
 
@@ -151,8 +156,11 @@ export interface Vendor extends Audit {
   msme: string | null;
   paymentTerms: PaymentTerms | null;
   bank: string | null;
+  /** Bank branch, filled from the IFSC lookup or typed in. */
+  branch: string | null;
   accountNo: string | null;
   ifsc: string | null;
+  documents: VendorDocument[];
   /** 1–5 stars; null = not rated. */
   rating: number | null;
   notes: string | null;
@@ -165,6 +173,17 @@ export interface Vendor extends Audit {
   blacklistReason: string | null;
   blacklistedAt: string | null;
   blacklistedBy: string | null;
+}
+
+/** An uploaded file on the vendor. Bytes live in the blob store under vendors/<vendorId>/<id>. */
+export interface VendorDocument {
+  id: string;
+  type: VendorDocType;
+  name: string;
+  mime: string;
+  sizeBytes: number;
+  uploadedAt: string;
+  uploadedBy: string | null;
 }
 
 export interface VendorCategoryRef {
@@ -214,6 +233,7 @@ export interface VendorInput {
   msme?: string | null;
   paymentTerms?: PaymentTerms | null;
   bank?: string | null;
+  branch?: string | null;
   accountNo?: string | null;
   ifsc?: string | null;
   rating?: number | null;
@@ -264,7 +284,7 @@ export interface ProductSourceRow {
   unit: ProductUnit;
   categoryName: string;
   leadTimeDays: number | null;
-  vendor: { id: string; code: string; name: string; city: string | null; state: string | null; rating: number | null; status: VendorStatus };
+  vendor: { id: string; code: string; name: string; city: string | null; state: string | null; phone: string | null; rating: number | null; status: VendorStatus };
 }
 
 export type ProductSourceSort = 'rating' | 'lead';

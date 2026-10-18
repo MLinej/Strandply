@@ -25,6 +25,36 @@ describe('rules', () => {
   });
 });
 
+describe('assignees and photos (Oct 2026)', () => {
+  it('"Assigned to" master: add, unique names, rename follows onto work orders; meta lists active names', async () => {
+    const { call, json } = await as();
+    expect((await call('POST', '/assignees', { name: 'Mahesh  Patel' })).status).toBe(201);
+    expect((await call('POST', '/assignees', { name: 'mahesh patel' })).status).toBe(409);
+    await call('PATCH', '/assignees/mtp-priya', { active: false });
+    const meta = await json('GET', '/meta');
+    expect(meta.technicians).toEqual(['Mahesh Patel', 'Raj Kumar']);
+    expect(meta.assignees).toContain('Priya Nair');
+    await call('PATCH', '/assignees/mtp-raj', { name: 'Raj Kumar Singh' });
+    expect((await json('GET', '/work-orders/wo-a')).assignee).toBe('Raj Kumar Singh');
+  });
+
+  it('photos: images only, served back, noted on the timeline, removable', async () => {
+    const { t, cookie, json } = await as();
+    const form = (files: [number[], string][]) => {
+      const f = new FormData();
+      for (const [b, n] of files) f.append('file', new File([new Uint8Array(b)], n));
+      return t.request('POST', `${MT}/work-orders/wo-a/photos`, { cookie, form: f });
+    };
+    expect((await form([[[0x25, 0x50, 0x44, 0x46], 'doc.pdf']])).status).toBe(422);
+    const w = await (await form([[[0xff, 0xd8, 0xff], 'leak.jpg'], [[0x89, 0x50, 0x4e, 0x47], 'seal.png']])).json();
+    expect(w.photos.map((p: { name: string; mime: string }) => [p.name, p.mime])).toEqual([['leak.jpg', 'image/jpeg'], ['seal.png', 'image/png']]);
+    expect(w.timeline.at(-1).text).toBe('2 photos attached.');
+    const file = await t.request('GET', `${MT}/work-orders/wo-a/photos/${w.photos[0].id}`, { cookie });
+    expect(file.headers.get('content-type')).toBe('image/jpeg');
+    expect((await json('DELETE', `/work-orders/wo-a/photos/${w.photos[0].id}`)).photos).toHaveLength(1);
+  });
+});
+
 describe('work orders', () => {
   it('create: WO number per FY, title / assignee / due date required, an active area, and a timeline from the start', async () => {
     const { call, json } = await as();

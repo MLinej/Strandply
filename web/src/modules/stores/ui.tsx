@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { qualityLabel, storeMaterialLabel, type GrnStatus, type GrnView, type MrnStatus, type QualityStatus } from '@contracts/stores';
+import { qualityLabel, storeItemLabel, storeMaterialLabel, type GrnStatus, type GrnView, type MrnStatus, type QualityStatus, type StoreProductOption, type StoreUnit } from '@contracts/stores';
 import { Pill } from '@/components/ui';
 import { formatDate } from '@/lib/format';
 import type { Tone } from '@/lib/status';
@@ -9,9 +9,28 @@ export const qtyFmt = (n: number) => num.format(n);
 export const materialLabel = storeMaterialLabel;
 
 /** "Nilgiri Wood, Resin +1 more" (legacy mrnItemsSummary). */
-export function itemsSummary(items: { material: string }[]) {
+/** The store unit closest to a product-master unit. */
+export function storeUnitFor(productUnit: string): StoreUnit {
+  const u = productUnit.toLowerCase();
+  if (u === 'kg' || u === 'gram') return 'Kg';
+  if (u === 'mt') return 'MT';
+  if (u === 'sheets') return 'Sheets';
+  if (u === 'bundle') return 'Bundle';
+  if (u === 'litre' || u === 'ml') return 'Litre';
+  if (u === 'roll') return 'Roll';
+  return 'Nos';
+}
+
+/** Product master options for a line picker; older lines (a material, no product) stay pickable under their material's name. */
+export function productComboOptions(products: StoreProductOption[], keep: { itemId: string | null; material: string | null }[]) {
+  const opts = products.map((p) => ({ id: p.id, label: p.name, hint: p.categoryName || null }));
+  for (const k of keep) if (!k.itemId && k.material && !opts.some((o) => o.id === `mat:${k.material}`)) opts.push({ id: `mat:${k.material}`, label: storeMaterialLabel(k.material), hint: 'material, before products were picked' });
+  return opts;
+}
+
+export function itemsSummary(items: { material: string; itemName?: string | null }[]) {
   if (!items.length) return '—';
-  const names = items.map((i) => storeMaterialLabel(i.material));
+  const names = items.map(storeItemLabel);
   return names.length <= 2 ? names.join(', ') : `${names.slice(0, 2).join(', ')} +${names.length - 2} more`;
 }
 /** "12,000 Kg + 500 Kg" */

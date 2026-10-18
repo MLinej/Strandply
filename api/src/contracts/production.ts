@@ -472,7 +472,8 @@ export interface Who {
   createdByName: string | null;
 }
 export type PlanView = Plan & Who & { calc: PlanCalc };
-export type HotPressView = HotPress & Who & { calc: HpCalc; cuttingNo: string | null };
+/** `summaryNo`: the production summary that already uses this report (one summary per hot press report). */
+export type HotPressView = HotPress & Who & { calc: HpCalc; cuttingNo: string | null; summaryId: string | null; summaryNo: string | null };
 export type ChippingView = Chipping & Who & { totalKg: number; totalPaise: number; avgRatePaise: number; wipId: string | null; wipNo: string | null };
 export type ResinUseView = ResinUse & Who & { vendorName: string | null; invoiceNo: string | null };
 export type CuttingView = Cutting & Who & { hotpressNo: string | null; product: Product | null; size: string | null; hpPcs: number; rejectPcs: number; rejectPct: number };
@@ -524,6 +525,8 @@ export interface LotOption {
   invoiceNo: string;
   /** SPL qty received (kg). */
   receivedKg: number;
+  /** Sent back to the vendor on purchase returns (kg). */
+  returnedKg: number;
   usedKg: number;
   availKg: number;
   /** Net rate, paise per ton (invoice rate ± rate-difference note). */

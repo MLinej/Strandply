@@ -1,44 +1,52 @@
 import { CircleAlert, CircleCheck, Plus, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { QUALITY_STATUSES, STORE_MATERIALS, STORE_UNITS, type GrnView, type MrnView, type QualityStatus, type StoreMaterial, type StoreUnit } from '@contracts/stores';
+import { QUALITY_STATUSES, STORE_UNITS, storeItemLabel, type GrnView, type MrnView, type QualityStatus, type StoreMaterial, type StoreUnit } from '@contracts/stores';
 import { useSession } from '@/app/session';
-import { Button, Input, Modal, Select, Textarea, useToast } from '@/components/ui';
+import { Button, Combo, Input, Modal, Select, Textarea, useToast } from '@/components/ui';
 import { formatDate } from '@/lib/format';
 import { errorMessage, fieldErrors } from '../../samples/ui/errors';
 import { useDebounced } from '../../samples/ui/list-state';
-import { useInvoiceLink, useMrn, useMrns, useSaveGrn, useStoresMeta } from '../api';
+import { useInvoiceLink, useMrn, useMrns, useSaveGrn, useStoresMeta, useStoresProducts } from '../api';
 import { printGrn } from '../print';
-import { dateTime, itemsSummary, materialLabel, qtyFmt } from '../ui';
+import { dateTime, itemsSummary, materialLabel, productComboOptions, qtyFmt, storeUnitFor } from '../ui';
 
 type Line = {
   key: string;
   id: string | null;
   mrnItemId: string | null;
-  material: StoreMaterial | '';
+  /** The product: from the MRN line, or picked for an unlisted item. */
+  itemId: string | null;
+  itemName: string | null;
+  /** Lines saved before products were picked. */
+  material: StoreMaterial | null;
   approxQty: number;
   approxUnit: StoreUnit | null;
   actualQty: string;
+  rejectedQty: string;
   unit: StoreUnit;
   quality: QualityStatus;
   qualityRemarks: string;
 };
-type Form = { mrnId: string; date: string; time: string; vendorName: string; invoiceNo: string; receivedByName: string; remarks: string; lines: Line[] };
+type Form = { mrnId: string; date: string; time: string; vendorName: string; invoiceNo: string; receivedByName: string; location: string; remarks: string; lines: Line[] };
 
 let seq = 0;
 const line = (over: Partial<Line> = {}): Line => ({
   key: `g${++seq}`,
   id: null,
   mrnItemId: null,
-  material: '',
+  itemId: null,
+  itemName: null,
+  material: null,
   approxQty: 0,
   approxUnit: null,
   actualQty: '',
+  rejectedQty: '',
   unit: 'Kg',
   quality: 'ok',
   qualityRemarks: '',
   ...over,
 });
-const linesFromMrn = (m: MrnView) => m.items.map((it) => line({ mrnItemId: it.id, material: it.material, approxQty: it.approxQty, approxUnit: it.unit, unit: it.unit }));
+const linesFromMrn = (m: MrnView) => m.items.map((it) => line({ mrnItemId: it.id, itemId: it.itemId, itemName: it.itemName, material: it.material, approxQty: it.approxQty, approxUnit: it.unit, unit: it.unit }));
 
 function InvoiceBadge({ invoiceNo, vendorName }: { invoiceNo: string; vendorName: string }) {
   const match = useInvoiceLink(useDebounced(invoiceNo.trim()), useDebounced(vendorName.trim())).data;
@@ -64,9 +72,11 @@ export function GrnForm({ open, grn, mrnId, onClose }: { open: boolean; grn: Grn
   const meta = useStoresMeta().data;
   const save = useSaveGrn();
   const pending = useMrns({ filters: { status: 'pending_grn' }, sort: 'date', pageSize: 100 }, { enabled: open && !grn }).data?.rows ?? [];
-  const [f, setF] = useState<Form>({ mrnId: '', date: '', time: '', vendorName: '', invoiceNo: '', receivedByName: '', remarks: '', lines: [] });
+  const [f, setF] = useState<Form>({ mrnId: '', date: '', time: '', vendorName: '', invoiceNo: '', receivedByName: '', location: '', remarks: '', lines: [] });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const auto = meta?.settings.autoPunchGrn ?? true;
+  const products = useStoresProducts({ enabled: open }).data ?? [];
+  const productOptions = productComboOptions(products, f.lines.filter((l) => !l.mrnItemId));
   const mrn = useMrn(open ? (grn?.mrnId ?? (f.mrnId || null)) : null).data ?? null;
   /** The MRN whose lines are on screen, so a refetch doesn't wipe what was typed. */
   const loadedFor = useRef<string | null>(null);
@@ -83,13 +93,14 @@ export function GrnForm({ open, grn, mrnId, onClose }: { open: boolean; grn: Grn
         vendorName: grn.vendorName,
         invoiceNo: grn.invoiceNo,
         receivedByName: grn.receivedByName,
+        location: grn.location ?? '',
         remarks: grn.remarks ?? '',
         lines: grn.items.map((it) =>
-          line({ id: it.id, mrnItemId: it.mrnItemId, material: it.material, approxQty: it.approxQty, approxUnit: it.mrnItemId ? it.unit : null, actualQty: String(it.actualQty), unit: it.unit, quality: it.quality, qualityRemarks: it.qualityRemarks ?? '' }),
+          line({ id: it.id, mrnItemId: it.mrnItemId, itemId: it.itemId, itemName: it.itemName, material: it.itemId ? null : it.material, approxQty: it.approxQty, approxUnit: it.mrnItemId ? it.unit : null, actualQty: String(it.actualQty), rejectedQty: it.rejectedQty ? String(it.rejectedQty) : '', unit: it.unit, quality: it.quality, qualityRemarks: it.qualityRemarks ?? '' }),
         ),
       });
     } else {
-      setF({ mrnId: mrnId ?? '', date: meta?.today ?? '', time: meta?.now ?? '', vendorName: '', invoiceNo: '', receivedByName: '', remarks: '', lines: [] });
+      setF({ mrnId: mrnId ?? '', date: meta?.today ?? '', time: meta?.now ?? '', vendorName: '', invoiceNo: '', receivedByName: '', location: '', remarks: '', lines: [] });
     }
     // Only on open (see MrnForm).
   }, [open, grn, mrnId]);
@@ -121,7 +132,8 @@ export function GrnForm({ open, grn, mrnId, onClose }: { open: boolean; grn: Grn
     const lines = f.lines.filter((l) => Number(l.actualQty) > 0);
     if (f.mrnId && !lines.length) local.items = 'Enter the actual quantity for at least one item';
     f.lines.forEach((l, i) => {
-      if (!l.mrnItemId && Number(l.actualQty) > 0 && !l.material) local[`items.${i}.material`] = 'Pick the material';
+      if (!l.mrnItemId && Number(l.actualQty) > 0 && !l.itemId && !l.material) local[`items.${i}.itemId`] = 'Pick the product';
+      if (Number(l.rejectedQty) > Number(l.actualQty)) local[`items.${i}.rejectedQty`] = 'More than received';
     });
     if (Object.keys(local).length) return setErrors(local);
     // Server paths index the lines sent, so map them back to the rows on screen.
@@ -135,14 +147,16 @@ export function GrnForm({ open, grn, mrnId, onClose }: { open: boolean; grn: Grn
           vendorName: f.vendorName.trim(),
           invoiceNo: f.invoiceNo.trim(),
           receivedByName: f.receivedByName.trim(),
+          location: f.location.trim() || null,
           remarks: f.remarks.trim() || null,
           items: lines.map((l) => ({
             id: l.id,
             mrnItemId: l.mrnItemId,
-            material: l.mrnItemId ? null : (l.material as StoreMaterial),
+            ...(l.mrnItemId ? {} : l.itemId ? { itemId: l.itemId } : { material: l.material }),
             actualQty: Number(l.actualQty),
             unit: l.unit,
             quality: l.quality,
+            rejectedQty: Number(l.rejectedQty) || 0,
             qualityRemarks: l.qualityRemarks.trim() || null,
           })),
         },
@@ -236,6 +250,7 @@ export function GrnForm({ open, grn, mrnId, onClose }: { open: boolean; grn: Grn
             <InvoiceBadge invoiceNo={f.invoiceNo} vendorName={f.vendorName} />
           </div>
           <Input label="Received by" placeholder="Stores person" value={f.receivedByName} onChange={(e) => set('receivedByName')(e.target.value)} error={errors.receivedByName} />
+          <Input label="Store / location" placeholder="Main Stores · Maintenance spares" value={f.location} onChange={(e) => set('location')(e.target.value)} />
         </div>
 
         <fieldset className="flex flex-col gap-2">
@@ -253,15 +268,20 @@ export function GrnForm({ open, grn, mrnId, onClose }: { open: boolean; grn: Grn
               </div>
               <div className="grid gap-2 sm:grid-cols-[1.3fr_1fr_1fr_0.8fr] [&>*]:min-w-0">
                 {l.mrnItemId ? (
-                  <Input label="Material" value={materialLabel(l.material)} readOnly />
+                  <Input label="Product" value={storeItemLabel({ material: l.material ?? 'other', itemName: l.itemName })} readOnly />
                 ) : (
-                  <Select
-                    label="Material (unlisted)"
-                    placeholder="Select"
-                    options={STORE_MATERIALS.map((m) => ({ value: m.id, label: m.label }))}
-                    value={l.material}
-                    onChange={(e) => setLine(l.key, { material: e.target.value as StoreMaterial }, `items.${i}.material`)}
-                    error={errors[`items.${i}.material`]}
+                  <Combo
+                    label="Product (unlisted)"
+                    ariaLabel={`Product, item ${i + 1}`}
+                    placeholder="Search the product master"
+                    options={productOptions}
+                    value={l.itemId ?? (l.material ? `mat:${l.material}` : null)}
+                    onChange={(id) => {
+                      if (id?.startsWith('mat:')) return;
+                      const p = products.find((x) => x.id === id);
+                      setLine(l.key, { itemId: id, itemName: p?.name ?? null, material: null, unit: p ? storeUnitFor(p.unit) : l.unit }, `items.${i}.itemId`);
+                    }}
+                    error={errors[`items.${i}.itemId`]}
                   />
                 )}
                 <Input label="Approx (gate)" value={l.approxUnit ? `${qtyFmt(l.approxQty)} ${l.approxUnit}` : '—'} readOnly tabIndex={-1} />
@@ -275,7 +295,17 @@ export function GrnForm({ open, grn, mrnId, onClose }: { open: boolean; grn: Grn
                 />
                 <Select label="Unit" options={STORE_UNITS.map((u) => ({ value: u, label: u }))} value={l.unit} onChange={(e) => setLine(l.key, { unit: e.target.value as StoreUnit })} />
               </div>
-              <div className="grid gap-2 sm:grid-cols-[1fr_2fr] [&>*]:min-w-0">
+              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_2fr] [&>*]:min-w-0">
+                <Input
+                  label="Rejected qty"
+                  aria-label={`Rejected quantity, item ${i + 1}`}
+                  inputMode="decimal"
+                  placeholder="0"
+                  value={l.rejectedQty}
+                  onChange={(e) => setLine(l.key, { rejectedQty: e.target.value }, `items.${i}.rejectedQty`)}
+                  error={errors[`items.${i}.rejectedQty`] ?? (Number(l.rejectedQty) > Number(l.actualQty) ? 'More than received' : undefined)}
+                  hint={Number(l.actualQty) ? `Accepted ${qtyFmt(Math.max(0, Number(l.actualQty) - (Number(l.rejectedQty) || 0)))}` : undefined}
+                />
                 <Select label="Quality" options={QUALITY_STATUSES.map((q) => ({ value: q.id, label: q.label }))} value={l.quality} onChange={(e) => setLine(l.key, { quality: e.target.value as QualityStatus })} />
                 <Input label="Quality remarks" placeholder="Shortage, damage…" value={l.qualityRemarks} onChange={(e) => setLine(l.key, { qualityRemarks: e.target.value })} />
               </div>

@@ -4,6 +4,8 @@ import type { ListQuery, ListResult } from '@contracts/common';
 import type { CompanyBlock } from '@contracts/sampletrack';
 import type {
   AccountingReport,
+  GateCondition,
+  Mrn,
   GrnFilters,
   GrnView,
   InvoiceMatch,
@@ -15,6 +17,7 @@ import type {
   StoresDashboard,
   StoresMeta,
   StoresSettings,
+  StoreProductOption,
   StoresVendorOption,
   StoreUnit,
 } from '@contracts/stores';
@@ -59,6 +62,11 @@ export function useSaveStoresSettings() {
   return useMutation({ mutationFn: (input: Partial<StoresSettings>) => api<StoresSettings>(`${STO}/settings`, { method: 'PATCH', body: input }), onSuccess: invalidate });
 }
 
+/** The product master, for the MRN / GRN product pickers. */
+export function useStoresProducts({ enabled = true } = {}) {
+  return useQuery({ queryKey: [...stoKeys.all, 'products'], queryFn: ({ signal }) => api<StoreProductOption[]>(`${STO}/products`, { signal }), enabled, staleTime: 60_000 });
+}
+
 export function useStoresVendors(q: string, { enabled = true } = {}) {
   return useQuery({
     queryKey: stoKeys.vendors(q),
@@ -85,12 +93,16 @@ export function useMrn(id: string | null | undefined) {
   return useQuery({ queryKey: stoKeys.mrn(id ?? ''), queryFn: ({ signal }) => api<MrnView>(`${STO}/mrns/${id}`, { signal }), enabled: !!id });
 }
 
+/** A product from the product master (itemId), or for lines saved before products, their material. */
 export interface MrnItemInput {
   id?: string | null;
-  material: StoreMaterial;
+  itemId?: string | null;
+  material?: StoreMaterial | null;
   approxQty: number;
+  challanQty?: number | null;
   unit: StoreUnit;
   packages: string | null;
+  condition?: GateCondition | null;
   remarks: string | null;
 }
 export interface MrnInput {
@@ -103,6 +115,12 @@ export interface MrnInput {
   vendorId: string | null;
   vendorName: string;
   invoiceNo: string | null;
+  challanDate?: string | null;
+  poNo?: string | null;
+  timeOut?: string | null;
+  transporter?: string | null;
+  lrNo?: string | null;
+  ewayBill?: string | null;
   remarks: string | null;
   items: MrnItemInput[];
 }
@@ -153,8 +171,11 @@ export function useInvoiceLink(invoiceNo: string, vendorName: string) {
 export interface GrnItemInput {
   id?: string | null;
   mrnItemId: string | null;
-  material: StoreMaterial | null;
+  /** Unlisted items: the product (or, for older lines, a material). */
+  itemId?: string | null;
+  material?: StoreMaterial | null;
   actualQty: number;
+  rejectedQty?: number;
   unit: StoreUnit;
   quality: QualityStatus;
   qualityRemarks: string | null;
@@ -166,6 +187,7 @@ export interface GrnInput {
   vendorName: string;
   invoiceNo: string;
   receivedByName: string;
+  location?: string | null;
   remarks: string | null;
   items: GrnItemInput[];
 }
@@ -208,6 +230,8 @@ export const exportGrns = (query: Omit<GrnQuery, 'page' | 'pageSize'>) => downlo
 export interface GrnPrintPayload {
   company: CompanyBlock;
   grn: GrnView;
+  mrn: Mrn | null;
+  itemCodes: Record<string, string>;
   generatedAt: string;
 }
 export const fetchGrnPrint = (id: string) => api<GrnPrintPayload>(`${STO}/grns/${id}/print`);

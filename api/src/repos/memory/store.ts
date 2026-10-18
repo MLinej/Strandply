@@ -20,7 +20,7 @@ import type { Chipping, Cutting, HotPress, MattBatch, Mdo, Plan, ResinUse, Summa
 import type { Customer, FgStock, Intercompany, PriceEntry, Proforma, SalesInvoice, SalesItem, SalesOrder, WeightEntry } from '../../contracts/sales';
 import type { Campaign, CrmCustomer, CrmProduct, CrmTask, Followup, Lead, Opportunity, OrderLost, OrderWon, Quotation, Salesperson } from '../../contracts/crm';
 import type { FreightOrder, Inquiry, RateComparison, Transporter, VehicleType } from '../../contracts/transport';
-import type { MtArea, WorkOrder } from '../../contracts/maintenance';
+import type { MtArea, MtAssignee, WorkOrder } from '../../contracts/maintenance';
 import type { ElBill, ElRate, ElReading } from '../../contracts/electricity';
 import type { Complaint, CpRecipient } from '../../contracts/complaints';
 import type { DwDepartment, DwEmployee, DwPlan } from '../../contracts/dwpas';
@@ -110,6 +110,7 @@ export interface MemoryData {
   trRateCmps: RateComparison[];
   trOrders: FreightOrder[];
   mtAreas: MtArea[];
+  mtAssignees: MtAssignee[];
   mtWorkOrders: WorkOrder[];
   elRates: ElRate[];
   elReadings: ElReading[];
@@ -198,6 +199,7 @@ const KEYS: { [K in TableName]: (keyof Row<K> & string) | ((row: Row<K>) => stri
   trRateCmps: 'id',
   trOrders: 'id',
   mtAreas: 'id',
+  mtAssignees: 'id',
   mtWorkOrders: 'id',
   elRates: 'id',
   elReadings: 'id',

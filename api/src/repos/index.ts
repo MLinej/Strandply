@@ -12,7 +12,7 @@ import type { ReclassRepo, SkuGroupRepo, StockOpeningRepo, StockSlipRepo } from 
 import type { CustomerRepo, FgStockRepo, IntercompanyRepo, PriceEntryRepo, ProformaRepo, SalesInvoiceRepo, SalesItemRepo, SalesOrderRepo, WeightEntryRepo } from './sales';
 import type { CampaignRepo, CrmCustomerRepo, CrmProductRepo, CrmTaskRepo, FollowupRepo, LeadRepo, OpportunityRepo, OrderLostRepo, OrderWonRepo, QuotationRepo, SalespersonRepo } from './crm';
 import type { FreightOrderRepo, InquiryRepo, RateComparisonRepo, TransporterRepo, VehicleTypeRepo } from './transport';
-import type { MtAreaRepo, WorkOrderRepo } from './maintenance';
+import type { MtAreaRepo, MtAssigneeRepo, WorkOrderRepo } from './maintenance';
 import type { ElBillRepo, ElRateRepo, ElReadingRepo } from './electricity';
 import type { ComplaintRepo, CpRecipientRepo } from './complaints';
 import type { DwDepartmentRepo, DwEmployeeRepo, DwPlanRepo } from './dwpas';
@@ -110,6 +110,7 @@ export interface Repos {
   trRateCmps: RateComparisonRepo;
   trOrders: FreightOrderRepo;
   mtAreas: MtAreaRepo;
+  mtAssignees: MtAssigneeRepo;
   mtWorkOrders: WorkOrderRepo;
   elRates: ElRateRepo;
   elReadings: ElReadingRepo;

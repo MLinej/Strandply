@@ -12,9 +12,15 @@ export const COMPANY_KEYS: Record<keyof CompanySettings, string> = {
   city: 'company.address_line',
   phone: 'company.phone',
   gst: 'company.gst',
+  email: 'company.email',
+  pan: 'company.pan',
+  stateCode: 'company.state_code',
+  bankName: 'company.bank_name',
+  bankAccountNo: 'company.bank_account_no',
+  bankIfsc: 'company.bank_ifsc',
 };
 
-const LABELS: Record<keyof CompanySettings, string> = { name: 'name', llpin: 'LLPIN', city: 'city', phone: 'phone', gst: 'GST' };
+const LABELS: Record<keyof CompanySettings, string> = { name: 'name', llpin: 'LLPIN', city: 'address', phone: 'phone', gst: 'GST', email: 'e-mail', pan: 'PAN', stateCode: 'state code', bankName: 'bank', bankAccountNo: 'account number', bankIfsc: 'IFSC' };
 
 /** Company details in st_settings. The single source for labels, slips, report prints and WhatsApp messages. */
 export class CompanyService {
@@ -37,13 +43,20 @@ export class CompanyService {
       city: text('city'),
       phone: text('phone'),
       gst: text('gst'),
+      email: text('email'),
+      pan: text('pan'),
+      // The state code is the first two digits of the GSTIN unless set.
+      stateCode: text('stateCode') ?? (text('gst')?.slice(0, 2).match(/^\d\d$/)?.[0] ?? null),
+      bankName: text('bankName'),
+      bankAccountNo: text('bankAccountNo'),
+      bankIfsc: text('bankIfsc'),
     };
   }
 
   /** What prints use. */
   async block(): Promise<CompanyBlock> {
     const c = await this.get();
-    return { name: c.name, city: c.city ?? '', phone: c.phone, llpin: c.llpin, gst: c.gst };
+    return { name: c.name, city: c.city ?? '', phone: c.phone, llpin: c.llpin, gst: c.gst, email: c.email, pan: c.pan, stateCode: c.stateCode, bankName: c.bankName, bankAccountNo: c.bankAccountNo, bankIfsc: c.bankIfsc };
   }
 
   /** Saves the changed fields in one transaction and logs them. A blank value clears the field (except name). */

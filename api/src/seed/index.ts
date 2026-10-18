@@ -124,8 +124,10 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     trRateCmps: [],
     trOrders: [],
     mtAreas: REF_MT_AREAS.map((a) => ({ ...a, ...audit })),
+    // The assignee master starts with the technicians already on work orders (the demo ones in dev).
+    mtAssignees: devUsers ? [...new Set(DEMO_WORK_ORDERS.map((w) => w.assignee))].sort().map((name, i) => ({ id: `mtp-${i + 1}`, name, active: true, ...audit })) : [],
     // Demo work orders keep their own raised times (the timeline and reports depend on them).
-    mtWorkOrders: devUsers ? DEMO_WORK_ORDERS.map((w) => ({ ...audit, ...structuredClone(w), updatedAt: w.createdAt })) : [],
+    mtWorkOrders: devUsers ? DEMO_WORK_ORDERS.map((w) => ({ ...audit, ...structuredClone(w), photos: [], equipment: null, station: null, updatedAt: w.createdAt })) : [],
     elRates: REF_EL_RATES.map((r) => ({ ...r, ...audit })),
     elReadings: devAudit(DEMO_READINGS),
     elBills: devAudit(DEMO_BILLS),

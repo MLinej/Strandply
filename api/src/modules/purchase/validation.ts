@@ -54,6 +54,20 @@ const entryFields = {
   species: optionalText(60),
   veneerType: optionalText(60),
   altQtyPcs: nullableBlank(qty('Alternate quantity')),
+  /** Itemized materials: the invoice lines. invQty, splQty and ratePaise are then worked out from them. */
+  lines: z
+    .array(
+      z.object({
+        itemId: nullableBlank(id),
+        itemName: z.string().trim().min(1, 'Pick a product').max(200),
+        hsn: optionalText(10),
+        invQty: qty('Quantity').refine((v) => v > 0, 'Quantity must be more than 0'),
+        splQty: qty('Strandply quantity').optional(),
+        ratePaise: paise('Rate').refine((v) => v > 0, 'Rate must be more than 0'),
+      }),
+    )
+    .max(50),
+  raiseNotes: z.boolean(),
   invQty: qty('Invoice quantity').refine((v) => v > 0, 'Invoice quantity must be more than 0'),
   splQty: qty('Strandply quantity'),
   ratePaise: paise('Rate').refine((v) => v > 0, 'Rate must be more than 0'),
@@ -68,6 +82,12 @@ const entryFields = {
  */
 export const entryCreateBody = z.object({
   ...entryFields,
+  lines: entryFields.lines.default([]),
+  raiseNotes: entryFields.raiseNotes.default(true),
+  // Itemized entries send lines instead; the service fills these in from them.
+  invQty: entryFields.invQty.optional(),
+  splQty: entryFields.splQty.optional(),
+  ratePaise: entryFields.ratePaise.optional(),
   gstPct: gstPct.default(18),
   rateDiffPaise: entryFields.rateDiffPaise.default(0),
   otherChargesPaise: entryFields.otherChargesPaise.default(0),
@@ -85,12 +105,35 @@ const poFields = {
   material: z.enum(MATERIAL_IDS),
   vendorId: nullableBlank(id),
   vendorName: z.string().trim().min(1, 'Vendor is required').max(200),
-  qty: qty('PO quantity').refine((v) => v > 0, 'PO quantity must be more than 0'),
-  ratePaise: paise('Rate'),
+  lines: z
+    .array(
+      z.object({
+        itemId: nullableBlank(id),
+        itemName: z.string().trim().min(1, 'Pick a product').max(200),
+        hsn: optionalText(10),
+        qty: qty('Quantity').refine((v) => v > 0, 'Quantity must be more than 0'),
+        ratePaise: paise('Rate'),
+      }),
+    )
+    .min(1, 'Add at least one item')
+    .max(50),
+  taxType: z.enum(TAX_TYPES),
+  gstPct,
+  freightPaise: paise('Freight'),
+  paymentTerms: optionalText(80),
+  deliveryTerms: optionalText(120),
+  deliveryDate: optionalDate,
+  quotationRef: optionalText(80),
   remarks: optionalText(1000),
   tncIds: z.array(id).max(50),
 };
-export const poCreateBody = z.object({ ...poFields, tncIds: poFields.tncIds.default([]) });
+export const poCreateBody = z.object({
+  ...poFields,
+  taxType: poFields.taxType.default('SG+CG'),
+  gstPct: gstPct.default(18),
+  freightPaise: poFields.freightPaise.default(0),
+  tncIds: poFields.tncIds.default([]),
+});
 export const poUpdateBody = z.object(poFields).partial();
 export type PoCreate = z.output<typeof poCreateBody>;
 export type PoUpdate = z.output<typeof poUpdateBody>;

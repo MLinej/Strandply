@@ -9,7 +9,7 @@ import { useUrlState } from '../../samples/ui/list-state';
 import { PageHeader } from '../../samples/ui/PageHeader';
 import { RowMenu, runAndClose } from '../../samples/ui/RowMenu';
 import { exportSales, useDeleteRecord, useFg, useFirmFilter, useSalesMeta, useSaveFg } from '../api';
-import { FirmPill, FirmSelect, qtyFmt, useDefaultFirm, useShowFirm } from '../ui';
+import { FirmPill, FirmSelect, sqmFmt, useDefaultFirm, useShowFirm } from '../ui';
 
 type Form = { firm: Firm; grade: string; thic: string; width: string; length: string; qty: string; reorder: string };
 
@@ -77,16 +77,16 @@ export function FgPage() {
   const remove = useDeleteRecord('fg');
   const [form, setForm] = useState<FgStockView | 'new' | null>(null);
   const [toDelete, setToDelete] = useState<FgStockView | null>(null);
-  const sum = (k: 'qtyOnHandSqm' | 'reservedSqm' | 'availableSqm') => Math.round((rows ?? []).reduce((s, r) => s + r[k], 0) * 100) / 100;
+  const sum = (k: 'qtyOnHandSqm' | 'reservedSqm' | 'availableSqm') => Math.round((rows ?? []).reduce((s, r) => s + r[k], 0) * 10000) / 10000;
 
   const columns: Column<FgStockView>[] = [
     ...(showFirm ? [{ id: 'firm', header: 'Firm', width: '64px', cell: (r: FgStockView) => <FirmPill firm={r.firm} /> }] : []),
     { id: 'grade', header: 'Grade', width: '140px', className: 'font-medium', cell: (r) => r.grade },
     { id: 'thic', header: 'Thickness', width: '100px', align: 'right', className: 'tabular-nums', cell: (r) => `${r.thic} mm` },
     { id: 'size', header: 'Size', width: '140px', className: 'tabular-nums', cell: (r) => `${r.width} × ${r.length} mm` },
-    { id: 'hand', header: 'On hand', width: '120px', align: 'right', className: 'tabular-nums', cell: (r) => `${qtyFmt(r.qtyOnHandSqm)} sq m` },
-    { id: 'res', header: 'Reserved', width: '120px', align: 'right', className: 'tabular-nums text-muted', cell: (r) => `${qtyFmt(r.reservedSqm)} sq m` },
-    { id: 'avail', header: 'Available', width: '120px', align: 'right', className: 'font-semibold tabular-nums', cell: (r) => `${qtyFmt(r.availableSqm)} sq m` },
+    { id: 'hand', header: 'On hand', width: '120px', align: 'right', className: 'tabular-nums', cell: (r) => `${sqmFmt(r.qtyOnHandSqm)} sq m` },
+    { id: 'res', header: 'Reserved', width: '120px', align: 'right', className: 'tabular-nums text-muted', cell: (r) => `${sqmFmt(r.reservedSqm)} sq m` },
+    { id: 'avail', header: 'Available', width: '120px', align: 'right', className: 'font-semibold tabular-nums', cell: (r) => `${sqmFmt(r.availableSqm)} sq m` },
     { id: 'status', header: 'Status', width: '110px', cell: (r) => (r.low ? <Pill tone="amber">Low stock</Pill> : <Pill tone="green">OK</Pill>) },
     {
       id: 'actions',
@@ -138,9 +138,9 @@ export function FgPage() {
         }
       />
       <div className="grid gap-3 sm:grid-cols-3">
-        <KpiTile label="On hand" value={`${qtyFmt(sum('qtyOnHandSqm'))} sq m`} meta={`${rows?.length ?? 0} specifications`} />
-        <KpiTile label="Reserved" value={`${qtyFmt(sum('reservedSqm'))} sq m`} meta="On pending orders" />
-        <KpiTile label="Available" value={`${qtyFmt(sum('availableSqm'))} sq m`} meta="Free to allocate" />
+        <KpiTile label="On hand" value={`${sqmFmt(sum('qtyOnHandSqm'))} sq m`} meta={`${rows?.length ?? 0} specifications`} />
+        <KpiTile label="Reserved" value={`${sqmFmt(sum('reservedSqm'))} sq m`} meta="On pending orders" />
+        <KpiTile label="Available" value={`${sqmFmt(sum('availableSqm'))} sq m`} meta="Free to allocate" />
       </div>
       <Select aria-label="Grade" placeholder="All grades" options={grades.map((g) => ({ value: g, label: g }))} value={url.values.grade} onChange={(e) => url.set({ grade: e.target.value })} containerClassName="w-[180px]" />
       <DataTable label="FG inventory" columns={columns} rows={rows ?? []} getRowId={(r) => r.id} minWidth={900} loading={!rows} empty={<EmptyState icon={Package} title="No stock entries" description="Add finished-goods stock by specification." />} />

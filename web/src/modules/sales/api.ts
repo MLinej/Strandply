@@ -4,6 +4,7 @@ import type { ListQuery, ListResult } from '@contracts/common';
 import type {
   Customer,
   CustomerFilters,
+  DispatchInfo,
   DispatchRegister,
   DocListFilters,
   DocSummary,
@@ -159,6 +160,8 @@ export interface PrintPayload<T> {
   doc: T;
   billParty: Customer | null;
   shipParty: Customer | null;
+  /** The sales order's dispatch details (invoices and orders). */
+  dispatch: DispatchInfo | null;
   generatedAt: string;
 }
 export const fetchPrint = <P extends DocPath>(path: P, id: string) => api<PrintPayload<DocViews[P]>>(`${SL}/${path}/${id}/print`);

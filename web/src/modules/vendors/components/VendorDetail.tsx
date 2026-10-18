@@ -7,11 +7,11 @@ import { Button, Modal, Tabs, Textarea, useToast } from '@/components/ui';
 import { formatDate } from '@/lib/format';
 import { DetailList } from '../../samples/ui/DetailList';
 import { errorMessage } from '../../samples/ui/errors';
-import { useVendorAction } from '../api';
+import { useVendorAction, vendorDocumentUrl } from '../api';
 import { printVendors } from '../print';
 import { CategoryPill, STEP_DONE, STEP_LABEL, Stars, stepsFor, VendorStatusPill } from '../ui';
 
-type Tab = 'overview' | 'products' | 'finance' | 'history';
+type Tab = 'overview' | 'products' | 'finance' | 'documents' | 'history';
 const STEP_ICON = { submit: Send, approve: CheckCircle2, activate: Power, blacklist: Ban, reinstate: RotateCcw } as const;
 const day = (iso: string | null) => (iso ? formatDate(iso.slice(0, 10)) : null);
 
@@ -175,6 +175,7 @@ export function VendorDetail({
             { value: 'overview', label: 'Overview' },
             { value: 'products', label: 'Products', count: v.products.length },
             { value: 'finance', label: 'Finance' },
+            { value: 'documents', label: 'Documents', count: v.documents.length },
             { value: 'history', label: 'History' },
           ]}
         >
@@ -218,11 +219,28 @@ export function VendorDetail({
                   { label: 'MSME / Udyam', value: v.msme },
                   { label: 'Payment terms', value: v.paymentTerms },
                   { label: 'Bank', value: v.bank },
+                  { label: 'Branch', value: v.branch },
                   { label: 'Account number', value: v.accountNo && <span className="font-mono">{v.accountNo}</span> },
                   { label: 'IFSC', value: v.ifsc && <span className="font-mono">{v.ifsc}</span> },
                 ]}
               />
             )}
+            {tab === 'documents' &&
+              (v.documents.length ? (
+                <ul className="divide-y divide-divider rounded border border-border">
+                  {v.documents.map((d) => (
+                    <li key={d.id} className="flex items-center gap-3 px-3 py-2 text-base">
+                      <span className="w-[160px] shrink-0 font-semibold">{d.type}</span>
+                      <a href={vendorDocumentUrl(v.id, d.id)} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-ink underline-offset-2 hover:underline">
+                        {d.name}
+                      </a>
+                      <span className="text-caption text-faint">{day(d.uploadedAt)}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-base text-muted">No documents attached. Use Edit to attach the GSTIN certificate, bank details, cancelled cheque or Udyam certificate.</p>
+              ))}
             {tab === 'history' && <HistoryTimeline v={v} />}
           </div>
         </Tabs>

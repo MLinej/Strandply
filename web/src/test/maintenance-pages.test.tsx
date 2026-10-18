@@ -22,6 +22,9 @@ const wo: WorkOrder = {
   id: 'wo-a', woNo: 'WO-26-0001', title: 'Hydraulic press oil leak', category: 'Hydraulic', area: 'Press Shop', priority: 'Critical', status: 'Open', assignee: 'Raj Kumar',
   description: 'Seal dripping', notes: null, dueDate: '2026-09-28', completedOn: null, ...audit,
   timeline: [{ id: 't1', type: 'created', text: 'Work order created.', by: null, byName: 'Admin User', at: '2026-09-25T04:00:00.000Z' }],
+  photos: [],
+  equipment: null,
+  station: null,
 };
 const wo2: WorkOrder = { ...wo, id: 'wo-b', woNo: 'WO-26-0002', title: 'Conveyor bearing noise', priority: 'High', status: 'In Progress', area: 'Assembly Line A', dueDate: '2026-10-05' };
 const dash: MaintenanceDashboard = { total: 2, open: 1, inProgress: 1, onHold: 0, completed: 0, critical: 1, overdue: 1, byArea: [], byCategory: [], byPriority: [], overdueList: [wo], recent: [] };
@@ -31,7 +34,8 @@ function fakeApi() {
   const fn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method ?? 'GET';
-    if (url === '/api/maintenance/meta') return json({ areas: ['Assembly Line A', 'Press Shop'], assignees: ['Raj Kumar'], today: '2026-10-01' });
+    if (url === '/api/maintenance/meta') return json({ areas: ['Assembly Line A', 'Press Shop'], assignees: ['Raj Kumar'], technicians: ['Raj Kumar'], today: '2026-10-01' });
+    if (url === '/api/maintenance/assignees' && init?.method === 'POST') return json({ id: 'mtp-9', name: 'Mahesh Patel', active: true }, 201);
     if (url === '/api/maintenance/dashboard') return json(dash);
     if (url === '/api/maintenance/work-orders' && method === 'POST') return json({ ...wo, id: 'wo-n', woNo: 'WO-26-0003' }, 201);
     if (url === '/api/maintenance/work-orders/wo-a/status') return json({ ...wo, status: 'In Progress' });
@@ -93,8 +97,20 @@ describe('Work orders', () => {
     await waitFor(() => expect(writes(fetchFn)).toHaveLength(1));
     expect(writes(fetchFn)[0]).toEqual({
       url: '/api/maintenance/work-orders',
-      body: { title: 'Boiler feed pump seal', category: 'Mechanical', area: 'Assembly Line A', assignee: 'Raj Kumar', dueDate: '2026-10-03', priority: 'High', status: 'Open', description: null, notes: null },
+      body: { title: 'Boiler feed pump seal', category: 'Mechanical', area: 'Assembly Line A', equipment: null, station: null, assignee: 'Raj Kumar', dueDate: '2026-10-03', priority: 'High', status: 'Open', description: null, notes: null },
     });
+  });
+
+  it('a name can be added to the "Assigned to" list from the form, and photos can be taken or attached', async () => {
+    const fetchFn = fakeApi();
+    renderAt('/maintenance/work-orders?new=1');
+    const dlg = await screen.findByRole('dialog', { name: 'New work order' });
+    expect(within(dlg).getByLabelText('Take photo').getAttribute('capture')).toBe('environment');
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Add a name to the list' }));
+    fireEvent.change(within(dlg).getByLabelText('New name'), { target: { value: 'Mahesh Patel' } });
+    fireEvent.click(within(dlg).getByRole('button', { name: 'Add' }));
+    await waitFor(() => expect((within(dlg).getByLabelText('Assigned to') as HTMLSelectElement).value).toBe('Mahesh Patel'));
+    expect(writes(fetchFn)).toEqual([{ url: '/api/maintenance/assignees', body: { name: 'Mahesh Patel' } }]);
   });
 
   it('the detail panel changes status and posts notes', async () => {

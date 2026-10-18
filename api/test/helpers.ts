@@ -166,6 +166,8 @@ export const vendor = (id: string, over: Partial<Vendor> = {}): Vendor => ({
   msme: null,
   paymentTerms: null,
   bank: null,
+  branch: null,
+  documents: [],
   accountNo: null,
   ifsc: null,
   rating: null,
@@ -242,6 +244,8 @@ export const purchaseEntry = (id: string, over: Partial<PurchaseEntry> = {}): Pu
   species: 'Eucalyptus',
   veneerType: null,
   altQtyPcs: null,
+  lines: [],
+  raiseNotes: true,
   invQty: 12400,
   splQty: 12730,
   ratePaise: 770000,
@@ -274,6 +278,7 @@ export function purchaseFixtures() {
     vendorName: 'TM Nilgiri Supplier',
     qty: 300000,
     ratePaise: 770000,
+    lines: [], taxType: 'SG+CG', gstPct: 18, freightPaise: 0, paymentTerms: null, deliveryTerms: null, deliveryDate: null, quotationRef: null, reviewedBy: null, reviewedAt: null,
     remarks: null,
     tncIds: [],
     status: 'pending',
@@ -325,10 +330,16 @@ export const mrn = (id: string, n: number, over: Partial<Mrn> = {}): Mrn => ({
   vendorId: null,
   vendorName: 'TM Nilgiri Supplier',
   invoiceNo: 'INV-pe-1',
+  challanDate: null,
+  poNo: null,
+  timeOut: null,
+  transporter: null,
+  lrNo: null,
+  ewayBill: null,
   remarks: null,
   items: [
-    { id: `${id}-1`, material: 'nilgiri', approxQty: 12000, unit: 'Kg', packages: null, remarks: null },
-    { id: `${id}-2`, material: 'resin', approxQty: 500, unit: 'Kg', packages: '2 drums', remarks: null },
+    { id: `${id}-1`, itemId: null, itemName: null, material: 'nilgiri', approxQty: 12000, challanQty: null, unit: 'Kg', packages: null, condition: null, remarks: null },
+    { id: `${id}-2`, itemId: null, itemName: null, material: 'resin', approxQty: 500, challanQty: 500, unit: 'Kg', packages: '2 drums', condition: 'Sealed', remarks: null },
   ],
   status: 'pending_grn',
   grnId: null,
@@ -349,8 +360,9 @@ export const grn = (id: string, n: number, m: Mrn, over: Partial<Grn> = {}): Grn
   vendorName: m.vendorName,
   invoiceNo: m.invoiceNo ?? 'INV-1',
   purchaseEntryId: null,
-  items: m.items.map((it) => ({ id: `${id}-${it.id}`, mrnItemId: it.id, material: it.material, approxQty: it.approxQty, actualQty: it.approxQty, unit: it.unit, quality: 'ok' as const, qualityRemarks: null })),
+  items: m.items.map((it) => ({ id: `${id}-${it.id}`, mrnItemId: it.id, itemId: it.itemId, itemName: it.itemName, material: it.material, approxQty: it.approxQty, actualQty: it.approxQty, rejectedQty: 0, unit: it.unit, quality: 'ok' as const, qualityRemarks: null })),
   receivedByName: 'Stores Keeper',
+  location: null,
   remarks: null,
   status: 'draft',
   reviewedBy: null,
@@ -800,10 +812,14 @@ export function transportFixtures() {
 /** Work orders on the seeded areas: wo-a Critical and overdue, wo-b in progress, wo-c completed early, wo-d on hold. Today is 2026-10-01. */
 export function maintenanceFixtures() {
   const wo = (id: string, n: number, title: string, o: Partial<WorkOrder>): WorkOrder => ({
-    id, woNo: `WO-26-000${n}`, title, category: 'Mechanical', area: 'Press Shop', priority: 'High', status: 'Open', assignee: 'Raj Kumar', description: null, notes: null, dueDate: '2026-10-05', completedOn: null,
-    timeline: [{ id: `${id}-t1`, type: 'created', text: 'Work order created.', by: null, byName: 'Admin User', at: o.createdAt ?? T0.toISOString() }], ...audit, ...o,
+    id, woNo: `WO-26-000${n}`, title, category: 'Mechanical', area: 'Press Shop', equipment: null, station: null, priority: 'High', status: 'Open', assignee: 'Raj Kumar', description: null, notes: null, dueDate: '2026-10-05', completedOn: null,
+    timeline: [{ id: `${id}-t1`, type: 'created', text: 'Work order created.', by: null, byName: 'Admin User', at: o.createdAt ?? T0.toISOString() }], photos: [], ...audit, ...o,
   });
   return {
+    mtAssignees: [
+      { id: 'mtp-raj', name: 'Raj Kumar', active: true, ...audit },
+      { id: 'mtp-priya', name: 'Priya Nair', active: true, ...audit },
+    ],
     mtWorkOrders: [
       wo('wo-a', 1, 'Hydraulic press oil leak', { category: 'Hydraulic', priority: 'Critical', dueDate: '2026-09-28', createdAt: '2026-09-25T04:00:00.000Z' }),
       wo('wo-b', 2, 'Conveyor bearing noise', { area: 'Assembly Line A', status: 'In Progress', assignee: 'Priya Nair', createdAt: '2026-09-26T04:00:00.000Z' }),

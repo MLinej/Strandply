@@ -8,7 +8,19 @@ import { errorMessage, fieldErrors } from '../samples/ui/errors';
 import { PageHeader } from '../samples/ui/PageHeader';
 
 type Form = Record<keyof CompanySettings, string>;
-const toForm = (c: CompanySettings): Form => ({ name: c.name, llpin: c.llpin ?? '', city: c.city ?? '', phone: c.phone ?? '', gst: c.gst ?? '' });
+const toForm = (c: CompanySettings): Form => ({
+  name: c.name,
+  llpin: c.llpin ?? '',
+  city: c.city ?? '',
+  phone: c.phone ?? '',
+  gst: c.gst ?? '',
+  email: c.email ?? '',
+  pan: c.pan ?? '',
+  stateCode: c.stateCode ?? '',
+  bankName: c.bankName ?? '',
+  bankAccountNo: c.bankAccountNo ?? '',
+  bankIfsc: c.bankIfsc ?? '',
+});
 
 /** Company details printed on slips, labels and reports, and used in WhatsApp messages (legacy saveCompanySettings). */
 export function CompanySettingsPage() {
@@ -54,8 +66,15 @@ export function CompanySettingsPage() {
             <Input label="Company name" value={f.name} onChange={(e) => set('name')(e.target.value)} error={errors.name} disabled={!canEdit} containerClassName="sm:col-span-2" />
             <Input label="LLPIN / CIN" value={f.llpin} onChange={(e) => set('llpin')(e.target.value)} error={errors.llpin} disabled={!canEdit} />
             <Input label="GSTIN" placeholder="24ABCDE1234F1Z5" autoCapitalize="characters" value={f.gst} onChange={(e) => set('gst')(e.target.value.toUpperCase())} error={errors.gst} disabled={!canEdit} />
-            <Input label="City / State" placeholder="Wankaner, Morbi, Gujarat" value={f.city} onChange={(e) => set('city')(e.target.value)} error={errors.city} disabled={!canEdit} />
+            <Input label="PAN" autoCapitalize="characters" value={f.pan} onChange={(e) => set('pan')(e.target.value.toUpperCase())} error={errors.pan} disabled={!canEdit} />
+            <Input label="GST state code" placeholder="24" inputMode="numeric" maxLength={2} value={f.stateCode} onChange={(e) => set('stateCode')(e.target.value.replace(/\D/g, ''))} error={errors.stateCode} disabled={!canEdit} hint="Taken from the GSTIN when blank" />
+            <Input label="Address" placeholder="Survey No. 112, Lakhdhirpur Road, Morbi, Gujarat 363642" value={f.city} onChange={(e) => set('city')(e.target.value)} error={errors.city} disabled={!canEdit} containerClassName="sm:col-span-2" />
             <Input label="Phone" value={f.phone} onChange={(e) => set('phone')(e.target.value)} error={errors.phone} disabled={!canEdit} />
+            <Input label="E-mail" type="email" placeholder="accounts@strandply.in" value={f.email} onChange={(e) => set('email')(e.target.value)} error={errors.email} disabled={!canEdit} />
+            <p className="mt-2 border-b border-divider pb-1 text-label font-semibold uppercase tracking-label text-primary sm:col-span-2">Bank details (printed on tax invoices)</p>
+            <Input label="Bank name" value={f.bankName} onChange={(e) => set('bankName')(e.target.value)} error={errors.bankName} disabled={!canEdit} containerClassName="sm:col-span-2" />
+            <Input label="Account number" inputMode="numeric" value={f.bankAccountNo} onChange={(e) => set('bankAccountNo')(e.target.value.replace(/\s/g, ''))} error={errors.bankAccountNo} disabled={!canEdit} />
+            <Input label="IFSC" maxLength={11} value={f.bankIfsc} onChange={(e) => set('bankIfsc')(e.target.value.toUpperCase())} error={errors.bankIfsc} disabled={!canEdit} />
             {canEdit && (
               <div className="flex justify-end gap-2 sm:col-span-2">
                 {changed.length > 0 && (

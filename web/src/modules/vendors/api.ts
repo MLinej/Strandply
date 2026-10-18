@@ -14,6 +14,7 @@ import type {
   VendorCategoryInput,
   VendorCategoryView,
   VendorCreateStatus,
+  VendorDocType,
   VendorEmailSettings,
   VendorFilters,
   VendorImportKind,
@@ -167,6 +168,30 @@ export interface VendorPrintPayload {
 
 export const fetchVendorPrint = (id?: string, query?: Omit<VendorQuery, 'page' | 'pageSize'>) =>
   api<VendorPrintPayload>(id ? `${VN}/${id}/print` : `${VN}/print`, { query });
+
+export function useNextVendorCode(enabled: boolean) {
+  return useQuery({ queryKey: [...vnKeys.vendors, 'next-code'], queryFn: ({ signal }) => api<{ code: string }>(`${VN}/next-code`, { signal }), enabled, staleTime: 0 });
+}
+
+export function useUploadVendorDocuments() {
+  const invalidate = useInvalidate(vnKeys.vendors);
+  return useMutation({
+    mutationFn: ({ id, type, files }: { id: string; type: VendorDocType; files: File[] }) => {
+      const form = new FormData();
+      form.append('type', type);
+      for (const f of files) form.append('file', f);
+      return api<VendorView>(`${VN}/${id}/documents`, { method: 'POST', form });
+    },
+    onSuccess: invalidate,
+  });
+}
+
+export function useRemoveVendorDocument() {
+  const invalidate = useInvalidate(vnKeys.vendors);
+  return useMutation({ mutationFn: ({ id, docId }: { id: string; docId: string }) => api<VendorView>(`${VN}/${id}/documents/${docId}`, { method: 'DELETE' }), onSuccess: invalidate });
+}
+
+export const vendorDocumentUrl = (vendorId: string, docId: string) => `/api${VN}/${vendorId}/documents/${docId}`;
 
 export const lookupPincode = (pincode: string) => api<PincodeMatch>(`/sampletrack/cities/pincode/${pincode}`);
 

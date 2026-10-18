@@ -1,4 +1,5 @@
-import { isOverdue, type MtArea, type MtStatus, type TimelineEntry, type WorkOrder, type WorkOrderFilters } from '../../contracts/maintenance';
+import { isOverdue, MAX_WO_PHOTO_BYTES, MAX_WO_PHOTOS, type MtArea, type MtAssignee, type MtStatus, type TimelineEntry, type WoPhoto, type WorkOrder, type WorkOrderFilters } from '../../contracts/maintenance';
+import type { BlobStore, StoredBlob } from '../../lib/blob-store';
 import { fyOf } from '../../contracts/purchase';
 import { isoNow, type Clock } from '../../lib/clock';
 import { businessToday } from '../../lib/dates';
@@ -11,7 +12,19 @@ import type { Actor } from '../sampletrack/actor';
 /* eslint-disable @typescript-eslint/no-explicit-any -- inputs are validated by zod at the route */
 type Input = Record<string, any>;
 
-const LABEL: Record<string, string> = { title: 'title', category: 'category', area: 'area', priority: 'priority', dueDate: 'due date', description: 'description', notes: 'notes' };
+const LABEL: Record<string, string> = { title: 'title', category: 'category', area: 'area', equipment: 'equipment', station: 'station', priority: 'priority', dueDate: 'due date', description: 'description', notes: 'notes' };
+
+const photoKey = (woId: string, photoId: string) => `maintenance/${woId}/${photoId}`;
+
+/** Checks the first bytes, so a renamed file can't pass as a photo. */
+function photoMime(f: { name: string; bytes: Uint8Array }): string | null {
+  const b = f.bytes;
+  const ext = /\.([a-z0-9]+)$/i.exec(f.name)?.[1]?.toLowerCase() ?? '';
+  if (b[0] === 0xff && b[1] === 0xd8 && ['jpg', 'jpeg'].includes(ext)) return 'image/jpeg';
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 && ext === 'png') return 'image/png';
+  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && ext === 'webp') return 'image/webp';
+  return null;
+}
 
 /** Plant areas and work orders with their timeline (legacy Maintenance Work Tracker). */
 export class WorkOrderService {
@@ -19,6 +32,7 @@ export class WorkOrderService {
     private readonly data: DataLayer,
     private readonly activity: ActivityService,
     private readonly clock: Clock,
+    private readonly blobs: BlobStore,
   ) {}
 
   private today = () => businessToday(this.clock);
@@ -59,6 +73,88 @@ export class WorkOrderService {
     });
   }
 
+  // ── Assignees (the "Assigned to" master) ──────────────────────────
+
+  async assignees(): Promise<MtAssignee[]> {
+    return (await this.data.repos.mtAssignees.listAll()).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /** Renaming someone renames them on their work orders (they store the name). */
+  async saveAssignee(actor: Actor, id: string | null, input: Input): Promise<MtAssignee> {
+    return this.data.uow.run(async (tx) => {
+      const at = isoNow(this.clock);
+      const before = id ? await tx.mtAssignees.getById(id) : null;
+      if (id && !before) throw notFound('Assignee');
+      const fields = { name: (input.name ?? before!.name).replace(/\s+/g, ' '), active: input.active ?? before?.active ?? true };
+      const a = await (before ? tx.mtAssignees.update(before.id, { ...fields, updatedAt: at }) : tx.mtAssignees.create({ id: newId(), ...fields, createdBy: actor.id, createdAt: at, updatedAt: at })).catch((err) => {
+        if (err instanceof UniqueViolationError) throw conflict('duplicate', `${fields.name} is already in the list`);
+        throw err;
+      });
+      if (before && before.name !== a!.name)
+        for (const w of (await tx.mtWorkOrders.listAll()).filter((x) => x.assignee === before.name)) await tx.mtWorkOrders.update(w.id, { assignee: a!.name, updatedAt: at });
+      await this.activity.record(tx, actor, { action: before ? 'Edit' : 'Create', entityType: 'maintenance_assignee', entityId: a!.id, details: before && before.name !== a!.name ? `Assignee ${before.name} renamed to ${a!.name}` : `Assignee ${a!.name}${a!.active ? '' : ' (inactive)'}` });
+      return a!;
+    });
+  }
+
+  /** Work orders keep the name they were assigned to. */
+  async removeAssignee(actor: Actor, id: string) {
+    await this.data.uow.run(async (tx) => {
+      const a = await tx.mtAssignees.getById(id);
+      if (!a) throw notFound('Assignee');
+      await tx.mtAssignees.softDelete(id, isoNow(this.clock));
+      await this.activity.record(tx, actor, { action: 'Delete', entityType: 'maintenance_assignee', entityId: id, details: `Removed assignee ${a.name}` });
+    });
+  }
+
+  // ── Photos ────────────────────────────────────────────────────────
+
+  /** JPG, PNG or WebP photos of the fault or the repair (taken with the phone camera or picked). */
+  async addPhotos(actor: Actor, id: string, files: { name: string; bytes: Uint8Array }[]): Promise<WorkOrder> {
+    if (!files.length) throw validationFailed('Attach at least one photo');
+    const before = await this.get(id);
+    if ((before.photos ?? []).length + files.length > MAX_WO_PHOTOS) throw validationFailed(`Up to ${MAX_WO_PHOTOS} photos per work order (${(before.photos ?? []).length} attached)`);
+    const at = isoNow(this.clock);
+    const photos: WoPhoto[] = files.map((f) => {
+      const mime = photoMime(f);
+      if (!mime) throw validationFailed(`${f.name}: attach a JPG, PNG or WebP photo`);
+      if (f.bytes.length > MAX_WO_PHOTO_BYTES) throw validationFailed(`${f.name}: photos can be up to ${MAX_WO_PHOTO_BYTES / 1024 / 1024} MB`);
+      return { id: newId(), name: f.name.replace(/[\\/]/g, '_').slice(0, 200), mime, sizeBytes: f.bytes.length, uploadedAt: at, uploadedBy: actor.id, uploadedByName: actor.name };
+    });
+    for (let i = 0; i < photos.length; i++) await this.blobs.put(photoKey(id, photos[i]!.id), files[i]!.bytes, photos[i]!.mime);
+    try {
+      return await this.data.uow.run(async (tx) => {
+        const cur = (await tx.mtWorkOrders.getById(id))!;
+        const w = (await tx.mtWorkOrders.update(id, { photos: [...(cur.photos ?? []), ...photos], timeline: [...cur.timeline, this.entry(actor, 'note', `${photos.length} photo${photos.length === 1 ? '' : 's'} attached.`, at)], updatedAt: at }))!;
+        await this.activity.record(tx, actor, { action: 'Edit', entityType: 'maintenance_work_order', entityId: id, details: `${w.woNo}: ${photos.length} photo(s) attached` });
+        return w;
+      });
+    } catch (err) {
+      for (const p of photos) await this.blobs.delete(photoKey(id, p.id));
+      throw err;
+    }
+  }
+
+  async removePhoto(actor: Actor, id: string, photoId: string): Promise<WorkOrder> {
+    const w = await this.data.uow.run(async (tx) => {
+      const cur = await tx.mtWorkOrders.getById(id);
+      const p = cur?.photos?.find((x) => x.id === photoId);
+      if (!cur || !p) throw notFound('Photo');
+      const u = (await tx.mtWorkOrders.update(id, { photos: cur.photos.filter((x) => x.id !== photoId), updatedAt: isoNow(this.clock) }))!;
+      await this.activity.record(tx, actor, { action: 'Edit', entityType: 'maintenance_work_order', entityId: id, details: `${u.woNo}: removed photo ${p.name}` });
+      return u;
+    });
+    await this.blobs.delete(photoKey(id, photoId));
+    return w;
+  }
+
+  async photoFile(id: string, photoId: string): Promise<{ photo: WoPhoto; blob: StoredBlob }> {
+    const photo = (await this.data.repos.mtWorkOrders.getById(id))?.photos?.find((x) => x.id === photoId);
+    const blob = photo ? await this.blobs.get(photoKey(id, photoId)) : null;
+    if (!photo || !blob) throw notFound('Photo');
+    return { photo, blob };
+  }
+
   // ── Work orders ───────────────────────────────────────────────────
 
   list(query: ListQuery<Partial<WorkOrderFilters> & { overdue?: boolean }>) {
@@ -95,6 +191,8 @@ export class WorkOrderService {
         title: input.title,
         category: input.category,
         area: input.area,
+        equipment: input.equipment ?? null,
+        station: input.station ?? null,
         priority: input.priority,
         status,
         assignee: input.assignee,
@@ -103,6 +201,7 @@ export class WorkOrderService {
         dueDate: input.dueDate,
         completedOn: status === 'Completed' ? today : null,
         timeline,
+        photos: [],
         createdBy: actor.id,
         createdAt: at,
         updatedAt: at,
@@ -129,6 +228,8 @@ export class WorkOrderService {
       const w = (await tx.mtWorkOrders.update(id, {
         title: next.title,
         category: next.category,
+        equipment: next.equipment ?? null,
+        station: next.station ?? null,
         area: next.area,
         priority: next.priority,
         status: next.status,

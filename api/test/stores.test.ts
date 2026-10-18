@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { worstQuality } from '../src/contracts/stores';
+import { materialForProduct, worstQuality } from '../src/contracts/stores';
 import { buildSeed } from '../src/seed';
 import { upgradeSnapshot } from '../src/seed/upgrades';
 import { makeTestApp, T0 } from './helpers';
@@ -112,10 +112,10 @@ describe('GRN (receiving)', () => {
     expect(await (await call('GET', '/grns/invoice-link?invoiceNo=inv-pe-1')).json()).toMatchObject({ match: { entryId: 'pe-1', lotNo: 'N01' } });
   });
 
-  it('checks the lines: unlisted items need a material; lines must belong to the MRN and appear once', async () => {
+  it('checks the lines: unlisted items need a product; lines must belong to the MRN and appear once', async () => {
     const { call } = await admin();
     const extra = await call('POST', '/grns', receiveOpen({ items: [{ mrnItemId: null, actualQty: 10, unit: 'Nos', quality: 'excess' }] }));
-    expect(await paths(extra)).toEqual(['items.0.material']);
+    expect(await paths(extra)).toEqual(['items.0.itemId']);
     const foreign = await call('POST', '/grns', receiveOpen({ items: [{ mrnItemId: 'mrn-draft-1', actualQty: 10, unit: 'Kg', quality: 'ok' }] }));
     expect(await paths(foreign)).toEqual(['items.0.mrnItemId']);
     const twice = await call('POST', '/grns', receiveOpen({ items: [1, 2].map(() => ({ mrnItemId: 'mrn-open-1', actualQty: 10, unit: 'Kg', quality: 'ok' })) }));
@@ -153,6 +153,25 @@ describe('GRN (receiving)', () => {
     const { call } = await admin();
     expect((await call('DELETE', '/grns/grn-rev')).status).toBe(204);
     expect(await (await call('GET', '/mrns/mrn-rev')).json()).toMatchObject({ status: 'pending_grn', grnId: null, grnNo: null });
+  });
+});
+
+describe('product lines (Oct 2026)', () => {
+  it('MRN and GRN lines name a product from the product master; its material group follows', async () => {
+    const { call } = await admin();
+    const products = await (await call('GET', '/products')).json();
+    const resin = products.find((p: { name: string }) => /resin/i.test(p.name));
+    const m = await (await call('POST', '/mrns', { ...gate, items: [{ itemId: resin.id, approxQty: 500, unit: 'Kg' }] })).json();
+    expect(m.items[0]).toMatchObject({ itemId: resin.id, itemName: resin.name, material: 'resin' });
+    expect(await paths(await call('POST', '/mrns', { ...gate, items: [{ approxQty: 1, unit: 'Kg' }] }))).toEqual(['items.0.itemId']);
+    expect(await paths(await call('POST', '/mrns', { ...gate, items: [{ itemId: 'nope', approxQty: 1, unit: 'Kg' }] }))).toEqual(['items.0.itemId']);
+    // Receiving takes the product from the MRN line.
+    const g = await (await call('POST', '/grns', { mrnId: m.id, invoiceNo: 'R/1', receivedByName: 'Stores', items: [{ mrnItemId: m.items[0].id, actualQty: 500, unit: 'Kg', quality: 'ok' }] })).json();
+    expect(g.items[0]).toMatchObject({ itemId: resin.id, itemName: resin.name, material: 'resin' });
+  });
+
+  it('material groups from product names', () => {
+    expect([['Nilgiri Logs', ''], ['MDI Resin', ''], ['Kraft Paper 50 GSM', ''], ['Core Veneer 1.5 mm', ''], ['Face Veneer Gurjan', ''], ['Fire Wood', ''], ['Stretch Film', 'Packaging']].map(([n, c]) => materialForProduct(n!, c))).toEqual(['nilgiri', 'resin', 'kraft', 'core', 'face', 'firewood', 'other']);
   });
 });
 

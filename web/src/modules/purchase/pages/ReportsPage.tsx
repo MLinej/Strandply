@@ -203,7 +203,7 @@ export function ReportsPage() {
                 <KpiTile variant="compact" label="Consumed of purchased" value={r.nilgiriYield.consumedPct === null ? '—' : `${r.nilgiriYield.consumedPct}%`} />
                 <KpiTile variant="compact" label="Not yet consumed" value={qtyWithUnit('nilgiri', Math.max(0, r.nilgiriYield.purchasedQty - r.nilgiriYield.consumedQty), { tons: true })} />
               </div>
-              <Table head={['Material', 'Species', 'Purchased', '', 'Consumed', 'Consumed %']} minWidth={640}>
+              <Table head={['Material', 'Product', 'Purchased', '', 'Consumed', 'Consumed %']} minWidth={640}>
                 {r.nilgiriYield.byspecies.map((s) => (
                   <tr key={s.species} className="border-b border-divider">
                     <td className={tdl}>Nilgiri Wood</td>

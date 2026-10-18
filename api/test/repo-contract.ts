@@ -767,7 +767,7 @@ export function runVendorRepoContract(name: string, make: DataLayerFactory) {
   const vendor = (id: string, over: Partial<Vendor> = {}): Omit<Vendor, 'deletedAt'> => ({
     id, code: id.toUpperCase(), name: `Vendor ${id}`, type: null, yearEstablished: null, categoryIds: [], productIds: [],
     contact: null, designation: null, phone: null, email: null, address: null, pincode: null, city: null, state: null,
-    website: null, gst: null, pan: null, msme: null, paymentTerms: null, bank: null, accountNo: null, ifsc: null, rating: null,
+    website: null, gst: null, pan: null, msme: null, paymentTerms: null, bank: null, branch: null, accountNo: null, ifsc: null, documents: [], rating: null,
     notes: null, status: 'pending', submittedAt: null, approvedAt: null, approvedBy: null, activatedAt: null, activatedBy: null,
     blacklistReason: null, blacklistedAt: null, blacklistedBy: null, ...audit, ...over,
   });
@@ -855,7 +855,7 @@ export function runPurchaseRepoContract(name: string, make: DataLayerFactory) {
     it('orders: PO number unique ignoring case; listAll newest first by material', async () => {
       const { repos } = await make();
       const po = (id: string, poNo: string, date: string, material: PurchaseOrder['material'] = 'nilgiri'): Omit<PurchaseOrder, 'deletedAt'> => ({
-        id, poNo, date, material, vendorId: null, vendorName: 'V', qty: 1, ratePaise: 1, remarks: null, tncIds: [], status: 'pending', approvedBy: null, approvedAt: null, ...audit,
+        id, poNo, date, material, vendorId: null, vendorName: 'V', qty: 1, ratePaise: 1, lines: [], taxType: 'SG+CG', gstPct: 18, freightPaise: 0, paymentTerms: null, deliveryTerms: null, deliveryDate: null, quotationRef: null, reviewedBy: null, reviewedAt: null, remarks: null, tncIds: [], status: 'pending', approvedBy: null, approvedAt: null, ...audit,
       });
       await repos.purchaseOrders.create(po('p1', 'PO-1', '2026-04-01'));
       await repos.purchaseOrders.create(po('p2', 'PO-2', '2026-05-01'));
@@ -910,7 +910,7 @@ export function runStoresRepoContract(name: string, make: DataLayerFactory) {
   describe(`repo contract (stores): ${name}`, () => {
     it('MRNs: number unique ignoring case; material / status / date / FY filters; pending oldest first; per-day count', async () => {
       const { repos } = await make();
-      await repos.mrns.create(row(mrn('a', 1, { date: '2026-03-30', createdAt: at(0), items: [{ id: 'a1', material: 'kraft', approxQty: 1, unit: 'Nos', packages: null, remarks: null }] })));
+      await repos.mrns.create(row(mrn('a', 1, { date: '2026-03-30', createdAt: at(0), items: [{ id: 'a1', itemId: null, itemName: null, material: 'kraft', approxQty: 1, challanQty: null, unit: 'Nos', packages: null, condition: null, remarks: null }] })));
       await repos.mrns.create(row(mrn('b', 2, { date: '2026-04-02', time: '09:00', createdAt: at(1) })));
       await repos.mrns.create(row(mrn('c', 3, { date: '2026-04-01', status: 'grn_created', createdAt: at(2) })));
       await expect(repos.mrns.create(row(mrn('d', 1)))).rejects.toBeInstanceOf(UniqueViolationError);

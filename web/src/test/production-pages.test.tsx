@@ -45,6 +45,8 @@ const hp = (state: WfState): HotPressView => ({
   createdByName: null,
   calc: calcHotPress(charges),
   cuttingNo: null,
+  summaryId: null,
+  summaryNo: null,
 });
 const weights = [42.1, 41.2, 43.5].map((weight, i) => ({ n: i + 1, weight, at: audit.createdAt }));
 const batch: MattBatchView = {

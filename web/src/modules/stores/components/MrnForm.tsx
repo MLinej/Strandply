@@ -1,17 +1,16 @@
 import { Plus, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
-import { STORE_MATERIALS, STORE_UNITS, type MrnView, type StoreMaterial, type StoreUnit } from '@contracts/stores';
+import { GATE_CONDITIONS, STORE_UNITS, type GateCondition, type MrnView, type StoreMaterial, type StoreUnit } from '@contracts/stores';
 import { useSession } from '@/app/session';
-import { Button, Input, Modal, Select, Textarea, useToast } from '@/components/ui';
+import { Button, Combo, Input, Modal, Select, Textarea, useToast } from '@/components/ui';
 import { errorMessage, fieldErrors } from '../../samples/ui/errors';
 import { useDebounced } from '../../samples/ui/list-state';
-import { useSaveMrn, useStoresMeta, useStoresVendors } from '../api';
+import { useSaveMrn, useStoresMeta, useStoresProducts, useStoresVendors } from '../api';
 import { printMrn } from '../print';
+import { productComboOptions, storeUnitFor } from '../ui';
 
-/** The unit Security most likely means for a material. */
-const DEFAULT_UNIT: Record<StoreMaterial, StoreUnit> = { nilgiri: 'Kg', resin: 'Kg', firewood: 'Kg', kraft: 'Nos', core: 'Nos', face: 'Sheets', other: 'Nos' };
-
-type Line = { key: string; id: string | null; material: StoreMaterial | ''; approxQty: string; unit: StoreUnit; packages: string; remarks: string };
+/** A line names a product; `material` is kept only for lines saved before products were picked. */
+type Line = { key: string; id: string | null; itemId: string | null; material: StoreMaterial | null; approxQty: string; challanQty: string; unit: StoreUnit; packages: string; condition: GateCondition | ''; remarks: string };
 type Form = {
   date: string;
   time: string;
@@ -22,15 +21,21 @@ type Form = {
   vendorId: string | null;
   vendorName: string;
   invoiceNo: string;
+  challanDate: string;
+  poNo: string;
+  timeOut: string;
+  transporter: string;
+  lrNo: string;
+  ewayBill: string;
   remarks: string;
   lines: Line[];
 };
 
 let seq = 0;
-const line = (over: Partial<Line> = {}): Line => ({ key: `l${++seq}`, id: null, material: '', approxQty: '', unit: 'Kg', packages: '', remarks: '', ...over });
+const line = (over: Partial<Line> = {}): Line => ({ key: `l${++seq}`, id: null, itemId: null, material: null, approxQty: '', challanQty: '', unit: 'Kg', packages: '', condition: '', remarks: '', ...over });
 
 function fromMrn(m: MrnView | null, today: string, now: string): Form {
-  if (!m) return { date: today, time: now, vehicleNo: '', securityName: '', driverName: '', driverPhone: '', vendorId: null, vendorName: '', invoiceNo: '', remarks: '', lines: [line()] };
+  if (!m) return { date: today, time: now, vehicleNo: '', securityName: '', driverName: '', driverPhone: '', vendorId: null, vendorName: '', invoiceNo: '', challanDate: '', poNo: '', timeOut: '', transporter: '', lrNo: '', ewayBill: '', remarks: '', lines: [line()] };
   return {
     date: m.date,
     time: m.time,
@@ -41,8 +46,14 @@ function fromMrn(m: MrnView | null, today: string, now: string): Form {
     vendorId: m.vendorId,
     vendorName: m.vendorName,
     invoiceNo: m.invoiceNo ?? '',
+    challanDate: m.challanDate ?? '',
+    poNo: m.poNo ?? '',
+    timeOut: m.timeOut ?? '',
+    transporter: m.transporter ?? '',
+    lrNo: m.lrNo ?? '',
+    ewayBill: m.ewayBill ?? '',
     remarks: m.remarks ?? '',
-    lines: m.items.map((it) => line({ id: it.id, material: it.material, approxQty: String(it.approxQty), unit: it.unit, packages: it.packages ?? '', remarks: it.remarks ?? '' })),
+    lines: m.items.map((it) => line({ id: it.id, itemId: it.itemId, material: it.itemId ? null : it.material, approxQty: String(it.approxQty), challanQty: it.challanQty === null ? '' : String(it.challanQty), unit: it.unit, packages: it.packages ?? '', condition: it.condition ?? '', remarks: it.remarks ?? '' })),
   };
 }
 
@@ -56,6 +67,8 @@ export function MrnForm({ open, mrn, onClose }: { open: boolean; mrn: MrnView | 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const vendors = useStoresVendors(useDebounced(f.vendorName.trim()), { enabled: open }).data ?? [];
   const auto = meta?.settings.autoPunchMrn ?? true;
+  const products = useStoresProducts({ enabled: open }).data ?? [];
+  const productOptions = productComboOptions(products, f.lines);
 
   useEffect(() => {
     if (!open) return;
@@ -81,12 +94,12 @@ export function MrnForm({ open, mrn, onClose }: { open: boolean; mrn: MrnView | 
     if (!f.vehicleNo.trim()) local.vehicleNo = 'Vehicle number is required';
     if (!f.securityName.trim()) local.securityName = 'Security guard name is required';
     if (!f.vendorName.trim()) local.vendorName = 'Vendor is required';
-    const lines = f.lines.filter((l) => l.material || l.approxQty);
-    if (!lines.length) local.items = 'Add at least one material';
+    const lines = f.lines.filter((l) => l.itemId || l.material || l.approxQty);
+    if (!lines.length) local.items = 'Add at least one product';
     lines.forEach((l) => {
       const i = f.lines.indexOf(l);
-      if (!l.material) local[`items.${i}.material`] = 'Pick a material';
-      if (!(Number(l.approxQty) > 0)) local[`items.${i}.approxQty`] = 'Enter the approx quantity';
+      if (!l.itemId && !l.material) local[`items.${i}.itemId`] = 'Pick a product';
+      if (!(Number(l.approxQty) > 0)) local[`items.${i}.approxQty`] = 'Enter the quantity counted at the gate';
     });
     if (Object.keys(local).length) return setErrors(local);
     try {
@@ -101,8 +114,14 @@ export function MrnForm({ open, mrn, onClose }: { open: boolean; mrn: MrnView | 
           vendorId: f.vendorId,
           vendorName: f.vendorName.trim(),
           invoiceNo: f.invoiceNo.trim() || null,
+          challanDate: f.challanDate || null,
+          poNo: f.poNo.trim() || null,
+          timeOut: f.timeOut || null,
+          transporter: f.transporter.trim() || null,
+          lrNo: f.lrNo.trim() || null,
+          ewayBill: f.ewayBill.trim() || null,
           remarks: f.remarks.trim() || null,
-          items: lines.map((l) => ({ id: l.id, material: l.material as StoreMaterial, approxQty: Number(l.approxQty), unit: l.unit, packages: l.packages.trim() || null, remarks: l.remarks.trim() || null })),
+          items: lines.map((l) => ({ id: l.id, ...(l.itemId ? { itemId: l.itemId } : { material: l.material! }), approxQty: Number(l.approxQty), challanQty: l.challanQty === '' ? null : Number(l.challanQty), unit: l.unit, packages: l.packages.trim() || null, condition: l.condition || null, remarks: l.remarks.trim() || null })),
         },
       });
       toast({ tone: 'success', title: mrn ? `${saved.mrnNo} updated` : `${saved.mrnNo} saved`, description: mrn ? undefined : `${saved.items.length} item(s). Stores can now make the GRN.` });
@@ -121,7 +140,7 @@ export function MrnForm({ open, mrn, onClose }: { open: boolean; mrn: MrnView | 
       size="lg"
       closeOnBackdrop={false}
       title={mrn ? `Edit ${mrn.mrnNo}` : 'New gate entry (MRN)'}
-      description={mrn ? undefined : meta ? `Next number ${meta.nextMrnNo}. One row per material on the vehicle.` : undefined}
+      description={mrn ? undefined : meta ? `Next number ${meta.nextMrnNo}. One row per product on the vehicle.` : undefined}
       footer={
         <>
           <Button onClick={onClose}>Cancel</Button>
@@ -167,10 +186,16 @@ export function MrnForm({ open, mrn, onClose }: { open: boolean; mrn: MrnView | 
             </datalist>
           </div>
           <Input label="Invoice / challan no." placeholder="If the driver has it" value={f.invoiceNo} onChange={(e) => set('invoiceNo')(e.target.value)} />
+          <Input label="Challan date" type="date" value={f.challanDate} onChange={(e) => set('challanDate')(e.target.value)} error={errors.challanDate} />
+          <Input label="Purchase order" placeholder="PO no. on the challan" value={f.poNo} onChange={(e) => set('poNo')(e.target.value.toUpperCase())} />
+          <Input label="Time out" type="time" value={f.timeOut} onChange={(e) => set('timeOut')(e.target.value)} error={errors.timeOut} hint="When the vehicle leaves" />
+          <Input label="Transporter" value={f.transporter} onChange={(e) => set('transporter')(e.target.value)} />
+          <Input label="LR no." value={f.lrNo} onChange={(e) => set('lrNo')(e.target.value)} />
+          <Input label="E-way bill" inputMode="numeric" value={f.ewayBill} onChange={(e) => set('ewayBill')(e.target.value)} error={errors.ewayBill} />
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-label font-semibold uppercase tracking-label text-faint">Materials on this vehicle</legend>
+          <legend className="mb-2 text-label font-semibold uppercase tracking-label text-faint">Products on this vehicle</legend>
           {errors.items && <p className="text-sm text-primary">{errors.items}</p>}
           {f.lines.map((l, i) => (
             <div key={l.key} className="flex flex-col gap-2 rounded border border-border p-3">
@@ -185,23 +210,27 @@ export function MrnForm({ open, mrn, onClose }: { open: boolean; mrn: MrnView | 
                   onClick={() => setF((x) => ({ ...x, lines: x.lines.filter((y) => y.key !== l.key) }))}
                 />
               </div>
-              <div className="grid gap-2 sm:grid-cols-[1.4fr_1fr_0.8fr] [&>*]:min-w-0">
-                <Select
-                  label="Material"
-                  placeholder="Select"
-                  options={STORE_MATERIALS.map((m) => ({ value: m.id, label: m.label }))}
-                  value={l.material}
-                  onChange={(e) => {
-                    const m = e.target.value as StoreMaterial;
-                    setLine(l.key, { material: m, unit: m ? DEFAULT_UNIT[m] : l.unit }, `items.${i}.material`);
+              <div className="grid gap-2 sm:grid-cols-[1.6fr_0.9fr_0.9fr_0.8fr] [&>*]:min-w-0">
+                <Combo
+                  label="Product"
+                  ariaLabel={`Product, item ${i + 1}`}
+                  placeholder="Search the product master"
+                  options={productOptions}
+                  value={l.itemId ?? (l.material ? `mat:${l.material}` : null)}
+                  onChange={(id) => {
+                    if (id?.startsWith('mat:')) return;
+                    const p = products.find((x) => x.id === id);
+                    setLine(l.key, { itemId: id, material: null, unit: p ? storeUnitFor(p.unit) : l.unit }, `items.${i}.itemId`);
                   }}
-                  error={errors[`items.${i}.material`]}
+                  error={errors[`items.${i}.itemId`]}
                 />
-                <Input label="Approx qty" inputMode="decimal" value={l.approxQty} onChange={(e) => setLine(l.key, { approxQty: e.target.value }, `items.${i}.approxQty`)} error={errors[`items.${i}.approxQty`]} />
+                <Input label="Challan qty" aria-label={`Challan quantity, item ${i + 1}`} inputMode="decimal" value={l.challanQty} onChange={(e) => setLine(l.key, { challanQty: e.target.value }, `items.${i}.challanQty`)} error={errors[`items.${i}.challanQty`]} />
+                <Input label="Counted at gate" inputMode="decimal" value={l.approxQty} onChange={(e) => setLine(l.key, { approxQty: e.target.value }, `items.${i}.approxQty`)} error={errors[`items.${i}.approxQty`]} />
                 <Select label="Unit" options={STORE_UNITS.map((u) => ({ value: u, label: u }))} value={l.unit} onChange={(e) => setLine(l.key, { unit: e.target.value as StoreUnit })} />
               </div>
-              <div className="grid gap-2 sm:grid-cols-[1fr_2fr] [&>*]:min-w-0">
+              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_2fr] [&>*]:min-w-0">
                 <Input label="Packages" placeholder="e.g. 2 drums" value={l.packages} onChange={(e) => setLine(l.key, { packages: e.target.value })} />
+                <Select label="Condition" placeholder="—" options={GATE_CONDITIONS.map((c) => ({ value: c, label: c }))} value={l.condition} onChange={(e) => setLine(l.key, { condition: e.target.value as GateCondition | '' })} />
                 <Input label="Item remarks" value={l.remarks} onChange={(e) => setLine(l.key, { remarks: e.target.value })} />
               </div>
             </div>

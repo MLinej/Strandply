@@ -35,6 +35,15 @@ export function maintenanceRoutes(): SecureRouter {
     return c.body(null, 204);
   });
 
+  // ── Assignees ("Assigned to" master): anyone raising work orders may add a name ──
+  r.get('/assignees', policy.anyPage(ALL), async (c) => c.json(await s(c).workOrders.assignees()));
+  r.post('/assignees', policy.anyPage(['maintenance_masters', 'maintenance_orders'], 'edit'), async (c) => c.json(await s(c).workOrders.saveAssignee(actor(c), null, await parseJson(c, v.assigneeCreateBody)), 201));
+  r.patch('/assignees/:id', policy.page('maintenance_masters', 'edit'), async (c) => c.json(await s(c).workOrders.saveAssignee(actor(c), idParam(c), await parseJson(c, v.assigneeUpdateBody))));
+  r.delete('/assignees/:id', policy.page('maintenance_masters', 'delete'), async (c) => {
+    await s(c).workOrders.removeAssignee(actor(c), idParam(c));
+    return c.body(null, 204);
+  });
+
   // ── Work orders ────────────────────────────────────────────────────
   const listQuery = z.object({
     ...paging,
@@ -61,6 +70,24 @@ export function maintenanceRoutes(): SecureRouter {
     return c.json(await s(c).workOrders.setStatus(actor(c), idParam(c), b.status, b.note));
   });
   r.post('/work-orders/:id/notes', policy.page('maintenance_orders', 'edit'), async (c) => c.json(await s(c).workOrders.addNote(actor(c), idParam(c), (await parseJson(c, v.noteBody)).text)));
+  // multipart/form-data: file (repeatable photos).
+  r.post('/work-orders/:id/photos', policy.page('maintenance_orders', 'edit'), async (c) => {
+    const form = await c.req.parseBody({ all: true }).catch(() => ({}) as Record<string, unknown>);
+    const raw = form['file'];
+    const list = (Array.isArray(raw) ? raw : raw ? [raw] : []).filter((f): f is File => f instanceof File);
+    const files = await Promise.all(list.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })));
+    return c.json(await s(c).workOrders.addPhotos(actor(c), idParam(c), files));
+  });
+  r.delete('/work-orders/:id/photos/:photoId', policy.page('maintenance_orders', 'edit'), async (c) => c.json(await s(c).workOrders.removePhoto(actor(c), idParam(c), c.req.param('photoId'))));
+  r.get('/work-orders/:id/photos/:photoId', policy.anyPage(READ), async (c) => {
+    const { photo, blob } = await s(c).workOrders.photoFile(idParam(c), c.req.param('photoId'));
+    return c.body(blob.bytes as Uint8Array<ArrayBuffer>, 200, {
+      'Content-Type': blob.mime,
+      'Content-Disposition': `inline; filename="${photo.name.replace(/[^\x20-\x7e]/g, '_').replace(/"/g, '')}"`,
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'private, max-age=3600',
+    });
+  });
   r.delete('/work-orders/:id', policy.page('maintenance_orders', 'delete'), async (c) => {
     await s(c).workOrders.remove(actor(c), idParam(c));
     return c.body(null, 204);

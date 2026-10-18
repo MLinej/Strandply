@@ -1,17 +1,29 @@
 import { clsx } from 'clsx';
-import { Check, Search, X } from 'lucide-react';
+import { Check, FileUp, Search, X } from 'lucide-react';
 import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
-import { PAYMENT_TERMS, VENDOR_TYPES, type VendorCreateStatus, type VendorInput, type VendorView } from '@contracts/vendors';
+import { MAX_VENDOR_DOC_BYTES, PAYMENT_TERMS, VENDOR_DOC_TYPES, VENDOR_TYPES, type VendorCreateStatus, type VendorDocType, type VendorInput, type VendorView } from '@contracts/vendors';
 import { Button, Input, Modal, Select, Textarea, useToast } from '@/components/ui';
+import { lookupIfsc } from '@/lib/ifsc';
 import { useCityOptions, useStates } from '../../samples/api';
 import { ConfirmDialog } from '../../samples/ui/ConfirmDialog';
 import { errorMessage, fieldErrors } from '../../samples/ui/errors';
-import { duplicateVendorOf, lookupPincode, useAllVendorProducts, useSaveVendor, useVendorCategories, type DuplicateVendorDetails } from '../api';
+import {
+  duplicateVendorOf,
+  lookupPincode,
+  useAllVendorProducts,
+  useNextVendorCode,
+  useRemoveVendorDocument,
+  useSaveVendor,
+  useUploadVendorDocuments,
+  useVendorCategories,
+  vendorDocumentUrl,
+  type DuplicateVendorDetails,
+} from '../api';
 import { CATEGORY_STYLE, StarInput } from '../ui';
 
 const TEXT_FIELDS = [
   'name', 'code', 'type', 'yearEstablished', 'contact', 'designation', 'phone', 'email', 'address', 'pincode', 'city', 'state',
-  'website', 'gst', 'pan', 'msme', 'paymentTerms', 'bank', 'accountNo', 'ifsc', 'notes',
+  'website', 'gst', 'pan', 'msme', 'paymentTerms', 'bank', 'branch', 'accountNo', 'ifsc', 'notes',
 ] as const;
 type TextField = (typeof TEXT_FIELDS)[number];
 type Form = Record<TextField, string> & { categoryIds: string[]; productIds: string[]; rating: number | null };
@@ -89,6 +101,75 @@ function ProductPicker({ value, onChange, categoryIds }: { value: string[]; onCh
   );
 }
 
+type PendingDoc = { type: VendorDocType; file: File };
+const kb = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+
+/** Supporting documents: files already on the vendor, plus ones picked here that upload when the form is saved. */
+function DocumentsPicker({ vendor, pending, onChange }: { vendor: VendorView | null; pending: PendingDoc[]; onChange: (d: PendingDoc[]) => void }) {
+  const toast = useToast();
+  const remove = useRemoveVendorDocument();
+  const [type, setType] = useState<VendorDocType>('GSTIN certificate');
+  // Removing a file returns the updated vendor; the `vendor` prop stays as it was when the form opened.
+  const [existing, setExisting] = useState(vendor?.documents ?? []);
+  useEffect(() => setExisting(vendor?.documents ?? []), [vendor]);
+  function add(files: FileList | null) {
+    const picked = Array.from(files ?? []);
+    const tooBig = picked.filter((f) => f.size > MAX_VENDOR_DOC_BYTES);
+    if (tooBig.length) toast({ tone: 'error', title: 'Files can be up to 10 MB', description: tooBig.map((f) => f.name).join(', ') });
+    onChange([...pending, ...picked.filter((f) => f.size <= MAX_VENDOR_DOC_BYTES).map((file) => ({ type, file }))]);
+  }
+  return (
+    <div className="col-span-full flex flex-col gap-2">
+      <div className="flex flex-wrap items-end gap-2.5">
+        <Select label="Document type" options={VENDOR_DOC_TYPES.map((t) => ({ value: t, label: t }))} value={type} onChange={(e) => setType(e.target.value as VendorDocType)} containerClassName="w-[220px]" />
+        <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded border border-border bg-card px-3 text-sm font-semibold text-ink hover:bg-page focus-within:ring-2 focus-within:ring-primary/30">
+          <FileUp size={15} aria-hidden /> Attach files
+          <input type="file" accept="application/pdf,image/jpeg,image/png" multiple className="sr-only" aria-label="Attach documents" onChange={(e) => (add(e.target.files), (e.target.value = ''))} />
+        </label>
+        <span className="pb-2 text-caption text-faint">PDF, JPG or PNG, up to 10 MB each</span>
+      </div>
+      {existing.length + pending.length > 0 ? (
+        <ul className="divide-y divide-divider rounded border border-border" aria-label="Documents">
+          {existing.map((d) => (
+            <li key={d.id} className="flex items-center gap-2.5 px-3 py-1.5 text-sm">
+              <span className="w-[150px] shrink-0 font-semibold">{d.type}</span>
+              <a href={vendorDocumentUrl(vendor!.id, d.id)} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate text-ink underline-offset-2 hover:underline">
+                {d.name}
+              </a>
+              <span className="text-caption text-faint">{kb(d.sizeBytes)}</span>
+              <button
+                type="button"
+                aria-label={`Remove ${d.name}`}
+                className="rounded p-0.5 text-faint hover:text-primary"
+                onClick={() =>
+                  remove.mutate(
+                    { id: vendor!.id, docId: d.id },
+                    { onSuccess: (v) => setExisting(v.documents), onError: (err) => toast({ tone: 'error', title: 'Couldn’t remove the document', description: errorMessage(err) }) },
+                  )
+                }
+              >
+                <X size={14} aria-hidden />
+              </button>
+            </li>
+          ))}
+          {pending.map((d, i) => (
+            <li key={`p${i}`} className="flex items-center gap-2.5 px-3 py-1.5 text-sm">
+              <span className="w-[150px] shrink-0 font-semibold">{d.type}</span>
+              <span className="min-w-0 flex-1 truncate">{d.file.name}</span>
+              <span className="text-caption text-amber">Uploads on save</span>
+              <button type="button" aria-label={`Remove ${d.file.name}`} className="rounded p-0.5 text-faint hover:text-primary" onClick={() => onChange(pending.filter((_, j) => j !== i))}>
+                <X size={14} aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted">No documents yet: attach the GSTIN certificate, bank details or cancelled cheque, Udyam certificate…</p>
+      )}
+    </div>
+  );
+}
+
 /**
  * Add / edit vendor (legacy buildVModal + saveV). A new vendor is either submitted for review (pending)
  * or saved inactive; an edit never changes the status.
@@ -96,6 +177,10 @@ function ProductPicker({ value, onChange, categoryIds }: { value: string[]; onCh
 export function VendorForm({ open, vendor, onClose, onSaved }: { open: boolean; vendor: VendorView | null; onClose: () => void; onSaved: (v: VendorView) => void }) {
   const toast = useToast();
   const save = useSaveVendor();
+  const upload = useUploadVendorDocuments();
+  const nextCode = useNextVendorCode(open && !vendor);
+  const [docs, setDocs] = useState<PendingDoc[]>([]);
+  const [ifscHint, setIfscHint] = useState<{ ok: boolean; text: string } | null>(null);
   const categories = useVendorCategories().data ?? [];
   const states = useStates().data ?? [];
   const cities = useCityOptions().data ?? [];
@@ -109,6 +194,8 @@ export function VendorForm({ open, vendor, onClose, onSaved }: { open: boolean; 
     if (!open) return;
     setErrors({});
     setPinHint(null);
+    setIfscHint(null);
+    setDocs([]);
     setDuplicate(null);
     setF(vendor ? fromVendor(vendor) : empty());
   }, [open, vendor]);
@@ -130,6 +217,17 @@ export function VendorForm({ open, vendor, onClose, onSaved }: { open: boolean; 
     }
   }
 
+  async function onIfsc(raw: string) {
+    const ifsc = raw.toUpperCase().replace(/\s/g, '').slice(0, 11);
+    set('ifsc')(ifsc);
+    if (ifsc.length !== 11) return setIfscHint(null);
+    setIfscHint({ ok: true, text: 'Looking up…' });
+    const m = await lookupIfsc(ifsc);
+    if (!m) return setIfscHint({ ok: false, text: 'IFSC not found. Enter the bank and branch.' });
+    setF((x) => (x.ifsc === ifsc ? { ...x, bank: m.bank, branch: m.branch } : x));
+    setIfscHint({ ok: true, text: `${m.bank}, ${m.branch}` });
+  }
+
   function onCity(city: string) {
     // Picking a known city fills its state (legacy selCity).
     const match = cities.filter((c) => c.city.toLowerCase() === city.trim().toLowerCase() && c.state);
@@ -145,13 +243,22 @@ export function VendorForm({ open, vendor, onClose, onSaved }: { open: boolean; 
       return;
     }
     const input = {
-      ...Object.fromEntries(TEXT_FIELDS.map((k) => [k, f[k].trim() === '' ? null : f[k].trim()])),
+      ...Object.fromEntries(TEXT_FIELDS.filter((k) => k !== 'code').map((k) => [k, f[k].trim() === '' ? null : f[k].trim()])),
       categoryIds: f.categoryIds,
       productIds: f.productIds,
       rating: f.rating,
     } as unknown as VendorInput;
     try {
-      const saved = await save.mutateAsync({ id: vendor?.id, input, status, force });
+      let saved = await save.mutateAsync({ id: vendor?.id, input, status, force });
+      for (const type of VENDOR_DOC_TYPES) {
+        const files = docs.filter((d) => d.type === type).map((d) => d.file);
+        if (!files.length) continue;
+        try {
+          saved = await upload.mutateAsync({ id: saved.id, type, files });
+        } catch (err) {
+          toast({ tone: 'error', title: `${type} didn’t upload`, description: `${errorMessage(err)} Open the vendor and attach it again.` });
+        }
+      }
       toast({
         tone: 'success',
         title: vendor ? `${saved.name} updated` : `${saved.name} added`,
@@ -166,7 +273,7 @@ export function VendorForm({ open, vendor, onClose, onSaved }: { open: boolean; 
     }
   }
 
-  const busy = save.isPending;
+  const busy = save.isPending || upload.isPending;
   return (
     <>
       <Modal
@@ -207,7 +314,7 @@ export function VendorForm({ open, vendor, onClose, onSaved }: { open: boolean; 
         >
           <Section title="Basic info">
             <Input label="Vendor name" value={f.name} onChange={(e) => set('name')(e.target.value)} error={errors.name} containerClassName="sm:col-span-2" />
-            <Input label="Code" placeholder={vendor ? '' : 'Leave blank for SPL-VEN-YY-NNN'} value={f.code} onChange={(e) => set('code')(e.target.value.toUpperCase())} error={errors.code} />
+            <Input label="Code" readOnly value={vendor ? f.code : (nextCode.data?.code ?? '')} placeholder="Assigned automatically" hint={vendor ? undefined : 'Assigned automatically on save'} className="font-mono" />
             <Select label="Type" placeholder="Select type" options={VENDOR_TYPES.map((t) => ({ value: t, label: t }))} value={f.type} onChange={(e) => set('type')(e.target.value)} />
             <Input label="Year established" inputMode="numeric" placeholder="e.g. 2008" maxLength={4} value={f.yearEstablished} onChange={(e) => set('yearEstablished')(e.target.value.replace(/\D/g, ''))} error={errors.yearEstablished} />
           </Section>
@@ -273,9 +380,22 @@ export function VendorForm({ open, vendor, onClose, onSaved }: { open: boolean; 
             <Input label="PAN" placeholder="AAAAA0000A" maxLength={10} value={f.pan} onChange={(e) => set('pan')(e.target.value.toUpperCase())} error={errors.pan} />
             <Input label="MSME / Udyam" placeholder="UDYAM-GJ-00-…" value={f.msme} onChange={(e) => set('msme')(e.target.value)} />
             <Select label="Payment terms" placeholder="Select terms" options={PAYMENT_TERMS.map((t) => ({ value: t, label: t }))} value={f.paymentTerms} onChange={(e) => set('paymentTerms')(e.target.value)} />
-            <Input label="Bank" value={f.bank} onChange={(e) => set('bank')(e.target.value)} />
             <Input label="Account number" inputMode="numeric" value={f.accountNo} onChange={(e) => set('accountNo')(e.target.value.replace(/\s/g, ''))} error={errors.accountNo} />
-            <Input label="IFSC" placeholder="SBIN0001234" maxLength={11} value={f.ifsc} onChange={(e) => set('ifsc')(e.target.value.toUpperCase())} error={errors.ifsc} />
+            <Input
+              label="IFSC"
+              placeholder="SBIN0001234"
+              maxLength={11}
+              value={f.ifsc}
+              onChange={(e) => void onIfsc(e.target.value)}
+              error={errors.ifsc}
+              hint={ifscHint ? <span className={ifscHint.ok ? 'text-green' : 'text-amber'}>{ifscHint.text}</span> : 'Fills the bank and branch'}
+            />
+            <Input label="Bank" value={f.bank} onChange={(e) => set('bank')(e.target.value)} />
+            <Input label="Branch" value={f.branch} onChange={(e) => set('branch')(e.target.value)} />
+          </Section>
+
+          <Section title="Documents">
+            <DocumentsPicker vendor={vendor} pending={docs} onChange={setDocs} />
           </Section>
 
           <Section title="Rating & notes">

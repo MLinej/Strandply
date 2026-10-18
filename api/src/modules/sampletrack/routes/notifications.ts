@@ -68,6 +68,12 @@ const companyBody = z.object({
     .preprocess((v) => (typeof v === 'string' ? v.trim() : v), z.union([z.literal(''), z.null(), z.string().max(40).regex(/^[+0-9][0-9\s\-()/,]{5,}$/, 'Enter a valid phone number')]))
     .optional(),
   gst,
+  email: z.union([z.literal(''), z.null(), z.string().trim().max(120).email('Enter a valid e-mail')]).optional(),
+  pan: z.union([z.literal(''), z.null(), z.string().trim().toUpperCase().regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, 'PAN is 5 letters, 4 digits, 1 letter')]).optional(),
+  stateCode: z.union([z.literal(''), z.null(), z.string().trim().regex(/^\d{2}$/, 'State code is two digits')]).optional(),
+  bankName: optionalText(120).optional(),
+  bankAccountNo: z.union([z.literal(''), z.null(), z.string().trim().regex(/^[0-9]{6,20}$/, 'Account number is 6 to 20 digits')]).optional(),
+  bankIfsc: z.union([z.literal(''), z.null(), z.string().trim().toUpperCase().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'IFSC is 4 letters, 0, then 6 letters or digits')]).optional(),
 });
 
 export function settingsRoutes(r: SecureRouter) {
@@ -82,6 +88,12 @@ export function settingsRoutes(r: SecureRouter) {
         city: blankToNull(body.city),
         phone: blankToNull(body.phone),
         gst: blankToNull(body.gst),
+        email: blankToNull(body.email),
+        pan: blankToNull(body.pan),
+        stateCode: blankToNull(body.stateCode),
+        bankName: blankToNull(body.bankName),
+        bankAccountNo: blankToNull(body.bankAccountNo),
+        bankIfsc: blankToNull(body.bankIfsc),
       }),
     );
   });

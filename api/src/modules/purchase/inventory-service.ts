@@ -22,7 +22,7 @@ import { writeXlsx } from '../../lib/spreadsheet';
 import type { DataLayer } from '../../repos';
 import type { ActivityService } from '../sampletrack/activity-service';
 import type { Actor } from '../sampletrack/actor';
-import { calcOf, fyRange, isPosted, ledgerKey, materialLabel } from './common';
+import { calcOf, fyRange, isPosted, ledgerKey, materialLabel, stockVariety } from './common';
 import type { OpeningStockBody } from './validation';
 
 const rupees = (p: number) => Math.round(p) / 100;
@@ -46,13 +46,12 @@ export class InventoryService {
     return first ? fyOf(first.date) : null;
   }
 
-  /** Ledger keys: every Nilgiri species in the master, plus any species used in this FY's data. */
-  private async keys(used: string[]): Promise<string[]> {
-    const species = (await this.data.repos.purchaseTypes.listAll('nilgiri_species')).map((t) => `nilgiri::${t.name}`);
+  /** Ledger keys: one per material, and for Nilgiri one per product used in this FY's data (in name order). */
+  private keys(used: string[]): string[] {
     const out: string[] = [];
     for (const m of MATERIALS) {
       if (m.id !== 'nilgiri') out.push(m.id);
-      else out.push(...new Set([...species, ...used.filter((k) => k.startsWith('nilgiri::'))]));
+      else out.push(...[...new Set(used.filter((k) => k.startsWith('nilgiri::')))].sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })));
     }
     return out;
   }
@@ -101,18 +100,18 @@ export class InventoryService {
     ]);
     const posted = entries.filter(isPosted);
     const used = [
-      ...posted.map((e) => ledgerKey(e.material, e.species)),
+      ...posted.map((e) => ledgerKey(e.material, stockVariety(e))),
       ...returns.map((r) => ledgerKey(r.material, r.species)),
       ...opening.items.map((i) => ledgerKey(i.material, i.species)),
       ...Object.keys(consumption),
     ];
-    const rows = (await this.keys(used)).map((key): LedgerRow => {
+    const rows = this.keys(used).map((key): LedgerRow => {
       const { material, species } = parseKey(key);
       const def = MATERIAL_BY_ID[material];
       const open = opening.items.filter((i) => ledgerKey(i.material, i.species) === key);
       const openQty = open.reduce((s, i) => s + i.qty, 0);
       const openPaise = open.reduce((s, i) => s + i.valuePaise, 0);
-      const mine = posted.filter((e) => ledgerKey(e.material, e.species) === key);
+      const mine = posted.filter((e) => ledgerKey(e.material, stockVariety(e)) === key);
       const purchQty = mine.reduce((s, e) => s + e.splQty, 0);
       const purchPaise = mine.reduce((s, e) => s + calcOf(e).spl.basic, 0);
       const rets = returns.filter((r) => ledgerKey(r.material, r.species) === key);
@@ -190,7 +189,7 @@ export class InventoryService {
     const items: OpeningItem[] = [];
     const seen = new Set<string>();
     for (const i of input.items) {
-      if (i.material !== 'nilgiri' && i.species) throw validationFailed('Invalid input', [{ path: 'items', message: 'Only Nilgiri lines have a species' }]);
+      if (i.material !== 'nilgiri' && i.species) throw validationFailed('Invalid input', [{ path: 'items', message: 'Only Nilgiri lines name a product' }]);
       const key = ledgerKey(i.material, i.species ?? null);
       if (seen.has(key)) throw validationFailed('Invalid input', [{ path: 'items', message: `${materialLabel(i.material)}${i.species ? ` (${i.species})` : ''} is listed twice` }]);
       seen.add(key);

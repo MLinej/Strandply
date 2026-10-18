@@ -14,6 +14,13 @@ export function formatDate(iso: string) {
   return dateFmt.format(new Date(`${iso}T00:00:00`)).replace(/\bSep\b/, 'Sept');
 }
 
+const dateTimeFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+
+/** An ISO timestamp → "22 Sept 2026, 03:45 pm" in India time (printed "generated" and approval stamps). */
+export function formatDateTime(iso: string) {
+  return dateTimeFmt.format(new Date(iso)).replace(/\bSep\b/, 'Sept');
+}
+
 const shortDate = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short' });
 
 /** "just now", "12 min ago", "3 h ago", "yesterday", then "22 Sept". */

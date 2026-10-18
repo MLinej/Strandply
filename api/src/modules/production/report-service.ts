@@ -189,12 +189,19 @@ export class ProductionReportService {
     ];
   }
 
-  async printPayload(actor: Actor, kind: DocKind | 'matt', id: string): Promise<{ company: CompanyBlock; doc: unknown; compare: CompareRow[]; generatedAt: string }> {
+  async printPayload(actor: Actor, kind: DocKind | 'matt', id: string): Promise<{ company: CompanyBlock; doc: unknown; compare: CompareRow[]; lots: Record<string, { vendorName: string; product: string | null }>; generatedAt: string }> {
     const doc = kind === 'matt' ? await this.matt.get(id) : await this.docs.get(kind, id);
+    // Chipping prints each lot's supplier and product (from the Purchase entry).
+    const lots: Record<string, { vendorName: string; product: string | null }> = {};
+    if (kind === 'chipping')
+      for (const l of (doc as { lots: { purchaseEntryId: string }[] }).lots) {
+        const e = await this.data.repos.purchaseEntries.getById(l.purchaseEntryId);
+        if (e) lots[e.id] = { vendorName: e.vendorName, product: e.itemName ?? e.species };
+      }
     const compare = kind === 'plan' ? await this.comparePlan(id) : kind === 'summary' ? await this.compareSummary(id) : [];
     const company = await this.company.block();
     await this.data.uow.run((tx) => this.activity.record(tx, actor, { action: 'Print', entityType: `production_${kind}`, entityId: id, details: `Printed ${(doc as { docNo: string }).docNo}` }));
-    return { company, doc, compare, generatedAt: isoNow(this.clock) };
+    return { company, doc, compare, lots, generatedAt: isoNow(this.clock) };
   }
 
   /** One sheet per module (legacy reportsExportCurrentTab / per-module XLS). */

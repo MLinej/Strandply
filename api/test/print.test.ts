@@ -52,7 +52,7 @@ describe('courier label', () => {
     const label = await (await t.request('GET', `${ST}/dispatches/${dsp.id}/label`, { cookie: admin })).json();
     expect(label).toEqual({
       page: { size: 'A5', orientation: 'landscape', widthMm: 210, heightMm: 148 },
-      from: { name: 'Strandply LLP', city: 'Wankaner, Morbi, Gujarat', phone: '+91 2828 123456', llpin: 'AAP-7300', gst: null },
+      from: { name: 'Strandply LLP', city: 'Wankaner, Morbi, Gujarat', phone: '+91 2828 123456', llpin: 'AAP-7300', gst: null, email: null, pan: null, stateCode: null, bankName: null, bankAccountNo: null, bankIfsc: null },
       dispatch: {
         id: dsp.id,
         dspNo: 'DSP-0002',

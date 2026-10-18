@@ -28,16 +28,23 @@ export interface MaterialDef {
   /** Extra fields on the entry form. */
   hasSpecies?: boolean;
   hasVeneerType?: boolean;
+  /** Entered invoice-wise: one line per product (from the product master) with its own quantity and rate. */
+  itemized?: boolean;
+  /**
+   * Debit / credit notes for quantity and rate differences. 'always': every entry. 'optional': the entry says
+   * (some vendors issue them, some don't). 'none': billed exactly as invoiced, no weighbridge reconciliation.
+   */
+  notes: 'always' | 'optional' | 'none';
 }
 
 /** Legacy MATS. Nilgiri is priced per ton: the legacy data was, though its form said per kg (a bug). */
 export const MATERIALS: readonly MaterialDef[] = [
-  { id: 'nilgiri', label: 'Nilgiri Wood', unit: 'Kg', rateBasis: 'ton', lotPrefix: 'N', hasSpecies: true },
-  { id: 'resin', label: 'Resin', unit: 'Kg', rateBasis: 'ton', lotPrefix: 'R' },
-  { id: 'kraft', label: 'Kraft Paper', unit: 'Pcs', rateBasis: 'unit', lotPrefix: 'K' },
-  { id: 'firewood', label: 'Fire Wood', unit: 'Kg', rateBasis: 'ton', lotPrefix: 'F' },
-  { id: 'core', label: 'Core Veneer', unit: 'Pcs', rateBasis: 'unit', lotPrefix: 'C' },
-  { id: 'face', label: 'Face Veneer', unit: 'Sq Mtr', rateBasis: 'unit', lotPrefix: 'V', hasVeneerType: true },
+  { id: 'nilgiri', label: 'Nilgiri Wood', unit: 'Kg', rateBasis: 'ton', lotPrefix: 'N', hasSpecies: true, notes: 'always' },
+  { id: 'resin', label: 'Resin', unit: 'Kg', rateBasis: 'ton', lotPrefix: 'R', itemized: true, notes: 'optional' },
+  { id: 'kraft', label: 'Kraft Paper', unit: 'Pcs', rateBasis: 'unit', lotPrefix: 'K', notes: 'optional' },
+  { id: 'firewood', label: 'Fire Wood', unit: 'Kg', rateBasis: 'ton', lotPrefix: 'F', notes: 'always' },
+  { id: 'core', label: 'Core Veneer', unit: 'Pcs', rateBasis: 'unit', lotPrefix: 'C', itemized: true, notes: 'none' },
+  { id: 'face', label: 'Face Veneer', unit: 'Sq Mtr', rateBasis: 'unit', lotPrefix: 'V', hasVeneerType: true, itemized: true, notes: 'none' },
 ];
 export const MATERIAL_BY_ID = Object.fromEntries(MATERIALS.map((m) => [m.id, m])) as Record<MaterialId, MaterialDef>;
 export const rateUnitOf = (m: MaterialDef) => (m.rateBasis === 'ton' ? 'Ton' : m.unit);
@@ -48,12 +55,29 @@ export const PURCHASE_GST_RATES = [0, 5, 12, 18, 28] as const;
 
 // ── The entry calculation (legacy calcEntry / renderSlip) ────────────
 
+/** One invoice line (itemized materials). */
+export interface EntryLine {
+  /** Product master (Vendors → products) id; null for a typed-in description. */
+  itemId: string | null;
+  itemName: string;
+  hsn: string | null;
+  invQty: number;
+  /** Our quantity for the line; the same as invQty where nothing is weighed or counted again. */
+  splQty: number;
+  /** Paise per rate unit (per ton or per unit). */
+  ratePaise: number;
+}
+
 export interface CalcInput {
   material: MaterialId;
   invQty: number;
   splQty: number;
   /** Paise per rate unit (per ton or per unit). */
   ratePaise: number;
+  /** Invoice lines; when given they replace invQty / splQty / ratePaise for the amounts. */
+  lines?: Pick<EntryLine, 'invQty' | 'splQty' | 'ratePaise'>[];
+  /** false: no quantity or rate note; what is owed is the invoice. Default true. */
+  raiseNotes?: boolean;
   /** Paise per rate unit. > 0: the invoice rate is higher than agreed (rate debit note). < 0: rate credit note. */
   rateDiffPaise: number;
   /** Freight and other charges on the invoice, paise. */
@@ -108,19 +132,36 @@ export function amountFor(material: MaterialId, qty: number, ratePaise: number):
 }
 
 export function calcEntry(i: CalcInput): EntryCalc {
-  const inv = taxOn(amountFor(i.material, i.invQty, i.ratePaise), i.taxType, i.gstPct);
+  const lines = i.lines?.length ? i.lines : [{ invQty: i.invQty, splQty: i.splQty, ratePaise: i.ratePaise }];
+  const invQty = lines.reduce((s, l) => s + l.invQty, 0);
+  const splQty = lines.reduce((s, l) => s + l.splQty, 0);
+  const invBasic = lines.reduce((s, l) => s + amountFor(i.material, l.invQty, l.ratePaise), 0);
+  const splBasic = lines.reduce((s, l) => s + amountFor(i.material, l.splQty, l.ratePaise), 0);
+  const inv = taxOn(invBasic, i.taxType, i.gstPct);
   const invoice = { ...inv, total: inv.total + i.otherChargesPaise };
-  const spl = taxOn(amountFor(i.material, i.splQty, i.ratePaise), i.taxType, i.gstPct);
-  const diffQty = Math.round((i.splQty - i.invQty) * 1000) / 1000;
+  const spl = taxOn(splBasic, i.taxType, i.gstPct);
+  const diffQty = Math.round((splQty - invQty) * 1000) / 1000;
+  const notes = i.raiseNotes !== false;
   const note = (type: 'dn' | 'cn', qty: number, rate: number): NoteCalc => ({
     type,
     qty,
     ...taxOn(amountFor(i.material, qty, rate), i.taxType, i.gstPct),
   });
-  const qtyNote = diffQty === 0 ? null : note(diffQty < 0 ? 'dn' : 'cn', Math.abs(diffQty), i.ratePaise);
-  const rateNote = i.rateDiffPaise === 0 || i.splQty === 0 ? null : note(i.rateDiffPaise > 0 ? 'dn' : 'cn', i.splQty, Math.abs(i.rateDiffPaise));
+  let qtyNote: NoteCalc | null = null;
+  if (notes && lines.length === 1 && diffQty !== 0) qtyNote = note(diffQty < 0 ? 'dn' : 'cn', Math.abs(diffQty), lines[0]!.ratePaise);
+  // Several lines at different rates: the note is the net amount difference.
+  if (notes && lines.length > 1 && splBasic !== invBasic) qtyNote = { type: splBasic < invBasic ? 'dn' : 'cn', qty: Math.abs(diffQty), ...taxOn(Math.abs(splBasic - invBasic), i.taxType, i.gstPct) };
+  const rateNote = !notes || i.rateDiffPaise === 0 || splQty === 0 ? null : note(i.rateDiffPaise > 0 ? 'dn' : 'cn', splQty, Math.abs(i.rateDiffPaise));
   const rateAdj = rateNote ? (rateNote.type === 'dn' ? -rateNote.total : rateNote.total) : 0;
-  return { invoice, spl, diffQty, qtyNote, rateNote, payable: spl.total + i.otherChargesPaise + rateAdj };
+  return { invoice, spl, diffQty, qtyNote, rateNote, payable: notes ? spl.total + i.otherChargesPaise + rateAdj : invoice.total };
+}
+
+/** Rate that gives the lines' basic amount on their total quantity (the entry's headline rate for invoice-wise entries). */
+export function averageRate(material: MaterialId, lines: Pick<EntryLine, 'invQty' | 'ratePaise'>[]): number {
+  const qty = lines.reduce((s, l) => s + l.invQty, 0);
+  const basic = lines.reduce((s, l) => s + amountFor(material, l.invQty, l.ratePaise), 0);
+  const divisor = MATERIAL_BY_ID[material].rateBasis === 'ton' ? 1000 : 1;
+  return qty > 0 ? Math.round((basic * divisor) / qty) : 0;
 }
 
 // ── Financial years (Indian FY: 1 April – 31 March), labelled "2026-27" ──
@@ -200,6 +241,10 @@ export interface PurchaseEntry extends Audit, VendorSnapshot {
   veneerType: string | null;
   /** Face veneer: the piece count of the Sq Mtr quantity, for reference only. */
   altQtyPcs: number | null;
+  /** Invoice lines for itemized materials (resin, veneers); empty otherwise. invQty, splQty and ratePaise are then their totals. */
+  lines: EntryLine[];
+  /** Whether quantity / rate debit and credit notes are raised (see MaterialDef.notes). */
+  raiseNotes: boolean;
   invQty: number;
   splQty: number;
   ratePaise: number;
@@ -214,6 +259,10 @@ export interface PurchaseEntry extends Audit, VendorSnapshot {
 
 export interface PurchaseEntryView extends PurchaseEntry {
   calc: EntryCalc;
+  /** Quantity sent back on purchase returns linked to this lot. */
+  returnedQty: number;
+  /** splQty − returnedQty: what the lot really holds. */
+  netQty: number;
   poNo: string | null;
   approvedByName: string | null;
   createdByName: string | null;
@@ -222,8 +271,8 @@ export interface PurchaseEntryView extends PurchaseEntry {
 
 export type EntryInput = Omit<
   PurchaseEntry,
-  keyof Audit | 'id' | 'status' | 'approvedBy' | 'approvedAt' | 'qtyNoteStatus' | 'rateNoteStatus' | 'lotNo'
-> & { lotNo?: string | null };
+  keyof Audit | 'id' | 'status' | 'approvedBy' | 'approvedAt' | 'qtyNoteStatus' | 'rateNoteStatus' | 'lotNo' | 'lines' | 'raiseNotes'
+> & { lotNo?: string | null; lines?: EntryLine[]; raiseNotes?: boolean };
 
 export interface EntryFilters {
   material: MaterialId;
@@ -293,6 +342,33 @@ export interface NoteStats {
 
 // ── Purchase orders ──────────────────────────────────────────────────
 
+/** pending → reviewed → approved. Approving straight from pending is allowed (no reviewer is then printed). */
+export const PO_STATUSES = ['pending', 'reviewed', 'approved'] as const;
+export type PoStatus = (typeof PO_STATUSES)[number];
+
+/** One PO line: a product from the product master, in the material's unit. */
+export interface PoLine {
+  itemId: string | null;
+  itemName: string;
+  hsn: string | null;
+  qty: number;
+  /** Paise per rate unit (per ton or per unit, as the material). */
+  ratePaise: number;
+  /** amountFor(material, qty, rate). */
+  amountPaise: number;
+}
+
+export interface PoTotals {
+  itemsPaise: number;
+  freightPaise: number;
+  /** Items + freight. */
+  taxablePaise: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  total: number;
+}
+
 export interface PurchaseOrder extends Audit {
   id: string;
   /** Typed in (legacy "PO-002", "008/26-27"), or PO-YY-NNN when left blank. Unique. */
@@ -301,12 +377,25 @@ export interface PurchaseOrder extends Audit {
   material: MaterialId;
   vendorId: string | null;
   vendorName: string;
+  /** Lines; qty and ratePaise below are their total and average rate (what entries are received against). */
+  lines: PoLine[];
   qty: number;
   ratePaise: number;
+  taxType: TaxType;
+  gstPct: number;
+  freightPaise: number;
+  paymentTerms: string | null;
+  deliveryTerms: string | null;
+  /** Expected delivery date. */
+  deliveryDate: string | null;
+  /** Vendor's quotation / reference. */
+  quotationRef: string | null;
   remarks: string | null;
   /** T&C clauses (Vendors T&C master) printed on the PO. */
   tncIds: string[];
-  status: 'pending' | 'approved';
+  status: PoStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
   approvedBy: string | null;
   approvedAt: string | null;
 }
@@ -314,12 +403,16 @@ export interface PurchaseOrder extends Audit {
 export type PoProgress = 'Open' | 'Partial' | 'Closed';
 
 export interface PurchaseOrderView extends PurchaseOrder {
+  /** Items before GST (legacy "value"). */
   valuePaise: number;
-  /** SPL quantity of posted entries against the PO. */
+  totals: PoTotals;
+  /** SPL quantity of posted entries against the PO, less returns. */
   receivedQty: number;
   balanceQty: number;
   pctComplete: number;
   progress: PoProgress;
+  createdByName: string | null;
+  reviewedByName: string | null;
   approvedByName: string | null;
 }
 
@@ -329,16 +422,29 @@ export interface PoInput {
   material: MaterialId;
   vendorId?: string | null;
   vendorName: string;
-  qty: number;
-  ratePaise: number;
+  lines: Omit<PoLine, 'amountPaise'>[];
+  taxType?: TaxType;
+  gstPct?: number;
+  freightPaise?: number;
+  paymentTerms?: string | null;
+  deliveryTerms?: string | null;
+  deliveryDate?: string | null;
+  quotationRef?: string | null;
   remarks?: string | null;
   tncIds?: string[];
+}
+
+/** Items, freight and GST on (items + freight), each component rounded to the paisa. */
+export function poTotals(material: MaterialId, lines: Pick<PoLine, 'qty' | 'ratePaise'>[], freightPaise: number, taxType: TaxType, gstPct: number): PoTotals {
+  const itemsPaise = lines.reduce((s, l) => s + amountFor(material, l.qty, l.ratePaise), 0);
+  const t = taxOn(itemsPaise + freightPaise, taxType, gstPct);
+  return { itemsPaise, freightPaise, taxablePaise: t.basic, cgst: t.cgst, sgst: t.sgst, igst: t.igst, total: t.total };
 }
 
 export interface PoFilters {
   material: MaterialId;
   progress: PoProgress;
-  status: 'pending' | 'approved';
+  status: PoStatus;
   fy: string;
 }
 
@@ -403,7 +509,7 @@ export interface ReturnInput {
 
 // ── Inventory ────────────────────────────────────────────────────────
 
-/** One opening line: a material, or for Nilgiri one line per species (as in the ledger). */
+/** One opening line: a material, or for Nilgiri one line per product (as in the ledger; `species` holds the product name). */
 export interface OpeningItem {
   material: MaterialId;
   species: string | null;
@@ -440,11 +546,15 @@ export interface OpeningStockInput {
   mode: 'draft' | 'submit';
 }
 
-/** One ledger row: a material, or a Nilgiri species. Quantities in the material's unit, values in paise at basic (GST excluded). */
+/**
+ * One ledger row: a material, or a Nilgiri product. Quantities in the material's unit, values in paise at basic (GST excluded).
+ * Nilgiri stock is kept per product picked on the entry (the species, for entries saved before products were picked).
+ */
 export interface LedgerRow {
-  /** `nilgiri::Eucalyptus` or a material id. */
+  /** `nilgiri::<product>` or a material id. */
   key: string;
   material: MaterialId;
+  /** Nilgiri: the product name (see above); null for the other materials. */
   species: string | null;
   openQty: number;
   openPaise: number;
@@ -616,6 +726,17 @@ export interface PurchaseVendorOption {
   suggestedTaxType: TaxType;
   paymentTerms: string | null;
   items: { id: string; name: string; hsn: string | null; gstRate: number | null; categoryName: string }[];
+}
+
+/** Product master row for the entry, PO and stores forms. */
+export interface PurchaseProductOption {
+  id: string;
+  code: string;
+  name: string;
+  unit: string;
+  hsn: string | null;
+  gstRate: number | null;
+  categoryName: string;
 }
 
 export interface PurchaseMeta {

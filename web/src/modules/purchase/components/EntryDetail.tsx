@@ -1,6 +1,6 @@
 import { CheckCircle2, FileText, Pencil, Printer, Tag, Trash2, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { DOCUMENT_TYPES, MATERIAL_BY_ID, type DocumentType, type PurchaseEntryView, type TypeKind } from '@contracts/purchase';
+import { amountFor, DOCUMENT_TYPES, MATERIAL_BY_ID, rateUnitOf, type DocumentType, type PurchaseEntryView, type TypeKind } from '@contracts/purchase';
 import { useSession } from '@/app/session';
 import { Button, Input, Modal, Select, useToast } from '@/components/ui';
 import { formatDate } from '@/lib/format';
@@ -8,7 +8,7 @@ import { DetailList } from '../../samples/ui/DetailList';
 import { errorMessage } from '../../samples/ui/errors';
 import { documentUrl, useAddType, useApproveEntry, useDocuments, usePurchaseMeta, useRemoveType, useUploadDocument } from '../api';
 import { printEntry } from '../print';
-import { EntryStatusPill, materialLabel, qtyWithUnit } from '../ui';
+import { EntryStatusPill, inr, materialLabel, qtyFmt, qtyWithUnit } from '../ui';
 import { CalcTable } from './CalcTable';
 
 function Documents({ entryId }: { entryId: string }) {
@@ -59,6 +59,39 @@ function Documents({ entryId }: { entryId: string }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/** Invoice lines of an itemized entry. */
+function EntryLines({ e }: { e: PurchaseEntryView }) {
+  const m = MATERIAL_BY_ID[e.material];
+  return (
+    <div className="overflow-x-auto rounded border border-border">
+      <table className="w-full min-w-[600px] text-sm" aria-label="Invoice items">
+        <thead className="bg-page text-label font-semibold uppercase tracking-label text-muted">
+          <tr>
+            <th className="px-2 py-1.5 text-left">Product</th>
+            <th className="px-2 py-1.5 text-left">HSN</th>
+            <th className="px-2 py-1.5 text-right">Qty ({m.unit})</th>
+            {e.raiseNotes && <th className="px-2 py-1.5 text-right">Strandply qty</th>}
+            <th className="px-2 py-1.5 text-right">Rate / {rateUnitOf(m)}</th>
+            <th className="px-2 py-1.5 text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {e.lines.map((l, i) => (
+            <tr key={i} className="border-t border-divider">
+              <td className="px-2 py-1.5 font-medium">{l.itemName}</td>
+              <td className="px-2 py-1.5 text-muted">{l.hsn ?? '—'}</td>
+              <td className="px-2 py-1.5 text-right tabular-nums">{qtyFmt(l.invQty)}</td>
+              {e.raiseNotes && <td className="px-2 py-1.5 text-right tabular-nums">{qtyFmt(l.splQty)}</td>}
+              <td className="px-2 py-1.5 text-right tabular-nums">{inr(l.ratePaise)}</td>
+              <td className="px-2 py-1.5 text-right font-semibold tabular-nums">{inr(amountFor(e.material, l.invQty, l.ratePaise))}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -148,12 +181,15 @@ export function EntryDetail({ entry, onClose, onEdit, onDelete }: { entry: Purch
               { label: 'Tax', value: `${e.taxType}${e.taxType !== 'URD' ? ` @ ${e.gstPct}%` : ''}` },
               ...(MATERIAL_BY_ID[e.material].hasSpecies ? [{ label: 'Species', value: e.species }] : []),
               ...(MATERIAL_BY_ID[e.material].hasVeneerType ? [{ label: 'Veneer type', value: e.veneerType }, { label: 'Alternate qty', value: e.altQtyPcs === null ? null : `${e.altQtyPcs} Pcs` }] : []),
-              ...(e.itemName ? [{ label: 'Item', value: `${e.itemName}${e.hsn ? ` · HSN ${e.hsn}` : ''}` }] : []),
+              ...(e.itemName && !e.lines.length ? [{ label: e.material === 'nilgiri' ? 'Product' : 'Item', value: `${e.itemName}${e.hsn ? ` · HSN ${e.hsn}` : ''}` }] : []),
+              { label: 'Notes', value: e.raiseNotes ? 'Debit / credit notes raised' : 'Billed as invoiced, no notes' },
+              ...(e.returnedQty ? [{ label: 'Returned', value: `${qtyWithUnit(e.material, e.returnedQty)} · ${qtyWithUnit(e.material, e.netQty)} left in the lot` }] : []),
               { label: 'Difference', value: e.calc.diffQty === 0 ? 'None' : `${e.calc.diffQty > 0 ? '+' : ''}${qtyWithUnit(e.material, e.calc.diffQty)}` },
               { label: 'Approval', value: e.status === 'approved' ? `${e.approvedByName ?? 'Approved'}${e.approvedAt ? `, ${formatDate(e.approvedAt.slice(0, 10))}` : ''}` : e.status === 'draft' ? 'Draft, not posted' : 'Awaiting approval' },
               { label: 'Remarks', value: e.remarks, wide: true },
             ]}
           />
+          {e.lines.length > 0 && <EntryLines e={e} />}
           <CalcTable material={e.material} invQty={e.invQty} splQty={e.splQty} ratePaise={e.ratePaise} rateDiffPaise={e.rateDiffPaise} taxType={e.taxType} calc={e.calc} />
           <Documents entryId={e.id} />
         </div>

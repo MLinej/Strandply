@@ -5,6 +5,7 @@ import {
   TNC_APPLIES,
   TNC_CATEGORIES,
   VENDOR_IMPORT_KINDS,
+  VENDOR_DOC_TYPES,
   VENDOR_STATUSES,
   type VendorAction,
   type VendorImportKind,
@@ -182,6 +183,7 @@ export function vendorRoutes(): SecureRouter {
   r.get('/print', policy.page('vendors', 'print'), async (c) =>
     c.json(await s(c).vendorSettings.print(actor(c), { query: noPaging(toListQuery(parseQuery(c, vendorQuery))) })),
   );
+  r.get('/next-code', policy.page('vendors', 'edit'), async (c) => c.json(await s(c).vendors.nextCode()));
   r.post('', policy.page('vendors', 'edit'), async (c) => {
     const body = await parseJson(c, vendorCreateBody);
     return c.json(await s(c).vendors.create(actor(c), body, { force: forceOf(c) }), 201);
@@ -192,6 +194,26 @@ export function vendorRoutes(): SecureRouter {
   r.patch('/:id', policy.page('vendors', 'edit'), async (c) => {
     const body = await parseJson(c, vendorUpdateBody);
     return c.json(await s(c).vendors.update(actor(c), idParam(c), body, { force: forceOf(c) }));
+  });
+  // multipart/form-data: type (one of VENDOR_DOC_TYPES), file (repeatable).
+  r.post('/:id/documents', policy.page('vendors', 'edit'), async (c) => {
+    const form = await c.req.parseBody({ all: true }).catch(() => ({}) as Record<string, unknown>);
+    const type = z.enum(VENDOR_DOC_TYPES).safeParse(Array.isArray(form['type']) ? form['type'][0] : form['type']);
+    if (!type.success) throw validationFailed('Invalid input', [{ path: 'type', message: 'Pick the document type' }]);
+    const raw = form['file'];
+    const list = (Array.isArray(raw) ? raw : raw ? [raw] : []).filter((f): f is File => f instanceof File);
+    const files = await Promise.all(list.map(async (f) => ({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) })));
+    return c.json(await s(c).vendors.addDocuments(actor(c), idParam(c), type.data, files));
+  });
+  r.delete('/:id/documents/:docId', policy.page('vendors', 'edit'), async (c) => c.json(await s(c).vendors.removeDocument(actor(c), idParam(c), c.req.param('docId'))));
+  r.get('/:id/documents/:docId', policy.page('vendors'), async (c) => {
+    const { doc, blob } = await s(c).vendors.documentFile(idParam(c), c.req.param('docId'));
+    return c.body(blob.bytes as Uint8Array<ArrayBuffer>, 200, {
+      'Content-Type': blob.mime,
+      'Content-Disposition': `inline; filename="${doc.name.replace(/[^\x20-\x7e]/g, '_').replace(/"/g, '')}"`,
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'private, max-age=3600',
+    });
   });
   const step = (action: VendorAction) => async (c: Context) => c.json(await s(c).vendors.act(actor(c), idParam(c), action));
   r.post('/:id/submit', policy.page('vendors', 'edit'), step('submit'));

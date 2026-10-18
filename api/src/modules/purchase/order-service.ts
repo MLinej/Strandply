@@ -1,14 +1,18 @@
 import {
   amountFor,
+  averageRate,
   fyOf,
   MATERIALS,
+  poTotals,
   taxOn,
+  type PoLine,
   type PoFilters,
   type PoOption,
   type PoStats,
   type PurchaseOrder,
   type PurchaseMeta,
   type PurchaseOrderView,
+  type PurchaseProductOption,
   type PurchaseReturn,
   type PurchaseReturnView,
   type PurchaseType,
@@ -29,7 +33,7 @@ import type { Actor } from '../sampletrack/actor';
 import { changedKeys } from '../sampletrack/masters/common';
 import type { CompanyService } from '../sampletrack/settings/company-service';
 import { nextCode } from '../vendors/masters';
-import { currentFy, fyList, isPosted, materialLabel } from './common';
+import { currentFy, fyList, isPosted, materialLabel, returnedByEntry, stockVariety } from './common';
 import type { PoCreate, PoUpdate, ReturnCreate } from './validation';
 
 const pad3 = (n: number) => String(n).padStart(3, '0');
@@ -53,25 +57,48 @@ export class PurchaseOrderService {
     private readonly clock: Clock,
   ) {}
 
-  /** Received = SPL quantity of posted entries against the PO (legacy getReceivedQtyForPO). */
+  /** Received = SPL quantity of posted entries against the PO, less what was returned from those lots (legacy getReceivedQtyForPO). */
   private async views(pos: PurchaseOrder[], repos: Repos = this.data.repos): Promise<PurchaseOrderView[]> {
-    const userIds = [...new Set(pos.map((p) => p.approvedBy).filter((x): x is string => !!x))];
-    const people = await repos.users.getByIds(userIds);
+    const userIds = [...new Set(pos.flatMap((p) => [p.createdBy, p.reviewedBy, p.approvedBy]).filter((x): x is string => !!x))];
+    const [people, returned] = await Promise.all([repos.users.getByIds(userIds), returnedByEntry(this.data)]);
+    const name = (id: string | null | undefined) => (id ? (people.find((u) => u.id === id)?.name ?? null) : null);
     return Promise.all(
       pos.map(async (p) => {
-        const received = (await repos.purchaseEntries.listByPo(p.id)).filter(isPosted).reduce((s, e) => s + e.splQty, 0);
+        const received = Math.round((await repos.purchaseEntries.listByPo(p.id)).filter(isPosted).reduce((s, e) => s + e.splQty - (returned.get(e.id) ?? 0), 0) * 1000) / 1000;
         const pct = p.qty > 0 ? Math.min(100, Math.round((received / p.qty) * 100)) : 0;
+        // POs saved before lines existed are one line of their material.
+        const lines: PoLine[] = p.lines?.length ? p.lines : [{ itemId: null, itemName: materialLabel(p.material), hsn: null, qty: p.qty, ratePaise: p.ratePaise, amountPaise: amountFor(p.material, p.qty, p.ratePaise) }];
+        const totals = poTotals(p.material, lines, p.freightPaise ?? 0, p.taxType ?? 'SG+CG', p.gstPct ?? 18);
         return {
           ...p,
-          valuePaise: amountFor(p.material, p.qty, p.ratePaise),
+          lines,
+          taxType: p.taxType ?? 'SG+CG',
+          gstPct: p.gstPct ?? 18,
+          freightPaise: p.freightPaise ?? 0,
+          paymentTerms: p.paymentTerms ?? null,
+          deliveryTerms: p.deliveryTerms ?? null,
+          deliveryDate: p.deliveryDate ?? null,
+          quotationRef: p.quotationRef ?? null,
+          reviewedBy: p.reviewedBy ?? null,
+          reviewedAt: p.reviewedAt ?? null,
+          valuePaise: totals.itemsPaise,
+          totals,
           receivedQty: received,
           balanceQty: Math.round((p.qty - received) * 1000) / 1000,
           pctComplete: pct,
           progress: received >= p.qty ? 'Closed' : received > 0 ? 'Partial' : 'Open',
-          approvedByName: p.approvedBy ? (people.find((u) => u.id === p.approvedBy)?.name ?? null) : null,
+          createdByName: name(p.createdBy),
+          reviewedByName: name(p.reviewedBy),
+          approvedByName: name(p.approvedBy),
         };
       }),
     );
+  }
+
+  /** Lines with their amounts, and the PO's total quantity and average rate (what entries are received against). */
+  private linesOf(material: PurchaseOrder['material'], input: { itemId?: string | null; itemName: string; hsn?: string | null; qty: number; ratePaise: number }[]) {
+    const lines: PoLine[] = input.map((l) => ({ itemId: l.itemId ?? null, itemName: l.itemName, hsn: l.hsn ?? null, qty: l.qty, ratePaise: l.ratePaise, amountPaise: amountFor(material, l.qty, l.ratePaise) }));
+    return { lines, qty: Math.round(lines.reduce((s, l) => s + l.qty, 0) * 1000) / 1000, ratePaise: averageRate(material, lines.map((l) => ({ invQty: l.qty, ratePaise: l.ratePaise }))) };
   }
 
   async list(query: ListQuery<PoFilters>): Promise<{ rows: PurchaseOrderView[]; total: number; stats: PoStats }> {
@@ -126,11 +153,19 @@ export class PurchaseOrderService {
           material: input.material,
           vendorId: input.vendorId ?? null,
           vendorName: input.vendorName,
-          qty: input.qty,
-          ratePaise: input.ratePaise,
+          ...this.linesOf(input.material, input.lines),
+          taxType: input.taxType,
+          gstPct: input.gstPct,
+          freightPaise: input.freightPaise,
+          paymentTerms: input.paymentTerms ?? null,
+          deliveryTerms: input.deliveryTerms ?? null,
+          deliveryDate: input.deliveryDate ?? null,
+          quotationRef: input.quotationRef ?? null,
           remarks: input.remarks ?? null,
           tncIds: [...new Set(input.tncIds)],
           status: 'pending',
+          reviewedBy: null,
+          reviewedAt: null,
           approvedBy: null,
           approvedAt: null,
           createdBy: actor.id,
@@ -154,22 +189,37 @@ export class PurchaseOrderService {
         if (input.material && input.material !== before.material && (await tx.purchaseEntries.listByPo(id)).length) {
           throw conflict('po_in_use', 'Entries are already received against this PO, so its material can’t change');
         }
-        const { poNo, ...rest } = input;
-        const patchIn: Partial<PurchaseOrder> = { ...rest, ...(poNo ? { poNo } : {}) };
-        const changed = changedKeys(before, patchIn).filter((k) => k !== 'tncIds' || patchIn.tncIds!.join() !== before.tncIds.join());
+        const { poNo, lines, ...rest } = input;
+        const material = input.material ?? before.material;
+        const patchIn: Partial<PurchaseOrder> = { ...rest, ...(poNo ? { poNo } : {}), ...(lines ? this.linesOf(material, lines) : input.material && before.lines?.length ? this.linesOf(material, before.lines) : {}) };
+        const changed = changedKeys(before, patchIn).filter((k) => (k !== 'tncIds' || patchIn.tncIds!.join() !== before.tncIds.join()) && (k !== 'lines' || JSON.stringify(patchIn.lines) !== JSON.stringify(before.lines)));
         if (!changed.length) return before;
         const patch: PoPatch = { ...Object.fromEntries(changed.map((k) => [k, patchIn[k]])), updatedAt: isoNow(this.clock) };
-        if (before.status === 'approved') Object.assign(patch, { status: 'pending', approvedBy: null, approvedAt: null });
+        if (before.status !== 'pending') Object.assign(patch, { status: 'pending', reviewedBy: null, reviewedAt: null, approvedBy: null, approvedAt: null });
         const updated = (await tx.purchaseOrders.update(id, patch))!;
         await this.activity.record(tx, actor, {
           action: 'Edit',
           entityType: 'purchase_order',
           entityId: id,
-          details: `Updated PO ${updated.poNo}: ${changed.join(', ')}${before.status === 'approved' ? '; needs approval again' : ''}`,
+          details: `Updated PO ${updated.poNo}: ${changed.join(', ')}${before.status !== 'pending' ? '; needs review and approval again' : ''}`,
         });
         return updated;
       }),
     );
+    return (await this.views([po]))[0]!;
+  }
+
+  /** pending → reviewed (the "Reviewed by" signature on the PO). */
+  async review(actor: Actor, id: string): Promise<PurchaseOrderView> {
+    const po = await this.data.uow.run(async (tx) => {
+      const p = await tx.purchaseOrders.getById(id);
+      if (!p) throw notFound('Purchase order');
+      if (p.status !== 'pending') throw conflict('not_pending', p.status === 'approved' ? 'This PO is already approved' : 'This PO is already reviewed');
+      const at = isoNow(this.clock);
+      const updated = (await tx.purchaseOrders.update(id, { status: 'reviewed', reviewedBy: actor.id, reviewedAt: at, updatedAt: at }))!;
+      await this.activity.record(tx, actor, { action: 'StatusChange', entityType: 'purchase_order', entityId: id, details: `Reviewed PO ${p.poNo}` });
+      return updated;
+    });
     return (await this.views([po]))[0]!;
   }
 
@@ -273,13 +323,18 @@ export class PurchaseReturnService {
     return { rows: await this.views(rows), total };
   }
 
-  /** Returns reduce stock as soon as they're saved (legacy); approval records who signed off. */
+  /** Returns reduce stock, and the linked lot's quantity, as soon as they're saved (legacy); approval records who signed off. */
   async create(actor: Actor, input: ReturnCreate): Promise<PurchaseReturnView> {
     const at = isoNow(this.clock);
     const r = await this.data.uow.run(async (tx) => {
       const entry = input.entryId ? await tx.purchaseEntries.getById(input.entryId) : null;
       if (input.entryId && !entry) throw validationFailed('Invalid input', [{ path: 'entryId', message: 'Unknown purchase entry' }]);
       if (entry && entry.material !== input.material) throw validationFailed('Invalid input', [{ path: 'material', message: `That entry is ${materialLabel(entry.material)}` }]);
+      if (entry) {
+        const already = (await tx.purchaseReturns.listBetween('0000-01-01', '9999-12-31')).filter((x) => x.entryId === entry.id).reduce((t, x) => t + x.qty, 0);
+        const left = Math.round((entry.splQty - already) * 1000) / 1000;
+        if (input.qty > left) throw validationFailed('Invalid input', [{ path: 'qty', message: `Lot ${entry.lotNo} has ${left} left to return` }]);
+      }
       const vendorName = input.vendorName ?? entry?.vendorName;
       if (!vendorName) throw validationFailed('Invalid input', [{ path: 'vendorName', message: 'Vendor is required' }]);
       const returnNo = await nextCode(tx, this.clock, 'RET', (yy, n) => `RET-${yy}-${pad3(n)}`, async () => false);
@@ -288,7 +343,8 @@ export class PurchaseReturnService {
         returnNo,
         date: input.date,
         material: input.material,
-        species: input.material === 'nilgiri' ? (input.species ?? entry?.species ?? null) : null,
+        // Nilgiri: the stock row it comes off (the lot's product, as in the ledger).
+        species: input.material === 'nilgiri' ? ((entry ? stockVariety(entry) : null) ?? input.species ?? null) : null,
         entryId: entry?.id ?? null,
         vendorName,
         originalInvoiceNo: input.originalInvoiceNo ?? entry?.invoiceNo ?? null,
@@ -387,6 +443,15 @@ export class PurchaseMasterService {
       await tx.purchaseTypes.softDelete(id, isoNow(this.clock));
       await this.activity.record(tx, actor, { action: 'Delete', entityType: 'purchase_type', entityId: id, details: `Removed ${kindLabel(t.kind)} ${t.name}` });
     });
+  }
+
+  /** Every product in the product master, by name (entry and PO item pickers). */
+  async productOptions(): Promise<PurchaseProductOption[]> {
+    const [products, cats] = await Promise.all([this.data.repos.vendorProducts.listAll(), this.data.repos.vendorCategories.listAll()]);
+    const catName = new Map(cats.map((c) => [c.id, c.name]));
+    return products
+      .map((p) => ({ id: p.id, code: p.code, name: p.name, unit: p.unit, hsn: p.hsn, gstRate: p.gstRate, categoryName: catName.get(p.categoryId) ?? '' }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
   }
 
   /**

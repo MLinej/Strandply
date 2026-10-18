@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { QUALITY_IDS, STORE_MATERIAL_IDS, STORE_UNITS } from '../../contracts/stores';
+import { GATE_CONDITIONS, QUALITY_IDS, STORE_MATERIAL_IDS, STORE_UNITS } from '../../contracts/stores';
 import { isIsoDate } from '../../lib/dates';
 import { optionalText } from '../../lib/validate';
 import { nullableBlank } from '../sampletrack/masters/validation';
@@ -16,10 +16,14 @@ const required = (label: string, max: number) => z.string().trim().min(1, `${lab
 const mrnItem = z.object({
   /** Keep an existing line's id on edit; new lines get one from the server. */
   id: nullableBlank(id),
-  material: z.enum(STORE_MATERIAL_IDS, { error: 'Pick a material' }),
+  /** The product (product master). Older clients may send a material instead. */
+  itemId: nullableBlank(id),
+  material: z.enum(STORE_MATERIAL_IDS).nullish(),
   approxQty: qty('Approx quantity').refine((v) => v > 0, 'Approx quantity must be more than 0'),
+  challanQty: nullableBlank(qty('Challan quantity')),
   unit: z.enum(STORE_UNITS),
   packages: optionalText(40),
+  condition: nullableBlank(z.enum(GATE_CONDITIONS)),
   remarks: optionalText(300),
 });
 
@@ -34,8 +38,14 @@ const mrnFields = {
   vendorId: nullableBlank(id),
   vendorName: required('Vendor', 200),
   invoiceNo: optionalText(60),
+  challanDate: nullableBlank(date),
+  poNo: optionalText(40),
+  timeOut: nullableBlank(time),
+  transporter: optionalText(120),
+  lrNo: optionalText(40),
+  ewayBill: optionalText(20),
   remarks: optionalText(1000),
-  items: z.array(mrnItem).min(1, 'Add at least one material').max(20),
+  items: z.array(mrnItem).min(1, 'Add at least one product').max(20),
 };
 export const mrnCreateBody = z.object(mrnFields);
 export const mrnUpdateBody = z.object(mrnFields).partial();
@@ -46,9 +56,11 @@ const grnItem = z.object({
   id: nullableBlank(id),
   /** The MRN line received; null for an unlisted / extra item. */
   mrnItemId: nullableBlank(id),
-  /** Required for unlisted items; taken from the MRN line otherwise. */
+  /** Required for unlisted items (a product, or a material); taken from the MRN line otherwise. */
+  itemId: nullableBlank(id),
   material: z.enum(STORE_MATERIAL_IDS).nullish(),
   actualQty: qty('Actual quantity').refine((v) => v > 0, 'Actual quantity must be more than 0'),
+  rejectedQty: qty('Rejected quantity').optional(),
   unit: z.enum(STORE_UNITS),
   quality: z.enum(QUALITY_IDS),
   qualityRemarks: optionalText(300),
@@ -60,6 +72,7 @@ const grnFields = {
   vendorName: required('Vendor', 200).optional(),
   invoiceNo: required('Invoice / bill number', 60),
   receivedByName: required('Received by', 80),
+  location: optionalText(120),
   remarks: optionalText(1000),
   items: z.array(grnItem).min(1, 'Enter the actual quantity for at least one item').max(30),
 };

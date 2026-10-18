@@ -12,7 +12,7 @@ export const REF_MT_AREAS: Ref<MtArea>[] = ['Assembly Line A', 'Assembly Line B'
 
 const t = (id: string, type: TimelineEntry['type'], byName: string, at: string, text: string): TimelineEntry => ({ id, type, by: null, byName, at, text });
 
-export const DEMO_WORK_ORDERS: (Ref<WorkOrder> & { createdAt: string })[] = [
+export const DEMO_WORK_ORDERS: (Omit<Ref<WorkOrder>, 'photos' | 'equipment' | 'station'> & { createdAt: string })[] = [
   {
     id: 'wo-1', woNo: 'WO-26-0001', title: 'Hydraulic Press #3 Oil Leak', category: 'Hydraulic', area: 'Press Shop', priority: 'Critical', status: 'In Progress', assignee: 'Raj Kumar',
     description: 'Continuous oil drip from main cylinder seal. Production halted.', notes: 'Replacement seal ordered.', dueDate: '2026-09-28', completedOn: null, createdAt: '2026-09-25T03:40:00.000Z',

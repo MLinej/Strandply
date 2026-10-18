@@ -1,9 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { ReactNode } from 'react';
-import { APPROVAL_LABEL, FIRM_LABEL, PI_STATUS_LABEL, rateSqftOf, SO_STATUS_LABEL, type Customer, type DocTotals, type ProformaView, type ReportResult, type SalesInvoiceView, type SalesOrderView } from '@contracts/sales';
+import { PI_STATUS_LABEL, SO_STATUS_LABEL, type Customer, type ProformaView, type ReportResult, type SalesInvoiceView, type SalesOrderView } from '@contracts/sales';
 import type { CompanyBlock } from '@contracts/sampletrack';
 import { formatDate } from '@/lib/format';
+import { dueDate, InvoiceDocument, stateWithCode, type InvoiceLineRow, type InvoiceParty } from '@/lib/invoice-print';
 import { PAGES, printHtml } from '@/lib/print';
+import { KIT_CSS } from '@/lib/print-kit';
 import { fetchPrint, type DocPath } from './api';
 import { inr, qtyFmt, sqmFmt, stamp } from './ui';
 
@@ -45,19 +47,6 @@ function Fields({ fields, cols = 3 }: { fields: [string, Cell][]; cols?: number 
           <div style={{ fontWeight: 600 }}>{v(x)}</div>
         </div>
       ))}
-    </div>
-  );
-}
-
-function Party({ title, name, party }: { title: string; name: string; party: Customer | null }) {
-  return (
-    <div style={{ flex: 1, border: `1px solid ${LINE}`, borderRadius: 4, padding: '2mm 3mm' }}>
-      <div style={{ fontSize: 7.5, color: FAINT, textTransform: 'uppercase', letterSpacing: 0.4 }}>{title}</div>
-      <div style={{ fontWeight: 700, fontSize: 10.5 }}>{name}</div>
-      {party?.address && <div style={{ color: MUTED }}>{party.address}</div>}
-      <div style={{ color: MUTED }}>{[party?.city, party?.state, party?.pincode].filter(Boolean).join(', ')}</div>
-      {party?.gstin && <div>GSTIN {party.gstin}</div>}
-      {party?.mobile1 && <div style={{ color: MUTED }}>{party.mobile1}</div>}
     </div>
   );
 }
@@ -106,121 +95,149 @@ function TableBlock({ t }: { t: Table }) {
   );
 }
 
-function Totals({ t, gstPct, label }: { t: DocTotals; gstPct: number; label: string }) {
-  const rows: [string, number][] = [['Total of items', t.itemsPaise], ...(t.freightPaise ? ([['Freight', t.freightPaise]] as [string, number][]) : [])];
-  if (t.cgst) rows.push([`CGST @ ${gstPct / 2}%`, t.cgst], [`SGST @ ${gstPct / 2}%`, t.sgst]);
-  if (t.igst) rows.push([`IGST @ ${gstPct}%`, t.igst]);
-  return (
-    <div style={{ marginLeft: 'auto', width: '75mm', marginBottom: '3mm' }}>
-      {rows.map(([k, x]) => (
-        <div key={k} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.6mm 0' }}>
-          <span style={{ color: MUTED }}>{k}</span>
-          <span>{inr(x)}</span>
-        </div>
-      ))}
-      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: `1.5px solid ${INK}`, marginTop: '1mm', paddingTop: '1mm', fontSize: 11, fontWeight: 800 }}>
-        <span>{label}</span>
-        <span>{inr(t.total)}</span>
-      </div>
-    </div>
-  );
+/** A party block: address, city / pincode, state with its GST code, GSTIN. */
+function partyBlock(title: string, name: string, c: Customer | null): InvoiceParty {
+  return {
+    title,
+    name,
+    lines: [c?.address, [c?.city, c?.pincode].filter(Boolean).join(', ') || null, stateWithCode(c?.state, c?.gstin), c?.gstin ? `GSTIN ${c.gstin}` : null],
+  };
 }
 
-function SignOff({ firm, generatedAt, note }: { firm: string; generatedAt: string; note?: ReactNode }) {
-  return (
-    <>
-      {note && <div style={{ marginTop: '2mm', color: MUTED }}>{note}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12mm', marginTop: '14mm', fontSize: 8.5 }}>
-        <div style={{ flex: 1, borderTop: `1px solid ${INK}`, paddingTop: '1mm', color: MUTED }}>Prepared by</div>
-        <div style={{ flex: 1, borderTop: `1px solid ${INK}`, paddingTop: '1mm', color: MUTED, textAlign: 'right' }}>Authorised signatory — {firm}</div>
-      </div>
-      <div style={{ marginTop: '4mm', textAlign: 'center', color: FAINT, fontSize: 7.5 }}>Generated {stamp(generatedAt)}</div>
-    </>
-  );
-}
+const A4_PAGE_H = 297 - 24 - 2;
 
-/** Proforma, sales order or tax invoice on A4 (legacy printPiPdf / printSalesOrderPdf / printInvoicePdf). */
+/** Proforma, sales order or tax invoice on A4, in the tax invoice format (legacy printPiPdf / printSalesOrderPdf / printInvoicePdf). */
 export async function printSalesDoc(path: DocPath, id: string) {
   const data = await fetchPrint(path, id);
-  const { company, billParty, shipParty, generatedAt } = data;
-  const firm = FIRM_LABEL[data.doc.firm];
-  let title: string;
+  const { no, body } = salesDocument(path, data);
+  await printHtml({ page: PAGES.requestSlip, marginMm: 12, css: KIT_CSS, title: no.replace(/\//g, '-'), bodyHtml: renderToStaticMarkup(body) });
+}
+
+/** The printed document for a proforma, order or invoice payload. */
+export function salesDocument(path: DocPath, data: Awaited<ReturnType<typeof fetchPrint>>): { no: string; body: ReactNode } {
+  const { company, billParty, shipParty, generatedAt, dispatch } = data;
+  const doc = data.doc;
+  const lines: InvoiceLineRow[] = doc.lines.map((l) => ({
+    name: l.itemName,
+    sub: [l.pcs ? `${qtyFmt(l.pcs)} pcs` : null, l.brand].filter(Boolean).join(' · ') || null,
+    hsn: l.hsn,
+    qty: l.qtySqm,
+    uom: 'SQM',
+    ratePaise: l.ratePaise,
+    taxablePaise: l.amountPaise,
+  }));
+  const place = stateWithCode(billParty?.state ?? doc.state, billParty?.gstin);
+  const supply = doc.taxType === 'IGST' ? 'Inter-state (IGST)' : 'Intra-state (CGST + SGST)';
+  const t = doc.totals;
+  const common = {
+    company,
+    lines,
+    freightPaise: doc.freightPaise,
+    taxType: doc.taxType,
+    gstPct: doc.gstPct,
+    totals: { taxablePaise: t.taxablePaise, cgst: t.cgst, sgst: t.sgst, igst: t.igst, total: t.total },
+    parties: [partyBlock('Bill to', doc.billTo, billParty), partyBlock('Ship to', doc.shipTo, shipParty)],
+    pageHeightMm: A4_PAGE_H,
+    extra: doc.remarks ? (
+      <div style={{ marginBottom: '3mm' }}>
+        <span style={{ fontSize: 8.5, fontWeight: 700, letterSpacing: 0.8, color: MUTED, marginRight: '3mm' }}>REMARKS</span>
+        {doc.remarks}
+      </div>
+    ) : undefined,
+  };
+  let body: ReactNode;
   let no: string;
-  let sub: string;
-  let fields: [string, Cell][];
-  let table: Table;
-  let label = 'Grand total';
-  let note: ReactNode = null;
   if (path === 'invoices') {
-    const i = data.doc as SalesInvoiceView;
-    title = 'Tax invoice';
+    const i = doc as SalesInvoiceView;
     no = i.invNo;
-    sub = `${d(i.date)} · ${APPROVAL_LABEL[i.approval]}`;
-    fields = [
-      ['Invoice date', d(i.date)],
-      ['Sales order', i.soNo],
-      ['Customer PO', i.poNo],
-      ['Tax type', i.taxType],
-      ['E-way bill', i.ewayBill ?? 'Not generated'],
-      ['IRN', i.irn ?? 'Not generated'],
-      ['Weight', `${qtyFmt(i.tons)} t`],
-    ];
-    table = {
-      head: ['#', 'Item', 'HSN', 'SO qty (sq m)', 'Pcs', 'Qty (sq m)', 'Rate / sq m', 'Rate / sq ft', 'Amount'],
-      numeric: [3, 4, 5, 6, 7, 8],
-      rows: i.lines.map((l, n) => [n + 1, l.itemName, l.hsn, sqmFmt(l.soQtySqm), l.pcs, sqmFmt(l.qtySqm), inr(l.ratePaise), inr(rateSqftOf(l.ratePaise)), inr(l.amountPaise)]),
-      foot: ['', 'Total', '', '', i.lines.reduce((s, l) => s + l.pcs, 0), sqmFmt(i.lines.reduce((s, l) => s + l.qtySqm, 0)), '', '', inr(i.totals.itemsPaise)],
-    };
-    note = i.remarks;
-  } else {
-    const o = data.doc as SalesOrderView & ProformaView;
-    const isOrder = path === 'orders';
-    title = isOrder ? 'Sales order' : 'Proforma invoice';
-    no = isOrder ? o.soNo : o.piNo;
-    sub = `${d(o.date)} · ${isOrder ? SO_STATUS_LABEL[o.status as SalesOrderView['status']] : PI_STATUS_LABEL[o.status as ProformaView['status']]}`;
-    fields = isOrder
-      ? [
-          ['SO date', d(o.date)],
+    body = (
+      <InvoiceDocument
+        {...common}
+        title="Tax invoice"
+        copyLabel="Original for recipient"
+        docNo={i.invNo}
+        dateText={d(i.date)}
+        banner={i.irn ? `IRN ${i.irn}` : undefined}
+        detailsTitle="Invoice details"
+        left={[
+          ['Invoice no.', i.invNo, true],
+          ['Date', d(i.date)],
+          ['Place of supply', place],
+          ['Supply', supply],
+          ['Reverse charge', 'No'],
+          ['Due date', d(dueDate(i.date, billParty?.paymentTerms ?? (billParty?.creditDays ? `${billParty.creditDays} days` : null)))],
+        ]}
+        right={[
+          ['Order ref.', i.soNo],
+          // The town from the address line ("…, Morbi, Gujarat 363642" → Morbi).
+          ['Dispatch from', company.city ? (company.city.split(',').map((x) => x.trim()).at(-2) ?? company.city) : null],
+          ['E-way bill', i.ewayBill],
+          ['Vehicle', dispatch?.vehicleNo],
+          ['Transporter', dispatch?.transporter],
+          ['LR no.', dispatch?.lrNo],
+        ]}
+        footer="Computer-generated invoice · Page 1 of 1"
+      />
+    );
+  } else if (path === 'orders') {
+    const o = doc as SalesOrderView;
+    no = o.soNo;
+    body = (
+      <InvoiceDocument
+        {...common}
+        title="Sales order"
+        copyLabel={SO_STATUS_LABEL[o.status]}
+        docNo={o.soNo}
+        dateText={d(o.date)}
+        detailsTitle="Order details"
+        left={[
+          ['SO no.', o.soNo, true],
+          ['Date', d(o.date)],
           ['Customer PO', o.poNo ? `${o.poNo}${o.poDate ? ` · ${d(o.poDate)}` : ''}` : null],
+          ['Place of supply', place],
+          ['Supply', supply],
           ['Expected dispatch', d(o.edd)],
+        ]}
+        right={[
           ['Sales person', o.salesPerson],
           ['Payment terms', o.paymentTerms],
           ['Delivery terms', o.deliveryTerms],
-        ]
-      : [
-          ['PI date', d(o.date)],
-          ['Valid until', d(o.validUntil)],
-          ['Party’s PO ref', o.poRef],
-          ['Sales person', o.salesPerson],
-          ['Payment terms', o.paymentTerms],
-          ['Delivery terms', o.deliveryTerms],
-        ];
-    table = {
-      head: ['#', 'Item', 'Brand', 'Pcs', 'Qty (sq m)', 'Rate / sq m', 'Rate / sq ft', 'Wt (kg)', 'Amount'],
-      numeric: [3, 4, 5, 6, 7, 8],
-      rows: o.lines.map((l, n) => [n + 1, l.itemName, l.brand, l.pcs, sqmFmt(l.qtySqm), inr(l.ratePaise), inr(rateSqftOf(l.ratePaise)), l.weightKg ? qtyFmt(l.pcs * l.weightKg) : '—', inr(l.amountPaise)]),
-      foot: ['', 'Total', '', o.lines.reduce((s, l) => s + l.pcs, 0), sqmFmt(o.lines.reduce((s, l) => s + l.qtySqm, 0)), '', '', o.totalWeightKg ? qtyFmt(o.totalWeightKg) : '', inr(o.totals.itemsPaise)],
-    };
-    label = isOrder ? 'Order value' : 'Total value';
-    note = o.remarks;
+          ['Vehicle', dispatch?.vehicleNo],
+          ['Transporter', dispatch?.transporter],
+          ['Total weight', o.totalWeightKg ? `${qtyFmt(o.totalWeightKg)} kg` : null],
+        ]}
+        footer={`Computer-generated sales order · Generated ${stamp(generatedAt)} · Page 1 of 1`}
+      />
+    );
+  } else {
+    const p = doc as ProformaView;
+    no = p.piNo;
+    body = (
+      <InvoiceDocument
+        {...common}
+        title="Proforma invoice"
+        copyLabel={PI_STATUS_LABEL[p.status]}
+        docNo={p.piNo}
+        dateText={d(p.date)}
+        detailsTitle="Proforma details"
+        left={[
+          ['PI no.', p.piNo, true],
+          ['Date', d(p.date)],
+          ['Valid until', d(p.validUntil)],
+          ['Party’s PO ref.', p.poRef],
+          ['Place of supply', place],
+          ['Supply', supply],
+        ]}
+        right={[
+          ['Sales person', p.salesPerson],
+          ['Payment terms', p.paymentTerms],
+          ['Delivery terms', p.deliveryTerms],
+        ]}
+        footer={`Computer-generated proforma invoice · Generated ${stamp(generatedAt)} · Page 1 of 1`}
+      />
+    );
   }
-  await printHtml({
-    ...A4,
-    title: no,
-    bodyHtml: renderToStaticMarkup(
-      <div style={{ fontFamily: 'Inter, Arial, sans-serif', fontSize: 9.5, color: INK }}>
-        <Letterhead company={company} title={title} no={no} sub={sub} />
-        <Fields fields={fields} />
-        <div style={{ display: 'flex', gap: '4mm', marginBottom: '3mm' }}>
-          <Party title="Bill to" name={data.doc.billTo} party={billParty} />
-          <Party title="Ship to" name={data.doc.shipTo} party={shipParty} />
-        </div>
-        <TableBlock t={table} />
-        <Totals t={data.doc.totals} gstPct={data.doc.gstPct} label={label} />
-        <SignOff firm={firm} generatedAt={generatedAt} note={note} />
-      </div>,
-    ),
-  });
+  return { no, body };
 }
 
 /** Any report as an A4 table (legacy printPendingOrderPdf, generalised). */

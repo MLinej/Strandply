@@ -1,6 +1,6 @@
-import { Download, MessageCircle, Pencil, Plus, Printer, Search, Trash2, Wrench, X } from 'lucide-react';
+import { Camera, Download, ImagePlus, MessageCircle, Pencil, Plus, Printer, Search, Trash2, UserPlus, Wrench, X } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
-import { MT_CATEGORIES, MT_PRIORITIES, MT_STATUSES, type MtStatus, type TimelineType, type WorkOrder } from '@contracts/maintenance';
+import { MAX_WO_PHOTO_BYTES, MAX_WO_PHOTOS, MT_CATEGORIES, MT_PRIORITIES, MT_STATUSES, type MtStatus, type TimelineType, type WorkOrder } from '@contracts/maintenance';
 import { useSession } from '@/app/session';
 import { Button, Card, DataTable, EmptyState, Input, KpiTile, MenuItem, MenuSeparator, Modal, Pagination, SegmentedControl, Select, Skeleton, Tabs, Textarea, useToast, type Column } from '@/components/ui';
 import { ConfirmDialog } from '../../samples/ui/ConfirmDialog';
@@ -9,7 +9,21 @@ import { errorMessage, fieldErrors } from '../../samples/ui/errors';
 import { useSearchParam, useUrlState } from '../../samples/ui/list-state';
 import { PageHeader } from '../../samples/ui/PageHeader';
 import { RowMenu, runAndClose } from '../../samples/ui/RowMenu';
-import { exportWorkOrders, useAddNote, useDeleteWorkOrder, useMaintenanceDashboard, useMaintenanceMeta, useSaveWorkOrder, useSetStatus, useWorkOrder, useWorkOrders } from '../api';
+import {
+  exportWorkOrders,
+  photoUrl,
+  useAddNote,
+  useAddPhotos,
+  useDeleteWorkOrder,
+  useMaintenanceDashboard,
+  useMaintenanceMeta,
+  useRemovePhoto,
+  useSaveAssignee,
+  useSaveWorkOrder,
+  useSetStatus,
+  useWorkOrder,
+  useWorkOrders,
+} from '../api';
 import { printWorkOrder } from '../print';
 import { d, Due, PriorityPill, stamp, StatusPill, whatsAppLink } from '../ui';
 
@@ -17,13 +31,38 @@ const PAGE_SIZE = 25;
 type View = 'list' | 'board';
 const TIMELINE_LABEL: Record<TimelineType, string> = { created: 'Created', assigned: 'Assigned', status: 'Status', edited: 'Edited', note: 'Note' };
 
+/** Photo pickers: the camera on a phone (capture) or files from the gallery / computer. */
+function PhotoButtons({ onPick, disabled }: { onPick: (files: File[]) => void; disabled?: boolean }) {
+  const take = (e: { target: HTMLInputElement }) => {
+    onPick(Array.from(e.target.files ?? []));
+    e.target.value = '';
+  };
+  const cls = 'inline-flex h-ctl-sm cursor-pointer items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium hover:bg-page focus-within:ring-2 focus-within:ring-primary/30';
+  return (
+    <div className="flex flex-wrap gap-2" aria-disabled={disabled}>
+      <label className={cls}>
+        <Camera size={14} aria-hidden /> Take photo
+        <input type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Take photo" disabled={disabled} onChange={take} />
+      </label>
+      <label className={cls}>
+        <ImagePlus size={14} aria-hidden /> Attach photos
+        <input type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" aria-label="Attach photos" disabled={disabled} onChange={take} />
+      </label>
+    </div>
+  );
+}
+
 /** New / edit work order (legacy form: identity, assignment & schedule, details). */
 function WorkOrderForm({ open, workOrder, onClose, onSaved }: { open: boolean; workOrder: WorkOrder | null; onClose: () => void; onSaved?: (w: WorkOrder) => void }) {
   const toast = useToast();
   const meta = useMaintenanceMeta().data;
   const save = useSaveWorkOrder();
+  const addPhotos = useAddPhotos();
+  const addAssignee = useSaveAssignee();
   const [v, setV] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [newName, setNewName] = useState<string | null>(null);
   useEffect(() => {
     if (!open) return;
     const w = workOrder;
@@ -31,6 +70,8 @@ function WorkOrderForm({ open, workOrder, onClose, onSaved }: { open: boolean; w
       title: w?.title ?? '',
       category: w?.category ?? 'Mechanical',
       area: w?.area ?? meta?.areas[0] ?? '',
+      equipment: w?.equipment ?? '',
+      station: w?.station ?? '',
       assignee: w?.assignee ?? '',
       dueDate: w?.dueDate ?? '',
       priority: w?.priority ?? 'High',
@@ -39,12 +80,21 @@ function WorkOrderForm({ open, workOrder, onClose, onSaved }: { open: boolean; w
       notes: w?.notes ?? '',
     });
     setErrors({});
+    setPhotos([]);
+    setNewName(null);
   }, [open, workOrder, meta?.areas]);
   const set = (k: string) => (e: { target: { value: string } }) => setV((x) => ({ ...x, [k]: e.target.value }));
   async function submit(e: FormEvent) {
     e.preventDefault();
     try {
-      const saved = await save.mutateAsync({ id: workOrder?.id, input: { ...v, description: v.description || null, notes: v.notes || null } });
+      let saved = await save.mutateAsync({ id: workOrder?.id, input: { ...v, equipment: v.equipment?.trim() || null, station: v.station?.trim() || null, description: v.description || null, notes: v.notes || null } });
+      if (photos.length) {
+        try {
+          saved = await addPhotos.mutateAsync({ id: saved.id, files: photos });
+        } catch (err) {
+          toast({ tone: 'error', title: 'Photos didn’t upload', description: `${errorMessage(err)} Open the work order and attach them again.` });
+        }
+      }
       toast({ tone: 'success', title: workOrder ? 'Work order saved' : `${saved.woNo} created` });
       onSaved?.(saved);
       onClose();
@@ -54,6 +104,25 @@ function WorkOrderForm({ open, workOrder, onClose, onSaved }: { open: boolean; w
     }
   }
   const areas = [...new Set([...(meta?.areas ?? []), ...(workOrder ? [workOrder.area] : [])])];
+  const technicians = [...new Set([...(meta?.technicians ?? []), ...(v.assignee ? [v.assignee] : [])])].sort((a, b) => a.localeCompare(b));
+  const room = MAX_WO_PHOTOS - (workOrder?.photos.length ?? 0) - photos.length;
+  function pickPhotos(files: File[]) {
+    const tooBig = files.filter((f) => f.size > MAX_WO_PHOTO_BYTES);
+    if (tooBig.length) toast({ tone: 'error', title: `Photos can be up to ${MAX_WO_PHOTO_BYTES / 1024 / 1024} MB`, description: tooBig.map((f) => f.name).join(', ') });
+    setPhotos((x) => [...x, ...files.filter((f) => f.size <= MAX_WO_PHOTO_BYTES)].slice(0, MAX_WO_PHOTOS - (workOrder?.photos.length ?? 0)));
+  }
+  async function saveName() {
+    const name = (newName ?? '').trim();
+    if (!name) return;
+    try {
+      const a = await addAssignee.mutateAsync({ input: { name } });
+      setV((x) => ({ ...x, assignee: a.name }));
+      setNewName(null);
+      toast({ tone: 'success', title: `${a.name} added to the list` });
+    } catch (err) {
+      toast({ tone: 'error', title: 'Couldn’t add the name', description: errorMessage(err) });
+    }
+  }
   return (
     <Modal
       open={open}
@@ -77,12 +146,38 @@ function WorkOrderForm({ open, workOrder, onClose, onSaved }: { open: boolean; w
         </div>
         <Select label="Category" options={MT_CATEGORIES.map((x) => ({ value: x, label: x }))} value={v.category ?? ''} onChange={set('category')} />
         <Select label="Plant area" placeholder="Pick an area" options={areas.map((x) => ({ value: x, label: x }))} value={v.area ?? ''} onChange={set('area')} error={errors.area} />
-        <Input label="Assigned to" value={v.assignee ?? ''} onChange={set('assignee')} error={errors.assignee} placeholder="Technician name" list="mt-assignees" />
-        <datalist id="mt-assignees">
-          {(meta?.assignees ?? []).map((a) => (
-            <option key={a} value={a} />
-          ))}
-        </datalist>
+        <Input label="Equipment" value={v.equipment ?? ''} onChange={set('equipment')} error={errors.equipment} placeholder="e.g. Conveyor belt motor" />
+        <Input label="Station" value={v.station ?? ''} onChange={set('station')} error={errors.station} placeholder="e.g. Station 4" />
+        <div className="flex flex-col gap-1.5">
+          {newName === null ? (
+            <>
+              <Select label="Assigned to" placeholder="Pick a technician" options={technicians.map((x) => ({ value: x, label: x }))} value={v.assignee ?? ''} onChange={set('assignee')} error={errors.assignee} />
+              <button type="button" className="inline-flex items-center gap-1 self-start text-caption font-medium text-muted underline-offset-2 hover:text-ink hover:underline" onClick={() => setNewName('')}>
+                <UserPlus size={12} aria-hidden /> Add a name to the list
+              </button>
+            </>
+          ) : (
+            <div className="flex items-end gap-1.5">
+              <Input
+                label="New name"
+                value={newName}
+                autoFocus
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    void saveName();
+                  }
+                }}
+                containerClassName="flex-1"
+              />
+              <Button size="md" loading={addAssignee.isPending} disabled={!newName.trim()} onClick={() => void saveName()}>
+                Add
+              </Button>
+              <Button size="md" variant="ghost" icon={X} aria-label="Cancel adding a name" onClick={() => setNewName(null)} />
+            </div>
+          )}
+        </div>
         <Input label="Due date" type="date" value={v.dueDate ?? ''} onChange={set('dueDate')} error={errors.dueDate} />
         <Select label="Priority" options={MT_PRIORITIES.map((x) => ({ value: x, label: x }))} value={v.priority ?? ''} onChange={set('priority')} />
         <Select label="Status" options={MT_STATUSES.map((x) => ({ value: x, label: x }))} value={v.status ?? ''} onChange={set('status')} />
@@ -91,6 +186,25 @@ function WorkOrderForm({ open, workOrder, onClose, onSaved }: { open: boolean; w
         </div>
         <div className="col-span-2">
           <Textarea label="Notes / remarks" rows={2} value={v.notes ?? ''} onChange={set('notes')} error={errors.notes} placeholder="Parts needed, observations" />
+        </div>
+        <div className="col-span-2 flex flex-col gap-2">
+          <span className="text-sm font-semibold text-ink">Photos</span>
+          <PhotoButtons onPick={pickPhotos} disabled={room <= 0} />
+          {photos.length > 0 && (
+            <ul className="flex flex-wrap gap-2" aria-label="Photos to upload">
+              {photos.map((f, i) => (
+                <li key={i} className="flex items-center gap-1.5 rounded border border-border px-2 py-1 text-sm">
+                  <span className="max-w-[180px] truncate">{f.name}</span>
+                  <button type="button" aria-label={`Remove ${f.name}`} className="text-faint hover:text-primary" onClick={() => setPhotos((x) => x.filter((_, j) => j !== i))}>
+                    <X size={13} aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <span className="text-caption text-faint">
+            JPG, PNG or WebP, up to {MAX_WO_PHOTO_BYTES / 1024 / 1024} MB each, {MAX_WO_PHOTOS} per work order. {photos.length ? 'Uploaded when you save.' : ''}
+          </span>
         </div>
       </form>
     </Modal>
@@ -104,6 +218,8 @@ function DetailPanel({ id, today, onClose, onEdit, onDelete }: { id: string; tod
   const w = useWorkOrder(id).data;
   const setStatus = useSetStatus();
   const addNote = useAddNote();
+  const addPhotos = useAddPhotos();
+  const removePhoto = useRemovePhoto();
   const [tab, setTab] = useState<'details' | 'timeline'>('details');
   const [note, setNote] = useState('');
   if (!w) return <Skeleton className="h-96" />;
@@ -167,6 +283,7 @@ function DetailPanel({ id, today, onClose, onEdit, onDelete }: { id: string; tod
               items={[
                 { label: 'Assigned to', value: w.assignee },
                 { label: 'Plant area', value: w.area },
+                { label: 'Equipment', value: [w.equipment, w.station].filter(Boolean).join(' · ') || null },
                 { label: 'Raised', value: d(w.createdAt.slice(0, 10)) },
                 { label: 'Due date', value: <Due w={w} today={today} /> },
                 ...(w.completedOn ? [{ label: 'Completed on', value: d(w.completedOn) }] : []),
@@ -174,6 +291,42 @@ function DetailPanel({ id, today, onClose, onEdit, onDelete }: { id: string; tod
                 { label: 'Notes', value: w.notes, wide: true },
               ]}
             />
+            <div className="flex flex-col gap-2">
+              <p className="text-label font-semibold uppercase tracking-label text-faint">Photos ({w.photos.length})</p>
+              {w.photos.length > 0 && (
+                <ul className="grid grid-cols-3 gap-2" aria-label="Photos">
+                  {w.photos.map((p) => (
+                    <li key={p.id} className="group relative overflow-hidden rounded border border-border">
+                      <a href={photoUrl(w.id, p.id)} target="_blank" rel="noreferrer" title={`${p.name} · ${p.uploadedByName}, ${stamp(p.uploadedAt)}`}>
+                        <img src={photoUrl(w.id, p.id)} alt={p.name} className="aspect-square w-full object-cover" loading="lazy" />
+                      </a>
+                      {canDo('edit') && (
+                        <button
+                          type="button"
+                          aria-label={`Remove ${p.name}`}
+                          className="absolute right-1 top-1 rounded bg-card/90 p-0.5 text-muted opacity-0 hover:text-primary group-hover:opacity-100 focus:opacity-100"
+                          onClick={() => void removePhoto.mutateAsync({ id: w.id, photoId: p.id }).catch((err) => toast({ tone: 'error', title: 'Couldn’t remove the photo', description: errorMessage(err) }))}
+                        >
+                          <X size={13} aria-hidden />
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {canDo('edit') && w.photos.length < MAX_WO_PHOTOS && (
+                <PhotoButtons
+                  disabled={addPhotos.isPending}
+                  onPick={(files) =>
+                    files.length &&
+                    void addPhotos
+                      .mutateAsync({ id: w.id, files })
+                      .then(() => toast({ tone: 'success', title: `${files.length} photo${files.length === 1 ? '' : 's'} attached` }))
+                      .catch((err) => toast({ tone: 'error', title: 'Couldn’t attach the photos', description: errorMessage(err) }))
+                  }
+                />
+              )}
+            </div>
             {canDo('edit') && (
               <div>
                 <p className="mb-1.5 text-label font-semibold uppercase tracking-label text-faint">Update status</p>

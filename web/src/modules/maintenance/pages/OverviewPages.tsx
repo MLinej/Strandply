@@ -2,7 +2,7 @@ import { Download, History, Pencil, Plus, Search, Trash2, Wrench } from 'lucide-
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import type { ActivityEntryView } from '@contracts/admin';
-import type { MaintenanceReportRow, MtArea } from '@contracts/maintenance';
+import type { MaintenanceReportRow } from '@contracts/maintenance';
 import { useSession } from '@/app/session';
 import { Button, Card, DataTable, EmptyState, Input, KpiTile, MenuItem, Modal, Pagination, Pill, Skeleton, useToast, type Column } from '@/components/ui';
 import { BarList } from '../../purchase/ui';
@@ -11,7 +11,7 @@ import { errorMessage, fieldErrors } from '../../samples/ui/errors';
 import { useSearchParam, useUrlState } from '../../samples/ui/list-state';
 import { PageHeader } from '../../samples/ui/PageHeader';
 import { RowMenu, runAndClose } from '../../samples/ui/RowMenu';
-import { exportWorkOrders, useAreas, useDeleteArea, useMaintenanceAudit, useMaintenanceDashboard, useMaintenanceReports, useSaveArea } from '../api';
+import { exportWorkOrders, useAreas, useAssignees, useDeleteArea, useDeleteAssignee, useMaintenanceAudit, useMaintenanceDashboard, useMaintenanceReports, useSaveArea, useSaveAssignee } from '../api';
 import { d, PriorityPill, stamp } from '../ui';
 
 /** Maintenance dashboard: status counts, what's overdue, open work by area / category / priority, latest activity. */
@@ -102,18 +102,27 @@ export function DashboardPage() {
   );
 }
 
-/** Plant areas (legacy Manage Areas): offered on work orders. */
-export function AreasPage() {
+type NamedRow = { id: string; name: string; active: boolean };
+interface NameListCopy {
+  /** "area" / "name": used in buttons and messages. */
+  noun: string;
+  title: string;
+  description: string;
+  placeholder: string;
+  activeLabel: string;
+  removeNote: string;
+}
+
+/** A master of names (plant areas, technicians): add, rename, deactivate, remove. */
+function NameList<T extends NamedRow>({ copy, rows, loading, save, remove }: { copy: NameListCopy; rows: T[]; loading: boolean; save: ReturnType<typeof useSaveArea>; remove: ReturnType<typeof useDeleteArea> }) {
   const toast = useToast();
   const { canDo } = useSession();
-  const areas = useAreas();
-  const save = useSaveArea();
-  const remove = useDeleteArea();
-  const [form, setForm] = useState<MtArea | 'new' | null>(null);
+  const [form, setForm] = useState<T | 'new' | null>(null);
   const [name, setName] = useState('');
   const [active, setActive] = useState(true);
   const [error, setError] = useState<string>();
-  const [toDelete, setToDelete] = useState<MtArea | null>(null);
+  const [toDelete, setToDelete] = useState<T | null>(null);
+  const formId = `mt-${copy.noun}-form`;
   useEffect(() => {
     setName(form && form !== 'new' ? form.name : '');
     setActive(form && form !== 'new' ? form.active : true);
@@ -123,14 +132,14 @@ export function AreasPage() {
     e.preventDefault();
     try {
       await save.mutateAsync({ id: form === 'new' ? null : form?.id, input: { name, active } });
-      toast({ tone: 'success', title: 'Area saved' });
+      toast({ tone: 'success', title: `${copy.noun[0]!.toUpperCase()}${copy.noun.slice(1)} saved` });
       setForm(null);
     } catch (err) {
       setError(fieldErrors(err).name ?? errorMessage(err));
     }
   };
-  const columns: Column<MtArea>[] = [
-    { id: 'name', header: 'Area', className: 'font-medium', cell: (a) => a.name },
+  const columns: Column<T>[] = [
+    { id: 'name', header: 'Name', className: 'font-medium', cell: (a) => a.name },
     { id: 'st', header: 'Status', width: '110px', cell: (a) => (a.active ? <Pill tone="green">Active</Pill> : <Pill>Inactive</Pill>) },
     {
       id: 'actions',
@@ -161,38 +170,38 @@ export function AreasPage() {
     },
   ];
   return (
-    <div className="flex max-w-3xl flex-col gap-3.5 p-6">
-      <PageHeader
-        title="Plant areas"
-        description="Areas offered on work orders. Renaming one renames it on its work orders; an area with work orders can only be deactivated."
-        actions={
-          canDo('edit') && (
-            <Button variant="primary" icon={Plus} onClick={() => setForm('new')}>
-              Add area
-            </Button>
-          )
-        }
-      />
-      <DataTable label="Plant areas" columns={columns} rows={areas.data ?? []} getRowId={(a) => a.id} minWidth={420} loading={areas.isLoading} onRowClick={canDo('edit') ? (a) => setForm(a) : undefined} empty={<EmptyState icon={Wrench} title="No areas" />} />
+    <section className="flex flex-col gap-3" aria-label={copy.title}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold">{copy.title}</h2>
+          <p className="text-base text-muted">{copy.description}</p>
+        </div>
+        {canDo('edit') && (
+          <Button icon={Plus} onClick={() => setForm('new')}>
+            Add {copy.noun}
+          </Button>
+        )}
+      </div>
+      <DataTable label={copy.title} columns={columns} rows={rows} getRowId={(a) => a.id} minWidth={420} loading={loading} onRowClick={canDo('edit') ? (a) => setForm(a) : undefined} empty={<EmptyState icon={Wrench} title={`No ${copy.noun}s yet`} />} />
       <Modal
         open={form !== null}
         onClose={() => setForm(null)}
         size="sm"
-        title={form === 'new' ? 'Add area' : 'Edit area'}
+        title={form === 'new' ? `Add ${copy.noun}` : `Edit ${copy.noun}`}
         footer={
           <>
             <Button onClick={() => setForm(null)}>Cancel</Button>
-            <Button variant="primary" type="submit" form="mt-area-form" loading={save.isPending}>
+            <Button variant="primary" type="submit" form={formId} loading={save.isPending}>
               Save
             </Button>
           </>
         }
       >
-        <form id="mt-area-form" onSubmit={(e) => void submit(e)} className="flex flex-col gap-3">
-          <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} error={error} placeholder="e.g. CNC machine shop" />
+        <form id={formId} onSubmit={(e) => void submit(e)} className="flex flex-col gap-3">
+          <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} error={error} placeholder={copy.placeholder} />
           <label className="flex items-center gap-2 text-base">
             <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="accent-primary" />
-            Active (offered on new work orders)
+            {copy.activeLabel}
           </label>
         </form>
       </Modal>
@@ -205,14 +214,57 @@ export function AreasPage() {
         onConfirm={() =>
           void remove
             .mutateAsync(toDelete!.id)
-            .then(() => toast({ tone: 'success', title: 'Area removed' }))
+            .then(() => toast({ tone: 'success', title: `${toDelete!.name} removed` }))
             .catch((err) => toast({ tone: 'error', title: 'Can’t remove', description: errorMessage(err) }))
             .finally(() => setToDelete(null))
         }
         onClose={() => setToDelete(null)}
       >
-        Areas with work orders can’t be removed; deactivate them instead.
+        {copy.removeNote}
       </ConfirmDialog>
+    </section>
+  );
+}
+
+/** Maintenance masters: plant areas (legacy Manage Areas) and the "Assigned to" names, both offered on work orders. */
+export function AreasPage() {
+  const areas = useAreas();
+  const people = useAssignees();
+  const saveArea = useSaveArea();
+  const removeArea = useDeleteArea();
+  const savePerson = useSaveAssignee();
+  const removePerson = useDeleteAssignee();
+  return (
+    <div className="flex max-w-3xl flex-col gap-6 p-6">
+      <PageHeader title="Maintenance masters" description="Lists offered on work orders." />
+      <NameList
+        copy={{
+          noun: 'area',
+          title: 'Plant areas',
+          description: 'Renaming one renames it on its work orders; an area with work orders can only be deactivated.',
+          placeholder: 'e.g. CNC machine shop',
+          activeLabel: 'Active (offered on new work orders)',
+          removeNote: 'Areas with work orders can’t be removed; deactivate them instead.',
+        }}
+        rows={areas.data ?? []}
+        loading={areas.isLoading}
+        save={saveArea}
+        remove={removeArea}
+      />
+      <NameList
+        copy={{
+          noun: 'name',
+          title: 'Assigned to',
+          description: 'Technicians offered in “Assigned to”. Names can also be added from the work order form. Renaming one renames it on its work orders.',
+          placeholder: 'e.g. Raj Kumar',
+          activeLabel: 'Active (offered on new work orders)',
+          removeNote: 'Work orders already assigned to this name keep it.',
+        }}
+        rows={people.data ?? []}
+        loading={people.isLoading}
+        save={savePerson}
+        remove={removePerson}
+      />
     </div>
   );
 }

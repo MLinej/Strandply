@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle2, ClipboardCheck, Pencil, Printer } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { GrnView, MrnView } from '@contracts/stores';
+import { storeItemLabel, type GrnView, type MrnView } from '@contracts/stores';
 import { useSession } from '@/app/session';
 import { Button, Modal, useToast } from '@/components/ui';
 import { formatDate } from '@/lib/format';
@@ -106,7 +106,11 @@ export function MrnDetail({
               { label: 'Status', value: <span className="flex items-center gap-2"><MrnStatusPill status={m.status} />{m.status === 'pending_grn' && <DaysPill days={m.daysPending} />}</span> },
               { label: 'GRN', value: m.grnNo },
               { label: 'Vendor', value: m.vendorName },
-              { label: 'Invoice / challan', value: m.invoiceNo ?? 'Not available at gate' },
+              { label: 'Invoice / challan', value: m.invoiceNo ? `${m.invoiceNo}${m.challanDate ? ` · ${formatDate(m.challanDate)}` : ''}` : 'Not available at gate' },
+              { label: 'Purchase order', value: m.poNo },
+              { label: 'Time out', value: m.timeOut },
+              { label: 'Transporter · LR', value: [m.transporter, m.lrNo && `LR ${m.lrNo}`].filter(Boolean).join(' · ') || null },
+              { label: 'E-way bill', value: m.ewayBill },
               { label: 'Vehicle', value: m.vehicleNo },
               { label: 'Security guard', value: m.securityName },
               { label: 'Driver', value: [m.driverName, m.driverPhone].filter(Boolean).join(' · ') || null },
@@ -116,8 +120,8 @@ export function MrnDetail({
           />
           <ItemsTable
             label="MRN items"
-            head={['#', 'Material', 'Approx qty', 'Packages', 'Remarks']}
-            rows={m.items.map((it, i) => [i + 1, materialLabel(it.material), <span key="q" className="tabular-nums">{`${qtyFmt(it.approxQty)} ${it.unit}`}</span>, it.packages ?? '—', it.remarks ?? '—'])}
+            head={['#', 'Product', 'Approx qty', 'Packages', 'Remarks']}
+            rows={m.items.map((it, i) => [i + 1, storeItemLabel(it), <span key="q" className="tabular-nums">{`${qtyFmt(it.approxQty)} ${it.unit}`}</span>, it.packages ?? '—', it.remarks ?? '—'])}
           />
         </div>
       )}
@@ -181,6 +185,7 @@ export function GrnDetail({ id, onClose, onEdit }: { id: string | null; onClose:
             items={[
               { label: 'Received', value: dateTime(g.date, g.time) },
               { label: 'Received by', value: g.receivedByName },
+              { label: 'Store / location', value: g.location },
               { label: 'Vehicle', value: g.vehicleNo },
               { label: 'Vendor', value: g.vendorName },
               {
@@ -206,15 +211,16 @@ export function GrnDetail({ id, onClose, onEdit }: { id: string | null; onClose:
           />
           <ItemsTable
             label="GRN items"
-            head={['#', 'Material', 'Approx (gate)', 'Actual', 'Quality', 'Remarks']}
+            head={['#', 'Product', 'Approx (gate)', 'Actual', 'Rejected', 'Quality', 'Remarks']}
             rows={g.items.map((it, i) => [
               i + 1,
               <span key="m">
-                {materialLabel(it.material)}
+                {storeItemLabel(it)}
                 {!it.mrnItemId && <span className="text-caption text-faint"> (unlisted)</span>}
               </span>,
               it.approxQty ? `${qtyFmt(it.approxQty)} ${it.unit}` : '—',
               <strong key="a" className="tabular-nums">{`${qtyFmt(it.actualQty)} ${it.unit}`}</strong>,
+              it.rejectedQty ? `${qtyFmt(it.rejectedQty)} ${it.unit}` : '—',
               <QualityPill key="ql" quality={it.quality} />,
               it.qualityRemarks ?? '—',
             ])}

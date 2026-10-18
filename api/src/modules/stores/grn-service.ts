@@ -1,6 +1,6 @@
 import {
   qualityLabel,
-  storeMaterialLabel,
+  storeItemLabel,
   worstQuality,
   type Grn,
   type GrnFilters,
@@ -20,13 +20,17 @@ import type { ActivityService } from '../sampletrack/activity-service';
 import type { Actor } from '../sampletrack/actor';
 import { collectAll } from '../sampletrack/masters/common';
 import type { CompanyService } from '../sampletrack/settings/company-service';
-import { businessTime, findInvoice, nextDocNo, readSettings } from './common';
+import { businessTime, findInvoice, nextDocNo, productLine, readSettings } from './common';
 import { itemsSummary } from './mrn-service';
 import type { GrnCreate, GrnUpdate } from './validation';
 
 export interface GrnPrintPayload {
   company: CompanyBlock;
   grn: GrnView;
+  /** The gate entry it receives (time in / out, transport, challan quantities). */
+  mrn: Mrn | null;
+  /** Product master codes by item id, for the item column. */
+  itemCodes: Record<string, string>;
   generatedAt: string;
 }
 
@@ -82,35 +86,45 @@ export class GrnService {
    * Builds the GRN lines. Lines from the MRN take their material and gate quantity from it;
    * unlisted lines need a material and have no gate quantity.
    */
-  private items(mrn: Mrn, input: GrnCreate['items'], before: GrnItem[] = []): GrnItem[] {
+  private async items(tx: Repos, mrn: Mrn, input: GrnCreate['items'], before: GrnItem[] = []): Promise<GrnItem[]> {
     const byId = new Map(mrn.items.map((i) => [i.id, i]));
     const known = new Set(before.map((i) => i.id));
     const seen = new Set<string>();
-    return input.map((it, idx) => {
+    const out: GrnItem[] = [];
+    for (const [idx, it] of input.entries()) {
       const path = `items.${idx}`;
       let material = it.material ?? null;
+      let itemId: string | null = null;
+      let itemName: string | null = null;
       let approxQty = 0;
+      if (it.itemId && !it.mrnItemId) ({ itemId, itemName, material } = await productLine(tx, it.itemId, `${path}.itemId`));
       if (it.mrnItemId) {
         const src = byId.get(it.mrnItemId);
         if (!src) throw validationFailed('Invalid input', [{ path: `${path}.mrnItemId`, message: `That line isn’t on ${mrn.mrnNo}` }]);
         if (seen.has(it.mrnItemId)) throw validationFailed('Invalid input', [{ path: `${path}.mrnItemId`, message: 'The same MRN line is received twice' }]);
         seen.add(it.mrnItemId);
         material = src.material;
+        itemId = src.itemId ?? null;
+        itemName = src.itemName ?? null;
         approxQty = src.approxQty;
       } else if (!material) {
-        throw validationFailed('Invalid input', [{ path: `${path}.material`, message: 'Pick the material for the extra item' }]);
+        throw validationFailed('Invalid input', [{ path: `${path}.itemId`, message: 'Pick the product for the extra item' }]);
       }
-      return {
+      out.push({
         id: it.id && known.has(it.id) ? it.id : newId(),
         mrnItemId: it.mrnItemId ?? null,
+        itemId,
+        itemName,
         material,
         approxQty,
         actualQty: it.actualQty,
+        rejectedQty: Math.min(it.rejectedQty ?? 0, it.actualQty),
         unit: it.unit,
         quality: it.quality,
         qualityRemarks: it.qualityRemarks ?? null,
-      };
-    });
+      });
+    }
+    return out;
   }
 
   private async stamp(tx: Repos, input: { date?: string; time?: string }) {
@@ -143,8 +157,9 @@ export class GrnService {
         vendorName,
         invoiceNo: input.invoiceNo,
         purchaseEntryId: link?.entryId ?? null,
-        items: this.items(mrn, input.items),
+        items: await this.items(tx, mrn, input.items),
         receivedByName: input.receivedByName,
+        location: input.location ?? null,
         remarks: input.remarks ?? null,
         status: 'draft',
         reviewedBy: null,
@@ -185,12 +200,12 @@ export class GrnService {
         if (input.time) patch.time = input.time;
         if (patch.date && patch.date < mrn.date) throw validationFailed('Invalid input', [{ path: 'date', message: `Receiving can’t be before the gate entry (${mrn.date})` }]);
       }
-      for (const k of ['vendorName', 'receivedByName', 'remarks'] as const) if (input[k] !== undefined) (patch as Record<string, unknown>)[k] = input[k];
+      for (const k of ['vendorName', 'receivedByName', 'location', 'remarks'] as const) if (input[k] !== undefined) (patch as Record<string, unknown>)[k] = input[k];
       if (input.invoiceNo !== undefined || input.vendorName !== undefined) {
         patch.invoiceNo = input.invoiceNo ?? before.invoiceNo;
         patch.purchaseEntryId = (await findInvoice(tx, patch.invoiceNo, input.vendorName ?? before.vendorName))?.entryId ?? null;
       }
-      if (input.items) patch.items = this.items(mrn, input.items, before.items);
+      if (input.items) patch.items = await this.items(tx, mrn, input.items, before.items);
       const reset = before.status === 'reviewed';
       if (reset) Object.assign(patch, { status: 'draft', reviewedBy: null, reviewedAt: null });
       const updated = (await tx.grns.update(id, patch))!;
@@ -260,7 +275,11 @@ export class GrnService {
     const grn = await this.get(id);
     const company = await this.company.block();
     await this.data.uow.run((tx) => this.activity.record(tx, actor, { action: 'Print', entityType: 'stores_grn', entityId: id, details: `Printed GRN ${grn.grnNo}` }));
-    return { company, grn, generatedAt: isoNow(this.clock) };
+    const mrn = await this.data.repos.mrns.getById(grn.mrnId);
+    const ids = [...new Set(grn.items.map((it) => it.itemId).filter((x): x is string => !!x))];
+    const products = await Promise.all(ids.map((i) => this.data.repos.vendorProducts.getById(i)));
+    const itemCodes = Object.fromEntries(products.filter((p) => !!p).map((p) => [p.id, p.code]));
+    return { company, grn, mrn, itemCodes, generatedAt: isoNow(this.clock) };
   }
 
   /** GRN register, one row per item (legacy grnExcelBtn). */
@@ -278,7 +297,7 @@ export class GrnService {
           { header: 'Date', value: (r: R) => r.g.date },
           { header: 'Time', value: (r: R) => r.g.time },
           { header: 'Vendor', value: (r: R) => r.g.vendorName },
-          { header: 'Material', value: (r: R) => storeMaterialLabel(r.it.material) + (r.it.mrnItemId ? '' : ' (unlisted)') },
+          { header: 'Product', value: (r: R) => storeItemLabel(r.it) + (r.it.mrnItemId ? '' : ' (unlisted)') },
           { header: 'Approx Qty', value: (r: R) => r.it.approxQty || null },
           { header: 'Actual Qty', value: (r: R) => r.it.actualQty },
           { header: 'Unit', value: (r: R) => r.it.unit },

@@ -59,6 +59,9 @@ export function storesRoutes(): SecureRouter {
     return c.json(await s(c).mrns.vendorOptions(q));
   });
 
+  // Product master for the MRN / GRN product pickers.
+  r.get('/products', policy.anyPage(['stores_gate', 'stores_grn']), async (c) => c.json(await s(c).mrns.productOptions()));
+
   // ── MRN (gate entry) ───────────────────────────────────────────────
   r.get('/mrns', policy.anyPage(MRN_READERS), async (c) => c.json(await s(c).mrns.list(toListQuery(parseQuery(c, mrnQuery)))));
   r.get('/mrns/export', policy.page('stores_gate', 'export'), async (c) =>

@@ -43,6 +43,8 @@ const vendor = (over: Partial<VendorView> = {}): VendorView => ({
   msme: null,
   paymentTerms: '30 Days',
   bank: null,
+  branch: null,
+  documents: [],
   accountNo: null,
   ifsc: null,
   rating: 3,

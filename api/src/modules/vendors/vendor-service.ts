@@ -4,6 +4,8 @@ import type {
   ProductSourceSort,
   Vendor,
   VendorAction,
+  VendorDocType,
+  VendorDocument,
   VendorFilters,
   VendorOption,
   VendorReport,
@@ -11,6 +13,9 @@ import type {
   VendorStatus,
   VendorView,
 } from '../../contracts/vendors';
+import { MAX_VENDOR_DOC_BYTES } from '../../contracts/vendors';
+import type { BlobStore, StoredBlob } from '../../lib/blob-store';
+import { businessToday } from '../../lib/dates';
 import { isoNow, type Clock } from '../../lib/clock';
 import { newId } from '../../lib/crypto';
 import { conflict, HttpError, notFound, validationFailed } from '../../lib/errors';
@@ -58,17 +63,34 @@ const EXPORT_COLUMNS: Column<VendorView>[] = [
   { header: 'PAN', value: (v) => v.pan },
   { header: 'MSME', value: (v) => v.msme },
   { header: 'Payment Terms', value: (v) => v.paymentTerms },
+  { header: 'Bank', value: (v) => v.bank },
+  { header: 'Branch', value: (v) => v.branch },
+  { header: 'Account No', value: (v) => v.accountNo },
+  { header: 'IFSC', value: (v) => v.ifsc },
   { header: 'Status', value: (v) => STATUS_LABEL[v.status] },
   { header: 'Rating', value: (v) => v.rating },
   { header: 'Products', value: (v) => v.products.map((p) => p.name).join(' | ') },
   { header: 'Notes', value: (v) => v.notes },
 ];
 
+const docBlobKey = (vendorId: string, docId: string) => `vendors/${vendorId}/${docId}`;
+
+/** PDF, JPG or PNG, checked against the first bytes so a renamed file can't pass. */
+function docMime(f: { name: string; bytes: Uint8Array }): string | null {
+  const b = f.bytes;
+  const ext = /\.([a-z0-9]+)$/i.exec(f.name)?.[1]?.toLowerCase() ?? '';
+  if (ext === 'pdf' && b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return 'application/pdf';
+  if (['jpg', 'jpeg'].includes(ext) && b[0] === 0xff && b[1] === 0xd8) return 'image/jpeg';
+  if (ext === 'png' && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return 'image/png';
+  return null;
+}
+
 export class VendorService {
   constructor(
     private readonly data: DataLayer,
     private readonly activity: ActivityService,
     private readonly clock: Clock,
+    private readonly blobs: BlobStore,
   ) {}
 
   // ── Reading ────────────────────────────────────────────────────────
@@ -82,6 +104,8 @@ export class VendorService {
     const nameOf = (id: string | null) => (id ? (people.find((u) => u.id === id)?.name ?? null) : null);
     return rows.map((v) => ({
       ...v,
+      branch: v.branch ?? null,
+      documents: v.documents ?? [],
       categories: v.categoryIds
         .map((id) => catById.get(id))
         .filter((c) => !!c)
@@ -154,7 +178,7 @@ export class VendorService {
           unit: p.unit,
           categoryName: catName.get(p.categoryId) ?? '',
           leadTimeDays: p.leadTimeDays,
-          vendor: { id: v.id, code: v.code, name: v.name, city: v.city, state: v.state, rating: v.rating, status: v.status },
+          vendor: { id: v.id, code: v.code, name: v.name, city: v.city, state: v.state, phone: v.phone, rating: v.rating, status: v.status },
         });
       }
     }
@@ -255,8 +279,10 @@ export class VendorService {
           msme: input.msme ?? null,
           paymentTerms: input.paymentTerms ?? null,
           bank: input.bank ?? null,
+          branch: input.branch ?? null,
           accountNo: input.accountNo ?? null,
           ifsc: input.ifsc ?? null,
+          documents: [],
           rating: input.rating ?? null,
           notes: input.notes ?? null,
           status,
@@ -350,6 +376,64 @@ export class VendorService {
       return updated;
     });
     return (await this.views([vendor]))[0]!;
+  }
+
+  /** The code the next new vendor will get (shown read-only on the Add form). Doesn't use the number up. */
+  async nextCode(): Promise<{ code: string }> {
+    const yy = businessToday(this.clock).slice(2, 4);
+    const taken = new Set((await this.data.repos.vendors.listAll()).map((v) => v.code));
+    let n = (await this.data.repos.counters.current(`VEN-${yy}`)) + 1;
+    while (taken.has(vendorCode(yy, n))) n++;
+    return { code: vendorCode(yy, n) };
+  }
+
+  // ── Documents (GST certificate, cancelled cheque, Udyam…) ──────────
+
+  /** Uploads PDFs or images of one document type onto the vendor. */
+  async addDocuments(actor: Actor, id: string, type: VendorDocType, files: { name: string; bytes: Uint8Array }[]): Promise<VendorView> {
+    if (!files.length) throw validationFailed('Attach at least one file');
+    if (!(await this.data.repos.vendors.getById(id))) throw notFound('Vendor');
+    const at = isoNow(this.clock);
+    const docs: VendorDocument[] = files.map((f) => {
+      const mime = docMime(f);
+      if (!mime) throw validationFailed(`${f.name}: upload a PDF, JPG or PNG file`);
+      if (f.bytes.length === 0) throw validationFailed(`${f.name} is empty`);
+      if (f.bytes.length > MAX_VENDOR_DOC_BYTES) throw validationFailed(`${f.name}: files can be up to 10 MB`);
+      return { id: newId(), type, name: f.name.replace(/[\\/]/g, '_').slice(0, 200), mime, sizeBytes: f.bytes.length, uploadedAt: at, uploadedBy: actor.id };
+    });
+    for (let i = 0; i < docs.length; i++) await this.blobs.put(docBlobKey(id, docs[i]!.id), files[i]!.bytes, docs[i]!.mime);
+    try {
+      const v = await this.data.uow.run(async (tx) => {
+        const cur = (await tx.vendors.getById(id))!;
+        const updated = (await tx.vendors.update(id, { documents: [...(cur.documents ?? []), ...docs], updatedAt: at }))!;
+        await this.activity.record(tx, actor, { action: 'Edit', entityType: 'vendor', entityId: id, details: `${updated.code} ${updated.name}: uploaded ${type} (${docs.map((d) => d.name).join(', ')})` });
+        return updated;
+      });
+      return (await this.views([v]))[0]!;
+    } catch (err) {
+      for (const d of docs) await this.blobs.delete(docBlobKey(id, d.id));
+      throw err;
+    }
+  }
+
+  async removeDocument(actor: Actor, id: string, docId: string): Promise<VendorView> {
+    const v = await this.data.uow.run(async (tx) => {
+      const cur = await tx.vendors.getById(id);
+      const doc = cur?.documents?.find((d) => d.id === docId);
+      if (!cur || !doc) throw notFound('Document');
+      const updated = (await tx.vendors.update(id, { documents: cur.documents.filter((d) => d.id !== docId), updatedAt: isoNow(this.clock) }))!;
+      await this.activity.record(tx, actor, { action: 'Edit', entityType: 'vendor', entityId: id, details: `${updated.code} ${updated.name}: removed ${doc.type} ${doc.name}` });
+      return updated;
+    });
+    await this.blobs.delete(docBlobKey(id, docId));
+    return (await this.views([v]))[0]!;
+  }
+
+  async documentFile(id: string, docId: string): Promise<{ doc: VendorDocument; blob: StoredBlob }> {
+    const doc = (await this.data.repos.vendors.getById(id))?.documents?.find((d) => d.id === docId);
+    const blob = doc ? await this.blobs.get(docBlobKey(id, docId)) : null;
+    if (!doc || !blob) throw notFound('Document');
+    return { doc, blob };
   }
 
   // TODO(purchase): block the delete while purchase orders reference the vendor.

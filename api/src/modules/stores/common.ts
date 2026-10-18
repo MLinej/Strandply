@@ -1,7 +1,8 @@
 import { fyLabel, fyOf } from '../../contracts/purchase';
-import type { InvoiceMatch, StoresSettings } from '../../contracts/stores';
+import { materialForProduct, type InvoiceMatch, type StoreMaterial, type StoresSettings } from '../../contracts/stores';
 import type { Clock } from '../../lib/clock';
 import { BUSINESS_TZ, businessToday } from '../../lib/dates';
+import { validationFailed } from '../../lib/errors';
 import type { Repos } from '../../repos';
 
 export const SETTING_KEYS = { autoPunchMrn: 'stores.auto_punch_mrn', autoPunchGrn: 'stores.auto_punch_grn' } as const;
@@ -64,4 +65,12 @@ export function fyOptions(clock: Clock): string[] {
   const out: string[] = [];
   for (let y = cur; y >= Math.min(cur, 2024); y--) out.push(fyLabel(y));
   return out;
+}
+
+/** A product-master line: its name and material group. 422 at `path` for an unknown product. */
+export async function productLine(repos: Repos, itemId: string, path: string): Promise<{ itemId: string; itemName: string; material: StoreMaterial }> {
+  const p = await repos.vendorProducts.getById(itemId);
+  if (!p) throw validationFailed('Invalid input', [{ path, message: 'Unknown product' }]);
+  const cat = await repos.vendorCategories.getById(p.categoryId);
+  return { itemId: p.id, itemName: p.name, material: materialForProduct(p.name, cat?.name) };
 }

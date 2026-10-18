@@ -229,6 +229,65 @@ UPGRADES.push({
   },
 });
 
+UPGRADES.push({
+  // Same as db/migrations/0018_change_requests.sql on an existing database.
+  name: '0018_change_requests',
+  apply(data) {
+    for (const v of data.vendors ?? []) {
+      v.branch ??= null;
+      v.documents ??= [];
+    }
+    // Entries saved before invoice lines: one item, notes as before.
+    for (const e of data.puEntries ?? []) {
+      e.lines ??= [];
+      e.raiseNotes ??= true;
+    }
+    // Gate and receiving lines saved before products were picked keep their material.
+    for (const m of data.stoMrns ?? []) {
+      for (const k of ['challanDate', 'poNo', 'timeOut', 'transporter', 'lrNo', 'ewayBill'] as const) m[k] ??= null;
+      for (const it of m.items) {
+        it.itemId ??= null;
+        it.itemName ??= null;
+        it.challanQty ??= null;
+        it.condition ??= null;
+      }
+    }
+    for (const g of data.stoGrns ?? []) {
+      g.location ??= null;
+      for (const it of g.items) {
+        it.itemId ??= null;
+        it.itemName ??= null;
+        it.rejectedQty ??= 0;
+      }
+    }
+    // Work orders gain photos; the new "Assigned to" master starts with everyone already on a work order.
+    for (const w of data.mtWorkOrders ?? []) {
+      w.photos ??= [];
+      w.equipment ??= null;
+      w.station ??= null;
+    }
+    if (!data.mtAssignees?.length) {
+      const at = new Date().toISOString();
+      data.mtAssignees = [...new Set((data.mtWorkOrders ?? []).filter((w) => !w.deletedAt).map((w) => w.assignee))]
+        .sort()
+        .map((name, i) => ({ id: `mtp-${i + 1}`, name, active: true, createdBy: null, createdAt: at, updatedAt: at, deletedAt: null }));
+    }
+    // POs saved before lines: shown as one line of their material; GST at the old default.
+    for (const p of data.puOrders ?? []) {
+      p.lines ??= [];
+      p.taxType ??= 'SG+CG';
+      p.gstPct ??= 18;
+      p.freightPaise ??= 0;
+      p.paymentTerms ??= null;
+      p.deliveryTerms ??= null;
+      p.deliveryDate ??= null;
+      p.quotationRef ??= null;
+      p.reviewedBy ??= null;
+      p.reviewedAt ??= null;
+    }
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

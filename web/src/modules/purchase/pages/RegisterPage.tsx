@@ -76,7 +76,7 @@ export function RegisterPage() {
           <span className="truncate font-medium">{e.vendorName}</span>
           <span className="truncate text-caption text-faint">
             {e.invoiceNo}
-            {e.species ? ` · ${e.species}` : e.veneerType ? ` · ${e.veneerType}` : ''}
+            {e.itemName ? ` · ${e.itemName}` : e.species ? ` · ${e.species}` : e.veneerType ? ` · ${e.veneerType}` : ''}
           </span>
         </span>
       ),
@@ -103,6 +103,11 @@ export function RegisterPage() {
         <span className="flex flex-col items-end leading-tight tabular-nums">
           <span>{qtyFmt(e.splQty)}</span>
           {e.calc.diffQty !== 0 && <span className={e.calc.diffQty < 0 ? 'text-caption text-primary' : 'text-caption text-green'}>{e.calc.diffQty > 0 ? '+' : ''}{qtyFmt(e.calc.diffQty)}</span>}
+          {e.returnedQty > 0 && (
+            <span className="text-caption text-amber" title={`${qtyFmt(e.returnedQty)} returned`}>
+              net {qtyFmt(e.netQty)}
+            </span>
+          )}
         </span>
       ),
     },

@@ -51,6 +51,8 @@ const entry = (over: Partial<PurchaseEntryView> = {}): PurchaseEntryView => ({
   species: 'Eucalyptus',
   veneerType: null,
   altQtyPcs: null,
+  lines: [],
+  raiseNotes: true,
   status: 'pending',
   approvedBy: null,
   approvedAt: null,
@@ -61,6 +63,8 @@ const entry = (over: Partial<PurchaseEntryView> = {}): PurchaseEntryView => ({
   updatedAt: '',
   deletedAt: null,
   calc: calcEntry(base),
+  returnedQty: 0,
+  netQty: 12730,
   poNo: null,
   approvedByName: null,
   createdByName: null,
@@ -83,6 +87,7 @@ function fakeApi() {
     if (url === '/api/purchase/entries/pe-1/approve' && method === 'POST') return json(entry({ status: 'approved' }));
     if (url.startsWith('/api/purchase/pos/options')) return json([]);
     if (url.startsWith('/api/purchase/vendor-options')) return json([]);
+    if (url === '/api/purchase/products') return json([{ id: 'vprod-mdi', code: 'SPL-P-26-001', name: 'MDI Resin', unit: 'KG', hsn: '3909', gstRate: 18, categoryName: 'Resin' }]);
     if (url.startsWith('/api/purchase/inventory'))
       return json({ fy: '2026-27', opening: { fy: '2026-27', asOnDate: '2026-03-31', source: 'blank', status: null, approvedByName: null, approvedAt: null, items: [], totalPaise: 0 }, rows: [ledgerRow], ageing: [] });
     if (url.includes('/badges')) return json({});
@@ -155,6 +160,40 @@ describe('Entry form', () => {
     expect(within(breakup).getByText('₹95,480.00')).toBeTruthy(); // invoice basic, per ton
     expect(within(breakup).getByText('Excess received (Strandply > invoice)')).toBeTruthy();
     expect(within(dialog).getByPlaceholderText('N02 (next)')).toBeTruthy();
+  });
+});
+
+describe('Entry form: invoice-wise materials', () => {
+  it('resin takes several product lines and its debit / credit notes can be switched off', async () => {
+    const fetchFn = fakeApi();
+    renderAt('/purchase/register?material=resin', buyer);
+    fireEvent.click(await screen.findByRole('button', { name: 'Add entry' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add Resin entry' });
+    fireEvent.change(within(dialog).getByLabelText('Quantity, line 1'), { target: { value: '1000' } });
+    fireEvent.change(within(dialog).getByLabelText('Rate, line 1'), { target: { value: '40000' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Add item' }));
+    fireEvent.change(within(dialog).getByLabelText('Quantity, line 2'), { target: { value: '500' } });
+    fireEvent.change(within(dialog).getByLabelText('Rate, line 2'), { target: { value: '60000' } });
+    // Notes on: the A/B reconciliation shows the invoice basic of both lines.
+    expect(within(within(dialog).getByRole('table', { name: 'Amount breakup' })).getAllByText('₹70,000.00').length).toBeGreaterThan(0);
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: /Raise debit \/ credit notes/ }));
+    expect(within(dialog).queryByRole('table', { name: 'Amount breakup' })).toBeNull();
+    expect(within(dialog).queryByLabelText('Strandply quantity, line 1')).toBeNull();
+    expect(within(within(dialog).getByLabelText('Invoice total')).getByText('₹82,600.00')).toBeTruthy(); // 70 000 + 18% GST
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save entry' }));
+    expect(await within(dialog).findAllByText('Pick a product')).toHaveLength(2);
+    expect(writes(fetchFn)).toHaveLength(0);
+  });
+
+  it('core veneer has no quantity reconciliation or notes at all', async () => {
+    fakeApi();
+    renderAt('/purchase/register?material=core', buyer);
+    fireEvent.click(await screen.findByRole('button', { name: 'Add entry' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Add Core Veneer entry' });
+    expect(within(dialog).queryByRole('checkbox', { name: /Raise debit/ })).toBeNull();
+    expect(within(dialog).queryByRole('table', { name: 'Amount breakup' })).toBeNull();
+    expect(within(dialog).queryByLabelText(/Rate difference/)).toBeNull();
+    expect(within(dialog).getByLabelText('Product, line 1')).toBeTruthy();
   });
 });
 

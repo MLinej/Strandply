@@ -55,17 +55,30 @@ describe('documents', () => {
   it('chipping takes the net rate from Purchase (rate − debit-note difference) and can’t over-draw a lot', async () => {
     const { call, json } = await admin();
     const lots = await json('GET', '/lots?material=nilgiri');
-    expect(lots[0]).toMatchObject({ lotNo: 'N01', receivedKg: 12730, usedKg: 5000, availKg: 7730, netRatePaise: 750000 });
+    // 1 000 kg of the lot went back to the vendor (ret-1).
+    expect(lots[0]).toMatchObject({ lotNo: 'N01', receivedKg: 12730, returnedKg: 1000, usedKg: 5000, availKg: 6730, netRatePaise: 750000 });
     const c = await (await call('POST', '/chipping', { date: '2026-09-25', shift: 'Day', lots: [{ purchaseEntryId: 'pe-1', qty: 1000 }] })).json();
     expect(c).toMatchObject({ docNo: 'CHR-0002', totalKg: 1000, totalPaise: 750000, avgRatePaise: 750000, lots: [{ ratePaise: 750000, amountPaise: 750000 }] });
-    const over = await call('POST', '/chipping', { date: '2026-09-25', shift: 'Day', lots: [{ purchaseEntryId: 'pe-1', qty: 6731 }] });
+    const over = await call('POST', '/chipping', { date: '2026-09-25', shift: 'Day', lots: [{ purchaseEntryId: 'pe-1', qty: 5731 }] });
     expect(over.status).toBe(409);
-    expect((await over.json()).error.message).toContain('Only 6,730 kg left in lot N01');
+    expect((await over.json()).error.message).toContain('Only 5,730 kg left in lot N01');
     expect(await paths(await call('POST', '/chipping', { date: '2026-09-25', shift: 'Day', lots: [{ purchaseEntryId: 'pe-2', qty: 1 }] }))).toEqual(['lots.0.purchaseEntryId']);
     expect(await paths(await call('POST', '/chipping', { date: '2026-09-25', shift: 'Day', lots: [{ purchaseEntryId: 'pe-draft', qty: 1 }] }))).toEqual(['lots.0.purchaseEntryId']);
     // Editing counts the report's own use as free: ch-1 can grow to everything not used by CHR-0002.
-    expect((await call('PATCH', '/chipping/ch-1', { lots: [{ purchaseEntryId: 'pe-1', qty: 11730 }] })).status).toBe(200);
-    expect((await call('PATCH', '/chipping/ch-1', { lots: [{ purchaseEntryId: 'pe-1', qty: 11731 }] })).status).toBe(409);
+    expect((await call('PATCH', '/chipping/ch-1', { lots: [{ purchaseEntryId: 'pe-1', qty: 10730 }] })).status).toBe(200);
+    expect((await call('PATCH', '/chipping/ch-1', { lots: [{ purchaseEntryId: 'pe-1', qty: 10731 }] })).status).toBe(409);
+  });
+
+  it('a hot press report goes into one production summary only, and the picker hides used ones', async () => {
+    const { call, json } = await admin();
+    // ps-1 (fixtures) already uses hp-1.
+    const again = await call('POST', '/summaries', { date: '2026-09-26', product: 'OSB', size: '8x4', hotpressId: 'hp-1' });
+    expect(again.status).toBe(409);
+    expect((await again.json()).error.code).toBe('hotpress_used');
+    const hp = await json('GET', '/hotpress/hp-1');
+    expect(hp).toMatchObject({ summaryId: 'ps-1' });
+    // Editing that summary keeps its own report.
+    expect((await call('PATCH', '/summaries/ps-1', { remarks: 'x' })).status).toBe(200);
   });
 
   it('resin consumption draws on resin lots at their rate', async () => {
@@ -200,7 +213,7 @@ describe('dashboard and settings', () => {
     expect(d.kpis).toEqual({ hotpress: 1, boardsPressed: 60, summaries: 1, chipping: 1, rejectPcs: 3, cutPcs: 57, rejectPct: 5 });
     expect(d.byProduct).toEqual([{ label: 'OSB', value: 60 }]);
     expect(d.awaiting).toEqual({ review: 1, approval: 0 });
-    expect(d.nilgiriLots[0]).toMatchObject({ lotNo: 'N01', availKg: 7730 });
+    expect(d.nilgiriLots[0]).toMatchObject({ lotNo: 'N01', availKg: 6730 });
   });
 
   it('settings: thickness and size masters, sorted and de-duplicated', async () => {

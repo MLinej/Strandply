@@ -7,6 +7,8 @@ import { PageHeader } from '../../samples/ui/PageHeader';
 import { useVendorCategories, useVendorsByProduct } from '../api';
 import { Stars, VendorStatusPill } from '../ui';
 
+type VendorRow = ProductSourceRow['vendor'];
+
 const SORTS: { value: ProductSourceSort; label: string }[] = [
   { value: 'rating', label: 'Best rated' },
   { value: 'lead', label: 'Shortest lead time' },
@@ -19,37 +21,40 @@ export function FindByProductPage() {
   const categories = useVendorCategories().data ?? [];
   const sort: ProductSourceSort = url.values.by === 'lead' ? 'lead' : 'rating';
   const res = useVendorsByProduct({ q: url.q || undefined, categoryId: url.values.categoryId || undefined, sort });
-  const rows = res.data ?? [];
+  // One row per vendor: the products matched only decide who is listed (in the API's sort order).
+  const rows = [...new Map((res.data ?? []).map((r) => [r.vendor.id, r.vendor] as const)).values()];
 
-  const columns: Column<ProductSourceRow>[] = [
-    {
-      id: 'product',
-      header: 'Product',
-      cell: (r) => (
-        <span className="flex flex-col leading-tight">
-          <span className="font-semibold">{r.productName}</span>
-          <span className="text-caption text-faint">
-            {r.categoryName} · per {r.unit}
-          </span>
-        </span>
-      ),
-    },
+  const columns: Column<VendorRow>[] = [
     {
       id: 'vendor',
-      header: 'Vendor',
-      width: '260px',
-      cell: (r) => (
+      header: 'Vendor name',
+      cell: (v) => (
         <span className="flex flex-col leading-tight">
-          <Link to={`/vendors/directory?open=${r.vendor.id}`} className="font-medium text-ink hover:underline" onClick={(e) => e.stopPropagation()}>
-            {r.vendor.name}
+          <Link to={`/vendors/directory?open=${v.id}`} className="font-semibold text-ink hover:underline" onClick={(e) => e.stopPropagation()}>
+            {v.name}
           </Link>
-          <span className="text-caption text-faint">{[r.vendor.city, r.vendor.state].filter(Boolean).join(', ') || r.vendor.code}</span>
+          <span className="text-caption text-faint">{v.code}</span>
         </span>
       ),
     },
-    { id: 'lead', header: 'Lead time', width: '110px', align: 'right', className: 'tabular-nums', cell: (r) => (r.leadTimeDays === null ? '—' : `${r.leadTimeDays} day${r.leadTimeDays === 1 ? '' : 's'}`) },
-    { id: 'rating', header: 'Rating', width: '130px', cell: (r) => <Stars rating={r.vendor.rating} /> },
-    { id: 'status', header: 'Status', width: '110px', cell: (r) => <VendorStatusPill status={r.vendor.status} /> },
+    { id: 'city', header: 'City', width: '160px', cell: (v) => v.city ?? '—' },
+    { id: 'state', header: 'State', width: '160px', cell: (v) => v.state ?? '—' },
+    {
+      id: 'phone',
+      header: 'Mobile number',
+      width: '160px',
+      className: 'tabular-nums',
+      cell: (v) =>
+        v.phone ? (
+          <a href={`tel:${v.phone}`} className="text-ink hover:underline" onClick={(e) => e.stopPropagation()}>
+            {v.phone}
+          </a>
+        ) : (
+          '—'
+        ),
+    },
+    { id: 'rating', header: 'Rating', width: '130px', cell: (v) => <Stars rating={v.rating} /> },
+    { id: 'status', header: 'Status', width: '110px', cell: (v) => <VendorStatusPill status={v.status} /> },
   ];
 
   return (
@@ -61,7 +66,7 @@ export function FindByProductPage() {
         <Select aria-label="Sort" options={SORTS} value={sort} onChange={(e) => url.set({ by: e.target.value === 'rating' ? null : e.target.value })} containerClassName="w-[190px]" />
         {res.data && (
           <span className="text-sm text-muted">
-            {rows.length} match{rows.length === 1 ? '' : 'es'}
+            {rows.length} vendor{rows.length === 1 ? '' : 's'}
           </span>
         )}
       </div>
@@ -69,7 +74,7 @@ export function FindByProductPage() {
         label="Vendors by product"
         columns={columns}
         rows={rows}
-        getRowId={(r) => `${r.productId}|${r.vendor.id}`}
+        getRowId={(v) => v.id}
         minWidth={820}
         loading={res.isLoading}
         empty={<EmptyState icon={PackageSearch} title="No vendors found" description="Try a different product or category." />}
