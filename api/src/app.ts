@@ -88,7 +88,7 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const dispatches = new DispatchService(data, activity, notifications, clock);
   const company = new CompanyService(data, activity, clock);
   const print = new PrintService(data, dispatches, requests, activity, company, clock);
-  const vendors = new VendorService(data, activity, clock);
+  const vendors = new VendorService(data, activity, clock, blobs);
   const inventory = new InventoryService(data, activity, clock);
   const mrns = new MrnService(data, activity, company, clock);
   const grns = new GrnService(data, activity, company, clock);
@@ -97,7 +97,7 @@ export function createServices({ data, config, clock = systemClock, blobs = new 
   const wipBatches = new WipService(data, activity, clock);
   const salesDocs = new SalesDocumentService(data, activity, clock);
   const salesMasters = new SalesMasterService(data, activity, clock);
-  const workOrders = new WorkOrderService(data, activity, clock);
+  const workOrders = new WorkOrderService(data, activity, clock, blobs);
   const electricity = new ElectricityService(data, blobs, activity, clock);
   const complaints = new ComplaintService(data, blobs, activity, clock);
   const dwpas = new DwpasService(data, activity, clock);
