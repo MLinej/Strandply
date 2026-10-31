@@ -34,7 +34,7 @@ const admin: SessionUser = {
 const clerk: SessionUser = { ...admin, id: 'u-c', permissions: ['sales.view', 'sales.invoices', 'sales.orders'], st: { pages: [], actions: ['edit'], widgets: [] } };
 
 const audit = { createdBy: null, createdAt: '2026-09-20T03:00:00.000Z', updatedAt: '2026-09-20T03:00:00.000Z', deletedAt: null };
-const item = { id: 'sli-1', name: 'S-OSB MDO 1220mm X 2440mm X 12mm', brand: 'Strandply', grade: 'S-OSB', subType: 'MDO', thic: 12, width: 1220, length: 2440, sqmFactor: 2.9768, defaultRatePaise: 40000, hsn: '441012', active: true, ...audit };
+const item = { id: 'sli-1', name: 'S-OSB MDO 1220mm X 2440mm X 12mm', brand: 'Strandply', grade: 'S-OSB', subType: 'MDO', thic: 12, width: 1220, length: 2440, sqmFactor: 2.9768, defaultRatePaise: 40000, weightKg: 25, hsn: '441012', active: true, ...audit };
 const options = {
   customers: [
     { id: 'slc-g', name: 'GUJARAT TRADERS', city: 'RAJKOT', state: 'GUJARAT', gstin: '24AAAAA0000A1Z5', taxTypes: { llp: 'SG+CG', osb: 'IGST' }, paymentTerms: '30 Days', dealerType: 'Dealer' },
@@ -46,7 +46,6 @@ const options = {
     { itemId: 'sli-1', effectiveDate: '2026-04-01', ratePaise: 44000 },
     { itemId: 'sli-1', effectiveDate: '2026-10-15', ratePaise: 46000 },
   ],
-  weights: [{ itemId: 'sli-1', effectiveDate: '2026-04-01', weightKg: 25 }],
 };
 const meta = {
   settings: {
@@ -189,7 +188,7 @@ afterEach(() => {
 });
 
 describe('Sales order form', () => {
-  it('fills sq m from pcs and the rate and weight from the price list as of the SO date; tax from the bill-to GSTIN', async () => {
+  it('fills sq m from pcs, the rate from the price list as of the SO date and the weight from the item master; tax from the bill-to GSTIN', async () => {
     const fetchFn = fakeApi();
     renderAt('/sales/orders?new=1', admin);
     const dlg = await screen.findByRole('dialog', { name: 'New sales order' });

@@ -12,8 +12,8 @@ import { exportSales, useDeleteRecord, useItems, useSalesMeta, useSaveItem } fro
 import { inr, rupeesText, toPaise } from '../ui';
 
 const PAGE_SIZE = 25;
-type Form = { name: string; brand: string; grade: string; subType: string; hsn: string; thic: string; width: string; length: string; sqmFactor: string; rate: string; active: boolean };
-const EMPTY: Form = { name: '', brand: 'Strandply', grade: 'S-OSB', subType: '', hsn: '441012', thic: '12', width: '1220', length: '2440', sqmFactor: '', rate: '', active: true };
+type Form = { name: string; brand: string; grade: string; subType: string; hsn: string; thic: string; width: string; length: string; sqmFactor: string; rate: string; weight: string; active: boolean };
+const EMPTY: Form = { name: '', brand: 'Strandply', grade: 'S-OSB', subType: '', hsn: '441012', thic: '12', width: '1220', length: '2440', sqmFactor: '', rate: '', weight: '', active: true };
 
 /** Add / edit item (legacy openItemModal). The sq m factor follows width × length unless typed. */
 function ItemForm({ open, item, onClose }: { open: boolean; item: SalesItem | null; onClose: () => void }) {
@@ -27,7 +27,7 @@ function ItemForm({ open, item, onClose }: { open: boolean; item: SalesItem | nu
     setErrors({});
     setF(
       item
-        ? { name: item.name, brand: item.brand, grade: item.grade, subType: item.subType ?? '', hsn: item.hsn ?? '', thic: String(item.thic), width: String(item.width), length: String(item.length), sqmFactor: String(item.sqmFactor), rate: rupeesText(item.defaultRatePaise), active: item.active }
+        ? { name: item.name, brand: item.brand, grade: item.grade, subType: item.subType ?? '', hsn: item.hsn ?? '', thic: String(item.thic), width: String(item.width), length: String(item.length), sqmFactor: String(item.sqmFactor), rate: rupeesText(item.defaultRatePaise), weight: item.weightKg ? String(item.weightKg) : '', active: item.active }
         : { ...EMPTY, brand: s?.brands[0] ?? 'Strandply' },
     );
   }, [open, item]);
@@ -55,6 +55,7 @@ function ItemForm({ open, item, onClose }: { open: boolean; item: SalesItem | nu
       length: Number(f.length),
       sqmFactor: f.sqmFactor ? Number(f.sqmFactor) : null,
       defaultRatePaise: toPaise(f.rate),
+      weightKg: Number(f.weight) || 0,
       active: f.active,
     };
     try {
@@ -93,6 +94,7 @@ function ItemForm({ open, item, onClose }: { open: boolean; item: SalesItem | nu
         <Input label="Length (mm)" inputMode="decimal" value={f.length} onChange={(e) => set('length', e.target.value)} error={errors.length} />
         <Input label="Sq m factor" inputMode="decimal" value={f.sqmFactor} onChange={(e) => set('sqmFactor', e.target.value)} hint="Width × length; editable" error={errors.sqmFactor} />
         <Input label="Default rate / sq m (₹)" inputMode="decimal" value={f.rate} onChange={(e) => set('rate', e.target.value)} hint={f.rate ? `${inr(rateSqftOf(toPaise(f.rate)))}/sq ft` : 'Used when the price list has no rate'} />
+        <Input label="Weight per board (kg)" inputMode="decimal" value={f.weight} onChange={(e) => set('weight', e.target.value)} hint="Filled in on proforma and order lines" error={errors.weightKg} />
         <Input label="HSN code" value={f.hsn} onChange={(e) => set('hsn', e.target.value)} />
         <label className="flex items-center gap-2 text-base sm:col-span-3">
           <input type="checkbox" checked={f.active} onChange={(e) => set('active', e.target.checked)} /> Active (inactive items can’t be picked on new documents)
@@ -130,6 +132,7 @@ export function ItemsPage() {
     { id: 'size', header: 'Thickness · size', width: '170px', className: 'text-sm tabular-nums', cell: (i) => `${i.thic} mm · ${i.width} × ${i.length}` },
     { id: 'factor', header: 'Sq m / board', width: '110px', align: 'right', className: 'tabular-nums', cell: (i) => i.sqmFactor },
     { id: 'rate', header: 'Default rate / sq m', width: '150px', align: 'right', className: 'tabular-nums', cell: (i) => (i.defaultRatePaise ? inr(i.defaultRatePaise) : '—') },
+    { id: 'weight', header: 'Kg / board', width: '100px', align: 'right', className: 'tabular-nums', cell: (i) => (i.weightKg ? i.weightKg : '—') },
     { id: 'hsn', header: 'HSN', width: '90px', className: 'text-sm tabular-nums', cell: (i) => i.hsn ?? '—' },
     { id: 'active', header: 'Status', width: '90px', cell: (i) => (i.active ? <Pill tone="green">Active</Pill> : <Pill>Inactive</Pill>) },
     {
@@ -166,7 +169,7 @@ export function ItemsPage() {
     <div className="flex flex-col gap-3.5 p-6">
       <PageHeader
         title="Item master"
-        description={`${list.data?.total ?? 0} items. Rates by date are in the price list, board weights in the weight chart.`}
+        description={`${list.data?.total ?? 0} items. Rates by date are in the price list.`}
         actions={
           <>
             {canDo('export') && (
@@ -219,7 +222,7 @@ export function ItemsPage() {
         }
         onClose={() => setToDelete(null)}
       >
-        Its price-list and weight-chart rows go with it. Items on documents can’t be deleted; mark them inactive.
+        Its price-list rows go with it. Items on documents can’t be deleted; mark them inactive.
       </ConfirmDialog>
     </div>
   );

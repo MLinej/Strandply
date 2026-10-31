@@ -98,11 +98,13 @@ export interface SalesItem extends Audit {
   sqmFactor: number;
   /** Paise per sq m. */
   defaultRatePaise: number;
+  /** Kg per board, copied onto order and proforma lines (0 = not set). Replaces the legacy weight chart. */
+  weightKg: number;
   hsn: string | null;
   active: boolean;
 }
 
-/** Price List / Weight Chart row: the value applies from its effective date until a later row for the same item. */
+/** Price List row: the value applies from its effective date until a later row for the same item. */
 export interface PriceEntry extends Audit {
   id: string;
   itemId: string;
@@ -111,6 +113,7 @@ export interface PriceEntry extends Audit {
   ratePaise: number;
 }
 
+/** Legacy weight chart row, kept only so old data can be read; board weights now live on the item. */
 export interface WeightEntry extends Audit {
   id: string;
   itemId: string;
@@ -160,7 +163,7 @@ export interface OrderLine extends LineItem {
   pcs: number;
   qtySqm: number;
   ratePaise: number;
-  /** Kg per board, from the Weight Chart (editable). */
+  /** Kg per board, from the item master (editable). */
   weightKg: number;
   amountPaise: number;
 }
@@ -508,12 +511,11 @@ export interface EmailDraft {
 
 // ── Lookups, dashboard and reports ──────────────────────────────────
 
-/** What document forms need to pick parties and items and prefill rates and weights. */
+/** What document forms need to pick parties and items and prefill rates (weights come with the items). */
 export interface SalesOptions {
   customers: Pick<Customer, 'id' | 'name' | 'city' | 'state' | 'gstin' | 'taxTypes' | 'paymentTerms' | 'dealerType'>[];
   items: SalesItem[];
   prices: Pick<PriceEntry, 'itemId' | 'effectiveDate' | 'ratePaise'>[];
-  weights: Pick<WeightEntry, 'itemId' | 'effectiveDate' | 'weightKg'>[];
 }
 
 export interface SalesMeta {

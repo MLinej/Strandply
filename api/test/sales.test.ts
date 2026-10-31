@@ -71,17 +71,22 @@ describe('party and item masters', () => {
     expect(it1.sqmFactor).toBe(1.4884);
     expect((await json('PATCH', `/items/${it1.id}`, { length: 2440 })).sqmFactor).toBe(2.9768);
     expect((await json('PATCH', `/items/${it1.id}`, { sqmFactor: 3 })).sqmFactor).toBe(3);
+    // Weight per board lives on the item (the weight chart is gone) and reaches the form options.
+    expect(it1.weightKg).toBe(0);
+    expect((await json('PATCH', `/items/${it1.id}`, { weightKg: 18.5 })).weightKg).toBe(18.5);
+    expect(await paths(await call('PATCH', `/items/${it1.id}`, { weightKg: -1 }))).toEqual(['weightKg']);
+    expect((await json('GET', '/options')).items.find((i: { id: string }) => i.id === it1.id).weightKg).toBe(18.5);
     expect(await paths(await call('POST', '/items', { name: 'Y', brand: 'Nobody', grade: 'OSB', thic: 9, width: 1, length: 1 }))).toEqual(['brand']);
     expect((await call('DELETE', '/items/sli-1')).status).toBe(409);
   });
 
-  it('price list and weight chart: one entry per item and date', async () => {
+  it('price list: one entry per item and date', async () => {
     const { call, json } = await admin();
     expect((await call('POST', '/prices', { itemId: 'sli-1', effectiveDate: '2026-04-01', ratePaise: 1 })).status).toBe(409);
     const p = await json('POST', '/prices', { itemId: 'sli-1', effectiveDate: '2026-10-01', ratePaise: 46000 });
     expect(p.itemName).toContain('PRELAM');
     expect((await json('GET', '/prices?itemId=sli-1')).map((x: { effectiveDate: string }) => x.effectiveDate)).toEqual(['2026-10-01', '2026-04-01']);
-    expect((await call('POST', '/weights', { itemId: 'nope', effectiveDate: '2026-10-01', weightKg: 20 })).status).toBe(422);
+    expect((await call('POST', '/weights', { itemId: 'sli-1', effectiveDate: '2026-10-01', weightKg: 20 })).status).toBe(404);
     const opts = await json('GET', '/options');
     expect(opts.prices).toHaveLength(2);
     expect(opts.customers.map((c: { id: string }) => c.id)).toEqual(['slc-g', 'slc-m', 'slc-x']);
@@ -285,13 +290,13 @@ describe('dashboard, reports, exports, email, settings', () => {
 
   it('exports are spreadsheets and are logged', async () => {
     const { call, json } = await admin();
-    for (const k of ['customers', 'items', 'prices', 'weights', 'proformas', 'orders', 'invoices', 'dispatch', 'fg', 'intercompany']) {
+    for (const k of ['customers', 'items', 'prices', 'proformas', 'orders', 'invoices', 'dispatch', 'fg', 'intercompany']) {
       const res = await call('GET', `/export/${k}`);
       expect(res.status, k).toBe(200);
       expect(res.headers.get('content-type')).toContain('spreadsheetml');
     }
     expect((await call('GET', '/reports/pending_orders/export')).status).toBe(200);
-    expect((await json('GET', '/audit')).rows.filter((r: { action: string }) => r.action === 'Export')).toHaveLength(11);
+    expect((await json('GET', '/audit')).rows.filter((r: { action: string }) => r.action === 'Export')).toHaveLength(10);
   });
 
   it('email drafts fill the template; prints carry the letterhead and parties and are logged', async () => {
@@ -356,6 +361,22 @@ describe('seed and dev snapshot upgrade (0010)', () => {
     expect(up.slItems).toHaveLength(62);
     const again = upgradeSnapshot(up, seed, T0.toISOString());
     expect(again.settings!.filter((s) => s.key.startsWith('sales.'))).toHaveLength(8);
+  });
+
+  it('0019 gives each item its latest weight-chart weight', () => {
+    const seed = buildSeed({ devUsers: false, at: T0.toISOString() });
+    const old = structuredClone(seed) as Partial<typeof seed>;
+    old.upgrades = seed.upgrades.filter((u) => u.name !== '0019_item_weight');
+    for (const i of old.slItems!) delete (i as Partial<typeof i>).weightKg;
+    const audit = { createdBy: null, createdAt: T0.toISOString(), updatedAt: T0.toISOString(), deletedAt: null };
+    old.slWeights = [
+      { id: 'w1', itemId: 'sli-1', effectiveDate: '2026-04-01', weightKg: 25, ...audit },
+      { id: 'w2', itemId: 'sli-1', effectiveDate: '2026-08-01', weightKg: 26, ...audit },
+      { id: 'w3', itemId: 'sli-2', effectiveDate: '2026-09-01', weightKg: 30, ...audit, deletedAt: T0.toISOString() },
+    ];
+    const up = upgradeSnapshot(old, seed, T0.toISOString());
+    const w = (id: string) => up.slItems!.find((i) => i.id === id)!.weightKg;
+    expect([w('sli-1'), w('sli-2'), w('sli-3')]).toEqual([26, 0, 0]);
   });
 });
 

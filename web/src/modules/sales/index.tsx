@@ -3,7 +3,7 @@ import { AuditPage } from './pages/AuditPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { DispatchPage } from './pages/DispatchPage';
-import { PriceListPage, WeightChartPage } from './pages/EntriesPage';
+import { PriceListPage } from './pages/EntriesPage';
 import { FgPage } from './pages/FgPage';
 import { IntercompanyPage } from './pages/IntercompanyPage';
 import { InvoicesPage } from './pages/InvoicesPage';
@@ -18,7 +18,6 @@ export const pages: ModulePages = {
   customers: CustomersPage,
   items: ItemsPage,
   'price-list': PriceListPage,
-  'weight-chart': WeightChartPage,
   proforma: ProformaPage,
   orders: OrdersPage,
   invoices: InvoicesPage,

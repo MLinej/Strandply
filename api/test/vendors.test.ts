@@ -341,7 +341,7 @@ describe('dev snapshot upgrade (0005)', () => {
     expect(up.rolePermissions!.find((r) => r.role === 'dispatch')!.permissions.pages).not.toContain('vendors');
     expect(up.cities!.find((c) => c.id === 'city-morbi')!.pincodes).toEqual(['363641', '363650']);
     expect(up.cities!.some((c) => c.id === 'city-valsad')).toBe(true);
-    expect(up.upgrades!.map((u) => u.name)).toEqual(['0005_vendors', '0006_purchase', '0007_stores', '0008_stock', '0009_production', '0010_sales', '0011_crm', '0012_transport', '0013_maintenance', '0014_electricity', '0015_complaints', '0016_dwpas', '0017_hub', '0018_change_requests']);
+    expect(up.upgrades!.map((u) => u.name)).toEqual(['0005_vendors', '0006_purchase', '0007_stores', '0008_stock', '0009_production', '0010_sales', '0011_crm', '0012_transport', '0013_maintenance', '0014_electricity', '0015_complaints', '0016_dwpas', '0017_hub', '0018_change_requests', '0019_item_weight']);
 
     // Running again changes nothing.
     adminAfter.pages = ['dashboard'];

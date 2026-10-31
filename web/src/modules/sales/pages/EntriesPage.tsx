@@ -1,4 +1,4 @@
-import { Download, Pencil, Plus, Scale, Tags, Trash2 } from 'lucide-react';
+import { Download, Pencil, Plus, Tags, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { rateSqftOf } from '@contracts/sales';
 import { useSession } from '@/app/session';
@@ -9,35 +9,17 @@ import { errorMessage, fieldErrors } from '../../samples/ui/errors';
 import { useUrlState } from '../../samples/ui/list-state';
 import { PageHeader } from '../../samples/ui/PageHeader';
 import { RowMenu, runAndClose } from '../../samples/ui/RowMenu';
-import { exportSales, useDeleteRecord, useEntries, useSalesMeta, useSalesOptions, useSaveEntry, type EntryKind, type PriceRow, type WeightRow } from '../api';
+import { exportSales, useDeleteRecord, usePrices, useSalesMeta, useSalesOptions, useSavePrice, type PriceRow } from '../api';
 import { Combo } from '@/components/ui';
-import { inr, qtyFmt, rupeesText, toPaise } from '../ui';
+import { inr, rupeesText, toPaise } from '../ui';
 
-type Row = PriceRow | WeightRow;
-const isPrice = (r: Row): r is PriceRow => 'ratePaise' in r;
+type Row = PriceRow;
 
-const TEXT: Record<EntryKind, { title: string; description: string; value: string; add: string; empty: string }> = {
-  prices: {
-    title: 'Price list',
-    description: 'Rate per sq m by item, from an effective date. New documents take the latest rate on or before their date.',
-    value: 'Rate / sq m (₹)',
-    add: 'Add price',
-    empty: 'No prices yet. Until there are, forms use the item’s default rate.',
-  },
-  weights: {
-    title: 'Weight chart',
-    description: 'Weight per board by item, from an effective date. Orders and proformas show total weight from it.',
-    value: 'Weight per board (kg)',
-    add: 'Add weight',
-    empty: 'No board weights yet.',
-  },
-};
-
-function EntryForm({ kind, open, row, onClose }: { kind: EntryKind; open: boolean; row: Row | null; onClose: () => void }) {
+function PriceForm({ open, row, onClose }: { open: boolean; row: Row | null; onClose: () => void }) {
   const toast = useToast();
   const today = useSalesMeta().data?.today ?? '';
   const items = useSalesOptions({ enabled: open }).data?.items ?? [];
-  const save = useSaveEntry(kind);
+  const save = useSavePrice();
   const [itemId, setItemId] = useState<string | null>(null);
   const [date, setDate] = useState('');
   const [value, setValue] = useState('');
@@ -47,14 +29,14 @@ function EntryForm({ kind, open, row, onClose }: { kind: EntryKind; open: boolea
     setErrors({});
     setItemId(row?.itemId ?? null);
     setDate(row?.effectiveDate ?? today);
-    setValue(row ? (isPrice(row) ? rupeesText(row.ratePaise) : String(row.weightKg)) : '');
+    setValue(row ? rupeesText(row.ratePaise) : '');
   }, [open, row]);
   const options = useMemo(() => items.map((i) => ({ id: i.id, label: i.name })), [items]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!itemId) return setErrors({ itemId: 'Pick an item' });
-    const input = { itemId, effectiveDate: date, ...(kind === 'prices' ? { ratePaise: toPaise(value) } : { weightKg: Number(value) }) };
+    const input = { itemId, effectiveDate: date, ratePaise: toPaise(value) };
     try {
       await save.mutateAsync({ id: row?.id, input });
       toast({ tone: 'success', title: 'Saved' });
@@ -65,12 +47,11 @@ function EntryForm({ kind, open, row, onClose }: { kind: EntryKind; open: boolea
     }
   }
 
-  const t = TEXT[kind];
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={row ? `Edit ${t.title.toLowerCase()} entry` : t.add}
+      title={row ? 'Edit price list entry' : 'Add price'}
       footer={
         <>
           <Button onClick={onClose}>Cancel</Button>
@@ -85,12 +66,12 @@ function EntryForm({ kind, open, row, onClose }: { kind: EntryKind; open: boolea
         <div className="grid gap-3 sm:grid-cols-2 [&>*]:min-w-0">
           <Input label="Effective from" type="date" value={date} onChange={(e) => setDate(e.target.value)} error={errors.effectiveDate} />
           <Input
-            label={t.value}
+            label="Rate / sq m (₹)"
             inputMode="decimal"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            error={errors.ratePaise ?? errors.weightKg}
-            hint={kind === 'prices' && value ? `${inr(rateSqftOf(toPaise(value)))}/sq ft` : undefined}
+            error={errors.ratePaise}
+            hint={value ? `${inr(rateSqftOf(toPaise(value)))}/sq ft` : undefined}
           />
         </div>
       </form>
@@ -98,17 +79,16 @@ function EntryForm({ kind, open, row, onClose }: { kind: EntryKind; open: boolea
   );
 }
 
-/** Price List or Weight Chart (legacy price_list / weight_chart): effective-dated values per item. */
-function EntriesPage({ kind }: { kind: EntryKind }) {
+/** Price List (legacy price_list): effective-dated rates per item. Board weights are on the item master. */
+export function PriceListPage() {
   const toast = useToast();
   const { canDo } = useSession();
   const url = useUrlState(['item'] as const);
-  const rows = (useEntries(kind, url.values.item || undefined).data ?? []) as Row[];
+  const rows = usePrices(url.values.item || undefined).data ?? [];
   const items = useSalesOptions().data?.items ?? [];
-  const remove = useDeleteRecord(kind);
+  const remove = useDeleteRecord('prices');
   const [form, setForm] = useState<Row | 'new' | null>(null);
   const [toDelete, setToDelete] = useState<Row | null>(null);
-  const t = TEXT[kind];
   // Rows that are in force today: the newest per item on or before today.
   const today = useSalesMeta().data?.today ?? '';
   const current = useMemo(() => {
@@ -120,12 +100,8 @@ function EntriesPage({ kind }: { kind: EntryKind }) {
   const columns: Column<Row>[] = [
     { id: 'item', header: 'Item', cell: (r) => <span className="font-medium">{r.itemName}</span> },
     { id: 'date', header: 'Effective from', width: '140px', className: 'tabular-nums', cell: (r) => formatDate(r.effectiveDate) },
-    ...(kind === 'prices'
-      ? [
-          { id: 'rate', header: 'Rate / sq m', width: '130px', align: 'right' as const, className: 'font-semibold tabular-nums', cell: (r: Row) => inr((r as PriceRow).ratePaise) },
-          { id: 'sqft', header: 'Rate / sq ft', width: '120px', align: 'right' as const, className: 'tabular-nums text-muted', cell: (r: Row) => inr(rateSqftOf((r as PriceRow).ratePaise)) },
-        ]
-      : [{ id: 'kg', header: 'Weight per board', width: '150px', align: 'right' as const, className: 'font-semibold tabular-nums', cell: (r: Row) => `${qtyFmt((r as WeightRow).weightKg)} kg` }]),
+    { id: 'rate', header: 'Rate / sq m', width: '130px', align: 'right', className: 'font-semibold tabular-nums', cell: (r) => inr(r.ratePaise) },
+    { id: 'sqft', header: 'Rate / sq ft', width: '120px', align: 'right', className: 'tabular-nums text-muted', cell: (r) => inr(rateSqftOf(r.ratePaise)) },
     { id: 'now', header: 'In force', width: '100px', className: 'text-sm', cell: (r) => (current.has(r.id) ? 'Current' : r.effectiveDate > today ? 'Upcoming' : 'Superseded') },
     {
       id: 'actions',
@@ -160,26 +136,26 @@ function EntriesPage({ kind }: { kind: EntryKind }) {
   return (
     <div className="flex flex-col gap-3.5 p-6">
       <PageHeader
-        title={t.title}
-        description={t.description}
+        title="Price list"
+        description="Rate per sq m by item, from an effective date. New documents take the latest rate on or before their date."
         actions={
           <>
             {canDo('export') && (
-              <Button icon={Download} onClick={() => void exportSales(kind).catch((err) => toast({ tone: 'error', title: 'Export failed', description: errorMessage(err) }))}>
+              <Button icon={Download} onClick={() => void exportSales('prices').catch((err) => toast({ tone: 'error', title: 'Export failed', description: errorMessage(err) }))}>
                 Excel
               </Button>
             )}
             {canDo('edit') && (
               <Button variant="primary" icon={Plus} onClick={() => setForm('new')}>
-                {t.add}
+                Add price
               </Button>
             )}
           </>
         }
       />
       <Select aria-label="Item" placeholder="All items" options={items.map((i) => ({ value: i.id, label: i.name }))} value={url.values.item} onChange={(e) => url.set({ item: e.target.value })} containerClassName="w-[380px]" />
-      <DataTable label={t.title} columns={columns} rows={rows} getRowId={(r) => r.id} minWidth={760} empty={<EmptyState icon={kind === 'prices' ? Tags : Scale} title={t.empty} />} />
-      <EntryForm kind={kind} open={form !== null} row={form === 'new' ? null : form} onClose={() => setForm(null)} />
+      <DataTable label="Price list" columns={columns} rows={rows} getRowId={(r) => r.id} minWidth={760} empty={<EmptyState icon={Tags} title="No prices yet. Until there are, forms use the item’s default rate." />} />
+      <PriceForm open={form !== null} row={form === 'new' ? null : form} onClose={() => setForm(null)} />
       <ConfirmDialog
         open={!!toDelete}
         title="Delete this entry?"
@@ -200,6 +176,3 @@ function EntriesPage({ kind }: { kind: EntryKind }) {
     </div>
   );
 }
-
-export const PriceListPage = () => <EntriesPage kind="prices" />;
-export const WeightChartPage = () => <EntriesPage kind="weights" />;

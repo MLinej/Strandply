@@ -1,8 +1,8 @@
 // Item Master reference data: the legacy Sales ERP catalogue (SPL_SEED_ITEMS), converted by a one-off script.
-// Same rows as the seed in db/migrations/0010_sales.sql.
+// Same rows as the seed in db/migrations/0010_sales.sql. Weight per board starts unset (0).
 import type { SalesItem } from '../contracts/sales';
 
-export const REF_SALES_ITEMS: Omit<SalesItem, 'createdBy' | 'createdAt' | 'updatedAt' | 'deletedAt'>[] = [
+export const REF_SALES_ITEMS: Omit<SalesItem, 'weightKg' | 'createdBy' | 'createdAt' | 'updatedAt' | 'deletedAt'>[] = [
   {"id":"sli-1","name":"S-OSB PRELAM + MDO 1220mm X 2440mm X 12mm","brand":"Strandply","grade":"S-OSB","subType":"PRELAM + MDO","thic":12,"width":1220,"length":2440,"sqmFactor":2.9768,"defaultRatePaise":44074,"hsn":"441012","active":true},
   {"id":"sli-2","name":"S-OSB MDO 1220mm X 2440mm X 9mm","brand":"Strandply","grade":"S-OSB","subType":"MDO","thic":9,"width":1220,"length":2440,"sqmFactor":2.9768,"defaultRatePaise":33099,"hsn":"441012","active":true},
   {"id":"sli-3","name":"S-OSB MDO 1220mm X 2440mm X 12mm","brand":"Strandply","grade":"S-OSB","subType":"MDO","thic":12,"width":1220,"length":2440,"sqmFactor":2.9768,"defaultRatePaise":40430,"hsn":"441012","active":true},

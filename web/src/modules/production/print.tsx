@@ -4,7 +4,7 @@ import { DOC_KINDS, mattStatus, PLAN_SECTIONS, type DocKind, type MattBatchView,
 import type { CompanyBlock } from '@contracts/sampletrack';
 import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
 import { PAGES, printHtml } from '@/lib/print';
-import { amountInWords, Box, DocHeader, DocTable, Grid, KIT_CSS, KV, MUTED, Pill, RED, Sheet, Signatures, Tile, WriteBlank, type Signer } from '@/lib/print-kit';
+import { amountInWords, Box, DocHeader, DocTable, Grid, INK, KIT_CSS, KV, LINE, MUTED, Pill, RED, Sheet, Signatures, SOFT, Tile, WriteBlank, type Signer } from '@/lib/print-kit';
 import { fetchDocPrint, fetchMattPrint, type CompareRow, type PrintPayload, type ViewByKind } from './api';
 import { inr, kg, mins, perKg, qtyFmt, wfLabel } from './ui';
 
@@ -25,7 +25,7 @@ interface Sections {
 const d = (x: string | null | undefined) => (x ? formatDate(x) : '—');
 const v = (x: Cell) => (x === null || x === undefined || x === '' ? '—' : String(x));
 
-/** What each kind prints (legacy hpDlPDF, chipDlPDF, resinDlPDF, bcDlPDF, mdoDlPDF, ppDlPDF, psDlPDF). */
+/** What each kind prints (legacy hpDlPDF, chipDlPDF, resinDlPDF, bcDlPDF, mdoDlPDF, ppDlPDF). The summary has its own layout. */
 function sections<K extends DocKind>(kind: K, doc: ViewByKind[K]): Sections {
   switch (kind) {
     case 'hotpress': {
@@ -148,26 +148,6 @@ function sections<K extends DocKind>(kind: K, doc: ViewByKind[K]): Sections {
         ],
       };
     }
-    case 'summary': {
-      const s = doc as ViewByKind['summary'];
-      return {
-        fields: [
-          ['Product', `${s.product} · ${s.size}${s.thickness ? ` · ${s.thickness} mm` : ''}`],
-          ['Batch', s.batch],
-          ['Press pcs', qtyFmt(s.pressPcs)],
-          ['Boards produced', qtyFmt(s.boards)],
-          ['Board rejects', `${qtyFmt(s.boardRej)} (${s.boardRejPct}%)`],
-          ['Matts', qtyFmt(s.mattPcs)],
-          ['Matt weight', kg(s.mattWtKg)],
-          ['Matt rejects', qtyFmt(s.mattRej)],
-          ['Resin', `${kg(s.resinKg)} · ${inr(s.resinPaise)}`],
-          ['Dry wood', kg(s.dryWoodKg)],
-          ['Wet wood', `${kg(s.wetWoodKg)} · ${inr(s.wetWoodPaise)}`],
-          ['Linked', [s.links.planNo, s.links.hotpressNo, s.links.mattNo, ...s.links.resinNos, s.links.cuttingNo].filter(Boolean).join(', ')],
-        ],
-        tables: s.wip.length ? [{ title: 'WIP Nilgiri used', head: ['WIP batch', 'Qty (kg)'], numeric: [1], rows: s.wip.map((w, i) => [s.links.wipNos[i], qtyFmt(w.qty)]) }] : [],
-      };
-    }
   }
   return { fields: [], tables: [] };
 }
@@ -278,6 +258,109 @@ export function ChippingDocument({ data }: { data: PrintPayload<ViewByKind['chip
   );
 }
 
+/** Horizontal bar scaled to `of` (the summary's output and matt rows). */
+function Bar({ label, value, of, text, tone = INK }: { label: string; value: number; of: number; text: string; tone?: string }) {
+  const pct = of > 0 ? Math.min(100, (value / of) * 100) : 0;
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '30mm 1fr 30mm', alignItems: 'center', gap: '3mm', margin: '1mm 0' }}>
+      <span style={{ fontWeight: 600 }}>{label}</span>
+      <span style={{ display: 'block', height: '3.2mm', background: SOFT, borderRadius: 2 }}>
+        <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: tone, borderRadius: 2 }} />
+      </span>
+      <span style={{ textAlign: 'right', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{text}</span>
+    </div>
+  );
+}
+
+const pct2 = (n: number, of: number) => (of > 0 ? `${((n / of) * 100).toFixed(2)}%` : '—');
+
+/** Production summary: details, figure tiles, press output and matt bars, materials with cost per board, links. */
+export function SummaryDocument({ data }: { data: PrintPayload<ViewByKind['summary']> }) {
+  const s = data.doc;
+  const product = `${s.product} · ${s.size}${s.thickness ? ` · ${s.thickness} mm` : ''}`;
+  const materialPaise = s.resinPaise + s.wetWoodPaise;
+  const perBoard = (n: number) => (s.boards > 0 ? n / s.boards : null);
+  const sent = s.wfTrail.find((x) => x.action === 'send');
+  const last = (a: WfStep['action']) => [...s.wfTrail].reverse().find((x) => x.action === a);
+  const signers: Signer[] = [
+    { role: 'Prepared by', name: sent?.byName, at: sent?.at },
+    { role: 'Reviewed by', name: last('review')?.byName, at: last('review')?.at },
+    { role: 'Approved by', name: last('approve')?.byName, at: last('approve')?.at },
+  ];
+  const resinPerKg = s.resinKg > 0 ? (s.resinPaise / s.resinKg) * 1000 : null;
+  const materials: ReactNode[][] = [
+    ['Resin', qtyFmt(s.resinKg), resinPerKg === null ? '—' : perKg(resinPerKg), inr(s.resinPaise), perBoard(s.resinKg) === null ? '—' : kg(Math.round(perBoard(s.resinKg)! * 100) / 100)],
+    ['Wet wood (WIP Nilgiri)', qtyFmt(s.wetWoodKg), s.wetWoodRatePaise ? perKg(s.wetWoodRatePaise) : '—', inr(s.wetWoodPaise), perBoard(s.wetWoodKg) === null ? '—' : kg(Math.round(perBoard(s.wetWoodKg)! * 100) / 100)],
+    ['Dry wood', qtyFmt(s.dryWoodKg), '—', '—', perBoard(s.dryWoodKg) === null ? '—' : kg(Math.round(perBoard(s.dryWoodKg)! * 100) / 100)],
+  ];
+  const links: [string, ReactNode, boolean?][] = [
+    ['Production plan', s.links.planNo ?? '—'],
+    ['Hot press', s.links.hotpressNo ?? '—'],
+    ['Matt batch', s.links.mattNo ?? '—'],
+    ['Resin', s.links.resinNos.join(', ') || '—'],
+    ['Cutting', s.links.cuttingNo ?? '—'],
+    ['WIP Nilgiri', s.wip.map((w, i) => `${s.links.wipNos[i] ?? '—'} (${kg(w.qty)})`).join(', ') || '—'],
+  ];
+  return (
+    <Sheet minHeightMm={A4_PAGE_H} bottom={<Signatures signers={signers} />} footer={footerLine(data.company, 'Production summary', data.generatedAt)}>
+      <DocHeader
+        company={data.company}
+        title="Production summary"
+        right={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '2.5mm', marginTop: 4 }}>
+            <strong style={{ fontSize: 12 }}>{product}</strong>
+            <span style={{ color: MUTED }}>{d(s.date)}</span>
+            <Pill tone={WF_TONE[s.wfState]}>{wfLabel(s.wfState)}</Pill>
+          </div>
+        }
+      />
+      <Box title="Report details" style={{ marginBottom: '4mm' }}>
+        <Grid cols="1fr 1fr" gap="8mm" style={{ marginBottom: 0 }}>
+          <KV rows={[['Report no.', s.docNo, true], ['Date', d(s.date)], ['Product', product, true], ['Batch', s.batch ?? '—']]} />
+          <KV rows={[['Status', wfLabel(s.wfState)], ['Press pcs', qtyFmt(s.pressPcs)], ['Matts', qtyFmt(s.mattPcs)], ['Matt weight', kg(s.mattWtKg)]]} />
+        </Grid>
+      </Box>
+      <Grid cols="1fr 1fr 1fr 1fr" gap="3mm" style={{ marginBottom: '4mm' }}>
+        <Tile label="Boards produced" value={qtyFmt(s.boards)} sub={`of ${qtyFmt(s.pressPcs)} press pcs · ${pct2(s.boards, s.pressPcs)} yield`} />
+        <Tile label="Board rejects" value={`${s.boardRejPct}%`} sub={`${qtyFmt(s.boardRej)} boards`} alert={s.boardRejPct > 10} />
+        <Tile label="Resin used" value={kg(s.resinKg)} sub={inr(s.resinPaise)} />
+        <Tile label="Material cost / board" value={perBoard(materialPaise) === null ? '—' : inr(Math.round(perBoard(materialPaise)!))} sub={`${inr(materialPaise)} resin + wet wood`} />
+      </Grid>
+      <Box title="Press output" titleRight={<span style={{ color: MUTED, fontSize: 8.5 }}>Boards · matts</span>} style={{ marginBottom: '4mm' }}>
+        <Bar label="Press pcs" value={s.pressPcs} of={s.pressPcs} text={qtyFmt(s.pressPcs)} tone="#98A2B3" />
+        <Bar label="Good boards" value={s.boards} of={s.pressPcs} text={`${qtyFmt(s.boards)} · ${pct2(s.boards, s.pressPcs)}`} />
+        <Bar label="Board rejects" value={s.boardRej} of={s.pressPcs} text={`${qtyFmt(s.boardRej)} · ${s.boardRejPct}%`} tone={RED} />
+        <div style={{ borderTop: `1px solid ${LINE}`, margin: '2mm 0 1mm' }} />
+        <Bar label="Matts" value={s.mattPcs} of={s.mattPcs} text={qtyFmt(s.mattPcs)} tone="#98A2B3" />
+        <Bar label="Matt rejects" value={s.mattRej} of={s.mattPcs} text={`${qtyFmt(s.mattRej)} · ${pct2(s.mattRej, s.mattPcs)}`} tone={RED} />
+      </Box>
+      <DocTable
+        label="Raw material consumed"
+        cols={[{ header: 'Material' }, { header: 'Qty (kg)', align: 'right', width: '26mm' }, { header: 'Rate', align: 'right', width: '28mm' }, { header: 'Amount', align: 'right', width: '32mm' }, { header: 'Per board', align: 'right', width: '26mm' }]}
+        rows={materials}
+        compact
+        foot={['Total', qtyFmt(s.resinKg + s.wetWoodKg + s.dryWoodKg), '', inr(materialPaise), perBoard(materialPaise) === null ? '—' : inr(Math.round(perBoard(materialPaise)!))]}
+      />
+      {data.compare.length > 0 && (
+        <DocTable
+          compact
+          label="Plan vs actual"
+          cols={['Metric', 'Plan', 'Actual', 'Variance', 'Status'].map((h, i) => ({ header: h, align: i && i < 4 ? 'right' : 'left' }))}
+          rows={compareTable(data.compare).rows.map((r) => r.map((c) => v(c)))}
+        />
+      )}
+      <Grid cols="1fr 1fr" gap="4mm" style={{ marginBottom: '4mm' }}>
+        <Box title="Linked reports">
+          <KV dense rows={links} />
+        </Box>
+        <Box title="Remarks">
+          <div style={{ minHeight: '10mm' }}>{s.remarks}</div>
+        </Box>
+      </Grid>
+    </Sheet>
+  );
+}
+
 /** Any other production document: details card, its tables, plan vs actual, the sign-off row. */
 function GenericDocument<K extends DocKind>({ kind, data }: { kind: K; data: PrintPayload<ViewByKind[K]> }) {
   const doc = data.doc as ViewByKind[K] & { docNo: string; date: string; wfState: ViewByKind['plan']['wfState']; wfTrail: WfStep[]; remarks: string | null; operator?: string | null };
@@ -311,7 +394,14 @@ const A4 = { page: PAGES.requestSlip, marginMm: 12, css: KIT_CSS };
 export async function printDoc<K extends DocKind>(kind: K, id: string) {
   const data = await fetchDocPrint(kind, id);
   const no = (data.doc as { docNo: string }).docNo;
-  const body = kind === 'chipping' ? <ChippingDocument data={data as unknown as PrintPayload<ViewByKind['chipping']>} /> : <GenericDocument kind={kind} data={data} />;
+  const body =
+    kind === 'chipping' ? (
+      <ChippingDocument data={data as unknown as PrintPayload<ViewByKind['chipping']>} />
+    ) : kind === 'summary' ? (
+      <SummaryDocument data={data as unknown as PrintPayload<ViewByKind['summary']>} />
+    ) : (
+      <GenericDocument kind={kind} data={data} />
+    );
   await printHtml({ ...A4, title: no, bodyHtml: renderToStaticMarkup(body) });
 }
 

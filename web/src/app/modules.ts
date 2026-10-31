@@ -177,7 +177,6 @@ export const MODULES: ModuleDef[] = [
       { slug: 'customers', label: 'Party master', perm: 'sales.masters', built: true },
       { slug: 'items', label: 'Item master', perm: 'sales.masters', built: true },
       { slug: 'price-list', label: 'Price list', perm: 'sales.masters', built: true },
-      { slug: 'weight-chart', label: 'Weight chart', perm: 'sales.masters', built: true },
       { slug: 'reports', label: 'Sales reports', perm: 'sales.reports', built: true },
       { slug: 'settings', label: 'Sales settings', perm: 'sales.settings', built: true },
       { slug: 'audit', label: 'Audit trail', perm: 'sales.dashboard', built: true },

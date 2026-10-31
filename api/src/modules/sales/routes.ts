@@ -31,8 +31,6 @@ import {
   proformaUpdateBody,
   settingsBody,
   statusBody,
-  weightCreateBody,
-  weightUpdateBody,
 } from './validation';
 
 const actor = (c: Context): Actor => actorOf(requireAuthContext(c as never).user);
@@ -72,7 +70,6 @@ const EXPORTS: Record<string, PageKey[]> = {
   customers: ['sales_masters'],
   items: ['sales_masters'],
   prices: ['sales_masters'],
-  weights: ['sales_masters'],
   proformas: ['sales_proforma'],
   orders: ['sales_orders'],
   invoices: ['sales_invoices'],
@@ -106,7 +103,7 @@ export function salesRoutes(): SecureRouter {
   r.patch('/customers/:id', policy.page('sales_masters', 'edit'), async (c) => c.json(await s(c).salesMasters.updateCustomer(actor(c), idParam(c), await parseJson(c, customerUpdateBody))));
   r.delete('/customers/:id', policy.page('sales_masters', 'delete'), del((c) => s(c).salesMasters.removeCustomer(actor(c), idParam(c))));
 
-  // ── Item master, price list, weight chart ──────────────────────────
+  // ── Item master and price list ──────────────────────────────────────
   const itemQuery = z.object({ ...paging, sort: z.string().max(30).optional(), brand: text, grade: text, active: bool.optional() });
   r.get('/items', policy.anyPage(FORMS), async (c) => c.json(await s(c).salesMasters.listItems(toListQuery(parseQuery(c, itemQuery)))));
   r.post('/items', policy.page('sales_masters', 'edit'), async (c) => c.json(await s(c).salesMasters.createItem(actor(c), await parseJson(c, itemCreateBody)), 201));
@@ -117,11 +114,7 @@ export function salesRoutes(): SecureRouter {
   r.get('/prices', policy.anyPage(FORMS), async (c) => c.json(await s(c).salesMasters.listPrices(parseQuery(c, itemFilter).itemId)));
   r.post('/prices', policy.page('sales_masters', 'edit'), async (c) => c.json(await s(c).salesMasters.savePrice(actor(c), null, await parseJson(c, priceCreateBody)), 201));
   r.patch('/prices/:id', policy.page('sales_masters', 'edit'), async (c) => c.json(await s(c).salesMasters.savePrice(actor(c), idParam(c), await parseJson(c, priceUpdateBody))));
-  r.delete('/prices/:id', policy.page('sales_masters', 'delete'), del((c) => s(c).salesMasters.removeEntry(actor(c), 'price', idParam(c))));
-  r.get('/weights', policy.anyPage(FORMS), async (c) => c.json(await s(c).salesMasters.listWeights(parseQuery(c, itemFilter).itemId)));
-  r.post('/weights', policy.page('sales_masters', 'edit'), async (c) => c.json(await s(c).salesMasters.saveWeight(actor(c), null, await parseJson(c, weightCreateBody)), 201));
-  r.patch('/weights/:id', policy.page('sales_masters', 'edit'), async (c) => c.json(await s(c).salesMasters.saveWeight(actor(c), idParam(c), await parseJson(c, weightUpdateBody))));
-  r.delete('/weights/:id', policy.page('sales_masters', 'delete'), del((c) => s(c).salesMasters.removeEntry(actor(c), 'weight', idParam(c))));
+  r.delete('/prices/:id', policy.page('sales_masters', 'delete'), del((c) => s(c).salesMasters.removeEntry(actor(c), idParam(c))));
 
   // ── Proforma invoices ──────────────────────────────────────────────
   r.get('/proformas', policy.anyPage(['sales_proforma', 'sales_dashboard', 'sales_reports']), async (c) => c.json(await s(c).salesDocs.listProformas(toListQuery(parseQuery(c, docQuery)))));

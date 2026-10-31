@@ -87,16 +87,16 @@ const itemFields = {
   /** Blank = width × length. */
   sqmFactor: nullableBlank(pos('Sq m factor', 100)),
   defaultRatePaise: paise('Default rate'),
+  /** Kg per board; 0 = not set. */
+  weightKg: num('Weight per board', 10000),
   hsn: optionalText(12),
   active: z.boolean(),
 };
-export const itemCreateBody = z.object({ ...itemFields, defaultRatePaise: itemFields.defaultRatePaise.default(0), active: itemFields.active.default(true) });
+export const itemCreateBody = z.object({ ...itemFields, defaultRatePaise: itemFields.defaultRatePaise.default(0), weightKg: itemFields.weightKg.default(0), active: itemFields.active.default(true) });
 export const itemUpdateBody = z.object(itemFields).partial();
 
 export const priceCreateBody = z.object({ itemId: id, effectiveDate: date, ratePaise: paise('Rate').refine((v) => v > 0, 'Rate must be more than 0') });
 export const priceUpdateBody = priceCreateBody.partial();
-export const weightCreateBody = z.object({ itemId: id, effectiveDate: date, weightKg: pos('Weight per board', 10000) });
-export const weightUpdateBody = weightCreateBody.partial();
 
 // ── Proformas and orders ────────────────────────────────────────────
 

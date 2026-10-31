@@ -16,7 +16,6 @@ import {
   type SalesItem,
   type SalesSettings,
   type SalesTaxType,
-  type WeightEntry,
 } from '../../contracts/sales';
 import { isoNow, type Clock } from '../../lib/clock';
 import { newId } from '../../lib/crypto';
@@ -32,7 +31,7 @@ type Input = Record<string, any>;
 const defined = (o: Input) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
 const money = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
 
-/** Party, item, price list, weight chart, FG stock, inter-company and settings (legacy Masters and Admin). */
+/** Party, item, price list, FG stock, inter-company and settings (legacy Masters and Admin). */
 export class SalesMasterService {
   constructor(
     private readonly data: DataLayer,
@@ -179,7 +178,7 @@ export class SalesMasterService {
     });
   }
 
-  /** Items on documents can't be deleted (mark them inactive). Their price-list and weight-chart rows go with them. */
+  /** Items on documents can't be deleted (mark them inactive). Their price-list (and any legacy weight-chart) rows go with them. */
   async removeItem(actor: Actor, id: string) {
     await this.data.uow.run(async (tx) => {
       const it = await tx.salesItems.getById(id);
@@ -194,7 +193,7 @@ export class SalesMasterService {
     });
   }
 
-  // ── Price list and weight chart ───────────────────────────────────
+  // ── Price list ───────────────────────────────────────────────────
 
   /** Newest effective date first, with item names. */
   async listPrices(itemId?: string) {
@@ -206,20 +205,11 @@ export class SalesMasterService {
       .map((r) => ({ ...r, itemName: name.get(r.itemId) ?? '—' }));
   }
 
-  async listWeights(itemId?: string) {
-    const [rows, items] = await Promise.all([this.repos().salesWeights.listAll(), this.repos().salesItems.listAll()]);
-    const name = new Map(items.map((i) => [i.id, i.name]));
-    return rows
-      .filter((r) => !itemId || r.itemId === itemId)
-      .sort((a, b) => b.effectiveDate.localeCompare(a.effectiveDate) || b.createdAt.localeCompare(a.createdAt))
-      .map((r) => ({ ...r, itemName: name.get(r.itemId) ?? '—' }));
-  }
-
   /** One row per item and date: a second one for the same day is a conflict (edit the first). */
-  private async entry<K extends 'salesPrices' | 'salesWeights'>(tx: Repos, repo: K, i: Input, exceptId: string | null) {
+  private async entry(tx: Repos, i: Input, exceptId: string | null) {
     const item = await tx.salesItems.getById(i.itemId);
     if (!item) throw badRef('itemId', 'Unknown item');
-    const rows = (await tx[repo].listAll()) as (PriceEntry | WeightEntry)[];
+    const rows = await tx.salesPrices.listAll();
     if (rows.some((r) => r.id !== exceptId && r.itemId === i.itemId && r.effectiveDate === i.effectiveDate)) throw conflict('duplicate', `${item.name} already has an entry effective ${i.effectiveDate}`);
     return item;
   }
@@ -229,7 +219,7 @@ export class SalesMasterService {
       const before = id ? await tx.salesPrices.getById(id) : null;
       if (id && !before) throw notFound('Price entry');
       const merged = { ...before, ...defined(input) } as PriceEntry;
-      const item = await this.entry(tx, 'salesPrices', merged, id);
+      const item = await this.entry(tx, merged, id);
       const at = isoNow(this.clock);
       const row = before
         ? (await tx.salesPrices.update(before.id, { itemId: merged.itemId, effectiveDate: merged.effectiveDate, ratePaise: merged.ratePaise, updatedAt: at }))!
@@ -239,29 +229,13 @@ export class SalesMasterService {
     });
   }
 
-  async saveWeight(actor: Actor, id: string | null, input: Input) {
-    return this.data.uow.run(async (tx) => {
-      const before = id ? await tx.salesWeights.getById(id) : null;
-      if (id && !before) throw notFound('Weight entry');
-      const merged = { ...before, ...defined(input) } as WeightEntry;
-      const item = await this.entry(tx, 'salesWeights', merged, id);
-      const at = isoNow(this.clock);
-      const row = before
-        ? (await tx.salesWeights.update(before.id, { itemId: merged.itemId, effectiveDate: merged.effectiveDate, weightKg: merged.weightKg, updatedAt: at }))!
-        : await tx.salesWeights.create({ id: newId(), itemId: merged.itemId, effectiveDate: merged.effectiveDate, weightKg: merged.weightKg, createdBy: actor.id, createdAt: at, updatedAt: at });
-      await this.activity.record(tx, actor, { action: before ? 'Edit' : 'Create', entityType: 'sales_weight', entityId: row.id, details: `${item.name}: ${row.weightKg} kg/board from ${row.effectiveDate}` });
-      return { ...row, itemName: item.name };
-    });
-  }
-
-  async removeEntry(actor: Actor, kind: 'price' | 'weight', id: string) {
+  async removeEntry(actor: Actor, id: string) {
     await this.data.uow.run(async (tx) => {
-      const repo = kind === 'price' ? tx.salesPrices : tx.salesWeights;
-      const row = await repo.getById(id);
-      if (!row) throw notFound(kind === 'price' ? 'Price entry' : 'Weight entry');
-      await repo.softDelete(id, isoNow(this.clock));
+      const row = await tx.salesPrices.getById(id);
+      if (!row) throw notFound('Price entry');
+      await tx.salesPrices.softDelete(id, isoNow(this.clock));
       const item = await tx.salesItems.getById(row.itemId);
-      await this.activity.record(tx, actor, { action: 'Delete', entityType: `sales_${kind}`, entityId: id, details: `Removed ${kind} entry for ${item?.name ?? 'an item'} from ${row.effectiveDate}` });
+      await this.activity.record(tx, actor, { action: 'Delete', entityType: 'sales_price', entityId: id, details: `Removed price entry for ${item?.name ?? 'an item'} from ${row.effectiveDate}` });
     });
   }
 

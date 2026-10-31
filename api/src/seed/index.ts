@@ -99,7 +99,7 @@ export function buildSeed({ devUsers, at = new Date().toISOString() }: SeedOptio
     prWip: [],
     prWipAdj: [],
     slCustomers: devAudit(DEMO_CUSTOMERS),
-    slItems: REF_SALES_ITEMS.map((i) => ({ ...i, ...audit })),
+    slItems: REF_SALES_ITEMS.map((i) => ({ ...i, weightKg: 0, ...audit })),
     slPrices: [],
     slWeights: [],
     slProformas: [],

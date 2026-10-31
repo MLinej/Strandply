@@ -25,7 +25,6 @@ import type {
   SalesOptions,
   SalesOrderView,
   SalesSettings,
-  WeightEntry,
 } from '@contracts/sales';
 import type { CompanyBlock } from '@contracts/sampletrack';
 import { api, downloadFile } from '@/api/client';
@@ -95,21 +94,19 @@ export function useSaveItem() {
   return useMutation({ mutationFn: save<SalesItem>('items'), onSuccess: invalidate });
 }
 
-export type EntryKind = 'prices' | 'weights';
 export type PriceRow = PriceEntry & { itemName: string };
-export type WeightRow = WeightEntry & { itemName: string };
-export function useEntries<K extends EntryKind>(kind: K, itemId?: string) {
+export function usePrices(itemId?: string) {
   return useQuery({
-    queryKey: slKeys.other(kind, { itemId }),
-    queryFn: ({ signal }) => api<(K extends 'prices' ? PriceRow : WeightRow)[]>(`${SL}/${kind}`, { query: { itemId: itemId || undefined }, signal }),
+    queryKey: slKeys.other('prices', { itemId }),
+    queryFn: ({ signal }) => api<PriceRow[]>(`${SL}/prices`, { query: { itemId: itemId || undefined }, signal }),
   });
 }
-export function useSaveEntry(kind: EntryKind) {
+export function useSavePrice() {
   const invalidate = useInvalidateAll();
-  return useMutation({ mutationFn: save<PriceRow | WeightRow>(kind), onSuccess: invalidate });
+  return useMutation({ mutationFn: save<PriceRow>('prices'), onSuccess: invalidate });
 }
 
-/** DELETE for any Sales record (customers, items, prices, weights, proformas, orders, invoices, fg, intercompany). */
+/** DELETE for any Sales record (customers, items, prices, proformas, orders, invoices, fg, intercompany). */
 export function useDeleteRecord(path: string) {
   const invalidate = useInvalidateAll();
   return useMutation({ mutationFn: (id: string) => api<void>(`${SL}/${path}/${id}`, { method: 'DELETE' }), onSuccess: invalidate });
@@ -198,7 +195,7 @@ export function useSalesDashboard(range: Range) {
 export function useReport(id: ReportId | null, range: Range) {
   return useQuery({ queryKey: slKeys.other('report', { id, ...range }), queryFn: ({ signal }) => api<ReportResult>(`${SL}/reports/${id}`, { query: range, signal }), enabled: !!id, placeholderData: keepPreviousData });
 }
-export type ExportKind = 'customers' | 'items' | 'prices' | 'weights' | 'proformas' | 'orders' | 'invoices' | 'dispatch' | 'fg' | 'intercompany';
+export type ExportKind = 'customers' | 'items' | 'prices' | 'proformas' | 'orders' | 'invoices' | 'dispatch' | 'fg' | 'intercompany';
 export const exportSales = (kind: ExportKind, range: Range = {}) => downloadFile(`${SL}/export/${kind}`, range);
 export const exportReport = (id: ReportId, range: Range = {}) => downloadFile(`${SL}/reports/${id}/export`, range);
 

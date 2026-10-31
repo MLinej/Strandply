@@ -93,10 +93,10 @@ export class SalesReportService {
     };
   }
 
-  /** Active parties and items, and every price / weight entry, for document forms. */
+  /** Active parties and items, and every price entry, for document forms. */
   async options(): Promise<SalesOptions> {
     const r = this.data.repos;
-    const [customers, items, prices, weights] = await Promise.all([r.salesCustomers.listAll(), r.salesItems.listAll(), r.salesPrices.listAll(), r.salesWeights.listAll()]);
+    const [customers, items, prices] = await Promise.all([r.salesCustomers.listAll(), r.salesItems.listAll(), r.salesPrices.listAll()]);
     return {
       customers: customers
         .filter((c) => c.active)
@@ -104,7 +104,6 @@ export class SalesReportService {
         .map((c) => ({ id: c.id, name: c.name, city: c.city, state: c.state, gstin: c.gstin, taxTypes: c.taxTypes, paymentTerms: c.paymentTerms, dealerType: c.dealerType })),
       items: items.filter((i) => i.active).sort((a, b) => a.name.localeCompare(b.name)),
       prices: prices.map((p) => ({ itemId: p.itemId, effectiveDate: p.effectiveDate, ratePaise: p.ratePaise })),
-      weights: weights.map((w) => ({ itemId: w.itemId, effectiveDate: w.effectiveDate, weightKg: w.weightKg })),
     };
   }
 
@@ -517,6 +516,7 @@ export class SalesReportService {
               { header: 'Length (mm)', value: (i) => i.length },
               { header: 'Sq m factor', value: (i) => i.sqmFactor },
               { header: 'Default rate / sq m (₹)', value: (i) => rupees(i.defaultRatePaise) },
+              { header: 'Weight per board (kg)', value: (i) => i.weightKg || null },
               { header: 'HSN', value: (i) => i.hsn },
               { header: 'Active', value: (i) => (i.active ? 'Yes' : 'No') },
             ],
@@ -532,18 +532,6 @@ export class SalesReportService {
               { header: 'Effective from', value: (p) => p.effectiveDate },
               { header: 'Rate / sq m (₹)', value: (p) => rupees(p.ratePaise) },
               { header: 'Rate / sq ft (₹)', value: (p) => rupees(rateSqftOf(p.ratePaise)) },
-            ],
-          }),
-        ];
-      case 'weights':
-        return [
-          sheet({
-            name: 'Weight chart',
-            rows: await this.masters.listWeights(),
-            columns: [
-              { header: 'Item', value: (w) => w.itemName },
-              { header: 'Effective from', value: (w) => w.effectiveDate },
-              { header: 'Weight per board (kg)', value: (w) => w.weightKg },
             ],
           }),
         ];

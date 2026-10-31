@@ -288,6 +288,21 @@ UPGRADES.push({
   },
 });
 
+UPGRADES.push({
+  // Same as db/migrations/0019_item_weight.sql on an existing database.
+  name: '0019_item_weight',
+  apply(data) {
+    // Each item takes its latest weight-chart weight; the weight chart itself is no longer used.
+    const latest = new Map<string, { effectiveDate: string; weightKg: number }>();
+    for (const w of data.slWeights ?? []) {
+      if (w.deletedAt) continue;
+      const cur = latest.get(w.itemId);
+      if (!cur || w.effectiveDate > cur.effectiveDate) latest.set(w.itemId, w);
+    }
+    for (const i of data.slItems ?? []) i.weightKg ??= latest.get(i.id)?.weightKg ?? 0;
+  },
+});
+
 /** Applies the upgrades `data` hasn't had yet. An old snapshot has no `upgrades` table, so all of them run. */
 export function upgradeSnapshot(data: Partial<MemoryData>, seed: MemoryData, at: string): Partial<MemoryData> {
   const done = new Set((data.upgrades ?? []).map((u) => u.name));

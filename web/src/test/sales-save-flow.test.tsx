@@ -8,8 +8,8 @@ import { ToastProvider } from '@/components/ui';
 import { routes } from '@/router';
 
 const admin: SessionUser = { id: 'u-a', code: 'admin', name: 'Rahul Admin', role: 'Admin', scopeNote: 'All', firms: ['llp'], permissions: ['*'], st: { pages: [], actions: ['edit', 'delete', 'print', 'export', 'sales_approve'], widgets: [] } };
-const item = { id: 'sli-1', name: 'S-OSB MDO', brand: 'Strandply', grade: 'S-OSB', subType: 'MDO', thic: 12, width: 1220, length: 2440, sqmFactor: 2.9768, defaultRatePaise: 40000, hsn: '441012', active: true };
-const options = { customers: [{ id: 'slc-g', name: 'GUJARAT TRADERS', city: 'RAJKOT', state: 'GUJARAT', gstin: '24AAAAA0000A1Z5', taxTypes: { llp: 'SG+CG', osb: 'IGST' }, paymentTerms: null, dealerType: 'Dealer' }], items: [item], prices: [], weights: [] };
+const item = { id: 'sli-1', name: 'S-OSB MDO', brand: 'Strandply', grade: 'S-OSB', subType: 'MDO', thic: 12, width: 1220, length: 2440, sqmFactor: 2.9768, defaultRatePaise: 40000, weightKg: 0, hsn: '441012', active: true };
+const options = { customers: [{ id: 'slc-g', name: 'GUJARAT TRADERS', city: 'RAJKOT', state: 'GUJARAT', gstin: '24AAAAA0000A1Z5', taxTypes: { llp: 'SG+CG', osb: 'IGST' }, paymentTerms: null, dealerType: 'Dealer' }], items: [item], prices: [] };
 const meta = { settings: { paymentTerms: DEFAULT_PAYMENT_TERMS, deliveryTerms: DEFAULT_DELIVERY_TERMS, salesPersons: [], brands: DEFAULT_BRANDS, grades: DEFAULT_GRADES, firmStateCodes: DEFAULT_FIRM_STATE_CODES, emailRecipients: [], emailTemplates: {} }, firms: [], dealerTypes: [], soStatuses: [], piStatuses: [], currentFy: '2026-27', fys: ['2026-27'], today: '2026-10-01' };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json' } });
 

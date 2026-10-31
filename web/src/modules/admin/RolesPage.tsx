@@ -92,7 +92,7 @@ const SECTIONS: { key: Section; title: string; items: readonly string[]; label: 
     items: PAGE_KEYS.filter((k) => k.startsWith('sales_')),
     label: {
       sales_dashboard: 'Dashboard and audit',
-      sales_masters: 'Party, item, price list, weight chart',
+      sales_masters: 'Party, item, price list',
       sales_proforma: 'Proforma invoices',
       sales_orders: 'Sales orders',
       sales_invoices: 'Sales invoices, inter-company',

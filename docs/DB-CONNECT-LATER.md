@@ -4,7 +4,7 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 
 ## Migrations (written, never run)
 - [ ] Review `db/migrations/0001_users.sql`. It is a provisional users table. Reconcile it with the ERP auth design (PLAN.md §4: code, PIN hash and salt, must_change_pin, firm access) **before the first apply**, while editing it in place is still safe.
-- [ ] Apply `0001`–`0018` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings; Transport: 6 vehicle types; Maintenance: 8 areas; Electricity: 4 rate entries, 1 setting; Complaints: 2 recipients; DWPAS: 12 departments, 7 employees).
+- [ ] Apply `0001`–`0019` to a local D1 and check that the schema and seed counts are right (36 states, 110 cities, 6 sample products, 11 settings, 3 counters, 5 role-permission rows; Vendors: 6 categories, 14 products, 9 T&C clauses; Purchase: 7 types; Stores: 2 settings; Stock: 103 item groups; Production: 5 settings; Sales: 62 items, 8 settings; CRM: 6 products, 2 salespersons, 2 settings; Transport: 6 vehicle types; Maintenance: 8 areas; Electricity: 4 rate entries, 1 setting; Complaints: 2 recipients; DWPAS: 12 departments, 7 employees).
 - [ ] Confirm D1 accepts the partial unique indexes, the `strftime(...)` column defaults and `json_valid()` in CHECK.
 - [ ] Apply to the remote D1.
 
@@ -160,3 +160,4 @@ Until the dedicated "connect DB" task, nothing touches D1, wrangler or the Cloud
 - [ ] Child tables the memory backend keeps as arrays: `vn_vendor_documents`, `pu_entry_lines`, `pu_order_lines`, `mt_work_order_photos`. Read and write them in the same batch as their parent row.
 - [ ] Vendor documents and work-order photos go to the blob store (`vendors/<id>/…`, `maintenance/<id>/…`) like purchase documents. TODO(r2).
 - [ ] `mt_assignees` is filled from the names already on work orders by the migration itself.
+- [ ] `0019_item_weight.sql` adds `sl_items.weight_kg` and copies each item's latest weight-chart weight into it. `sl_weight_chart` stays as history; nothing writes it any more.

@@ -52,8 +52,8 @@ const fromLine = (l: OrderLine): Line => blank({ itemId: l.itemId, brand: l.bran
 
 /**
  * Proforma and sales order form (legacy openPiModal / openSoModal: same fields). Picking an item fills the
- * rate from the Price List and the weight from the Weight Chart as of the document date (else the item's
- * default rate); pcs × the item's sq m factor fills the sq m, which stays editable.
+ * rate from the Price List as of the document date (else the item's default rate) and the weight per board
+ * from the item master; pcs × the item's sq m factor fills the sq m, which stays editable.
  */
 export function OrderForm({ kind, open, doc, onClose, onSaved }: { kind: Kind; open: boolean; doc: Doc | null; onClose: () => void; onSaved: (d: Doc) => void }) {
   const toast = useToast();
@@ -119,12 +119,11 @@ export function OrderForm({ kind, open, doc, onClose, onSaved }: { kind: Kind; o
   const setLine = (key: number, p: Partial<Line>) => setF((x) => ({ ...x, lines: x.lines.map((l) => (l.key === key ? { ...l, ...p } : l)) }));
   const clearLineErrors = (n: number) => setErrors((e) => Object.fromEntries(Object.entries(e).filter(([k]) => !k.startsWith(`lines.${n}.`) && k !== 'lines')));
 
-  /** Price-list rate and weight-chart weight for an item as of a date. */
+  /** Price-list rate for an item as of a date, and its weight per board from the item master. */
   const resolve = (itemId: string, date: string) => {
     const it = itemById.get(itemId);
     const price = opts && date ? effectiveEntry(opts.prices, itemId, date) : null;
-    const weight = opts && date ? effectiveEntry(opts.weights, itemId, date) : null;
-    return { rate: price ? rupeesText(price.ratePaise) : rupeesText(it?.defaultRatePaise ?? 0), weight: weight ? String(weight.weightKg) : null };
+    return { rate: price ? rupeesText(price.ratePaise) : rupeesText(it?.defaultRatePaise ?? 0), weight: it?.weightKg ? String(it.weightKg) : null };
   };
   function pickItem(l: Line, n: number, itemId: string | null) {
     clearLineErrors(n);
@@ -141,7 +140,7 @@ export function OrderForm({ kind, open, doc, onClose, onSaved }: { kind: Kind; o
   }
   function setDate(date: string) {
     set('date', date);
-    // Re-price lines from the price list and weight chart as of the new date (legacy sf_poDate change).
+    // Re-price lines from the price list as of the new date (legacy sf_poDate change).
     if (!date || locked) return;
     setF((x) => ({
       ...x,
@@ -149,8 +148,7 @@ export function OrderForm({ kind, open, doc, onClose, onSaved }: { kind: Kind; o
       lines: x.lines.map((l) => {
         if (!l.itemId) return l;
         const price = opts ? effectiveEntry(opts.prices, l.itemId, date) : null;
-        const weight = opts ? effectiveEntry(opts.weights, l.itemId, date) : null;
-        return { ...l, ...(price ? { rate: rupeesText(price.ratePaise) } : {}), ...(weight ? { weight: String(weight.weightKg) } : {}) };
+        return price ? { ...l, rate: rupeesText(price.ratePaise) } : l;
       }),
     }));
   }
@@ -224,7 +222,7 @@ export function OrderForm({ kind, open, doc, onClose, onSaved }: { kind: Kind; o
       size="xl"
       closeOnBackdrop={false}
       title={doc ? `Edit ${no}` : `New ${what}`}
-      description={locked ? `Invoiced (${order!.invoiceNos.join(', ')}): parties and items are fixed.` : 'Pick parties and items; rates and weights come from the price list and weight chart.'}
+      description={locked ? `Invoiced (${order!.invoiceNos.join(', ')}): parties and items are fixed.` : 'Pick parties and items; rates come from the price list and weights from the item master.'}
       footer={
         <>
           <Button onClick={onClose}>Cancel</Button>

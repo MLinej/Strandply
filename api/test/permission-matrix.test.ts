@@ -541,10 +541,6 @@ CASES.push(
   { method: 'POST', route: `${SL}/prices`, path: `${SL}/prices`, body: { itemId: 'sli-1', effectiveDate: '2026-10-01', ratePaise: 46000 }, allowed: ADMINS, ok: 201 },
   { method: 'PATCH', route: `${SL}/prices/:id`, path: `${SL}/prices/pl-1`, body: { ratePaise: 44500 }, allowed: ADMINS, ok: 200 },
   { method: 'DELETE', route: `${SL}/prices/:id`, path: `${SL}/prices/pl-1`, allowed: ADMINS, ok: 204 },
-  { method: 'GET', route: `${SL}/weights`, path: `${SL}/weights`, allowed: ADMINS, ok: 200 },
-  { method: 'POST', route: `${SL}/weights`, path: `${SL}/weights`, body: { itemId: 'sli-1', effectiveDate: '2026-10-01', weightKg: 26 }, allowed: ADMINS, ok: 201 },
-  { method: 'PATCH', route: `${SL}/weights/:id`, path: `${SL}/weights/wc-1`, body: { weightKg: 25.5 }, allowed: ADMINS, ok: 200 },
-  { method: 'DELETE', route: `${SL}/weights/:id`, path: `${SL}/weights/wc-1`, allowed: ADMINS, ok: 204 },
   // Proformas
   { method: 'GET', route: `${SL}/proformas`, path: `${SL}/proformas?firm=llp`, allowed: SL_VIEW, ok: 200 },
   { method: 'GET', route: `${SL}/proformas/:id`, path: `${SL}/proformas/pi-1`, allowed: ADMINS, ok: 200 },
@@ -590,7 +586,7 @@ CASES.push(
   { method: 'GET', route: `${SL}/dashboard`, path: `${SL}/dashboard?firm=llp`, allowed: SL_VIEW, ok: 200 },
   { method: 'GET', route: `${SL}/reports/:id`, path: `${SL}/reports/pending_orders`, allowed: SL_VIEW, ok: 200 },
   { method: 'GET', route: `${SL}/reports/:id/export`, path: `${SL}/reports/sales_register/export`, allowed: SL_VIEW, ok: 200 },
-  ...['customers', 'items', 'prices', 'weights', 'proformas', 'orders', 'invoices', 'dispatch', 'fg'].map((k) => ({ method: 'GET', route: `${SL}/export/${k}`, path: `${SL}/export/${k}`, allowed: ADMINS, ok: 200 })),
+  ...['customers', 'items', 'prices', 'proformas', 'orders', 'invoices', 'dispatch', 'fg'].map((k) => ({ method: 'GET', route: `${SL}/export/${k}`, path: `${SL}/export/${k}`, allowed: ADMINS, ok: 200 })),
   { method: 'GET', route: `${SL}/export/intercompany`, path: `${SL}/export/intercompany`, allowed: SL_VIEW, ok: 200 },
   { method: 'GET', route: `${SL}/audit`, path: `${SL}/audit`, allowed: SL_VIEW, ok: 200 },
 );
